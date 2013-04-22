@@ -106,6 +106,11 @@ class ConfigsSpec extends FlatSpec with ShouldMatchers {
     config.get[List[Symbol]]("string.values") should be (List('Hello, 'World))
   }
 
+  it should "get bytes" in {
+    config.get[Bytes]("bytes.value") should be (Bytes(1024L))
+    config.get[List[Bytes]]("bytes.values") should be (List(Bytes(100L), Bytes(1000000L)))
+  }
+
   it should "get duration(s)" in {
     config.get[Duration]("duration.value") should be (10.days)
     config.get[List[Duration]]("duration.values") should be (List(1.milli, 42.hours, 1.second))
