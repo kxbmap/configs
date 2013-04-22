@@ -17,7 +17,6 @@
 package com.github.kxbmap
 
 import com.typesafe.config.{ConfigException, Config}
-import shapeless.TypeOperators._
 
 
 package object configs {
@@ -29,10 +28,6 @@ package object configs {
 
     @inline def apply[T](f: (Config, String) => T): AtPath[T] = Configs { c => f(c, _) }
   }
-
-
-  sealed trait Bytes
-  val Bytes = tag[Bytes]
 
 
   final implicit class EnrichTypesafeConfig(val c: Config) extends AnyVal {

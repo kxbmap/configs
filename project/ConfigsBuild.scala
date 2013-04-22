@@ -16,7 +16,6 @@ object ConfigsBuild extends Build {
 
     libraryDependencies ++= Seq(
       "com.typesafe"   % "config"     % "1.0.0",
-      "com.chuusai"   %% "shapeless"  % "1.2.4",
       "org.scalatest" %% "scalatest"  % "1.9.1" % Test
     ),
 

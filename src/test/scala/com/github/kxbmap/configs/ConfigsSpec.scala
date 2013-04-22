@@ -22,7 +22,6 @@ import org.scalatest.FlatSpec
 import org.scalatest.matchers.ShouldMatchers
 import scala.concurrent.duration._
 import scala.util.{Try, Success}
-import shapeless.TypeOperators._
 
 
 class ConfigsSpec extends FlatSpec with ShouldMatchers {
@@ -105,11 +104,6 @@ class ConfigsSpec extends FlatSpec with ShouldMatchers {
   it should "get a Symbol(s)" in {
     config.get[Symbol]("string.value") should be === ('foobar)
     config.get[List[Symbol]]("string.values") should be (List('Hello, 'World))
-  }
-
-  it should "get bytes as Long(s)" in {
-    (config.get[Long @@ Bytes]("bytes.value"): Long) should be (1024L)
-    config.get[List[Long @@ Bytes]]("bytes.values") should be (List(100L, 1000000L))
   }
 
   it should "get duration(s)" in {

@@ -22,7 +22,6 @@ import scala.concurrent.duration.Duration
 import scala.reflect.{ClassTag, classTag}
 import scala.util.Try
 import scala.util.control.Exception._
-import shapeless.TypeOperators._
 
 
 trait Configs[T] {
@@ -93,13 +92,6 @@ object Configs {
   }
   implicit def tryAtPath[T: AtPath]: AtPath[Try[T]] = AtPath {
     Try apply _.get[T](_)
-  }
-
-  implicit val bytesAtPath: AtPath[Long @@ Bytes] = AtPath { (c, p) =>
-    Bytes(c.getBytes(p).toLong)
-  }
-  implicit val bytesListAtPath: AtPath[List[Long @@ Bytes]] = AtPath {
-    _.getBytesList(_).map { bs => Bytes(bs.toLong) }.toList
   }
 
   implicit val durationAtPath: AtPath[Duration] = AtPath {
