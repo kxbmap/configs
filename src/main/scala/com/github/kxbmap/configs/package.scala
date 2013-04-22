@@ -34,12 +34,6 @@ package object configs {
   sealed trait Bytes
   val Bytes = tag[Bytes]
 
-  sealed trait Milliseconds
-  val Milliseconds = tag[Milliseconds]
-
-  sealed trait Nanoseconds
-  val Nanoseconds = tag[Nanoseconds]
-
 
   final implicit class EnrichTypesafeConfig(val c: Config) extends AnyVal {
     def extract[T: Configs]: T = Configs.of[T].get(c)

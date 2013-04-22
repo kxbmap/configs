@@ -18,6 +18,7 @@ package com.github.kxbmap.configs
 
 import com.typesafe.config.Config
 import scala.collection.JavaConversions._
+import scala.concurrent.duration.Duration
 import scala.reflect.{ClassTag, classTag}
 import scala.util.Try
 import scala.util.control.Exception._
@@ -101,18 +102,11 @@ object Configs {
     _.getBytesList(_).map { bs => Bytes(bs.toLong) }.toList
   }
 
-  implicit val millisecondsAtPath: AtPath[Long @@ Milliseconds] = AtPath { (c, p) =>
-    Milliseconds(c.getMilliseconds(p).toLong)
+  implicit val durationAtPath: AtPath[Duration] = AtPath {
+    Duration fromNanos _.getNanoseconds(_)
   }
-  implicit val millisecondsListAtPath: AtPath[List[Long @@ Milliseconds]] = AtPath {
-    _.getMillisecondsList(_).map { ms => Milliseconds(ms.toLong) }.toList
-  }
-
-  implicit val nanosecondsAtPath: AtPath[Long @@ Nanoseconds] = AtPath { (c, p) =>
-    Nanoseconds(c.getNanoseconds(p).toLong)
-  }
-  implicit val nanosecondsListAtPath: AtPath[List[Long @@ Nanoseconds]] = AtPath {
-    _.getNanosecondsList(_).map { ns => Nanoseconds(ns.toLong) }.toList
+  implicit val durationListAtPath: AtPath[List[Duration]] = AtPath {
+    _.getNanosecondsList(_).map(Duration.fromNanos(_)).toList
   }
 
 }

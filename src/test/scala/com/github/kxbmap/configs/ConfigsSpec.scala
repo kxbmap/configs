@@ -20,6 +20,7 @@ import com.typesafe.config.{Config, ConfigException, ConfigFactory}
 import java.net.{InetSocketAddress, InetAddress}
 import org.scalatest.FlatSpec
 import org.scalatest.matchers.ShouldMatchers
+import scala.concurrent.duration._
 import scala.util.{Try, Success}
 import shapeless.TypeOperators._
 
@@ -111,16 +112,10 @@ class ConfigsSpec extends FlatSpec with ShouldMatchers {
     config.get[List[Long @@ Bytes]]("bytes.values") should be (List(100L, 1000000L))
   }
 
-  it should "get milliseconds as Long(s)" in {
-    (config.get[Long @@ Milliseconds]("seconds.value"): Long) should be (1000L)
-    config.get[List[Long @@ Milliseconds]]("seconds.values") should be (List(10000L, 1L))
+  it should "get duration(s)" in {
+    config.get[Duration]("duration.value") should be (10.days)
+    config.get[List[Duration]]("duration.values") should be (List(1.milli, 42.hours, 1.second))
   }
-
-  it should "get nanoseconds as Long(s)" in {
-    (config.get[Long @@ Nanoseconds]("seconds.value"): Long) should be (1000000000L)
-    config.get[List[Long @@ Nanoseconds]]("seconds.values") should be (List(10000000000L, 1000000L))
-  }
-
 
   it should "get as Option" in {
     config.get[Option[Int]]("int.value") should be (Some(42))
