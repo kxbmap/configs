@@ -56,8 +56,8 @@ object Configs {
   implicit def stringMapConfigs[T: AtPath]: Configs[Map[String, T]] = mapConfigs[String, T] { identity }
   implicit def symbolMapConfigs[T: AtPath]: Configs[Map[Symbol, T]] = mapConfigs[Symbol, T] { Symbol.apply }
 
-  implicit val symbolAtPath:      AtPath[Symbol]        = AtPath { (c, p) => Symbol(c.getString(p)) }
-  implicit val symbolListAtPath:  AtPath[List[Symbol]]  = AtPath { _.get[List[String]](_).map(Symbol.apply) }
+  implicit val symbolAtPath:      AtPath[Symbol]        = AtPath.base[String, Symbol] { Symbol.apply }
+  implicit val symbolListAtPath:  AtPath[List[Symbol]]  = AtPath.list[String, Symbol] { Symbol.apply }
 
   implicit def configsAtPath[T: Configs]: AtPath[T] = AtPath {
     _.getConfig(_).extract[T]

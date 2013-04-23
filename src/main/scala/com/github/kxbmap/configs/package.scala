@@ -27,6 +27,10 @@ package object configs {
     @inline def of[T: AtPath]: AtPath[T] = implicitly[AtPath[T]]
 
     @inline def apply[T](f: (Config, String) => T): AtPath[T] = Configs { c => f(c, _) }
+
+    def base[S: AtPath, T](f: S => T): AtPath[T] = AtPath { (c, p) => f(AtPath.of[S].get(c)(p)) }
+
+    def list[S, T](f: S => T)(implicit ev: AtPath[List[S]]): AtPath[List[T]] = AtPath { ev.get(_)(_).map(f) }
   }
 
 
