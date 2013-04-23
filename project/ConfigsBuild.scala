@@ -7,7 +7,7 @@ object ConfigsBuild extends Build {
     base  = file(".")
   ).settings(
     name          := "configs",
-    version       := "0.1.0",
+    version       := "0.2.0-SNAPSHOT",
     organization  := "com.github.kxbmap",
     description   := "A Scala wrapper for Typesafe config",
 
