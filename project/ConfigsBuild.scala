@@ -15,8 +15,9 @@ object ConfigsBuild extends Build {
     scalacOptions ++= Seq("-feature", "-unchecked", "-deprecation"),
 
     libraryDependencies ++= Seq(
-      "com.typesafe"   % "config"     % "1.0.0",
-      "org.scalatest" %% "scalatest"  % "1.9.1" % Test
+      "com.typesafe"     % "config"     % "1.0.0",
+      "org.scalatest"   %% "scalatest"  % "1.9.1"   % Test,
+      "org.scalacheck"  %% "scalacheck" % "1.10.1"  % Test
     ),
 
     publishMavenStyle := true,

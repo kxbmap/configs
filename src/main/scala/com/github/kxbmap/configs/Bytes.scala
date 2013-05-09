@@ -1,7 +1,9 @@
 package com.github.kxbmap.configs
 
 
-case class Bytes(value: Long)
+case class Bytes(value: Long) extends Ordered[Bytes] {
+  def compare(that: Bytes): Int = value compare that.value
+}
 
 
 object Bytes {
@@ -13,5 +15,7 @@ object Bytes {
     import scala.collection.JavaConversions._
     _.getBytesList(_).map(Bytes(_)).toList
   }
+
+  implicit val bytesOrdering: Ordering[Bytes] = Ordering.by(_.value)
 
 }
