@@ -33,4 +33,46 @@ class BytesSpec extends FlatSpec with ShouldMatchers with PropertyChecks {
     }
   }
 
+  it should "be available the addition operator" in {
+    forAll { (l: Bytes, r: Bytes) =>
+      (l + r) should be (Bytes(l.value + r.value))
+    }
+  }
+
+  it should "be available the subtraction operator" in {
+    forAll { (l: Bytes, r: Bytes) =>
+      (l - r) should be (Bytes(l.value - r.value))
+    }
+  }
+
+  it should "be available the multiplication operator" in {
+    forAll { (l: Bytes, r: Double) =>
+      (l * r) should be (Bytes((l.value * r).toLong))
+    }
+  }
+
+  it should "be available the division operator (Double)" in {
+    forAll { (l: Bytes, r: Double) =>
+      (l / r) should be (Bytes((l.value / r).toLong))
+    }
+  }
+
+  it should "be available the division operator (Bytes)" in {
+    forAll { (l: Bytes, r: Bytes) =>
+      (l, r) match {
+        case (Bytes(0), Bytes(0)) =>
+          (l / r).isNaN should be (true)
+
+        case _ =>
+          (l / r) should be (l.value.toDouble / r.value.toDouble)
+      }
+    }
+  }
+
+  it should "be available the unary negation operator" in {
+    forAll { (b: Bytes) =>
+      -b should be (Bytes(-b.value))
+    }
+  }
+
 }

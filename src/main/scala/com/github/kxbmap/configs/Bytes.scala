@@ -3,6 +3,13 @@ package com.github.kxbmap.configs
 
 case class Bytes(value: Long) extends Ordered[Bytes] {
   def compare(that: Bytes): Int = value compare that.value
+
+  def +(other: Bytes): Bytes = Bytes(value + other.value)
+  def -(other: Bytes): Bytes = Bytes(value - other.value)
+  def *(factor: Double): Bytes = Bytes((value * factor).toLong)
+  def /(divisor: Double): Bytes = Bytes((value / divisor).toLong)
+  def /(other: Bytes): Double = value / other.value.toDouble
+  def unary_- : Bytes = Bytes(-value)
 }
 
 
