@@ -17,6 +17,7 @@
 package com.github.kxbmap.configs
 
 import com.typesafe.config.Config
+import scala.annotation.implicitNotFound
 import scala.collection.JavaConversions._
 import scala.concurrent.duration.Duration
 import scala.reflect.{ClassTag, classTag}
@@ -24,6 +25,7 @@ import scala.util.Try
 import scala.util.control.Exception._
 
 
+@implicitNotFound("No implicit Configs defined for ${T}.")
 trait Configs[T] {
   def get(config: Config): T
 }

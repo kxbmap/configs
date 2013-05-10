@@ -17,10 +17,12 @@
 package com.github.kxbmap
 
 import com.typesafe.config.{ConfigException, Config}
+import scala.annotation.implicitNotFound
 
 
 package object configs {
 
+  @implicitNotFound("No implicit AtPath defined for ${T}.")
   type AtPath[T] = Configs[String => T]
 
   object AtPath {
