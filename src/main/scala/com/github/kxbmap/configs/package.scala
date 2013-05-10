@@ -30,16 +30,16 @@ package object configs {
 
     @inline def apply[T](f: (Config, String) => T): AtPath[T] = Configs { c => f(c, _) }
 
-    def base[S: AtPath, T](f: S => T): AtPath[T] = AtPath { (c, p) => f(AtPath.of[S].get(c)(p)) }
+    def base[S: AtPath, T](f: S => T): AtPath[T] = AtPath { (c, p) => f(AtPath.of[S].extract(c)(p)) }
 
-    def list[S, T](f: S => T)(implicit ev: AtPath[List[S]]): AtPath[List[T]] = AtPath { ev.get(_)(_).map(f) }
+    def list[S, T](f: S => T)(implicit ev: AtPath[List[S]]): AtPath[List[T]] = AtPath { ev.extract(_)(_).map(f) }
   }
 
 
   final implicit class EnrichTypesafeConfig(val c: Config) extends AnyVal {
-    def extract[T: Configs]: T = Configs.of[T].get(c)
+    def extract[T: Configs]: T = Configs.of[T].extract(c)
 
-    def get[T: AtPath](path: String): T = AtPath.of[T].get(c)(path)
+    def get[T: AtPath](path: String): T = extract[String => T].apply(path)
 
     def opt[T: AtPath](path: String): Option[T] = get[Option[T]](path)
 

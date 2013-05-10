@@ -27,14 +27,14 @@ import scala.util.control.Exception._
 
 @implicitNotFound("No implicit Configs defined for ${T}.")
 trait Configs[T] {
-  def get(config: Config): T
+  def extract(config: Config): T
 }
 
 object Configs extends LowPriorityConfigsInstances {
   @inline def of[T: Configs]: Configs[T] = implicitly[Configs[T]]
 
   def apply[T](f: Config => T): Configs[T] = new Configs[T] {
-    def get(config: Config): T = f(config)
+    def extract(config: Config): T = f(config)
   }
 }
 
