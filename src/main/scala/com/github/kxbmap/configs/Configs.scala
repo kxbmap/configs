@@ -30,13 +30,15 @@ trait Configs[T] {
   def get(config: Config): T
 }
 
-object Configs {
+object Configs extends LowPriorityConfigsInstances {
   @inline def of[T: Configs]: Configs[T] = implicitly[Configs[T]]
 
   def apply[T](f: Config => T): Configs[T] = new Configs[T] {
     def get(config: Config): T = f(config)
   }
+}
 
+trait LowPriorityConfigsInstances {
 
   implicit val intAtPath:         AtPath[Int]           = AtPath { _.getInt(_) }
   implicit val intListAtPath:     AtPath[List[Int]]     = AtPath { _.getIntList(_).map(_.toInt).toList }
