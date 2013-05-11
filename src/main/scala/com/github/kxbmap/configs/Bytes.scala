@@ -25,4 +25,8 @@ object Bytes {
 
   implicit val bytesOrdering: Ordering[Bytes] = Ordering.by(_.value)
 
+  final implicit class BytesMultiplication(val factor: Double) extends AnyVal {
+    def *(bytes: Bytes): Bytes = bytes * factor
+  }
+
 }

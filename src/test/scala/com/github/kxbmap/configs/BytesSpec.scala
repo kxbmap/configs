@@ -48,6 +48,7 @@ class BytesSpec extends FlatSpec with ShouldMatchers with PropertyChecks {
   it should "be available the multiplication operator" in {
     forAll { (l: Bytes, r: Double) =>
       (l * r) should be (Bytes((l.value * r).toLong))
+      (r * l) should be (l * r)
     }
   }
 
