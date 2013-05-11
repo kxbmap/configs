@@ -28,6 +28,8 @@ import scala.util.control.Exception._
 @implicitNotFound("No implicit Configs defined for ${T}.")
 trait Configs[T] {
   def extract(config: Config): T
+
+  def map[U](f: T => U): Configs[U] = Configs { f compose extract }
 }
 
 object Configs extends LowPriorityConfigsInstances {
@@ -60,8 +62,8 @@ trait LowPriorityConfigsInstances {
   implicit def stringMapConfigs[T: AtPath]: Configs[Map[String, T]] = mapConfigs[String, T] { identity }
   implicit def symbolMapConfigs[T: AtPath]: Configs[Map[Symbol, T]] = mapConfigs[Symbol, T] { Symbol.apply }
 
-  implicit val symbolAtPath:      AtPath[Symbol]        = AtPath.base[String, Symbol] { Symbol.apply }
-  implicit val symbolListAtPath:  AtPath[List[Symbol]]  = AtPath.list[String, Symbol] { Symbol.apply }
+  implicit val symbolAtPath:      AtPath[Symbol]        = AtPath.base { Symbol.apply }
+  implicit val symbolListAtPath:  AtPath[List[Symbol]]  = AtPath.list { Symbol.apply }
 
   implicit def configsAtPath[T: Configs]: AtPath[T] = AtPath {
     _.getConfig(_).extract[T]

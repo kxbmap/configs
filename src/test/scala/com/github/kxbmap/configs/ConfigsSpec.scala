@@ -18,15 +18,51 @@ package com.github.kxbmap.configs
 
 import com.typesafe.config.{Config, ConfigException, ConfigFactory}
 import java.net.{InetSocketAddress, InetAddress}
+import org.scalacheck.{Gen, Arbitrary}
 import org.scalatest.FlatSpec
 import org.scalatest.matchers.ShouldMatchers
+import org.scalatest.prop.PropertyChecks
 import scala.concurrent.duration._
 import scala.util.{Try, Success}
 
 
-class ConfigsSpec extends FlatSpec with ShouldMatchers {
+class ConfigsSpec extends FlatSpec with ShouldMatchers with PropertyChecks {
 
   behavior of "Configs"
+
+  it should "be satisfy Functor law" in {
+    val c = ConfigFactory.parseString(
+      """foo="Hello, World!"
+        |bar=42
+        |baz=[not string]
+      """.stripMargin)
+
+    implicit val configsArb = Arbitrary {
+      for {
+        p <- Gen.oneOf(Seq("foo", "bar", "baz", "qux", ""))
+      } yield Configs { c =>
+        try Some(c.getString(p)) catch {
+          case _: Throwable => None
+        }
+      }
+    }
+
+    implicit val funArb = Arbitrary[Option[String] => Option[String]] {
+      val fs = Seq[String => String](
+        _.toUpperCase, _.toLowerCase, _.capitalize, _.reverse, _.sorted, _.tail
+      )
+      Gen.oneOf(fs).map { f => (_: Option[String]).map(f) }
+    }
+
+    forAll { (cs: Configs[Option[String]],
+              f: Option[String] => Option[String],
+              g: Option[String] => Option[String]) =>
+
+      cs.map(identity).extract(c) should be (identity(cs).extract(c))
+      cs.map(f compose g).extract(c) should be (cs.map(g).map(f).extract(c))
+    }
+  }
+
 
   val config = ConfigFactory.load("test-data")
 
@@ -161,12 +197,8 @@ class ConfigsSpec extends FlatSpec with ShouldMatchers {
   }
 
   it should "get value(s) via user defined instances" in {
-    implicit val inetAddressAtPath: AtPath[InetAddress] = AtPath.base[String, InetAddress] {
-      InetAddress.getByName
-    }
-    implicit val inetAddressListAtPath: AtPath[List[InetAddress]] = AtPath.list[String, InetAddress] {
-      InetAddress.getByName
-    }
+    implicit val inetAddressAtPath      = AtPath base InetAddress.getByName
+    implicit val inetAddressListAtPath  = AtPath list InetAddress.getByName
 
     config.get[InetAddress]("address.value") should be (InetAddress.getByName("127.0.0.1"))
     config.get[List[InetAddress]]("address.values") should be (List(

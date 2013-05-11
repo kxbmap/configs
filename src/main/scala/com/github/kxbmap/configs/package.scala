@@ -30,9 +30,9 @@ package object configs {
 
     @inline def apply[T](f: (Config, String) => T): AtPath[T] = Configs { c => f(c, _) }
 
-    def base[S: AtPath, T](f: S => T): AtPath[T] = AtPath { (c, p) => f(AtPath.of[S].extract(c)(p)) }
+    def base[S: AtPath, T](f: S => T): AtPath[T] = AtPath.of[S].map { _ andThen f }
 
-    def list[S, T](f: S => T)(implicit ev: AtPath[List[S]]): AtPath[List[T]] = AtPath { ev.extract(_)(_).map(f) }
+    def list[S, T](f: S => T)(implicit ev: AtPath[List[S]]): AtPath[List[T]] = ev map { _ andThen (_ map f) }
   }
 
 
