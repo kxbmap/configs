@@ -197,8 +197,8 @@ class ConfigsSpec extends FlatSpec with ShouldMatchers with PropertyChecks {
   }
 
   it should "get value(s) via user defined instances" in {
-    implicit val inetAddressAtPath      = AtPath base InetAddress.getByName
-    implicit val inetAddressListAtPath  = AtPath list InetAddress.getByName
+    implicit val inetAddressAtPath      = AtPath mapBy InetAddress.getByName
+    implicit val inetAddressListAtPath  = AtPath mapListBy InetAddress.getByName
 
     config.get[InetAddress]("address.value") should be (InetAddress.getByName("127.0.0.1"))
     config.get[List[InetAddress]]("address.values") should be (List(
