@@ -47,16 +47,16 @@ class ConfigsSpec extends FlatSpec with ShouldMatchers with PropertyChecks {
       }
     }
 
-    implicit val funArb = Arbitrary[(Config => Option[String]) => Config => Option[String]] {
+    implicit val funArb = Arbitrary[Option[String] => Option[String]] {
       val fs = Seq[String => String](
         _.toUpperCase, _.toLowerCase, _.capitalize, _.reverse, _.sorted, _.tail
       )
-      Gen.oneOf(fs).map { f => e => e(_).map(f) }
+      Gen.oneOf(fs).map { f => (_: Option[String]).map(f) }
     }
 
     forAll { (cs: Configs[Option[String]],
-              f: (Config => Option[String]) => Config => Option[String],
-              g: (Config => Option[String]) => Config => Option[String]) =>
+              f: Option[String] => Option[String],
+              g: Option[String] => Option[String]) =>
 
       cs.map(identity).extract(c) should be (identity(cs).extract(c))
       cs.map(f compose g).extract(c) should be (cs.map(g).map(f).extract(c))

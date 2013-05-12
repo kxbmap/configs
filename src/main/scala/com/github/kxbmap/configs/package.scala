@@ -30,9 +30,9 @@ package object configs {
 
     @inline def apply[T](f: (Config, String) => T): AtPath[T] = Configs { c => f(c, _) }
 
-    def mapBy[S: AtPath, T](f: S => T): AtPath[T] = of[S] mapBy { f compose _ }
+    def mapBy[S: AtPath, T](f: S => T): AtPath[T] = AtPath.of[S].map { _ andThen f }
 
-    def mapListBy[S, T](f: S => T)(implicit ev: AtPath[List[S]]): AtPath[List[T]] = mapBy { (_: List[S]) map f }
+    def mapListBy[S, T](f: S => T)(implicit ev: AtPath[List[S]]): AtPath[List[T]] = mapBy { (_: List[S]).map(f) }
   }
 
 

@@ -29,9 +29,7 @@ import scala.util.control.Exception._
 trait Configs[T] {
   def extract(config: Config): T
 
-  def map[U](f: (Config => T) => Config => U): Configs[U] = Configs { f(extract) }
-
-  def mapBy[U](f: T => U): Configs[U] = map { f compose _ }
+  def map[U](f: T => U): Configs[U] = Configs { f compose extract }
 }
 
 object Configs extends LowPriorityConfigsInstances {
