@@ -31,8 +31,8 @@ object Sample extends App {
     DBConfig(
       c.get[String]("driver"),
       c.get[String]("url"),
-      c.orMissing[String]("user"),
-      c.orMissing[String]("password")
+      c.getOrMissing[String]("user"),
+      c.getOrMissing[String]("password")
     )
   }
 
@@ -41,7 +41,7 @@ object Sample extends App {
   val default = config.get[DBConfig]("db.default")
   println(default)
 
-  val break = config.opt[DBConfig]("db.break")
+  val break = config.get[Option[DBConfig]]("db.break")
   println(break)
 
   val dbs = config.get[Map[Symbol, Try[DBConfig]]]("db")

@@ -41,12 +41,12 @@ package object configs {
 
     def get[T: AtPath](path: String): T = extract[String => T].apply(path)
 
-    def opt[T: AtPath](path: String): Option[T] = get[Option[T]](path)
-
-    def orMissing[T: AtPath](path: String): Option[T] =
+    def getOrMissing[T: AtPath](path: String): Option[T] =
       try Some(get[T](path)) catch {
         case _: ConfigException.Missing => None
       }
+
+    def getOrElse[T: AtPath](path: String, default: => T): T = get[Option[T]](path).getOrElse(default)
   }
 
 }
