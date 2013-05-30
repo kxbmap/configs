@@ -1,4 +1,5 @@
 import sbt._, Keys._
+import org.sbtidea.SbtIdeaPlugin._
 
 object ConfigsBuild extends Build {
 
@@ -47,7 +48,9 @@ object ConfigsBuild extends Build {
     name        := "configs-ext",
     description := "A Scala wrapper for Typesafe config (ext)",
 
-    libraryDependencies ++= testDependencies
+    libraryDependencies ++= testDependencies,
+
+    ideaBasePackage := Some("com.github.kxbmap.configs")
   ).dependsOn(core)
 
   lazy val sample = Project(
