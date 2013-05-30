@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package sample
+package com.github.kxbmap.configs.sample
 
 object Sample extends App {
 

@@ -2,24 +2,71 @@ import sbt._, Keys._
 
 object ConfigsBuild extends Build {
 
-  lazy val configs = Project(
-    id    = "configs",
-    base  = file(".")
-  ).settings(
-    name          := "configs",
+  lazy val baseSettings = seq(
     version       := "0.2.0-SNAPSHOT",
     organization  := "com.github.kxbmap",
-    description   := "A Scala wrapper for Typesafe config",
-
     scalaVersion  := "2.10.1",
-    scalacOptions ++= Seq("-feature", "-unchecked", "-deprecation"),
+    scalacOptions ++= Seq("-feature", "-unchecked", "-deprecation")
+  )
 
-    libraryDependencies ++= Seq(
-      "com.typesafe"     % "config"     % "1.0.0",
-      "org.scalatest"   %% "scalatest"  % "1.9.1"   % Test,
-      "org.scalacheck"  %% "scalacheck" % "1.10.1"  % Test
-    ),
 
+  lazy val root = Project(
+    id    = "root",
+    base  = file(".")
+  ).settings(
+    baseSettings ++ publishSettings:_*
+  ).settings(
+    name            := "configs",
+    description     := "A Scala wrapper for Typesafe config",
+    publishArtifact := false
+  ).dependsOn(
+    core
+  ).aggregate(
+    core, ext, sample
+  )
+
+  lazy val core = Project(
+    id    = "core",
+    base  = file("core")
+  ).settings(
+    baseSettings ++ publishSettings:_*
+  ).settings(
+    name        := "configs-core",
+    description := "A Scala wrapper for Typesafe config (core)",
+
+    libraryDependencies += "com.typesafe" % "config" % "1.0.0",
+    libraryDependencies ++= testDependencies
+  )
+
+  lazy val ext = Project(
+    id    = "ext",
+    base  = file("ext")
+  ).settings(
+    baseSettings ++ publishSettings:_*
+  ).settings(
+    name        := "configs-ext",
+    description := "A Scala wrapper for Typesafe config (ext)",
+
+    libraryDependencies ++= testDependencies
+  ).dependsOn(core)
+
+  lazy val sample = Project(
+    id    = "sample",
+    base  = file("sample")
+  ).settings(
+    baseSettings ++ publishSettings:_*
+  ).settings(
+    name        := "configs-sample",
+    description := "A Scala wrapper for Typesafe config (sample)"
+  ).dependsOn(core)
+
+
+  lazy val testDependencies = Seq(
+    "org.scalatest"   %% "scalatest"  % "1.9.1"   % Test,
+    "org.scalacheck"  %% "scalacheck" % "1.10.1"  % Test
+  )
+
+  lazy val publishSettings = seq(
     publishMavenStyle := true,
     publishTo <<= version { v =>
       if (v.trim.endsWith("SNAPSHOT"))
