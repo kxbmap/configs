@@ -26,6 +26,7 @@ object ConfigsBuild extends Build {
     core, ext, sample
   )
 
+
   lazy val core = Project(
     id    = "core",
     base  = file("core")
@@ -39,6 +40,7 @@ object ConfigsBuild extends Build {
     libraryDependencies ++= testDependencies
   )
 
+
   lazy val ext = Project(
     id    = "ext",
     base  = file("ext")
@@ -48,10 +50,14 @@ object ConfigsBuild extends Build {
     name        := "configs-ext",
     description := "A Scala wrapper for Typesafe config (ext)",
 
+    libraryDependencies ++= Seq(
+      "com.jolbox" % "bonecp" % "0.7.1.RELEASE" % Provided
+    ),
     libraryDependencies ++= testDependencies,
 
     ideaBasePackage := Some("com.github.kxbmap.configs")
   ).dependsOn(core)
+
 
   lazy val sample = Project(
     id    = "sample",
