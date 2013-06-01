@@ -25,6 +25,8 @@ trait BoneCPConfigs {
     set[String]("username", "user")(cfg.setUsername(_))
     set[String]("password", "pass")(cfg.setPassword(_))
 
+    cfg.setReleaseHelperThreads(c.missingOrElse("releaseHelperThreads", 0))
+
     set[String]("poolName")(cfg.setPoolName(_))
     set[Int]("minConnectionPerPartition")(cfg.setMinConnectionsPerPartition(_))
     set[Int]("maxConnectionPerPartition")(cfg.setMaxConnectionsPerPartition(_))
@@ -36,7 +38,6 @@ trait BoneCPConfigs {
 
     set[String]("connectionTestStatement")(cfg.setConnectionTestStatement(_))
     set[Int]("statementsCacheSize")(cfg.setStatementsCacheSize(_))
-    set[Int]("releaseHelperThreads")(cfg.setReleaseHelperThreads(_))
     set[String]("connectionHook")(cfg.setConnectionHookClassName(_))
     set[String]("initSQL")(cfg.setInitSQL(_))
 
