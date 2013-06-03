@@ -47,6 +47,8 @@ package object configs {
       }
 
     def getOrElse[T: AtPath](path: String, default: => T): T = get[Option[T]](path).getOrElse(default)
+
+    def missingOrElse[T: AtPath](path: String, default: => T): T = missing[T](path).getOrElse(default)
   }
 
 }
