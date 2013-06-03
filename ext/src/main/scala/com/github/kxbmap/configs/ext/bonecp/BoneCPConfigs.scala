@@ -14,7 +14,7 @@ trait BoneCPConfigs {
     val cfg = new BoneCPConfig()
 
     def set[T: AtPath](p: String, ps: String*)(setter: T => Unit) {
-      (c.getOrMissing[T](p) /: ps)(_ orElse c.getOrMissing[T](_)) foreach setter
+      (c.missing[T](p) /: ps)(_ orElse c.missing[T](_)) foreach setter
     }
 
     def setDuration(p: String)(setter: (Long, TimeUnit) => Unit) {

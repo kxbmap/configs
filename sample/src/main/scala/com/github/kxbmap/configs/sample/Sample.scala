@@ -31,8 +31,8 @@ object Sample extends App {
     DBConfig(
       c.get[String]("driver"),
       c.get[String]("url"),
-      c.getOrMissing[String]("user"),
-      c.getOrMissing[String]("password")
+      c.missing[String]("user"),
+      c.missing[String]("password")
     )
   }
 

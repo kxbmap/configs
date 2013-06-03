@@ -41,7 +41,7 @@ package object configs {
 
     def get[T: AtPath](path: String): T = extract[String => T].apply(path)
 
-    def getOrMissing[T: AtPath](path: String): Option[T] =
+    def missing[T: AtPath](path: String): Option[T] =
       try Some(get[T](path)) catch {
         case _: ConfigException.Missing => None
       }

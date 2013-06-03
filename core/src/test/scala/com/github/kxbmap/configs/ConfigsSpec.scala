@@ -157,9 +157,9 @@ class ConfigsSpec extends FlatSpec with ShouldMatchers with PropertyChecks {
 
   it should "get or missing as Option" in {
     intercept[ConfigException.WrongType] {
-      config.getOrMissing[Int]("string.value")
+      config.missing[Int]("string.value")
     }
-    config.getOrMissing[Int]("missing.value") should be (None)
+    config.missing[Int]("missing.value") should be (None)
   }
 
   it should "get or default value" in {
