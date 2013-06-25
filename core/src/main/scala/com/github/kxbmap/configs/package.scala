@@ -25,16 +25,6 @@ package object configs {
   @implicitNotFound("No implicit AtPath defined for ${T}.")
   type AtPath[T] = Configs[String => T]
 
-  object AtPath {
-    @inline def of[T: AtPath]: AtPath[T] = implicitly[AtPath[T]]
-
-    @inline def apply[T](f: (Config, String) => T): AtPath[T] = Configs { c => f(c, _) }
-
-    def mapBy[S: AtPath, T](f: S => T): AtPath[T] = AtPath.of[S].map { _ andThen f }
-
-    def mapListBy[S, T](f: S => T)(implicit ev: AtPath[List[S]]): AtPath[List[T]] = mapBy { (_: List[S]).map(f) }
-  }
-
 
   final implicit class EnrichTypesafeConfig(val c: Config) extends AnyVal {
     def extract[T: Configs]: T = Configs.of[T].extract(c)
