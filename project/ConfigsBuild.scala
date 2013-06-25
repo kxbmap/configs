@@ -6,7 +6,7 @@ object ConfigsBuild extends Build {
   lazy val baseSettings = seq(
     version       := "0.2.0-SNAPSHOT",
     organization  := "com.github.kxbmap",
-    scalaVersion  := "2.10.1",
+    scalaVersion  := "2.10.2",
     scalacOptions ++= Seq("-feature", "-unchecked", "-deprecation")
   )
 
@@ -36,7 +36,7 @@ object ConfigsBuild extends Build {
     name        := "configs-core",
     description := "A Scala wrapper for Typesafe config (core)",
 
-    libraryDependencies += "com.typesafe" % "config" % "1.0.0",
+    libraryDependencies += "com.typesafe" % "config" % "1.0.1",
     libraryDependencies ++= testDependencies
   )
 
