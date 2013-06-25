@@ -16,7 +16,7 @@
 
 package com.github.kxbmap
 
-import com.typesafe.config.{ConfigException, Config}
+import com.typesafe.config.Config
 import scala.annotation.implicitNotFound
 
 
@@ -26,19 +26,20 @@ package object configs {
   type AtPath[T] = Configs[String => T]
 
 
+  @implicitNotFound("No implicit Catcher found for ${T}.")
+  type Catcher[T] = scala.util.control.Exception.Catcher[T]
+
+
   final implicit class EnrichTypesafeConfig(val c: Config) extends AnyVal {
     def extract[T: Configs]: T = Configs.of[T].extract(c)
 
     def get[T: AtPath](path: String): T = extract[String => T].apply(path)
 
-    def missing[T: AtPath](path: String): Option[T] =
-      try Some(get[T](path)) catch {
-        case _: ConfigException.Missing => None
-      }
+    def getOrElse[T: AtPath: Catcher](path: String, default: => T): T = opt[T](path).getOrElse(default)
 
-    def getOrElse[T: AtPath](path: String, default: => T): T = get[Option[T]](path).getOrElse(default)
+    def opt[T: AtPath: Catcher](path: String): Option[T] = get[Option[T]](path)
 
-    def missingOrElse[T: AtPath](path: String, default: => T): T = missing[T](path).getOrElse(default)
+    def either[T: AtPath: Catcher](path: String): Either[Throwable, T] = get[Either[Throwable, T]](path)
   }
 
 }

@@ -20,7 +20,6 @@ import com.typesafe.config.Config
 import scala.annotation.implicitNotFound
 import scala.collection.JavaConversions._
 import scala.concurrent.duration.Duration
-import scala.reflect.{ClassTag, classTag}
 import scala.util.Try
 import scala.util.control.Exception._
 
@@ -72,25 +71,18 @@ trait LowPriorityConfigsInstances {
     _.getConfigList(_).map(_.extract[T]).toList
   }
 
-  implicit def optionConfigs[T: Configs]: Configs[Option[T]] = Configs {
-    nonFatalCatch opt _.extract[T]
+  implicit def optionConfigs[T: Configs: Catcher]: Configs[Option[T]] = Configs {
+    new Catch(Catcher[T]) opt _.extract[T]
   }
-  implicit def optionAtPath[T: AtPath]: AtPath[Option[T]] = AtPath {
-    nonFatalCatch opt _.get[T](_)
-  }
-
-  implicit def eitherConfigs[E <: Throwable: ClassTag, T: Configs]: Configs[Either[E, T]] = Configs { c =>
-    (catching(classTag[E].runtimeClass) either c.extract[T]).left.map(_.asInstanceOf[E])
-  }
-  implicit def eitherAtPath[E <: Throwable: ClassTag, T: AtPath]: AtPath[Either[E, T]]  = AtPath { (c, p) =>
-    (catching(classTag[E].runtimeClass) either c.get[T](p)).left.map(_.asInstanceOf[E])
+  implicit def optionAtPath[T: AtPath: Catcher]: AtPath[Option[T]] = AtPath {
+    new Catch(Catcher[T]) opt _.get[T](_)
   }
 
-  implicit def throwableEitherConfigs[T: Configs]: Configs[Either[Throwable, T]] = Configs {
-    nonFatalCatch either _.extract[T]
+  implicit def eitherConfigs[T: Configs: Catcher]: Configs[Either[Throwable, T]] = Configs {
+    new Catch(Catcher[T]) either _.extract[T]
   }
-  implicit def throwableEitherAtPath[T: AtPath]: AtPath[Either[Throwable, T]] = AtPath {
-    nonFatalCatch either _.get[T](_)
+  implicit def eitherAtPath[T: AtPath: Catcher]: AtPath[Either[Throwable, T]] = AtPath {
+    new Catch(Catcher[T]) either _.get[T](_)
   }
 
   implicit def tryConfigs[T: Configs]: Configs[Try[T]] = Configs {

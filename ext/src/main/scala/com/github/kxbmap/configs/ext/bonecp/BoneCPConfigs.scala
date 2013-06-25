@@ -29,58 +29,56 @@ trait BoneCPConfigs {
     // Load default and app specific config files first
     val cfg = new BoneCPConfig()
 
-    def set[T: AtPath](p: String, ps: String*)(setter: T => Unit) {
-      (c.missing[T](p) /: ps)(_ orElse c.missing[T](_)) foreach setter
+    import Catcher.Implicits.missing
+
+    def duration(p: String)(setter: (Long, TimeUnit) => Unit) {
+      c.opt[Duration](p) foreach { d => setter(d.length, d.unit) }
     }
 
-    def setDuration(p: String)(setter: (Long, TimeUnit) => Unit) {
-      set[Duration](p)(d => setter(d.length, d.unit))
-    }
+    c.opt[String]("jdbcUrl") orElse c.opt[String]("url") foreach cfg.setJdbcUrl
+    c.opt[String]("username") orElse c.opt[String]("user") foreach cfg.setUsername
+    c.opt[String]("password") orElse c.opt[String]("pass") foreach cfg.setPassword
 
-    set[String]("jdbcUrl", "url")(cfg.setJdbcUrl)
-    set[String]("username", "user")(cfg.setUsername)
-    set[String]("password", "pass")(cfg.setPassword)
+    cfg.setReleaseHelperThreads(c.getOrElse("releaseHelperThreads", 0))
 
-    cfg.setReleaseHelperThreads(c.missingOrElse("releaseHelperThreads", 0))
+    c.opt[String]("poolName") foreach cfg.setPoolName
+    c.opt[Int]("minConnectionsPerPartition") foreach cfg.setMinConnectionsPerPartition
+    c.opt[Int]("maxConnectionsPerPartition") foreach cfg.setMaxConnectionsPerPartition
+    c.opt[Int]("acquireIncrement") foreach cfg.setAcquireIncrement
+    c.opt[Int]("partitionCount") foreach cfg.setPartitionCount
 
-    set[String]("poolName")(cfg.setPoolName)
-    set[Int]("minConnectionsPerPartition")(cfg.setMinConnectionsPerPartition)
-    set[Int]("maxConnectionsPerPartition")(cfg.setMaxConnectionsPerPartition)
-    set[Int]("acquireIncrement")(cfg.setAcquireIncrement)
-    set[Int]("partitionCount")(cfg.setPartitionCount)
+    duration("idleConnectionTestPeriod")(cfg.setIdleConnectionTestPeriod)
+    duration("idleMaxAge")(cfg.setIdleMaxAge)
 
-    setDuration("idleConnectionTestPeriod")(cfg.setIdleConnectionTestPeriod)
-    setDuration("idleMaxAge")(cfg.setIdleMaxAge)
+    c.opt[String]("connectionTestStatement") foreach cfg.setConnectionTestStatement
+    c.opt[Int]("statementsCacheSize") foreach cfg.setStatementsCacheSize
+    c.opt[String]("connectionHookClassName") foreach cfg.setConnectionHookClassName
+    c.opt[String]("initSQL") foreach cfg.setInitSQL
 
-    set[String]("connectionTestStatement")(cfg.setConnectionTestStatement)
-    set[Int]("statementsCacheSize")(cfg.setStatementsCacheSize)
-    set[String]("connectionHookClassName")(cfg.setConnectionHookClassName)
-    set[String]("initSQL")(cfg.setInitSQL)
+    c.opt[Boolean]("closeConnectionWatch") foreach cfg.setCloseConnectionWatch
+    c.opt[Boolean]("logStatementsEnabled") foreach cfg.setLogStatementsEnabled
+    duration("acquireRetryDelay")(cfg.setAcquireRetryDelay)
+    c.opt[Boolean]("lazyInit") foreach cfg.setLazyInit
+    c.opt[Boolean]("transactionRecoveryEnabled") foreach cfg.setTransactionRecoveryEnabled
+    c.opt[Int]("acquireRetryAttempts") foreach cfg.setAcquireRetryAttempts
+    c.opt[Boolean]("disableJMX") foreach cfg.setDisableJMX
 
-    set[Boolean]("closeConnectionWatch")(cfg.setCloseConnectionWatch)
-    set[Boolean]("logStatementsEnabled")(cfg.setLogStatementsEnabled)
-    setDuration("acquireRetryDelay")(cfg.setAcquireRetryDelay)
-    set[Boolean]("lazyInit")(cfg.setLazyInit)
-    set[Boolean]("transactionRecoveryEnabled")(cfg.setTransactionRecoveryEnabled)
-    set[Int]("acquireRetryAttempts")(cfg.setAcquireRetryAttempts)
-    set[Boolean]("disableJMX")(cfg.setDisableJMX)
+    duration("queryExecuteTimeLimit")(cfg.setQueryExecuteTimeLimit)
+    c.opt[Int]("poolAvailabilityThreshold") foreach cfg.setPoolAvailabilityThreshold
+    c.opt[Boolean]("disableConnectionTracking") foreach cfg.setDisableConnectionTracking
+    duration("connectionTimeout")(cfg.setConnectionTimeout)
+    duration("closeConnectionWatchTimeout")(cfg.setCloseConnectionWatchTimeout)
+    c.opt[Int]("statementReleaseHelperThreads") foreach cfg.setStatementReleaseHelperThreads
+    duration("maxConnectionAge")(cfg.setMaxConnectionAge)
 
-    setDuration("queryExecuteTimeLimit")(cfg.setQueryExecuteTimeLimit)
-    set[Int]("poolAvailabilityThreshold")(cfg.setPoolAvailabilityThreshold)
-    set[Boolean]("disableConnectionTracking")(cfg.setDisableConnectionTracking)
-    setDuration("connectionTimeout")(cfg.setConnectionTimeout)
-    setDuration("closeConnectionWatchTimeout")(cfg.setCloseConnectionWatchTimeout)
-    set[Int]("statementReleaseHelperThreads")(cfg.setStatementReleaseHelperThreads)
-    setDuration("maxConnectionAge")(cfg.setMaxConnectionAge)
-
-    set[String]("configFile")(cfg.setConfigFile)
-    set[String]("serviceOrder")(cfg.setServiceOrder)
-    set[Boolean]("statisticsEnabled")(cfg.setStatisticsEnabled)
-    set[Boolean]("defaultAutoCommit")(cfg.setDefaultAutoCommit(_))
-    set[Boolean]("defaultReadOnly")(cfg.setDefaultReadOnly(_))
-    set[String]("defaultCatalog")(cfg.setDefaultCatalog)
-    set[String]("defaultTransactionIsolation")(cfg.setDefaultTransactionIsolation)
-    set[Boolean]("externalAuth")(cfg.setExternalAuth)
+    c.opt[String]("configFile") foreach cfg.setConfigFile
+    c.opt[String]("serviceOrder") foreach cfg.setServiceOrder
+    c.opt[Boolean]("statisticsEnabled") foreach cfg.setStatisticsEnabled
+    c.opt[Boolean]("defaultAutoCommit") foreach { cfg.setDefaultAutoCommit(_) }
+    c.opt[Boolean]("defaultReadOnly") foreach { cfg.setDefaultReadOnly(_) }
+    c.opt[String]("defaultCatalog") foreach cfg.setDefaultCatalog
+    c.opt[String]("defaultTransactionIsolation") foreach cfg.setDefaultTransactionIsolation
+    c.opt[Boolean]("externalAuth") foreach cfg.setExternalAuth
 
     cfg
   }
