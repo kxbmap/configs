@@ -28,8 +28,8 @@ trait BoneCPConfigs {
     cfg.setReleaseHelperThreads(c.missingOrElse("releaseHelperThreads", 0))
 
     set[String]("poolName")(cfg.setPoolName)
-    set[Int]("minConnectionPerPartition")(cfg.setMinConnectionsPerPartition)
-    set[Int]("maxConnectionPerPartition")(cfg.setMaxConnectionsPerPartition)
+    set[Int]("minConnectionsPerPartition")(cfg.setMinConnectionsPerPartition)
+    set[Int]("maxConnectionsPerPartition")(cfg.setMaxConnectionsPerPartition)
     set[Int]("acquireIncrement")(cfg.setAcquireIncrement)
     set[Int]("partitionCount")(cfg.setPartitionCount)
 
@@ -38,7 +38,7 @@ trait BoneCPConfigs {
 
     set[String]("connectionTestStatement")(cfg.setConnectionTestStatement)
     set[Int]("statementsCacheSize")(cfg.setStatementsCacheSize)
-    set[String]("connectionHook")(cfg.setConnectionHookClassName)
+    set[String]("connectionHookClassName")(cfg.setConnectionHookClassName)
     set[String]("initSQL")(cfg.setInitSQL)
 
     set[Boolean]("closeConnectionWatch")(cfg.setCloseConnectionWatch)
