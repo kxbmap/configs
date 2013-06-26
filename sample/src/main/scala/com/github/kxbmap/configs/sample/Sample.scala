@@ -28,7 +28,6 @@ object Sample extends App {
                       password: Option[String])
 
   implicit val DBConfigs: Configs[DBConfig] = Configs { c =>
-    import Catch.Implicits.missing
     DBConfig(
       c.get[String]("driver"),
       c.get[String]("url"),

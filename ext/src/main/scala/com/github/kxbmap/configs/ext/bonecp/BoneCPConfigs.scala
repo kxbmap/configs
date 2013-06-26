@@ -29,8 +29,6 @@ trait BoneCPConfigs {
     // Load default and app specific config files first
     val cfg = new BoneCPConfig()
 
-    import Catch.Implicits.missing
-
     def duration(p: String)(setter: (Long, TimeUnit) => Unit): Unit =
       c.opt[Duration](p) foreach { d => setter(d.length, d.unit) }
 

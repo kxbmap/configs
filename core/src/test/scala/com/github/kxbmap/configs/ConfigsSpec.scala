@@ -156,7 +156,6 @@ class ConfigsSpec extends FlatSpec with ShouldMatchers with PropertyChecks {
   }
 
   it should "get or missing as Option" in {
-    import Catch.Implicits.missing
     intercept[ConfigException.WrongType] {
       config.opt[Int]("string.value")
     }
@@ -181,7 +180,6 @@ class ConfigsSpec extends FlatSpec with ShouldMatchers with PropertyChecks {
       config.either[Int]("missing.value") should be ('left)
     }
     intercept[ConfigException.WrongType] {
-      import Catch.Implicits.missing
       config.either[Int]("string.value")
     }
   }
@@ -236,7 +234,6 @@ class ConfigsSpec extends FlatSpec with ShouldMatchers with PropertyChecks {
       new InetSocketAddress("::1", 65535)
     ))
 
-    import Catch.Implicits.missing
     config.get[Map[String, Option[InetSocketAddress]]]("socket.address.map") should be (Map(
       "1" -> Some(new InetSocketAddress("127.0.0.1", 80)),
       "2" -> Some(new InetSocketAddress("localhost", 9000)),

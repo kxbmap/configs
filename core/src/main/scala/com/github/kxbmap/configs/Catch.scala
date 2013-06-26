@@ -21,9 +21,9 @@ import scala.util.control.NonFatal
 
 object Catch {
 
-  def missing: Catch = Implicits.missing
-  def configException: Catch = Implicits.configException
-  def nonFatal: Catch = Implicits.nonFatal
+  def missing: Catch          = Implicits.missing
+  def configException: Catch  = Implicits.configException
+  def nonFatal: Catch         = Implicits.nonFatal
 
   object Implicits {
     implicit lazy val missing: Catch = {

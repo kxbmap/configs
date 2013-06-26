@@ -70,27 +70,33 @@ trait LowPriorityConfigsInstances {
     _.getConfigList(_).map(_.extract[T]).toList
   }
 
-  implicit def optionConfigs[T](implicit ev1: Configs[T], ev2: Catch): Configs[Option[T]] = Configs { c =>
-    try Some(c.extract[T]) catch {
-      case t if ev2(t) => None
+  implicit def optionConfigs[T](implicit ev1: Configs[T], ev2: Catch = Catch.missing): Configs[Option[T]] =
+    Configs { c =>
+      try Some(c.extract[T]) catch {
+        case t if ev2(t) => None
+      }
     }
-  }
-  implicit def optionAtPath[T](implicit ev1: AtPath[T], ev2: Catch): AtPath[Option[T]] = AtPath { (c, p) =>
-    try Some(c.get[T](p)) catch {
-      case t if ev2(t) => None
-    }
-  }
 
-  implicit def eitherConfigs[T](implicit ev1: Configs[T], ev2: Catch): Configs[Either[Throwable, T]] = Configs { c =>
-    try Right(c.extract[T]) catch {
-      case t if ev2(t) => Left(t)
+  implicit def optionAtPath[T](implicit ev1: AtPath[T], ev2: Catch = Catch.missing): AtPath[Option[T]] =
+    AtPath { (c, p) =>
+      try Some(c.get[T](p)) catch {
+        case t if ev2(t) => None
+      }
     }
-  }
-  implicit def eitherAtPath[T](implicit ev1: AtPath[T], ev2: Catch): AtPath[Either[Throwable, T]] = AtPath { (c, p) =>
-    try Right(c.get[T](p)) catch {
-      case t if ev2(t) => Left(t)
+
+  implicit def eitherConfigs[T](implicit ev1: Configs[T], ev2: Catch = Catch.missing): Configs[Either[Throwable, T]] =
+    Configs { c =>
+      try Right(c.extract[T]) catch {
+        case t if ev2(t) => Left(t)
+      }
     }
-  }
+
+  implicit def eitherAtPath[T](implicit ev1: AtPath[T], ev2: Catch = Catch.missing): AtPath[Either[Throwable, T]] =
+    AtPath { (c, p) =>
+      try Right(c.get[T](p)) catch {
+        case t if ev2(t) => Left(t)
+      }
+    }
 
   implicit def tryConfigs[T: Configs]: Configs[Try[T]] = Configs {
     Try apply _.extract[T]
