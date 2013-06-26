@@ -29,11 +29,10 @@ trait BoneCPConfigs {
     // Load default and app specific config files first
     val cfg = new BoneCPConfig()
 
-    import Catcher.Implicits.missing
+    import Catch.Implicits.missing
 
-    def duration(p: String)(setter: (Long, TimeUnit) => Unit) {
+    def duration(p: String)(setter: (Long, TimeUnit) => Unit): Unit =
       c.opt[Duration](p) foreach { d => setter(d.length, d.unit) }
-    }
 
     c.opt[String]("jdbcUrl") orElse c.opt[String]("url") foreach cfg.setJdbcUrl
     c.opt[String]("username") orElse c.opt[String]("user") foreach cfg.setUsername

@@ -148,7 +148,7 @@ class ConfigsSpec extends FlatSpec with ShouldMatchers with PropertyChecks {
   }
 
   it should "get as Option" in {
-    import Catcher.Implicits.configException
+    import Catch.Implicits.configException
     config.opt[Int]("int.value") should be (Some(42))
     config.opt[List[Int]]("int.values") should be (Some(List(23, 42, 256)))
     config.opt[Int]("string.value") should be (None)
@@ -156,7 +156,7 @@ class ConfigsSpec extends FlatSpec with ShouldMatchers with PropertyChecks {
   }
 
   it should "get or missing as Option" in {
-    import Catcher.Implicits.missing
+    import Catch.Implicits.missing
     intercept[ConfigException.WrongType] {
       config.opt[Int]("string.value")
     }
@@ -164,24 +164,24 @@ class ConfigsSpec extends FlatSpec with ShouldMatchers with PropertyChecks {
   }
 
   it should "get or default value" in {
-    import Catcher.Implicits.configException
+    import Catch.Implicits.configException
     config.getOrElse("int.value", 0) should be (42)
     config.getOrElse("string.value", 0) should be (0)
   }
 
   it should "get as Either" in {
     {
-      import Catcher.Implicits.nonFatal
+      import Catch.Implicits.nonFatal
       config.either[Int]("int.value") should be (Right(42))
       config.either[List[Int]]("int.values") should be (Right(List(23, 42, 256)))
     }
     {
-      import Catcher.Implicits.configException
+      import Catch.Implicits.configException
       config.either[Int]("string.value") should be ('left)
       config.either[Int]("missing.value") should be ('left)
     }
     intercept[ConfigException.WrongType] {
-      import Catcher.Implicits.missing
+      import Catch.Implicits.missing
       config.either[Int]("string.value")
     }
   }
@@ -194,7 +194,7 @@ class ConfigsSpec extends FlatSpec with ShouldMatchers with PropertyChecks {
 
   it should "not suppress fatal errors" in {
     implicit val fatal = AtPath[String] { (_, _) => throw new NotImplementedError() }
-    import Catcher.Implicits.nonFatal
+    import Catch.Implicits.nonFatal
 
     intercept[NotImplementedError] {
       config.opt[String]("string.value")
@@ -236,7 +236,7 @@ class ConfigsSpec extends FlatSpec with ShouldMatchers with PropertyChecks {
       new InetSocketAddress("::1", 65535)
     ))
 
-    import Catcher.Implicits.missing
+    import Catch.Implicits.missing
     config.get[Map[String, Option[InetSocketAddress]]]("socket.address.map") should be (Map(
       "1" -> Some(new InetSocketAddress("127.0.0.1", 80)),
       "2" -> Some(new InetSocketAddress("localhost", 9000)),

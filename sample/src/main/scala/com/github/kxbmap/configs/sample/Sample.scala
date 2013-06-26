@@ -28,7 +28,7 @@ object Sample extends App {
                       password: Option[String])
 
   implicit val DBConfigs: Configs[DBConfig] = Configs { c =>
-    import Catcher.Implicits.missing
+    import Catch.Implicits.missing
     DBConfig(
       c.get[String]("driver"),
       c.get[String]("url"),
@@ -43,7 +43,7 @@ object Sample extends App {
   println(default)
 
   val break = {
-    import Catcher.Implicits.configException
+    import Catch.Implicits.configException
     config.opt[DBConfig]("db.break")
   }
   println(break)

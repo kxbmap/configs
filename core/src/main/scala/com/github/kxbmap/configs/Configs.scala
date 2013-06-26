@@ -21,7 +21,6 @@ import scala.annotation.implicitNotFound
 import scala.collection.JavaConversions._
 import scala.concurrent.duration.Duration
 import scala.util.Try
-import scala.util.control.Exception._
 
 
 @implicitNotFound("No implicit Configs defined for ${T}.")
@@ -71,18 +70,26 @@ trait LowPriorityConfigsInstances {
     _.getConfigList(_).map(_.extract[T]).toList
   }
 
-  implicit def optionConfigs[T: Configs: Catcher]: Configs[Option[T]] = Configs {
-    new Catch(Catcher[T]) opt _.extract[T]
+  implicit def optionConfigs[T](implicit ev1: Configs[T], ev2: Catch): Configs[Option[T]] = Configs { c =>
+    try Some(c.extract[T]) catch {
+      case t if ev2(t) => None
+    }
   }
-  implicit def optionAtPath[T: AtPath: Catcher]: AtPath[Option[T]] = AtPath {
-    new Catch(Catcher[T]) opt _.get[T](_)
+  implicit def optionAtPath[T](implicit ev1: AtPath[T], ev2: Catch): AtPath[Option[T]] = AtPath { (c, p) =>
+    try Some(c.get[T](p)) catch {
+      case t if ev2(t) => None
+    }
   }
 
-  implicit def eitherConfigs[T: Configs: Catcher]: Configs[Either[Throwable, T]] = Configs {
-    new Catch(Catcher[T]) either _.extract[T]
+  implicit def eitherConfigs[T](implicit ev1: Configs[T], ev2: Catch): Configs[Either[Throwable, T]] = Configs { c =>
+    try Right(c.extract[T]) catch {
+      case t if ev2(t) => Left(t)
+    }
   }
-  implicit def eitherAtPath[T: AtPath: Catcher]: AtPath[Either[Throwable, T]] = AtPath {
-    new Catch(Catcher[T]) either _.get[T](_)
+  implicit def eitherAtPath[T](implicit ev1: AtPath[T], ev2: Catch): AtPath[Either[Throwable, T]] = AtPath { (c, p) =>
+    try Right(c.get[T](p)) catch {
+      case t if ev2(t) => Left(t)
+    }
   }
 
   implicit def tryConfigs[T: Configs]: Configs[Try[T]] = Configs {

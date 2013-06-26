@@ -17,26 +17,26 @@
 package com.github.kxbmap.configs
 
 import com.typesafe.config.ConfigException
-import scala.util.control.Exception
+import scala.util.control.NonFatal
 
-object Catcher {
+object Catch {
 
-  @inline def apply[T: Catcher]: Catcher[T] = implicitly[Catcher[T]]
-
-  def missing[T]: Catcher[T] = Implicits.missing[T]
-  def configException[T]: Catcher[T] = Implicits.configException[T]
-  def nonFatal[T]: Catcher[T] = Implicits.nonFatal[T]
+  def missing: Catch = Implicits.missing
+  def configException: Catch = Implicits.configException
+  def nonFatal: Catch = Implicits.nonFatal
 
   object Implicits {
-    implicit def missing[T]: Catcher[T] = {
-      case x: ConfigException.Missing => throw x
+    implicit lazy val missing: Catch = {
+      case _: ConfigException.Missing => true
+      case _                          => false
     }
 
-    implicit def configException[T]: Catcher[T] = {
-      case x: ConfigException => throw x
+    implicit lazy val configException: Catch = {
+      case _: ConfigException => true
+      case _                  => false
     }
 
-    implicit def nonFatal[T]: Catcher[T] = Exception.nonFatalCatcher[T]
+    implicit lazy val nonFatal: Catch = NonFatal.apply
   }
 
 }
