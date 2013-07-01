@@ -23,7 +23,7 @@ object ConfigsBuild extends Build {
   ).dependsOn(
     core
   ).aggregate(
-    core, ext, sample
+    core, ext
   )
 
 
@@ -56,17 +56,6 @@ object ConfigsBuild extends Build {
     libraryDependencies ++= testDependencies,
 
     ideaBasePackage := Some("com.github.kxbmap.configs")
-  ).dependsOn(core)
-
-
-  lazy val sample = Project(
-    id    = "sample",
-    base  = file("sample")
-  ).settings(
-    baseSettings ++ publishSettings:_*
-  ).settings(
-    name        := "configs-sample",
-    description := "A Scala wrapper for Typesafe config (sample)"
   ).dependsOn(core)
 
 
