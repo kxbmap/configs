@@ -15,11 +15,11 @@
  */
 
 package com.github.kxbmap.configs
-package ext.std
+package std
 
 import java.net.{InetSocketAddress, InetAddress}
 
-trait JavaNetConfigs {
+trait JavaNetSupport {
 
   /**
    * AtPath for `InetAddress`
@@ -42,3 +42,5 @@ trait JavaNetConfigs {
     }
 
 }
+
+object JavaNetSupport extends JavaNetSupport

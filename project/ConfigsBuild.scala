@@ -20,11 +20,7 @@ object ConfigsBuild extends Build {
     name            := "configs",
     description     := "A Scala wrapper for Typesafe config",
     publishArtifact := false
-  ).dependsOn(
-    core
-  ).aggregate(
-    core, ext
-  )
+  ).aggregate(core, std, bonecp)
 
 
   lazy val core = Project(
@@ -34,25 +30,38 @@ object ConfigsBuild extends Build {
     baseSettings ++ publishSettings:_*
   ).settings(
     name        := "configs-core",
-    description := "A Scala wrapper for Typesafe config (core)",
+    description := "A Scala wrapper for Typesafe config",
 
     libraryDependencies += "com.typesafe" % "config" % "1.0.1",
     libraryDependencies ++= testDependencies
   )
 
 
-  lazy val ext = Project(
-    id    = "ext",
-    base  = file("ext")
+  lazy val std = Project(
+    id    = "std",
+    base  = file("std")
   ).settings(
     baseSettings ++ publishSettings:_*
   ).settings(
-    name        := "configs-ext",
-    description := "A Scala wrapper for Typesafe config (ext)",
+    name        := "configs-std",
+    description := "Configs instances for standard classes",
 
-    libraryDependencies ++= Seq(
-      "com.jolbox" % "bonecp" % "0.7.1.RELEASE" % Provided
-    ),
+    libraryDependencies ++= testDependencies,
+
+    ideaBasePackage := Some("com.github.kxbmap.configs")
+  ).dependsOn(core)
+
+
+  lazy val bonecp = Project(
+    id    = "bonecp",
+    base  = file("bonecp")
+  ).settings(
+    baseSettings ++ publishSettings:_*
+  ).settings(
+    name        := "configs-bonecp",
+    description := "Configs instance for BoneCPConfig",
+
+    libraryDependencies += "com.jolbox" % "bonecp" % "0.7.1.RELEASE" % Provided,
     libraryDependencies ++= testDependencies,
 
     ideaBasePackage := Some("com.github.kxbmap.configs")

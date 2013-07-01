@@ -15,12 +15,12 @@
  */
 
 package com.github.kxbmap.configs
-package ext.bonecp
+package bonecp
 
 import com.jolbox.bonecp.BoneCPConfig
 import scala.concurrent.duration._
 
-trait BoneCPConfigs {
+trait BoneCPSupport {
 
   /**
    * Configs for `BoneCPConfig`
@@ -81,3 +81,5 @@ trait BoneCPConfigs {
   }
 
 }
+
+object BoneCPSupport extends BoneCPSupport

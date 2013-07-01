@@ -15,12 +15,12 @@
  */
 
 package com.github.kxbmap.configs
-package ext.std
+package std
 
 import java.io.File
 import java.nio.file.{Paths, Path}
 
-trait JavaIOConfigs {
+trait JavaIOSupport {
 
   /**
    * AtPath for File
@@ -43,3 +43,5 @@ trait JavaIOConfigs {
   implicit val pathListAtPath: AtPath[List[Path]] = AtPath mapListBy { Paths.get(_: String) }
 
 }
+
+object JavaIOSupport extends JavaIOSupport
