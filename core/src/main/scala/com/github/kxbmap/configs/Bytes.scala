@@ -31,10 +31,10 @@ case class Bytes(value: Long) extends Ordered[Bytes] {
 
 object Bytes {
 
-  implicit val bytesAtPath: AtPath[Bytes] = AtPath {
+  implicit val bytesAtPath: AtPath[Bytes] = Configs.atPath {
     Bytes apply _.getBytes(_)
   }
-  implicit val bytesListAtPath: AtPath[List[Bytes]] = AtPath {
+  implicit val bytesListAtPath: AtPath[List[Bytes]] = Configs.atPath {
     import scala.collection.JavaConversions._
     _.getBytesList(_).map(Bytes(_)).toList
   }

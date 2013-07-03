@@ -16,14 +16,11 @@
 
 package com.github.kxbmap.configs
 
-import com.typesafe.config.Config
 
 object AtPath {
-  @inline def of[T: AtPath]: AtPath[T] = implicitly[AtPath[T]]
+  @inline def apply[T: AtPath]: AtPath[T] = implicitly[AtPath[T]]
 
-  @inline def apply[T](f: (Config, String) => T): AtPath[T] = Configs { c => f(c, _) }
+  def by[S: AtPath, T](f: S => T): AtPath[T] = AtPath[S] map { _ andThen f }
 
-  def mapBy[S: AtPath, T](f: S => T): AtPath[T] = AtPath.of[S].map { _ andThen f }
-
-  def mapListBy[S, T](f: S => T)(implicit ev: AtPath[List[S]]): AtPath[List[T]] = mapBy { (_: List[S]).map(f) }
+  def listBy[S, T](f: S => T)(implicit ev: AtPath[List[S]]): AtPath[List[T]] = by { (_: List[S]).map(f) }
 }

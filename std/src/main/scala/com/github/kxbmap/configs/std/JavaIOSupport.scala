@@ -25,22 +25,22 @@ trait JavaIOSupport {
   /**
    * AtPath for File
    */
-  implicit val fileAtPath: AtPath[File] = AtPath mapBy { new File(_: String) }
+  implicit val fileAtPath: AtPath[File] = AtPath by { new File(_: String) }
 
   /**
    * AtPath for List[File]
    */
-  implicit val fileListAtPath: AtPath[List[File]] = AtPath mapListBy { new File(_: String) }
+  implicit val fileListAtPath: AtPath[List[File]] = AtPath listBy { new File(_: String) }
 
   /**
    * AtPath for Path
    */
-  implicit val pathAtPath: AtPath[Path] = AtPath mapBy { Paths.get(_: String) }
+  implicit val pathAtPath: AtPath[Path] = AtPath by { Paths.get(_: String) }
 
   /**
    * AtPath for List[Path]
    */
-  implicit val pathListAtPath: AtPath[List[Path]] = AtPath mapListBy { Paths.get(_: String) }
+  implicit val pathListAtPath: AtPath[List[Path]] = AtPath listBy { Paths.get(_: String) }
 
 }
 

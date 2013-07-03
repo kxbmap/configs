@@ -40,7 +40,7 @@ class ConfigsSpec extends FlatSpec with ShouldMatchers with PropertyChecks {
     implicit val configsArb = Arbitrary {
       for {
         p <- Gen.oneOf(Seq("foo", "bar", "baz", "qux", ""))
-      } yield Configs { c =>
+      } yield Configs.configs { c =>
         try Some(c.getString(p)) catch {
           case _: Throwable => None
         }
@@ -191,7 +191,7 @@ class ConfigsSpec extends FlatSpec with ShouldMatchers with PropertyChecks {
   }
 
   it should "not suppress fatal errors" in {
-    implicit val fatal = AtPath[String] { (_, _) => throw new NotImplementedError() }
+    implicit val fatal = Configs.atPath[String] { (_, _) => throw new NotImplementedError() }
     import Catch.Implicits.nonFatal
 
     intercept[NotImplementedError] {
@@ -208,8 +208,8 @@ class ConfigsSpec extends FlatSpec with ShouldMatchers with PropertyChecks {
   }
 
   it should "get value(s) via user defined instances" in {
-    implicit val inetAddressAtPath      = AtPath mapBy InetAddress.getByName
-    implicit val inetAddressListAtPath  = AtPath mapListBy InetAddress.getByName
+    implicit val inetAddressAtPath      = AtPath by InetAddress.getByName
+    implicit val inetAddressListAtPath  = AtPath listBy InetAddress.getByName
 
     config.get[InetAddress]("address.value") should be (InetAddress.getByName("127.0.0.1"))
     config.get[List[InetAddress]]("address.values") should be (List(
@@ -223,7 +223,7 @@ class ConfigsSpec extends FlatSpec with ShouldMatchers with PropertyChecks {
       "3" -> InetAddress.getByName("::1")
     ))
 
-    implicit val inetSocketAddressConfigs: Configs[InetSocketAddress] = Configs { c =>
+    implicit val inetSocketAddressConfigs = Configs.configs[InetSocketAddress] { c =>
       new InetSocketAddress(c.get[InetAddress]("addr"), c.get[Int]("port"))
     }
 

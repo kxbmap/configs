@@ -25,19 +25,19 @@ trait JavaNetSupport {
    * AtPath for `InetAddress`
    */
   implicit val inetAddressAtPath: AtPath[InetAddress] =
-    AtPath mapBy InetAddress.getByName
+    AtPath by InetAddress.getByName
 
   /**
    * AtPath for `List[InetAddress]`
    */
   implicit val inetAddressListAtPath: AtPath[List[InetAddress]] =
-    AtPath mapListBy InetAddress.getByName
+    AtPath listBy InetAddress.getByName
 
   /**
    * Configs for `InetSocketAddress`
    */
   implicit val inetSocketAddressConfigs: Configs[InetSocketAddress] =
-    Configs { c =>
+    Configs.configs { c =>
       new InetSocketAddress(c.get[InetAddress]("host"), c.getInt("port"))
     }
 

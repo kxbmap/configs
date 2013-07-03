@@ -25,7 +25,7 @@ trait BoneCPSupport {
   /**
    * Configs for `BoneCPConfig`
    */
-  implicit val boneCPConfigConfigs: Configs[BoneCPConfig] = Configs { c =>
+  implicit val boneCPConfigConfigs: Configs[BoneCPConfig] = Configs.configs { c =>
     // Load default and app specific config files first
     val cfg = new BoneCPConfig()
 

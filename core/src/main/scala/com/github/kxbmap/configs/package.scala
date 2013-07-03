@@ -31,7 +31,7 @@ package object configs {
 
 
   final implicit class EnrichTypesafeConfig(val c: Config) extends AnyVal {
-    def extract[T: Configs]: T = Configs.of[T].extract(c)
+    def extract[T: Configs]: T = Configs[T].extract(c)
 
     def get[T: AtPath](path: String): T = extract[String => T].apply(path)
 

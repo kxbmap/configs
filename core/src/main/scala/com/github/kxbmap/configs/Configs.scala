@@ -27,88 +27,92 @@ import scala.util.Try
 trait Configs[T] {
   def extract(config: Config): T
 
-  def map[U](f: T => U): Configs[U] = Configs { f compose extract }
+  def map[U](f: T => U): Configs[U] = Configs.configs { f compose extract }
 }
 
 object Configs extends LowPriorityConfigsInstances {
-  @inline def of[T: Configs]: Configs[T] = implicitly[Configs[T]]
+  @inline def apply[T: Configs]: Configs[T] = implicitly[Configs[T]]
 
-  def apply[T](f: Config => T): Configs[T] = new Configs[T] {
+  def configs[T](f: Config => T): Configs[T] = new Configs[T] {
     def extract(config: Config): T = f(config)
   }
+
+  def atPath[T](f: (Config, String) => T): AtPath[T] = configs { c => f(c, _) }
 }
 
 trait LowPriorityConfigsInstances {
 
-  implicit val intAtPath:         AtPath[Int]           = AtPath { _.getInt(_) }
-  implicit val intListAtPath:     AtPath[List[Int]]     = AtPath { _.getIntList(_).map(_.toInt).toList }
-  implicit val longAtPath:        AtPath[Long]          = AtPath { _.getLong(_) }
-  implicit val longListAtPath:    AtPath[List[Long]]    = AtPath { _.getLongList(_).map(_.toLong).toList }
-  implicit val doubleAtPath:      AtPath[Double]        = AtPath { _.getDouble(_) }
-  implicit val doubleListAtPath:  AtPath[List[Double]]  = AtPath { _.getDoubleList(_).map(_.toDouble).toList }
-  implicit val booleanAtPath:     AtPath[Boolean]       = AtPath { _.getBoolean(_) }
-  implicit val booleanListAtPath: AtPath[List[Boolean]] = AtPath { _.getBooleanList(_).map(_.booleanValue()).toList }
-  implicit val stringAtPath:      AtPath[String]        = AtPath { _.getString(_) }
-  implicit val stringListAtPath:  AtPath[List[String]]  = AtPath { _.getStringList(_).toList }
+  import Configs._
 
-  implicit val configsIdentity: Configs[Config] = Configs { identity }
+  implicit val intAtPath:         AtPath[Int]           = atPath { _.getInt(_) }
+  implicit val intListAtPath:     AtPath[List[Int]]     = atPath { _.getIntList(_).map(_.toInt).toList }
+  implicit val longAtPath:        AtPath[Long]          = atPath { _.getLong(_) }
+  implicit val longListAtPath:    AtPath[List[Long]]    = atPath { _.getLongList(_).map(_.toLong).toList }
+  implicit val doubleAtPath:      AtPath[Double]        = atPath { _.getDouble(_) }
+  implicit val doubleListAtPath:  AtPath[List[Double]]  = atPath { _.getDoubleList(_).map(_.toDouble).toList }
+  implicit val booleanAtPath:     AtPath[Boolean]       = atPath { _.getBoolean(_) }
+  implicit val booleanListAtPath: AtPath[List[Boolean]] = atPath { _.getBooleanList(_).map(_.booleanValue()).toList }
+  implicit val stringAtPath:      AtPath[String]        = atPath { _.getString(_) }
+  implicit val stringListAtPath:  AtPath[List[String]]  = atPath { _.getStringList(_).toList }
 
-  def mapConfigs[K, T: AtPath](f: String => K): Configs[Map[K, T]] = Configs { c =>
+  implicit val configsIdentity: Configs[Config] = configs { identity }
+
+  def mapConfigs[K, T: AtPath](f: String => K): Configs[Map[K, T]] = configs { c =>
     c.root().keysIterator.map { k => f(k) -> c.get[T](k) }.toMap
   }
 
   implicit def stringMapConfigs[T: AtPath]: Configs[Map[String, T]] = mapConfigs[String, T] { identity }
   implicit def symbolMapConfigs[T: AtPath]: Configs[Map[Symbol, T]] = mapConfigs[Symbol, T] { Symbol.apply }
 
-  implicit val symbolAtPath:      AtPath[Symbol]        = AtPath mapBy Symbol.apply
-  implicit val symbolListAtPath:  AtPath[List[Symbol]]  = AtPath mapListBy Symbol.apply
+  implicit val symbolAtPath:      AtPath[Symbol]        = AtPath by Symbol.apply
+  implicit val symbolListAtPath:  AtPath[List[Symbol]]  = AtPath listBy Symbol.apply
 
-  implicit def configsAtPath[T: Configs]: AtPath[T] = AtPath {
+  implicit def configsAtPath[T: Configs]: AtPath[T] = atPath {
     _.getConfig(_).extract[T]
   }
-  implicit def configsListAtPath[T: Configs]: AtPath[List[T]] = AtPath {
+  implicit def configsListAtPath[T: Configs]: AtPath[List[T]] = atPath {
     _.getConfigList(_).map(_.extract[T]).toList
   }
 
   implicit def optionConfigs[T](implicit ev1: Configs[T], ev2: Catch = Catch.missing): Configs[Option[T]] =
-    Configs { c =>
+    configs { c =>
       try Some(c.extract[T]) catch {
         case t if ev2(t) => None
       }
     }
 
   implicit def optionAtPath[T](implicit ev1: AtPath[T], ev2: Catch = Catch.missing): AtPath[Option[T]] =
-    AtPath { (c, p) =>
+    atPath { (c, p) =>
       try Some(c.get[T](p)) catch {
         case t if ev2(t) => None
       }
     }
 
   implicit def eitherConfigs[T](implicit ev1: Configs[T], ev2: Catch = Catch.missing): Configs[Either[Throwable, T]] =
-    Configs { c =>
+    configs { c =>
       try Right(c.extract[T]) catch {
         case t if ev2(t) => Left(t)
       }
     }
 
   implicit def eitherAtPath[T](implicit ev1: AtPath[T], ev2: Catch = Catch.missing): AtPath[Either[Throwable, T]] =
-    AtPath { (c, p) =>
+    atPath { (c, p) =>
       try Right(c.get[T](p)) catch {
         case t if ev2(t) => Left(t)
       }
     }
 
-  implicit def tryConfigs[T: Configs]: Configs[Try[T]] = Configs {
+  implicit def tryConfigs[T: Configs]: Configs[Try[T]] = configs {
     Try apply _.extract[T]
   }
-  implicit def tryAtPath[T: AtPath]: AtPath[Try[T]] = AtPath {
+  implicit def tryAtPath[T: AtPath]: AtPath[Try[T]] = atPath {
     Try apply _.get[T](_)
   }
 
-  implicit val durationAtPath: AtPath[Duration] = AtPath {
+  implicit val durationAtPath: AtPath[Duration] = atPath {
     Duration fromNanos _.getNanoseconds(_)
   }
-  implicit val durationListAtPath: AtPath[List[Duration]] = AtPath {
+  implicit val durationListAtPath: AtPath[List[Duration]] = atPath {
     _.getNanosecondsList(_).map(Duration.fromNanos(_)).toList
   }
 
