@@ -32,7 +32,7 @@ object ConfigsBuild extends Build {
     name        := "configs-core",
     description := "A Scala wrapper for Typesafe config",
 
-    libraryDependencies += "com.typesafe" % "config" % "1.0.1",
+    libraryDependencies += "com.typesafe" % "config" % "1.0.2",
     libraryDependencies ++= testDependencies
   )
 
