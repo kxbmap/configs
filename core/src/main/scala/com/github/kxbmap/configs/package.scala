@@ -26,8 +26,8 @@ package object configs {
   type AtPath[T] = Configs[String => T]
 
 
-  @implicitNotFound("No implicit Catch found.")
-  type Catch = Throwable => Boolean
+  @implicitNotFound("No implicit ShouldCatch found.")
+  type ShouldCatch = Throwable => Boolean
 
 
   final implicit class EnrichTypesafeConfig(val c: Config) extends AnyVal {
@@ -35,13 +35,13 @@ package object configs {
 
     def get[T: AtPath](path: String): T = extract[String => T].apply(path)
 
-    def getOrElse[T: AtPath](path: String, default: => T)(implicit ev: Catch = Catch.missing): T =
+    def getOrElse[T: AtPath](path: String, default: => T)(implicit sc: ShouldCatch = ShouldCatch.missing): T =
       opt[T](path).getOrElse(default)
 
-    def opt[T: AtPath](path: String)(implicit ev: Catch = Catch.missing): Option[T] =
+    def opt[T: AtPath](path: String)(implicit sc: ShouldCatch = ShouldCatch.missing): Option[T] =
       get[Option[T]](path)
 
-    def either[T: AtPath](path: String)(implicit ev: Catch = Catch.missing): Either[Throwable, T] =
+    def either[T: AtPath](path: String)(implicit sc: ShouldCatch = ShouldCatch.missing): Either[Throwable, T] =
       get[Either[Throwable, T]](path)
   }
 

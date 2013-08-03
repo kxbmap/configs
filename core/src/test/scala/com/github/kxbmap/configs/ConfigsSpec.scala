@@ -148,7 +148,7 @@ class ConfigsSpec extends FlatSpec with ShouldMatchers with PropertyChecks {
   }
 
   it should "get as Option" in {
-    import Catch.Implicits.configException
+    import ShouldCatch.Implicit.configException
     config.opt[Int]("int.value") should be (Some(42))
     config.opt[List[Int]]("int.values") should be (Some(List(23, 42, 256)))
     config.opt[Int]("string.value") should be (None)
@@ -163,19 +163,19 @@ class ConfigsSpec extends FlatSpec with ShouldMatchers with PropertyChecks {
   }
 
   it should "get or default value" in {
-    import Catch.Implicits.configException
+    import ShouldCatch.Implicit.configException
     config.getOrElse("int.value", 0) should be (42)
     config.getOrElse("string.value", 0) should be (0)
   }
 
   it should "get as Either" in {
     {
-      import Catch.Implicits.nonFatal
+      import ShouldCatch.Implicit.nonFatal
       config.either[Int]("int.value") should be (Right(42))
       config.either[List[Int]]("int.values") should be (Right(List(23, 42, 256)))
     }
     {
-      import Catch.Implicits.configException
+      import ShouldCatch.Implicit.configException
       config.either[Int]("string.value") should be ('left)
       config.either[Int]("missing.value") should be ('left)
     }
@@ -192,7 +192,7 @@ class ConfigsSpec extends FlatSpec with ShouldMatchers with PropertyChecks {
 
   it should "not suppress fatal errors" in {
     implicit val fatal = Configs.atPath[String] { (_, _) => throw new NotImplementedError() }
-    import Catch.Implicits.nonFatal
+    import ShouldCatch.Implicit.nonFatal
 
     intercept[NotImplementedError] {
       config.opt[String]("string.value")

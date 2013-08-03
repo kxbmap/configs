@@ -74,31 +74,31 @@ trait LowPriorityConfigsInstances {
     _.getConfigList(_).map(_.extract[T]).toList
   }
 
-  implicit def optionConfigs[T: Configs](implicit ev: Catch = Catch.missing): Configs[Option[T]] =
+  implicit def optionConfigs[T: Configs](implicit sc: ShouldCatch = ShouldCatch.missing): Configs[Option[T]] =
     configs { c =>
       try Some(c.extract[T]) catch {
-        case t if ev(t) => None
+        case t if sc(t) => None
       }
     }
 
-  implicit def optionAtPath[T: AtPath](implicit ev: Catch = Catch.missing): AtPath[Option[T]] =
+  implicit def optionAtPath[T: AtPath](implicit sc: ShouldCatch = ShouldCatch.missing): AtPath[Option[T]] =
     atPath { (c, p) =>
       try Some(c.get[T](p)) catch {
-        case t if ev(t) => None
+        case t if sc(t) => None
       }
     }
 
-  implicit def eitherConfigs[T: Configs](implicit ev: Catch = Catch.missing): Configs[Either[Throwable, T]] =
+  implicit def eitherConfigs[T: Configs](implicit sc: ShouldCatch = ShouldCatch.missing): Configs[Either[Throwable, T]] =
     configs { c =>
       try Right(c.extract[T]) catch {
-        case t if ev(t) => Left(t)
+        case t if sc(t) => Left(t)
       }
     }
 
-  implicit def eitherAtPath[T: AtPath](implicit ev: Catch = Catch.missing): AtPath[Either[Throwable, T]] =
+  implicit def eitherAtPath[T: AtPath](implicit sc: ShouldCatch = ShouldCatch.missing): AtPath[Either[Throwable, T]] =
     atPath { (c, p) =>
       try Right(c.get[T](p)) catch {
-        case t if ev(t) => Left(t)
+        case t if sc(t) => Left(t)
       }
     }
 
