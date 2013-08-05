@@ -18,78 +18,79 @@ package com.github.kxbmap.configs
 
 import com.typesafe.config.ConfigFactory
 import org.scalacheck.Arbitrary
-import org.scalatest.FlatSpec
-import org.scalatest.matchers.ShouldMatchers
 import org.scalatest.prop.PropertyChecks
+import org.scalatest.{FunSpec, Matchers}
 
 
-class BytesSpec extends FlatSpec with ShouldMatchers with PropertyChecks {
+class BytesSpec extends FunSpec with Matchers with PropertyChecks {
 
-  behavior of "Bytes"
+  describe("Bytes") {
+    it ("should be available to get a value") {
+      val config = ConfigFactory.parseString("value = 1024b")
+      config.get[Bytes]("value") shouldBe Bytes(1024L)
+    }
 
-  it should "get from Config" in {
-    val config = ConfigFactory.load("test-data")
-    config.get[Bytes]("bytes.value") should be (Bytes(1024L))
-    config.get[List[Bytes]]("bytes.values") should be (List(Bytes(100L), Bytes(1000000L)))
+    it ("should be available to get values as list") {
+      val config = ConfigFactory.parseString("values = [100b, 1MB]")
+      config.get[List[Bytes]]("values") shouldBe List(Bytes(100L), Bytes(1000000L))
+    }
+
+    it ("should be a instance of Ordering") {
+      forAll { (bs: List[Bytes]) =>
+        bs.sorted shouldBe bs.map(_.value).sorted.map(Bytes.apply)
+      }
+    }
+
+    it ("should be a instance of Ordered") {
+      forAll { (l: Bytes, r: Bytes) =>
+        (l compare r) shouldBe (l.value compare r.value)
+      }
+    }
+
+    describe("operator '+'") {
+      it ("should be available") {
+        Bytes(2) + Bytes(3) shouldBe Bytes(5)
+      }
+    }
+
+    describe("operator '-'") {
+      it ("should be available") {
+        Bytes(2) - Bytes(3) shouldBe Bytes(-1)
+      }
+    }
+
+    describe("operator '*'") {
+      it ("should be available with the right hand number") {
+        Bytes(2) * 3 shouldBe Bytes(6)
+      }
+      it ("should be available with the left hand number") {
+        2 * Bytes(3) shouldBe Bytes(6)
+      }
+    }
+
+    describe("operator '/'") {
+      it ("should be available with the right hand number") {
+        Bytes(6) / 3 shouldBe Bytes(2)
+      }
+      it ("should be available with the right hand Bytes") {
+        Bytes(6) / Bytes(3) shouldBe 2
+      }
+    }
+
+    describe("operator unary '-'") {
+      it ("should be available") {
+        -Bytes(2) shouldBe Bytes(-2)
+      }
+    }
+
+    describe("operator unary '+'") {
+      it ("should be available") {
+        +Bytes(2) shouldBe Bytes(2)
+      }
+    }
   }
 
   implicit val BytesArb = Arbitrary {
     Arbitrary.arbitrary[Long].map(Bytes.apply)
   }
-
-  it should "be Ordering" in {
-    forAll { (bs: List[Bytes]) =>
-      bs.sorted.map(_.value) should be (bs.map(_.value).sorted)
-    }
-  }
-
-  it should "be Ordered" in {
-    forAll { (l: Bytes, r: Bytes) =>
-      (l compare r) should be (l.value compare r.value)
-    }
-  }
-
-  it should "be available the addition operator" in {
-    forAll { (l: Bytes, r: Bytes) =>
-      (l + r) should be (Bytes(l.value + r.value))
-    }
-  }
-
-  it should "be available the subtraction operator" in {
-    forAll { (l: Bytes, r: Bytes) =>
-      (l - r) should be (Bytes(l.value - r.value))
-    }
-  }
-
-  it should "be available the multiplication operator" in {
-    forAll { (l: Bytes, r: Double) =>
-      (l * r) should be (Bytes((l.value * r).toLong))
-      (r * l) should be (l * r)
-    }
-  }
-
-  it should "be available the division operator (Double)" in {
-    forAll { (l: Bytes, r: Double) =>
-      (l / r) should be (Bytes((l.value / r).toLong))
-    }
-  }
-
-  it should "be available the division operator (Bytes)" in {
-    forAll { (l: Bytes, r: Bytes) =>
-      (l, r) match {
-        case (Bytes(0), Bytes(0)) =>
-          (l / r).isNaN should be (true)
-
-        case _ =>
-          (l / r) should be (l.value.toDouble / r.value.toDouble)
-      }
-    }
-  }
-
-  it should "be available the unary negation operator" in {
-    forAll { (b: Bytes) =>
-      -b should be (Bytes(-b.value))
-    }
-  }
-
 }

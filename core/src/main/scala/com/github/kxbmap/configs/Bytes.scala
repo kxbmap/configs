@@ -25,6 +25,7 @@ case class Bytes(value: Long) extends Ordered[Bytes] {
   def *(factor: Double): Bytes = Bytes((value * factor).toLong)
   def /(divisor: Double): Bytes = Bytes((value / divisor).toLong)
   def /(other: Bytes): Double = value / other.value.toDouble
+  def unary_+ : Bytes = this
   def unary_- : Bytes = Bytes(-value)
 }
 
