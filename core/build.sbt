@@ -7,5 +7,3 @@ libraryDependencies ++= Seq(
   Dependencies.scalaTest % "test",
   Dependencies.scalaCheck % "test"
 )
-
-Publish.settings

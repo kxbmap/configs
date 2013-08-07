@@ -8,6 +8,4 @@ libraryDependencies ++= Seq(
   Dependencies.scalaCheck % "test"
 )
 
-Publish.settings
-
 ideaBasePackage := Some("com.github.kxbmap.configs")
