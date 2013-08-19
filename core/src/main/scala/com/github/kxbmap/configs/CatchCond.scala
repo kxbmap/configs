@@ -19,23 +19,23 @@ package com.github.kxbmap.configs
 import com.typesafe.config.ConfigException
 import scala.util.control.NonFatal
 
-object ShouldCatch {
+object CatchCond {
 
-  def missing: ShouldCatch          = Implicit.missing
-  def configException: ShouldCatch  = Implicit.configException
-  def nonFatal: ShouldCatch         = Implicit.nonFatal
+  def missing: CatchCond          = Implicit.missing
+  def configException: CatchCond  = Implicit.configException
+  def nonFatal: CatchCond         = Implicit.nonFatal
 
   object Implicit {
-    implicit lazy val missing: ShouldCatch = {
+    implicit lazy val missing: CatchCond = {
       case _: ConfigException.Missing => true
       case _                          => false
     }
 
-    implicit lazy val configException: ShouldCatch = {
+    implicit lazy val configException: CatchCond = {
       case _: ConfigException => true
       case _                  => false
     }
 
-    implicit lazy val nonFatal: ShouldCatch = NonFatal.apply
+    implicit lazy val nonFatal: CatchCond = NonFatal.apply
   }
 }

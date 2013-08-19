@@ -3,37 +3,37 @@ package com.github.kxbmap.configs
 import com.typesafe.config.ConfigException
 import org.scalatest.FunSpec
 
-class ShouldCatchSpec extends FunSpec {
-  
-  describe("ShouldCatch") {
+class CatchCondSpec extends FunSpec {
+
+  describe("CatchCond") {
 
     describe("missing") {
       it ("should returns true if apply to ConfigException.Missing") {
-        assert(ShouldCatch.missing(new ConfigException.Missing("")))
+        assert(CatchCond.missing(new ConfigException.Missing("")))
       }
-  
+
       it ("should returns false if otherwise") {
-        assert(!ShouldCatch.missing(new ConfigException.Generic("")))
+        assert(!CatchCond.missing(new ConfigException.Generic("")))
       }
     }
-  
+
     describe("configException") {
       it ("should returns true if apply to ConfigException") {
-        assert(ShouldCatch.configException(new ConfigException.Generic("")))
+        assert(CatchCond.configException(new ConfigException.Generic("")))
       }
-  
+
       it ("should returns false if otherwise") {
-        assert(!ShouldCatch.missing(new UnsupportedOperationException()))
+        assert(!CatchCond.missing(new UnsupportedOperationException()))
       }
     }
-  
+
     describe("nonFatal") {
       it ("should returns true if apply to non fatal exception") {
-        assert(ShouldCatch.nonFatal(new UnsupportedOperationException()))
+        assert(CatchCond.nonFatal(new UnsupportedOperationException()))
       }
-  
+
       it ("should returns false if otherwise") {
-        assert(!ShouldCatch.nonFatal(new NotImplementedError()))
+        assert(!CatchCond.nonFatal(new NotImplementedError()))
       }
     }
   }

@@ -214,7 +214,7 @@ class ConfigsSpec extends FunSpec with Matchers with TypeCheckedTripleEquals {
         }
 
         describe("with specific implicit parameter") {
-          implicit val sc: ShouldCatch = {
+          implicit val sc: CatchCond = {
             case e if e.getMessage.contains("xxx") => true
             case _ => false
           }

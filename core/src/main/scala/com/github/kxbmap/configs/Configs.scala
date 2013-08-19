@@ -75,17 +75,17 @@ trait LowPriorityConfigsInstances {
     _.getConfigList(_).map(_.extract[T]).toList
   }
 
-  implicit def optionConfigs[T: Configs](implicit sc: ShouldCatch = ShouldCatch.missing): Configs[Option[T]] =
+  implicit def optionConfigs[T: Configs](implicit cc: CatchCond = CatchCond.missing): Configs[Option[T]] =
     configs { c =>
       try Some(c.extract[T]) catch {
-        case t if sc(t) => None
+        case t if cc(t) => None
       }
     }
 
-  implicit def optionAtPath[T: AtPath](implicit sc: ShouldCatch = ShouldCatch.missing): AtPath[Option[T]] =
+  implicit def optionAtPath[T: AtPath](implicit cc: CatchCond = CatchCond.missing): AtPath[Option[T]] =
     atPath { (c, p) =>
       try Some(c.get[T](p)) catch {
-        case t if sc(t) => None
+        case t if cc(t) => None
       }
     }
 
