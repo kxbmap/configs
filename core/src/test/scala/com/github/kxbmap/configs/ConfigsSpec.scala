@@ -193,15 +193,15 @@ class ConfigsSpec extends FunSpec with Matchers with TypeCheckedTripleEquals {
             |b = [Hello, World]
             |""".stripMargin)
 
+        it ("should be available to get a value") {
+          c.opt[String]("a") should === (Some("foo"))
+        }
+
+        it ("should be available to get values as list") {
+          c.opt[List[String]]("b") should === (Some(List("Hello", "World")))
+        }
+
         describe("with default implicit parameter") {
-          it ("should be available to get a value") {
-            c.opt[String]("a") should === (Some("foo"))
-          }
-
-          it ("should be available to get values as list") {
-            c.opt[List[String]]("b") should === (Some(List("Hello", "World")))
-          }
-
           it ("should catch ConfigException.Missing") {
             c.opt[String]("c") should === (None)
           }
@@ -237,40 +237,23 @@ class ConfigsSpec extends FunSpec with Matchers with TypeCheckedTripleEquals {
             |b = [Hello, World]
             |""".stripMargin)
 
-        describe("with default implicit parameter") {
-          it ("should be available to get a value") {
-            c.get[Either[Throwable, String]]("a") should === (Right("foo"))
-          }
-
-          it ("should be available to get values as list") {
-            c.get[Either[Throwable, List[String]]]("b") should === (Right(List("Hello", "World")))
-          }
-
-          it ("should catch ConfigException.Missing") {
-            c.get[Either[Throwable, String]]("c") shouldBe 'left
-          }
-
-          it ("should not catch others") {
-            intercept[ConfigException.WrongType] {
-              c.get[Either[Throwable, Int]]("a")
-            }
-          }
+        it ("should be available to get a value") {
+          c.get[Either[Throwable, String]]("a") should === (Right("foo"))
         }
 
-        describe("with specific implicit parameter") {
-          implicit val sc: ShouldCatch = {
-            case e if e.getMessage.contains("xxx") => true
-            case _ => false
-          }
+        it ("should be available to get values as list") {
+          c.get[Either[Throwable, List[String]]]("b") should === (Right(List("Hello", "World")))
+        }
 
-          it ("should catch error that specify by instance") {
-            c.get[Either[Throwable, Int]]("xxx") shouldBe 'left
-          }
+        it ("should catch non fatal error") {
+          c.get[Either[Throwable, Int]]("a") shouldBe 'left
+        }
 
-          it ("should not catch others") {
-            intercept[ConfigException] {
-              c.get[Either[Throwable, Int]]("yyy")
-            }
+        implicit val cs = Configs.atPath[A]((_, _) => throw new FatalError())
+
+        it ("should not catch fatal error") {
+          intercept[FatalError] {
+            c.get[Either[Throwable, A]]("a")
           }
         }
       }

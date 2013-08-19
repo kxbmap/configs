@@ -21,6 +21,7 @@ import scala.annotation.implicitNotFound
 import scala.collection.JavaConversions._
 import scala.concurrent.duration.Duration
 import scala.util.Try
+import scala.util.control.Exception.nonFatalCatch
 
 
 @implicitNotFound("No implicit Configs defined for ${T}.")
@@ -88,19 +89,12 @@ trait LowPriorityConfigsInstances {
       }
     }
 
-  implicit def eitherConfigs[T: Configs](implicit sc: ShouldCatch = ShouldCatch.missing): Configs[Either[Throwable, T]] =
-    configs { c =>
-      try Right(c.extract[T]) catch {
-        case t if sc(t) => Left(t)
-      }
-    }
-
-  implicit def eitherAtPath[T: AtPath](implicit sc: ShouldCatch = ShouldCatch.missing): AtPath[Either[Throwable, T]] =
-    atPath { (c, p) =>
-      try Right(c.get[T](p)) catch {
-        case t if sc(t) => Left(t)
-      }
-    }
+  implicit def eitherConfigs[T: Configs]: Configs[Either[Throwable, T]] = configs {
+    nonFatalCatch either _.extract[T]
+  }
+  implicit def eitherAtPath[T: AtPath]: AtPath[Either[Throwable, T]] = atPath {
+    nonFatalCatch either _.get[T](_)
+  }
 
   implicit def tryConfigs[T: Configs]: Configs[Try[T]] = configs {
     Try apply _.extract[T]
