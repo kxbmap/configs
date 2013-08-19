@@ -1,8 +1,7 @@
 name := "root"
 
-lazy val core   = project
-lazy val std    = project dependsOn core
-lazy val bonecp = project dependsOn core
+lazy val core = project
+lazy val support = project dependsOn core
 
 version in Global := "0.2.0-SNAPSHOT"
 
