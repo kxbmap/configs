@@ -35,14 +35,11 @@ package object configs {
 
     def get[T: AtPath](path: String): T = extract[String => T].apply(path)
 
-    def getOrElse[T: AtPath](path: String, default: => T)(implicit sc: ShouldCatch = ShouldCatch.missing): T =
-      opt[T](path).getOrElse(default)
-
     def opt[T: AtPath](path: String)(implicit sc: ShouldCatch = ShouldCatch.missing): Option[T] =
       get[Option[T]](path)
 
-    def either[T: AtPath](path: String)(implicit sc: ShouldCatch = ShouldCatch.missing): Either[Throwable, T] =
-      get[Either[Throwable, T]](path)
+    def getOrElse[T: AtPath](path: String, default: => T)(implicit sc: ShouldCatch = ShouldCatch.missing): T =
+      opt[T](path) getOrElse default
   }
 
 }

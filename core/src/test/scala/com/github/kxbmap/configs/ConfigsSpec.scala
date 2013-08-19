@@ -239,20 +239,20 @@ class ConfigsSpec extends FunSpec with Matchers with TypeCheckedTripleEquals {
 
         describe("with default implicit parameter") {
           it ("should be available to get a value") {
-            c.either[String]("a") should === (Right("foo"))
+            c.get[Either[Throwable, String]]("a") should === (Right("foo"))
           }
 
           it ("should be available to get values as list") {
-            c.either[List[String]]("b") should === (Right(List("Hello", "World")))
+            c.get[Either[Throwable, List[String]]]("b") should === (Right(List("Hello", "World")))
           }
 
           it ("should catch ConfigException.Missing") {
-            c.either[String]("c") shouldBe 'left
+            c.get[Either[Throwable, String]]("c") shouldBe 'left
           }
 
           it ("should not catch others") {
             intercept[ConfigException.WrongType] {
-              c.either[Int]("a")
+              c.get[Either[Throwable, Int]]("a")
             }
           }
         }
@@ -264,12 +264,12 @@ class ConfigsSpec extends FunSpec with Matchers with TypeCheckedTripleEquals {
           }
 
           it ("should catch error that specify by instance") {
-            c.either[Int]("xxx") shouldBe 'left
+            c.get[Either[Throwable, Int]]("xxx") shouldBe 'left
           }
 
           it ("should not catch others") {
             intercept[ConfigException] {
-              c.either[Int]("yyy")
+              c.get[Either[Throwable, Int]]("yyy")
             }
           }
         }
