@@ -31,7 +31,7 @@ trait Configs[T] {
   def map[U](f: T => U): Configs[U] = Configs.configs { f compose extract }
 }
 
-object Configs extends LowPriorityConfigsInstances {
+object Configs extends ConfigsInstances {
   @inline def apply[T: Configs]: Configs[T] = implicitly[Configs[T]]
 
   def configs[T](f: Config => T): Configs[T] = new Configs[T] {
@@ -41,7 +41,7 @@ object Configs extends LowPriorityConfigsInstances {
   def atPath[T](f: (Config, String) => T): AtPath[T] = configs { c => f(c, _) }
 }
 
-trait LowPriorityConfigsInstances {
+trait ConfigsInstances {
 
   import Configs._
 
