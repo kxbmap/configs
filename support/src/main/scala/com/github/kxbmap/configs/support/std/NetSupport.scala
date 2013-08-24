@@ -17,28 +17,47 @@
 package com.github.kxbmap.configs
 package support.std
 
-import java.net.{InetSocketAddress, InetAddress}
+import com.typesafe.config.ConfigException
+import java.net.{UnknownHostException, InetSocketAddress, InetAddress}
 
 trait NetSupport {
 
   /**
    * AtPath for `InetAddress`
    */
-  implicit val inetAddressAtPath: AtPath[InetAddress] =
-    AtPath by InetAddress.getByName
+  implicit val inetAddressAtPath: AtPath[InetAddress] = Configs.atPath { (c, p) =>
+    try
+      InetAddress.getByName(c.getString(p))
+    catch {
+      case e: UnknownHostException =>
+        throw new ConfigException.BadValue(c.origin(), p, e.getMessage, e)
+    }
+  }
 
   /**
    * AtPath for `List[InetAddress]`
    */
-  implicit val inetAddressListAtPath: AtPath[List[InetAddress]] =
-    AtPath listBy InetAddress.getByName
+  implicit val inetAddressListAtPath: AtPath[List[InetAddress]] = Configs.atPath { (c, p) =>
+    try
+      c.get[List[String]](p) map InetAddress.getByName
+    catch {
+      case e: UnknownHostException =>
+        throw new ConfigException.BadValue(c.origin(), p, e.getMessage, e)
+    }
+  }
 
   /**
    * Configs for `InetSocketAddress`
    */
   implicit val inetSocketAddressConfigs: Configs[InetSocketAddress] =
     Configs.configs { c =>
-      new InetSocketAddress(c.get[InetAddress]("host"), c.getInt("port"))
+      val port = c.getInt("port")
+
+      c.opt[String]("hostname").fold {
+        new InetSocketAddress(c.get[InetAddress]("addr"), port)
+      } {
+        hostname => new InetSocketAddress(hostname, port)
+      }
     }
 
 }
