@@ -58,6 +58,7 @@ class ConfigsSpec extends FunSpec with Matchers with TypeCheckedTripleEquals {
     }
 
     describe("instances") {
+
       describe("for Int") {
         val c = parseString(
           """a = 42
@@ -201,7 +202,7 @@ class ConfigsSpec extends FunSpec with Matchers with TypeCheckedTripleEquals {
           c.opt[List[String]]("b") should === (Some(List("Hello", "World")))
         }
 
-        describe("with default implicit parameter") {
+        describe("with default CatchCond") {
           it ("should catch ConfigException.Missing") {
             c.opt[String]("c") should === (None)
           }
@@ -213,7 +214,7 @@ class ConfigsSpec extends FunSpec with Matchers with TypeCheckedTripleEquals {
           }
         }
 
-        describe("with specific implicit parameter") {
+        describe("with specific CatchCond") {
           implicit val sc: CatchCond = {
             case e if e.getMessage.contains("xxx") => true
             case _ => false
@@ -245,15 +246,23 @@ class ConfigsSpec extends FunSpec with Matchers with TypeCheckedTripleEquals {
           c.get[Either[Throwable, List[String]]]("b") should === (Right(List("Hello", "World")))
         }
 
-        it ("should catch non fatal error") {
-          c.get[Either[Throwable, Int]]("a") shouldBe 'left
+        implicit val cs = Configs.atPath[A]((_, _) => throw FatalError)
+
+        describe("with Throwable") {
+          it ("should catch all error") {
+            c.get[Either[Throwable, A]]("a") should === (Left(FatalError))
+          }
         }
 
-        implicit val cs = Configs.atPath[A]((_, _) => throw new FatalError())
+        describe("with FatalError") {
+          it ("should catch FatalError") {
+            c.get[Either[FatalError, A]]("a") should === (Left(FatalError))
+          }
 
-        it ("should not catch fatal error") {
-          intercept[FatalError] {
-            c.get[Either[Throwable, A]]("a")
+          it ("should not catch others") {
+            intercept[ConfigException.WrongType] {
+              c.get[Either[FatalError, Int]]("a")
+            }
           }
         }
       }
@@ -292,4 +301,5 @@ class ConfigsSpec extends FunSpec with Matchers with TypeCheckedTripleEquals {
   case object A extends A
 
   class FatalError extends ControlThrowable
+  object FatalError extends FatalError
 }

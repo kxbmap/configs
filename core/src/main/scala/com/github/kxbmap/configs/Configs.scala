@@ -20,8 +20,9 @@ import com.typesafe.config.Config
 import scala.annotation.implicitNotFound
 import scala.collection.JavaConversions._
 import scala.concurrent.duration.Duration
+import scala.reflect.{ClassTag, classTag}
 import scala.util.Try
-import scala.util.control.Exception.nonFatalCatch
+import scala.util.control.Exception.Catcher
 
 
 @implicitNotFound("No implicit Configs defined for ${T}.")
@@ -75,25 +76,24 @@ trait ConfigsInstances {
     _.getConfigList(_).map(_.extract[T]).toList
   }
 
-  implicit def optionConfigs[T: Configs](implicit cc: CatchCond = CatchCond.missing): Configs[Option[T]] =
-    configs { c =>
-      try Some(c.extract[T]) catch {
-        case t if cc(t) => None
-      }
-    }
-
-  implicit def optionAtPath[T: AtPath](implicit cc: CatchCond = CatchCond.missing): AtPath[Option[T]] =
-    atPath { (c, p) =>
-      try Some(c.get[T](p)) catch {
-        case t if cc(t) => None
-      }
-    }
-
-  implicit def eitherConfigs[T: Configs]: Configs[Either[Throwable, T]] = configs {
-    nonFatalCatch either _.extract[T]
+  implicit def optionConfigs[T: Configs](implicit cc: CatchCond = CatchCond.missing): Configs[Option[T]] = configs { c =>
+    try Some(c.extract[T]) catch optCatcher
   }
-  implicit def eitherAtPath[T: AtPath]: AtPath[Either[Throwable, T]] = atPath {
-    nonFatalCatch either _.get[T](_)
+  implicit def optionAtPath[T: AtPath](implicit cc: CatchCond = CatchCond.missing): AtPath[Option[T]] = atPath { (c, p) =>
+    try Some(c.get[T](p)) catch optCatcher
+  }
+  private def optCatcher(implicit cc: CatchCond): Catcher[Option[Nothing]] = {
+    case e if cc(e) => None
+  }
+
+  implicit def eitherConfigs[E <: Throwable: ClassTag, T: Configs]: Configs[Either[E, T]] = configs { c =>
+    try Right(c.extract[T]) catch eitherCatcher
+  }
+  implicit def eitherAtPath[E <: Throwable: ClassTag, T: AtPath]: AtPath[Either[E, T]] = atPath { (c, p) =>
+    try Right(c.get[T](p)) catch eitherCatcher
+  }
+  private def eitherCatcher[E <: Throwable: ClassTag]: Catcher[Either[E, Nothing]] = {
+    case e if classTag[E].runtimeClass isAssignableFrom e.getClass => Left(e.asInstanceOf[E])
   }
 
   implicit def tryConfigs[T: Configs]: Configs[Try[T]] = configs {
