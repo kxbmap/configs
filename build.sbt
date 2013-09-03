@@ -3,7 +3,7 @@ name := "root"
 lazy val core = project
 lazy val support = project dependsOn core
 
-version in Global := "0.2.0"
+version in Global := "0.2.1-SNAPSHOT"
 
 organization in Global := "com.github.kxbmap"
 
