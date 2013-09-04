@@ -20,7 +20,7 @@ package support.scalikejdbc
 import com.typesafe.config.{ConfigException, ConfigFactory}
 import org.scalatest.{Matchers, FunSpec}
 import scalikejdbc.globalsettings.{ExceptionForIgnoredParams, WarnLoggingForIgnoredParams, InfoLoggingForIgnoredParams, IgnoredParamsValidation, NoCheckForIgnoredParams}
-import scalikejdbc.{GlobalSettings, NameBindingSQLValidatorSettings, SQLFormatterSettings, LoggingSQLAndTimeSettings, ConnectionPoolSettings}
+import scalikejdbc.{NameBindingSQLValidatorSettings, SQLFormatterSettings, LoggingSQLAndTimeSettings, ConnectionPoolSettings}
 
 class ScalikeJDBCSupportSpec extends FunSpec with Matchers {
 
@@ -149,45 +149,6 @@ class ScalikeJDBCSupportSpec extends FunSpec with Matchers {
 
       c.extract[NameBindingSQLValidatorSettings] shouldBe NameBindingSQLValidatorSettings(
         ignoredParams = NoCheckForIgnoredParams
-      )
-    }
-  }
-
-
-  describe("loadGlobalSettings") {
-
-    it ("should be available") {
-      val c = ConfigFactory.parseString(
-        """scalikejdbc.global {
-          |  loggingSQLErrors = false
-          |  loggingSQLAndTime {
-          |    enabled = false
-          |    singleLineMode = true
-          |    logLevel = info
-          |    warningEnabled = true
-          |    warningThresholdMillis = 1000
-          |    warningLogLevel = error
-          |  }
-          |  sqlFormatter.formatterClassName = com.example.SQLFormatter
-          |  nameBindingSQLValidator.ignoredParams = infoLogging
-          |}""".stripMargin)
-
-      ScalikeJDBCSupport.loadGlobalSettings(c)
-
-      GlobalSettings.loggingSQLErrors shouldBe false
-      GlobalSettings.loggingSQLAndTime shouldBe LoggingSQLAndTimeSettings(
-        enabled = false,
-        singleLineMode = true,
-        logLevel = 'info,
-        warningEnabled = true,
-        warningThresholdMillis = 1000L,
-        warningLogLevel = 'error
-      )
-      GlobalSettings.sqlFormatter shouldBe SQLFormatterSettings(
-        formatterClassName = "com.example.SQLFormatter"
-      )
-      GlobalSettings.nameBindingSQLValidator shouldBe NameBindingSQLValidatorSettings(
-        ignoredParams = InfoLoggingForIgnoredParams
       )
     }
   }

@@ -18,4 +18,3 @@ package com.github.kxbmap.configs
 package support.scalikejdbc
 
 package object async extends ScalikeJDBCAsyncSupport
-

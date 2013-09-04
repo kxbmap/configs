@@ -10,7 +10,15 @@ libraryDependencies ++= Seq(
   scalikejdbcAsync % "optional",
   scalaTest  % "test",
   scalaCheck % "test",
-  slf4j_nop  % "test"
+  slf4j_nop  % "test",
+  mysql % "test",
+  postgresql % "test",
+  h2db % "test",
+  hsqldb % "test",
+  postgresqlAsync % "test",
+  mysqlAsync % "test"
 )
 
 ideaBasePackage := Some("com.github.kxbmap.configs")
+
+parallelExecution := false

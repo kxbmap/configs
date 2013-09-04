@@ -17,10 +17,10 @@
 package com.github.kxbmap.configs
 package support.scalikejdbc
 
+import com.typesafe.config.ConfigException
 import scala.concurrent.duration.Duration
 import scalikejdbc.globalsettings.{ExceptionForIgnoredParams, WarnLoggingForIgnoredParams, InfoLoggingForIgnoredParams, NoCheckForIgnoredParams, IgnoredParamsValidation}
-import scalikejdbc.{GlobalSettings, NameBindingSQLValidatorSettings, SQLFormatterSettings, LoggingSQLAndTimeSettings, ConnectionPoolSettings}
-import com.typesafe.config.{Config, ConfigException}
+import scalikejdbc.{NameBindingSQLValidatorSettings, SQLFormatterSettings, LoggingSQLAndTimeSettings, ConnectionPoolSettings}
 
 
 trait ScalikeJDBCSupport {
@@ -72,24 +72,4 @@ trait ScalikeJDBCSupport {
       ignoredParams = c.getOrElse("ignoredParams", default.ignoredParams)
     )
   }
-}
-
-
-object ScalikeJDBCSupport {
-
-  def loadGlobalSettings(config: Config, path: String = "scalikejdbc.global"): Unit =
-    config.opt[Config](path) foreach { global =>
-      global.opt[Boolean]("loggingSQLErrors") foreach {
-        GlobalSettings.loggingSQLErrors = _
-      }
-      global.opt[LoggingSQLAndTimeSettings]("loggingSQLAndTime") foreach {
-        GlobalSettings.loggingSQLAndTime = _
-      }
-      global.opt[SQLFormatterSettings]("sqlFormatter") foreach {
-        GlobalSettings.sqlFormatter = _
-      }
-      global.opt[NameBindingSQLValidatorSettings]("nameBindingSQLValidator") foreach {
-        GlobalSettings.nameBindingSQLValidator = _
-      }
-    }
 }
