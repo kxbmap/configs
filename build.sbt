@@ -9,7 +9,11 @@ organization in Global := "com.github.kxbmap"
 
 scalaVersion in Global := "2.10.2"
 
-scalacOptions in Global ++= Seq("-feature", "-unchecked", "-deprecation")
+scalacOptions in Global ++= Seq(
+  "-feature",
+  Opts.compile.unchecked,
+  Opts.compile.deprecation
+)
 
 inScope(Global)(Publish.settings)
 

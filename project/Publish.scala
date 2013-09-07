@@ -5,9 +5,9 @@ object Publish {
     publishMavenStyle := true,
     publishTo <<= version { v =>
       if (v.trim.endsWith("SNAPSHOT"))
-        Some(Resolver.sonatypeRepo("snapshots"))
+        Some(Opts.resolver.sonatypeSnapshots)
       else
-        Some("releases" at "https://oss.sonatype.org/service/local/staging/deploy/maven2")
+        Some(Opts.resolver.sonatypeStaging)
     },
     licenses := Seq(
       "Apache License, Version 2.0" -> url("http://www.apache.org/licenses/LICENSE-2.0.html")
