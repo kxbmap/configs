@@ -5,10 +5,10 @@ object Dependencies {
 
   val bonecp = "com.jolbox" % "bonecp" % "0.7.1.RELEASE"
 
-  val scalikejdbc       = "com.github.seratch"  %% "scalikejdbc"        % "1.6.7"
-  val scalikejdbcAsync  = "com.github.seratch"  %% "scalikejdbc-async"  % "0.2.4"
-  val postgresqlAsync   = "com.github.mauricio" %% "postgresql-async"   % "0.2.6"
-  val mysqlAsync        = "com.github.mauricio" %% "mysql-async"        % "0.2.6"
+  val scalikejdbc       = "com.github.seratch"  %% "scalikejdbc"        % "1.6.8"
+  val scalikejdbcAsync  = "com.github.seratch"  %% "scalikejdbc-async"  % "0.2.5"
+  val postgresqlAsync   = "com.github.mauricio" %% "postgresql-async"   % "0.2.7"
+  val mysqlAsync        = "com.github.mauricio" %% "mysql-async"        % "0.2.7"
 
   val scalaTest   = "org.scalatest"   %% "scalatest"  % "2.0.RC1-SNAP4"
   val scalaCheck  = "org.scalacheck"  %% "scalacheck" % "1.10.1"
