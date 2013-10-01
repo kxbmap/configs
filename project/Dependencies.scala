@@ -10,7 +10,7 @@ object Dependencies {
   val postgresqlAsync   = "com.github.mauricio" %% "postgresql-async"   % "0.2.7"
   val mysqlAsync        = "com.github.mauricio" %% "mysql-async"        % "0.2.7"
 
-  val scalaTest   = "org.scalatest"   %% "scalatest"  % "2.0.RC1-SNAP4"
+  val scalaTest   = "org.scalatest"   %% "scalatest"  % "2.0.RC1-SNAP6"
   val scalaCheck  = "org.scalacheck"  %% "scalacheck" % "1.10.1"
   val slf4j_nop   = "org.slf4j"        % "slf4j-nop"  % "1.7.5"
 
