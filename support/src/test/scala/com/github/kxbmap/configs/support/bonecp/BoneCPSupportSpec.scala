@@ -34,7 +34,6 @@ class BoneCPSupportSpec extends FunSpec {
     expected.setJdbcUrl("jdbc://foo.bar:4000")
     expected.setUsername("user")
     expected.setPassword("secret")
-    expected.setReleaseHelperThreads(0)
 
     it ("should be available to extract value") {
       assert(c.extract[BoneCPConfig] hasSameConfiguration expected)

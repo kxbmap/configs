@@ -17,6 +17,7 @@
 package com.github.kxbmap.configs
 
 import com.typesafe.config.Config
+import java.util.concurrent.TimeUnit
 import scala.annotation.implicitNotFound
 import scala.collection.JavaConversions._
 import scala.concurrent.duration.Duration
@@ -104,10 +105,10 @@ trait ConfigsInstances {
   }
 
   implicit val durationAtPath: AtPath[Duration] = atPath {
-    Duration fromNanos _.getNanoseconds(_)
+    Duration fromNanos _.getDuration(_, TimeUnit.NANOSECONDS)
   }
   implicit val durationListAtPath: AtPath[List[Duration]] = atPath {
-    _.getNanosecondsList(_).map(Duration.fromNanos(_)).toList
+    _.getDurationList(_, TimeUnit.NANOSECONDS).map(Duration.fromNanos(_)).toList
   }
 
 }

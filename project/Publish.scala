@@ -3,8 +3,8 @@ import sbt._, Keys._
 object Publish {
   val settings = Seq[Setting[_]](
     publishMavenStyle := true,
-    publishTo <<= version { v =>
-      if (v.trim.endsWith("SNAPSHOT"))
+    publishTo := {
+      if (version.value.trim.endsWith("SNAPSHOT"))
         Some(Opts.resolver.sonatypeSnapshots)
       else
         Some(Opts.resolver.sonatypeStaging)

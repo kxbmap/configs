@@ -72,7 +72,7 @@ class DBsSpec extends FunSpec with Matchers with BeforeAndAfter {
       DBs.setup()
       DBs.close()
 
-      ConnectionPool.get() shouldBe null
+      a [IllegalStateException] should be thrownBy ConnectionPool.get()
     }
   }
 
@@ -89,8 +89,8 @@ class DBsSpec extends FunSpec with Matchers with BeforeAndAfter {
       DBs.setupAll()
       DBs.closeAll()
 
-      ConnectionPool.get('db1) shouldBe null
-      ConnectionPool.get('db2) shouldBe null
+      a [IllegalStateException] should be thrownBy ConnectionPool.get('db1)
+      a [IllegalStateException] should be thrownBy ConnectionPool.get('db2)
     }
   }
 
@@ -103,6 +103,8 @@ class DBsSpec extends FunSpec with Matchers with BeforeAndAfter {
           |  loggingSQLAndTime {
           |    enabled = false
           |    singleLineMode = true
+          |    printUnprocessedStackTrace = true
+          |    stackTraceDepth = 1
           |    logLevel = info
           |    warningEnabled = true
           |    warningThresholdMillis = 1000
@@ -119,6 +121,8 @@ class DBsSpec extends FunSpec with Matchers with BeforeAndAfter {
       GlobalSettings.loggingSQLAndTime shouldBe LoggingSQLAndTimeSettings(
         enabled = false,
         singleLineMode = true,
+        printUnprocessedStackTrace = true,
+        stackTraceDepth = 1,
         logLevel = 'info,
         warningEnabled = true,
         warningThresholdMillis = 1000L,

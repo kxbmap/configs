@@ -36,8 +36,6 @@ trait BoneCPSupport {
     c.opt[String]("username") orElse c.opt[String]("user") foreach cfg.setUsername
     c.opt[String]("password") orElse c.opt[String]("pass") foreach cfg.setPassword
 
-    cfg.setReleaseHelperThreads(c.getOrElse("releaseHelperThreads", 0))
-
     c.opt[String]("poolName") foreach cfg.setPoolName
     c.opt[Int]("minConnectionsPerPartition") foreach cfg.setMinConnectionsPerPartition
     c.opt[Int]("maxConnectionsPerPartition") foreach cfg.setMaxConnectionsPerPartition
@@ -49,7 +47,8 @@ trait BoneCPSupport {
 
     c.opt[String]("connectionTestStatement") foreach cfg.setConnectionTestStatement
     c.opt[Int]("statementsCacheSize") foreach cfg.setStatementsCacheSize
-    c.opt[String]("connectionHookClassName") foreach cfg.setConnectionHookClassName
+    c.opt[String]("connectionHook") orElse
+      c.opt[String]("connectionHookClassName") foreach cfg.setConnectionHookClassName
     c.opt[String]("initSQL") foreach cfg.setInitSQL
 
     c.opt[Boolean]("closeConnectionWatch") foreach cfg.setCloseConnectionWatch
@@ -65,17 +64,24 @@ trait BoneCPSupport {
     c.opt[Boolean]("disableConnectionTracking") foreach cfg.setDisableConnectionTracking
     duration("connectionTimeout")(cfg.setConnectionTimeout)
     duration("closeConnectionWatchTimeout")(cfg.setCloseConnectionWatchTimeout)
-    c.opt[Int]("statementReleaseHelperThreads") foreach cfg.setStatementReleaseHelperThreads
     duration("maxConnectionAge")(cfg.setMaxConnectionAge)
 
     c.opt[String]("configFile") foreach cfg.setConfigFile
     c.opt[String]("serviceOrder") foreach cfg.setServiceOrder
     c.opt[Boolean]("statisticsEnabled") foreach cfg.setStatisticsEnabled
-    c.opt[Boolean]("defaultAutoCommit") foreach { cfg.setDefaultAutoCommit(_) }
+    c.opt[Boolean]("defaultAutoCommit") foreach cfg.setDefaultAutoCommit
     c.opt[Boolean]("defaultReadOnly") foreach { cfg.setDefaultReadOnly(_) }
     c.opt[String]("defaultCatalog") foreach cfg.setDefaultCatalog
     c.opt[String]("defaultTransactionIsolation") foreach cfg.setDefaultTransactionIsolation
     c.opt[Boolean]("externalAuth") foreach cfg.setExternalAuth
+
+    c.opt[Boolean]("deregisterDriverOnClose") foreach cfg.setDeregisterDriverOnClose
+    c.opt[Boolean]("nullOnConnectionTimeout") foreach cfg.setNullOnConnectionTimeout
+    c.opt[Boolean]("resetConnectionOnClose") foreach cfg.setResetConnectionOnClose
+    c.opt[Boolean]("detectUnresolvedTransactions") foreach cfg.setDetectUnresolvedTransactions
+    c.opt[String]("poolStrategy") foreach cfg.setPoolStrategy
+    c.opt[Boolean]("closeOpenStatements") foreach cfg.setCloseOpenStatements
+    c.opt[Boolean]("detectUnclosedStatements") foreach cfg.setDetectUnclosedStatements
 
     cfg
   }

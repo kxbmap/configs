@@ -41,6 +41,8 @@ trait ScalikeJDBCSupport {
     LoggingSQLAndTimeSettings(
       enabled = c.getOrElse("enabled", default.enabled),
       singleLineMode = c.getOrElse("singleLineMode", default.singleLineMode),
+      printUnprocessedStackTrace = c.getOrElse("printUnprocessedStackTrace", default.printUnprocessedStackTrace),
+      stackTraceDepth = c.getOrElse("stackTraceDepth", default.stackTraceDepth),
       logLevel = c.getOrElse("logLevel", default.logLevel),
       warningEnabled = c.getOrElse("warningEnabled", default.warningEnabled),
       warningThresholdMillis = c.opt[Long]("warningThresholdMillis") getOrElse
