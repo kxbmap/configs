@@ -22,3 +22,5 @@ publish := {}
 publishLocal := {}
 
 publishArtifact := false
+
+sonatypeSettings
