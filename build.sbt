@@ -15,7 +15,7 @@ scalacOptions in ThisBuild ++= Seq(
   Opts.compile.deprecation
 )
 
-inScope(Global)(Publish.settings)
+Publish.settings
 
 publish := {}
 

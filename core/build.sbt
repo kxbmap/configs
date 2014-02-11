@@ -9,3 +9,5 @@ libraryDependencies ++= Seq(
   scalaTest  % "test",
   scalaCheck % "test"
 )
+
+Publish.settings

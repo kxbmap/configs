@@ -20,3 +20,5 @@ libraryDependencies ++= Seq(
 )
 
 parallelExecution := false
+
+Publish.settings
