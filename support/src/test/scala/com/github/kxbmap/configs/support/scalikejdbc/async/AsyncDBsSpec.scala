@@ -106,6 +106,8 @@ class AsyncDBsSpec extends FunSpec with Matchers with BeforeAndAfter {
           |    enabled = false
           |    singleLineMode = true
           |    logLevel = info
+          |    printUnprocessedStackTrace = true
+          |    stackTraceDepth = 42
           |    warningEnabled = true
           |    warningThresholdMillis = 1000
           |    warningLogLevel = error
@@ -122,6 +124,8 @@ class AsyncDBsSpec extends FunSpec with Matchers with BeforeAndAfter {
         enabled = false,
         singleLineMode = true,
         logLevel = 'info,
+        printUnprocessedStackTrace = true,
+        stackTraceDepth = 42,
         warningEnabled = true,
         warningThresholdMillis = 1000L,
         warningLogLevel = 'error
