@@ -49,7 +49,7 @@ class CatchCondSpec extends FunSpec {
       }
 
       it ("should returns false if otherwise") {
-        assert(!CatchCond.nonFatal(new NotImplementedError()))
+        assert(!CatchCond.nonFatal(new InterruptedException))
       }
     }
   }
