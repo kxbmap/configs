@@ -22,6 +22,7 @@ package object std {
   object file extends FileSupport
   object path extends PathSupport
   object net extends NetSupport
+  object bean extends BeanSupport
 
   object all extends AllSupport
 }
