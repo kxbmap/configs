@@ -37,13 +37,15 @@ class ScalikeJDBCSupportSpec extends FunSpec with Matchers {
           |maxSize = 42
           |connectionTimeoutMillis = 1000
           |validationQuery = "/* ping */ select 1;"
+          |connectionPoolFactoryName = commons-dbcp2
           |""".stripMargin)
 
       c.extract[ConnectionPoolSettings] shouldBe ConnectionPoolSettings(
         initialSize = 10,
         maxSize = 42,
         connectionTimeoutMillis = 1000L,
-        validationQuery = "/* ping */ select 1;"
+        validationQuery = "/* ping */ select 1;",
+        connectionPoolFactoryName = "commons-dbcp2"
       )
     }
 
