@@ -1,5 +1,5 @@
 /*
- * Copyright 2013 Tsukasa Kitachi
+ * Copyright 2015 Philip L. McMahon
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,8 +17,27 @@
 package com.github.kxbmap.configs
 package support.std
 
-trait AllSupport
-  extends FileSupport
-  with PathSupport
-  with NetSupport
-  with BeanSupport
+import scala.collection.JavaConversions._
+
+
+trait BeanSupport {
+
+  object Beans {
+
+    def apply[T](f: => T): Configs[T] = Configs.configs {
+      _.entrySet().foldLeft(f) { (o, e) =>
+        val m = s"set${e.getKey.capitalize}"
+        val v = e.getValue.unwrapped()
+        o.getClass.getMethod(m, v.getClass).invoke(o, v)
+        o
+      }
+    }
+
+    def apply[T: Manifest]: Configs[T] = Beans {
+      implicitly[Manifest[T]].runtimeClass.asInstanceOf[Class[T]].
+        getConstructor().newInstance()
+    }
+
+  }
+
+}

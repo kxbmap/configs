@@ -17,10 +17,13 @@
 package com.github.kxbmap.configs
 package support.scalikejdbc
 
+import java.util.Locale
+
 import com.typesafe.config.ConfigException
+import scalikejdbc.globalsettings.{ExceptionForIgnoredParams, IgnoredParamsValidation, InfoLoggingForIgnoredParams, NoCheckForIgnoredParams, WarnLoggingForIgnoredParams}
+import scalikejdbc.{ConnectionPoolSettings, LoggingSQLAndTimeSettings, NameBindingSQLValidatorSettings, SQLFormatterSettings}
+
 import scala.concurrent.duration.Duration
-import scalikejdbc.globalsettings.{ExceptionForIgnoredParams, WarnLoggingForIgnoredParams, InfoLoggingForIgnoredParams, NoCheckForIgnoredParams, IgnoredParamsValidation}
-import scalikejdbc.{NameBindingSQLValidatorSettings, SQLFormatterSettings, LoggingSQLAndTimeSettings, ConnectionPoolSettings}
 
 
 trait ScalikeJDBCSupport {
@@ -32,7 +35,8 @@ trait ScalikeJDBCSupport {
       maxSize = c.getOrElse("maxSize", default.maxSize),
       connectionTimeoutMillis = c.opt[Long]("connectionTimeoutMillis") getOrElse
         c.opt[Duration]("connectionTimeout").fold(default.connectionTimeoutMillis)(_.toMillis),
-      validationQuery = c.getOrElse("validationQuery", default.validationQuery)
+      validationQuery = c.getOrElse("validationQuery", default.validationQuery),
+      connectionPoolFactoryName = c.getOrElse("connectionPoolFactoryName", default.connectionPoolFactoryName)
     )
   }
 
@@ -59,7 +63,7 @@ trait ScalikeJDBCSupport {
 
   implicit val ignoredParamsValidationAtPath: AtPath[IgnoredParamsValidation] = Configs.atPath { (c, p) =>
     val v = c.getString(p)
-    v.toLowerCase match {
+    v.toLowerCase(Locale.ENGLISH) match {
       case "nocheck"     => NoCheckForIgnoredParams
       case "infologging" => InfoLoggingForIgnoredParams
       case "warnlogging" => WarnLoggingForIgnoredParams
