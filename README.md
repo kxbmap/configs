@@ -9,7 +9,7 @@ Usage
 -----
 ### build.sbt
 ```scala
-libraryDependencies += "com.github.kxbmap" %% "configs" % "0.2.2"
+libraryDependencies += "com.github.kxbmap" %% "configs" % "0.2.3"
 ```
 
 ### Imports
