@@ -3,13 +3,13 @@ name := "root"
 lazy val core = project
 lazy val support = project dependsOn core
 
-version in ThisBuild := "0.2.3"
+version in ThisBuild := "0.2.4"
 
 organization in ThisBuild := "com.github.kxbmap"
 
-scalaVersion in ThisBuild := "2.10.4"
+scalaVersion in ThisBuild := "2.10.5"
 
-crossScalaVersions in ThisBuild := Seq(scalaVersion.value, "2.11.5")
+crossScalaVersions in ThisBuild := Seq(scalaVersion.value, "2.11.6")
 
 scalacOptions in ThisBuild ++= Seq(
   "-feature",
@@ -24,5 +24,3 @@ publish := {}
 publishLocal := {}
 
 publishArtifact := false
-
-sonatypeSettings

@@ -17,11 +17,11 @@
 package com.github.kxbmap.configs
 
 import com.typesafe.config.{Config, ConfigException, ConfigFactory}
+import org.scalactic.TypeCheckedTripleEquals
 import org.scalatest.{FunSpec, Matchers}
-import org.scalautils.TypeCheckedTripleEquals
 import scala.concurrent.duration._
 import scala.util.control.ControlThrowable
-import scala.util.{Try, Success}
+import scala.util.{Success, Try}
 
 class ConfigsSpec extends FunSpec with Matchers with TypeCheckedTripleEquals {
 
