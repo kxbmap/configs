@@ -74,7 +74,7 @@ val n = config.opt[Int]("string")  // == None
 
 #### Either
 ```scala
-val r = config.get[Eihter[Throwable, String]]("string")  // == Right("something")
+val r = config.get[Either[Throwable, String]]("string")  // == Right("something")
 val l = config.get[Either[Throwable, Int]]("string")     // == Left(ConfigException.WrongType(...))
 ```
 
