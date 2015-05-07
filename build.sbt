@@ -13,7 +13,7 @@ lazy val core = project.settings(commonSettings).settings(
   name := "configs-core",
   description := "A Scala wrapper for Typesafe config",
   libraryDependencies ++= Seq(
-    "com.typesafe" % "config" % "1.2.1"
+    "com.typesafe" % "config" % "1.3.0"
   )
 )
 
