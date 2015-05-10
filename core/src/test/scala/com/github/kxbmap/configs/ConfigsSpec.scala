@@ -230,32 +230,13 @@ class ConfigsSpec extends FunSpec with Matchers with TypeCheckedTripleEquals {
           c.opt[List[String]]("b") should === (Some(List("Hello", "World")))
         }
 
-        describe("with default CatchCond") {
-          it ("should catch ConfigException.Missing") {
-            c.opt[String]("c") should === (None)
-          }
-
-          it ("should not catch others") {
-            intercept[ConfigException.WrongType] {
-              c.opt[Int]("a")
-            }
-          }
+        it ("should catch ConfigException.Missing") {
+          c.opt[String]("c") should === (None)
         }
 
-        describe("with specific CatchCond") {
-          implicit val sc: CatchCond = {
-            case e if e.getMessage.contains("xxx") => true
-            case _ => false
-          }
-
-          it ("should catch error that specify by instance") {
-            c.opt[Int]("xxx") should === (None)
-          }
-
-          it ("should not catch others") {
-            intercept[ConfigException] {
-              c.opt[Int]("yyy")
-            }
+        it ("should not catch others") {
+          intercept[ConfigException.WrongType] {
+            c.opt[Int]("a")
           }
         }
       }

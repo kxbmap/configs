@@ -16,7 +16,7 @@
 
 package com.github.kxbmap.configs
 
-import com.typesafe.config.{Config, ConfigMemorySize}
+import com.typesafe.config.{Config, ConfigException, ConfigMemorySize}
 import java.util.concurrent.TimeUnit
 import scala.annotation.implicitNotFound
 import scala.collection.JavaConversions._
@@ -77,14 +77,14 @@ trait ConfigsInstances {
     _.getConfigList(_).map(_.extract[T]).toList
   }
 
-  implicit def optionConfigs[T: Configs](implicit cc: CatchCond = CatchCond.missing): Configs[Option[T]] = configs { c =>
-    try Some(c.extract[T]) catch optCatcher
+  implicit def optionConfigs[T: Configs]: Configs[Option[T]] = configs { c =>
+    try Some(c.extract[T]) catch {
+      case _: ConfigException.Missing => None
+    }
   }
-  implicit def optionAtPath[T: AtPath](implicit cc: CatchCond = CatchCond.missing): AtPath[Option[T]] = atPath { (c, p) =>
-    try Some(c.get[T](p)) catch optCatcher
-  }
-  private def optCatcher(implicit cc: CatchCond): Catcher[Option[Nothing]] = {
-    case e if cc(e) => None
+
+  implicit def optionAtPath[T: AtPath]: AtPath[Option[T]] = atPath { (c, p) =>
+    if (c.hasPathOrNull(p) && !c.getIsNull(p)) Some(c.get[T](p)) else None
   }
 
   implicit def eitherConfigs[E <: Throwable: ClassTag, T: Configs]: Configs[Either[E, T]] = configs { c =>
