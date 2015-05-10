@@ -16,7 +16,7 @@
 
 package com.github.kxbmap.configs
 
-import com.typesafe.config.Config
+import com.typesafe.config.{Config, ConfigMemorySize}
 import java.util.concurrent.TimeUnit
 import scala.annotation.implicitNotFound
 import scala.collection.JavaConversions._
@@ -109,6 +109,14 @@ trait ConfigsInstances {
   }
   implicit val durationListAtPath: AtPath[List[Duration]] = atPath {
     _.getDurationList(_, TimeUnit.NANOSECONDS).map(Duration.fromNanos(_)).toList
+  }
+
+  implicit val configMemorySizeAtPath: AtPath[ConfigMemorySize] = atPath {
+    _.getMemorySize(_)
+  }
+
+  implicit val configMemorySizeListAtPath: AtPath[List[ConfigMemorySize]] = atPath {
+    _.getMemorySizeList(_).toList
   }
 
 }

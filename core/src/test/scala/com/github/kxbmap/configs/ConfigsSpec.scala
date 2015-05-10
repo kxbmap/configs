@@ -16,7 +16,7 @@
 
 package com.github.kxbmap.configs
 
-import com.typesafe.config.{Config, ConfigException, ConfigFactory}
+import com.typesafe.config.{Config, ConfigException, ConfigFactory, ConfigMemorySize}
 import org.scalactic.TypeCheckedTripleEquals
 import org.scalatest.{FunSpec, Matchers}
 import scala.concurrent.duration._
@@ -185,6 +185,20 @@ class ConfigsSpec extends FunSpec with Matchers with TypeCheckedTripleEquals {
         }
         it ("should be available to get values as list") {
           c.get[List[Duration]]("b") should === (List(1.milli, 42.hours))
+        }
+      }
+
+      describe("for ConfigMemorySize") {
+        val c = parseString(
+          """a = 42M
+            |b = [1KiB, 1024b]
+            |""".stripMargin)
+
+        it ("should be available to get a value") {
+          c.get[ConfigMemorySize]("a") should === (ConfigMemorySize.ofBytes(42 * 1024 * 1024))
+        }
+        it ("should be available to get values as list") {
+          c.get[List[ConfigMemorySize]]("b") should === (List(ConfigMemorySize.ofBytes(1024), ConfigMemorySize.ofBytes(1024)))
         }
       }
 
