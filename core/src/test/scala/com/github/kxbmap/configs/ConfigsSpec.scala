@@ -188,6 +188,20 @@ class ConfigsSpec extends FunSpec with Matchers with TypeCheckedTripleEquals {
         }
       }
 
+      describe("for java.time.Duration") {
+        val c = parseString(
+          """a = 10days
+            |b = [1ms, 42h]
+            |""".stripMargin)
+
+        it ("should be available to get a value") {
+          c.get[java.time.Duration]("a") should === (java.time.Duration.ofDays(10))
+        }
+        it ("should be available to get values as list") {
+          c.get[List[java.time.Duration]]("b") should === (List(java.time.Duration.ofMillis(1), java.time.Duration.ofHours(42)))
+        }
+      }
+
       describe("for ConfigMemorySize") {
         val c = parseString(
           """a = 42M

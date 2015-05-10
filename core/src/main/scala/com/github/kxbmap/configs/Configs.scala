@@ -111,6 +111,14 @@ trait ConfigsInstances {
     _.getDurationList(_, TimeUnit.NANOSECONDS).map(Duration.fromNanos(_)).toList
   }
 
+  implicit val javaTimeDurationAtPath: AtPath[java.time.Duration] = atPath {
+    _.getDuration(_)
+  }
+
+  implicit val javaTimeDurationListAtPath: AtPath[List[java.time.Duration]] = atPath {
+    _.getDurationList(_).toList
+  }
+
   implicit val configMemorySizeAtPath: AtPath[ConfigMemorySize] = atPath {
     _.getMemorySize(_)
   }
