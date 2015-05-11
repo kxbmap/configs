@@ -1,15 +1,9 @@
 version in ThisBuild := "0.3.0-SNAPSHOT"
 
-scalaVersion in ThisBuild := "2.11.6"
+commonSettings
+rootPublishSettings
 
-organization in ThisBuild := "com.github.kxbmap"
-
-publish := {}
-publishLocal := {}
-publishArtifact := false
-
-
-lazy val core = project.settings(commonSettings).settings(
+lazy val core = project.settings(commonSettings ++ publishSettings).settings(
   name := "configs-core",
   description := "A Scala wrapper for Typesafe config",
   libraryDependencies ++= Seq(
@@ -19,7 +13,7 @@ lazy val core = project.settings(commonSettings).settings(
 
 def extension(id: String): Project = Project(id, file("ext") / id)
   .settings(name := s"configs-$id")
-  .settings(commonSettings)
+  .settings(commonSettings ++ publishSettings)
   .dependsOn(core)
 
 lazy val std = extension("std")
@@ -49,6 +43,8 @@ lazy val bonecp = extension("bonecp").settings(
 )
 
 lazy val commonSettings = Seq(
+  scalaVersion := "2.11.6",
+  organization := "com.github.kxbmap",
   crossScalaVersions := Seq(scalaVersion.value, "2.10.5"),
   scalacOptions ++= Seq(
     "-deprecation",
@@ -59,7 +55,10 @@ lazy val commonSettings = Seq(
     "org.scalatest" %% "scalatest" % "2.2.4" % "test",
     "org.scalacheck" %% "scalacheck" % "1.12.2" % "test",
     "org.slf4j" % "slf4j-simple" % "1.7.12" % "test"
-  ),
+  )
+)
+
+lazy val publishSettings = Seq(
   publishMavenStyle := true,
   publishTo := {
     if (isSnapshot.value)
@@ -85,4 +84,10 @@ lazy val commonSettings = Seq(
         <url>http://github.com/kxbmap</url>
       </developer>
     </developers>
+)
+
+lazy val rootPublishSettings = Seq(
+  publish := {},
+  publishLocal := {},
+  publishArtifact := false
 )
