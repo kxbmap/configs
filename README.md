@@ -29,7 +29,7 @@ val config = ConfigFactory.load()
 ```scala
 val a = config.get[Int]("a")          // == config.getInt("a")
 val b = config.get[String]("b")       // == config.getString("b")
-vsl c = config.get[List[Double]]("c") // Returns scala.List[Double], NOT java.util.List[java.lang.Double]
+val c = config.get[List[Double]]("c") // Returns scala.List[Double], NOT java.util.List[java.lang.Double]
 ```
 
 #### Bytes
