@@ -216,31 +216,6 @@ class ConfigsSpec extends FunSpec with Matchers with TypeCheckedTripleEquals {
         }
       }
 
-      describe("for Option") {
-        val c = parseString(
-          """a = foo
-            |b = [Hello, World]
-            |""".stripMargin)
-
-        it("should be available to get a value") {
-          c.opt[String]("a") should ===(Some("foo"))
-        }
-
-        it("should be available to get values as list") {
-          c.opt[List[String]]("b") should ===(Some(List("Hello", "World")))
-        }
-
-        it("should catch ConfigException.Missing") {
-          c.opt[String]("c") should ===(None)
-        }
-
-        it("should not catch others") {
-          intercept[ConfigException.WrongType] {
-            c.opt[Int]("a")
-          }
-        }
-      }
-
       describe("for Either") {
         val c = parseString(
           """a = foo

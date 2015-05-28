@@ -16,7 +16,7 @@
 
 package com.github.kxbmap.configs
 
-import com.typesafe.config.{Config, ConfigException, ConfigMemorySize}
+import com.typesafe.config.{Config, ConfigMemorySize}
 import java.util.concurrent.TimeUnit
 import scala.annotation.implicitNotFound
 import scala.collection.JavaConversions._
@@ -89,9 +89,7 @@ trait ConfigsInstances {
   }
 
   implicit def optionConfigs[T: Configs]: Configs[Option[T]] = configs { c =>
-    try Some(c.extract[T]) catch {
-      case _: ConfigException.Missing => None
-    }
+    Some(c.extract[T])
   }
 
   implicit def optionAtPath[T: AtPath]: AtPath[Option[T]] = atPath { (c, p) =>
