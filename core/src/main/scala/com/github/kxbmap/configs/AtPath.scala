@@ -18,9 +18,9 @@ package com.github.kxbmap.configs
 
 
 object AtPath {
-  @inline def apply[T: AtPath]: AtPath[T] = implicitly[AtPath[T]]
+  @inline def apply[T](implicit A: AtPath[T]): AtPath[T] = A
 
-  def by[S: AtPath, T](f: S => T): AtPath[T] = AtPath[S] map { _ andThen f }
+  def by[S: AtPath, T](f: S => T): AtPath[T] = AtPath[S].map(f.compose)
 
-  def listBy[S, T](f: S => T)(implicit ev: AtPath[List[S]]): AtPath[List[T]] = by { (_: List[S]).map(f) }
+  def listBy[S, T](f: S => T)(implicit ev: AtPath[List[S]]): AtPath[List[T]] = by((_: List[S]).map(f))
 }

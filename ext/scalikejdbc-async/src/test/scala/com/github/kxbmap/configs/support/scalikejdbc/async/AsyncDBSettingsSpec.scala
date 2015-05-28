@@ -25,7 +25,7 @@ class AsyncDBSettingsSpec extends FunSpec with Matchers {
 
   describe("Configs instance") {
 
-    it ("should be available") {
+    it("should be available") {
       val c = ConfigFactory.parseString(
         """driver = "com.mysql.jdbc.Driver"
           |url = "jdbc:mysql://localhost/configs"

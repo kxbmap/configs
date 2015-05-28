@@ -17,8 +17,8 @@
 package com.github.kxbmap.configs
 package support.std
 
-import java.util.{List => JList}
 import com.typesafe.config.{ConfigException, ConfigFactory}
+import java.util.{List => JList}
 import org.scalatest.{FunSpec, Matchers}
 
 class BeanSupportSpec extends FunSpec with Matchers with BeanSupport {
@@ -38,37 +38,41 @@ class BeanSupportSpec extends FunSpec with Matchers with BeanSupport {
         |d.string=x""".stripMargin)
 
     implicit val topConfigs = Beans[Top]
-    implicit val innerConfigs = Beans { new Inner }
+    implicit val innerConfigs = Beans(new Inner)
 
-    it ("should be available to get a value with a no-arg constructor") {
+    it("should be available to get a value with a no-arg constructor") {
       val o = c.get[Top]("a")
       o._string shouldBe "x"
       o._list shouldBe null // Omitted from config
     }
 
-    it ("should return different instances with a no-arg constructor") {
+    it("should return different instances with a no-arg constructor") {
       c.get[Top]("a") shouldNot be theSameInstanceAs c.get[Top]("a")
     }
 
-    it ("should be available to get a value via factory function") {
+    it("should be available to get a value via factory function") {
       val o = c.get[Inner]("a")
       o._string shouldBe "x"
       o._list shouldBe null
     }
 
-    it ("should return different instances with factory function") {
+    it("should return different instances with factory function") {
       c.get[Inner]("a") shouldNot be theSameInstanceAs c.get[Inner]("a")
     }
 
-    it ("should throw an exception for incorrect property types") {
-      intercept[ConfigException.WrongType] { c.get[Inner]("b") }
+    it("should throw an exception for incorrect property types") {
+      intercept[ConfigException.WrongType] {
+        c.get[Inner]("b")
+      }
     }
 
-    it ("should throw an exception for unknown property names") {
-      intercept[ConfigException.BadPath] { c.get[Inner]("c") }
+    it("should throw an exception for unknown property names") {
+      intercept[ConfigException.BadPath] {
+        c.get[Inner]("c")
+      }
     }
 
-    it ("should support both primitive types and objects") {
+    it("should support both primitive types and objects") {
       val o = c.get[Top]("d")
       o._boolean shouldBe true
       o._int shouldBe 1
@@ -91,10 +95,15 @@ trait Obj {
   var _string: String = _
 
   def setBoolean(b: Boolean): Unit = _boolean = b
+
   def setDouble(d: Double): Unit = _double = d
+
   def setInt(i: Int): Unit = _int = i
+
   def setList(l: JList[String]): Unit = _list = l
+
   def setLong(l: Long): Unit = _long = l
+
   def setString(s: String): Unit = _string = s
 
 }
@@ -109,8 +118,11 @@ class Primitives {
   var _long: Long = _
 
   def setBoolean(b: Boolean): Unit = _boolean = b
+
   def setDouble(d: Double): Unit = _double = d
+
   def setInt(i: Int): Unit = _int = i
+
   def setLong(l: Long): Unit = _long = l
 
 }

@@ -17,8 +17,8 @@
 package com.github.kxbmap.configs
 package support.scalikejdbc
 
-import com.typesafe.config.{ConfigFactory, Config}
-import scalikejdbc.{NameBindingSQLValidatorSettings, SQLFormatterSettings, LoggingSQLAndTimeSettings, GlobalSettings, ConnectionPool}
+import com.typesafe.config.{Config, ConfigFactory}
+import scalikejdbc.{ConnectionPool, GlobalSettings, LoggingSQLAndTimeSettings, NameBindingSQLValidatorSettings, SQLFormatterSettings}
 
 object DBs {
 

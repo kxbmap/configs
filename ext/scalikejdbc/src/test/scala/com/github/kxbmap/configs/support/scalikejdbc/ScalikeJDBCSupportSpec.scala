@@ -18,20 +18,20 @@ package com.github.kxbmap.configs
 package support.scalikejdbc
 
 import com.typesafe.config.{ConfigException, ConfigFactory}
-import org.scalatest.{Matchers, FunSpec}
-import scalikejdbc.globalsettings.{ExceptionForIgnoredParams, WarnLoggingForIgnoredParams, InfoLoggingForIgnoredParams, IgnoredParamsValidation, NoCheckForIgnoredParams}
-import scalikejdbc.{NameBindingSQLValidatorSettings, SQLFormatterSettings, LoggingSQLAndTimeSettings, ConnectionPoolSettings}
+import org.scalatest.{FunSpec, Matchers}
+import scalikejdbc.globalsettings.{ExceptionForIgnoredParams, IgnoredParamsValidation, InfoLoggingForIgnoredParams, NoCheckForIgnoredParams, WarnLoggingForIgnoredParams}
+import scalikejdbc.{ConnectionPoolSettings, LoggingSQLAndTimeSettings, NameBindingSQLValidatorSettings, SQLFormatterSettings}
 
 class ScalikeJDBCSupportSpec extends FunSpec with Matchers {
 
   describe("connectionPoolSettingsConfigs") {
 
-    it ("should be available") {
+    it("should be available") {
       val c = ConfigFactory.empty()
       c.extract[ConnectionPoolSettings] shouldBe ConnectionPoolSettings()
     }
 
-    it ("should be available with parameters") {
+    it("should be available with parameters") {
       val c = ConfigFactory.parseString(
         """initialSize = 10
           |maxSize = 42
@@ -49,7 +49,7 @@ class ScalikeJDBCSupportSpec extends FunSpec with Matchers {
       )
     }
 
-    it ("should be available with a duration parameter") {
+    it("should be available with a duration parameter") {
       val c = ConfigFactory.parseString("connectionTimeout = 2s")
       c.extract[ConnectionPoolSettings] shouldBe ConnectionPoolSettings(
         connectionTimeoutMillis = 2000L
@@ -59,12 +59,12 @@ class ScalikeJDBCSupportSpec extends FunSpec with Matchers {
 
   describe("loggingSQLAndTimeSettingsConfigs") {
 
-    it ("should be available") {
+    it("should be available") {
       val c = ConfigFactory.empty()
       c.extract[LoggingSQLAndTimeSettings] shouldBe LoggingSQLAndTimeSettings()
     }
 
-    it ("should be available with parameters") {
+    it("should be available with parameters") {
       val c = ConfigFactory.parseString(
         """enabled = false
           |singleLineMode = true
@@ -84,7 +84,7 @@ class ScalikeJDBCSupportSpec extends FunSpec with Matchers {
       )
     }
 
-    it ("should be available with a duration parameter") {
+    it("should be available with a duration parameter") {
       val c = ConfigFactory.parseString("warningThreshold = 2s")
       c.extract[LoggingSQLAndTimeSettings] shouldBe LoggingSQLAndTimeSettings(
         warningThresholdMillis = 2000L
@@ -94,12 +94,12 @@ class ScalikeJDBCSupportSpec extends FunSpec with Matchers {
 
   describe("sqlFormatterSettingsConfigs") {
 
-    it ("should be available") {
+    it("should be available") {
       val c = ConfigFactory.empty()
       c.extract[SQLFormatterSettings] shouldBe SQLFormatterSettings()
     }
 
-    it ("should be available with parameters") {
+    it("should be available with parameters") {
       val c = ConfigFactory.parseString("formatterClassName = com.example.SQLFormatter")
 
       c.extract[SQLFormatterSettings] shouldBe SQLFormatterSettings(
@@ -110,43 +110,43 @@ class ScalikeJDBCSupportSpec extends FunSpec with Matchers {
 
   describe("ignoredParamsValidationAtPath") {
 
-    it ("should be available for `noCheck`") {
+    it("should be available for `noCheck`") {
       val c = ConfigFactory.parseString("ignoredParams = noCheck")
       c.get[IgnoredParamsValidation]("ignoredParams") shouldBe NoCheckForIgnoredParams
     }
 
-    it ("should be available for `infoLogging`") {
+    it("should be available for `infoLogging`") {
       val c = ConfigFactory.parseString("ignoredParams = infoLogging")
       c.get[IgnoredParamsValidation]("ignoredParams") shouldBe InfoLoggingForIgnoredParams
     }
 
-    it ("should be available for `warnLogging`") {
+    it("should be available for `warnLogging`") {
       val c = ConfigFactory.parseString("ignoredParams = warnLogging")
       c.get[IgnoredParamsValidation]("ignoredParams") shouldBe WarnLoggingForIgnoredParams
     }
 
-    it ("should be available for `exception`") {
+    it("should be available for `exception`") {
       val c = ConfigFactory.parseString("ignoredParams = exception")
       c.get[IgnoredParamsValidation]("ignoredParams") shouldBe ExceptionForIgnoredParams
     }
 
-    it ("should throw ConfigException.BadValue for unknown value") {
+    it("should throw ConfigException.BadValue for unknown value") {
       val c = ConfigFactory.parseString("ignoredParams = Foo")
       val e = intercept[ConfigException.BadValue] {
         c.get[IgnoredParamsValidation]("ignoredParams")
       }
-      e.getMessage should include ("Foo")
+      e.getMessage should include("Foo")
     }
   }
 
   describe("nameBindingSQLValidatorSettingsConfigs") {
 
-    it ("should be available") {
+    it("should be available") {
       val c = ConfigFactory.empty()
       c.extract[NameBindingSQLValidatorSettings] shouldBe NameBindingSQLValidatorSettings()
     }
 
-    it ("should be available with parameters") {
+    it("should be available with parameters") {
       val c = ConfigFactory.parseString("ignoredParams = noCheck")
 
       c.extract[NameBindingSQLValidatorSettings] shouldBe NameBindingSQLValidatorSettings(

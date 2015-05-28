@@ -18,14 +18,14 @@ package com.github.kxbmap.configs
 package support.scalikejdbc
 
 import com.typesafe.config.{ConfigException, ConfigFactory}
-import org.scalatest.{Matchers, FunSpec}
+import org.scalatest.{FunSpec, Matchers}
 import scalikejdbc.ConnectionPoolSettings
 
 class DBSettingsSpec extends FunSpec with Matchers {
 
   describe("Configs instance") {
 
-    it ("should be available") {
+    it("should be available") {
       val c = ConfigFactory.parseString(
         """driver = "com.mysql.jdbc.Driver"
           |url = "jdbc:mysql://localhost/configs"
@@ -45,49 +45,49 @@ class DBSettingsSpec extends FunSpec with Matchers {
 
     describe("guess driver from url") {
 
-      it ("should be available for mysql") {
+      it("should be available for mysql") {
         val c = ConfigFactory.parseString(
           """url = "jdbc:mysql://localhost/configs"""")
 
         c.extract[DBSettings].driver shouldBe "com.mysql.jdbc.Driver"
       }
 
-      it ("should be available for postgresql") {
+      it("should be available for postgresql") {
         val c = ConfigFactory.parseString(
           """url = "jdbc:postgresql://localhost/configs"""")
 
         c.extract[DBSettings].driver shouldBe "org.postgresql.Driver"
       }
 
-      it ("should be available for h2") {
+      it("should be available for h2") {
         val c = ConfigFactory.parseString(
           """url = "jdbc:h2:mem:"""")
 
         c.extract[DBSettings].driver shouldBe "org.h2.Driver"
       }
 
-      it ("should be available for hsqldb") {
+      it("should be available for hsqldb") {
         val c = ConfigFactory.parseString(
           """url = "jdbc:hsqldb:mem:"""")
 
         c.extract[DBSettings].driver shouldBe "org.hsqldb.jdbcDriver"
       }
 
-      it ("should be available for mysql on heroku") {
+      it("should be available for mysql on heroku") {
         val c = ConfigFactory.parseString(
           """url = "mysql://localhost/configs"""")
 
         c.extract[DBSettings].driver shouldBe "com.mysql.jdbc.Driver"
       }
 
-      it ("should be available for postgresql on heroku") {
+      it("should be available for postgresql on heroku") {
         val c = ConfigFactory.parseString(
           """url = "postgres://localhost/configs"""")
 
         c.extract[DBSettings].driver shouldBe "org.postgresql.Driver"
       }
 
-      it ("should throw a ConfigException.BadValue if driver cannot guessed") {
+      it("should throw a ConfigException.BadValue if driver cannot guessed") {
         val c = ConfigFactory.parseString(
           """url = "jdbc:some_unknown://localhost/configs"""")
 

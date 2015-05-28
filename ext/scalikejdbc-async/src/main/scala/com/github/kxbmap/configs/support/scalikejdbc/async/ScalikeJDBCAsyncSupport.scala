@@ -17,9 +17,8 @@
 package com.github.kxbmap.configs
 package support.scalikejdbc.async
 
-import scalikejdbc.async.AsyncConnectionPoolSettings
-
 import scala.concurrent.duration.Duration
+import scalikejdbc.async.AsyncConnectionPoolSettings
 
 trait ScalikeJDBCAsyncSupport {
 

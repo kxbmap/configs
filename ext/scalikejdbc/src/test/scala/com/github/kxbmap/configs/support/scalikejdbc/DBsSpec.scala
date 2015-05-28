@@ -18,9 +18,9 @@ package com.github.kxbmap.configs
 package support.scalikejdbc
 
 import com.typesafe.config.ConfigFactory
-import org.scalatest.{BeforeAndAfter, Matchers, FunSpec}
+import org.scalatest.{BeforeAndAfter, FunSpec, Matchers}
 import scalikejdbc.globalsettings.InfoLoggingForIgnoredParams
-import scalikejdbc.{ConnectionPool, NameBindingSQLValidatorSettings, SQLFormatterSettings, LoggingSQLAndTimeSettings, GlobalSettings}
+import scalikejdbc.{ConnectionPool, GlobalSettings, LoggingSQLAndTimeSettings, NameBindingSQLValidatorSettings, SQLFormatterSettings}
 
 class DBsSpec extends FunSpec with Matchers with BeforeAndAfter {
 
@@ -30,7 +30,7 @@ class DBsSpec extends FunSpec with Matchers with BeforeAndAfter {
 
   describe("setup") {
 
-    it ("should be available") {
+    it("should be available") {
       implicit val c = ConfigFactory.parseString(
         """db.default.url = "jdbc:mysql://localhost:3306/configs"
           |db.default.user = kxbmap
@@ -45,7 +45,7 @@ class DBsSpec extends FunSpec with Matchers with BeforeAndAfter {
 
   describe("setupAll") {
 
-    it ("should be available") {
+    it("should be available") {
       implicit val c = ConfigFactory.parseString(
         """db.db1.url = "jdbc:mysql://localhost:3306/configs"
           |db.db1.user = kxbmap
@@ -62,7 +62,7 @@ class DBsSpec extends FunSpec with Matchers with BeforeAndAfter {
 
   describe("close") {
 
-    it ("should be available") {
+    it("should be available") {
       implicit val c = ConfigFactory.parseString(
         """db.default.url = "jdbc:mysql://localhost:3306/configs"
           |db.default.user = kxbmap
@@ -72,13 +72,13 @@ class DBsSpec extends FunSpec with Matchers with BeforeAndAfter {
       DBs.setup()
       DBs.close()
 
-      a [IllegalStateException] should be thrownBy ConnectionPool.get()
+      a[IllegalStateException] should be thrownBy ConnectionPool.get()
     }
   }
 
   describe("closeAll") {
 
-    it ("should be available") {
+    it("should be available") {
       implicit val c = ConfigFactory.parseString(
         """db.db1.url = "jdbc:mysql://localhost:3306/configs"
           |db.db1.user = kxbmap
@@ -89,14 +89,14 @@ class DBsSpec extends FunSpec with Matchers with BeforeAndAfter {
       DBs.setupAll()
       DBs.closeAll()
 
-      a [IllegalStateException] should be thrownBy ConnectionPool.get('db1)
-      a [IllegalStateException] should be thrownBy ConnectionPool.get('db2)
+      a[IllegalStateException] should be thrownBy ConnectionPool.get('db1)
+      a[IllegalStateException] should be thrownBy ConnectionPool.get('db2)
     }
   }
 
   describe("loadGlobalSettings") {
 
-    it ("should be available") {
+    it("should be available") {
       implicit val c = ConfigFactory.parseString(
         """scalikejdbc.global {
           |  loggingSQLErrors = false

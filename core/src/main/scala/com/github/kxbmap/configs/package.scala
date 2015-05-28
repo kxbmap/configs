@@ -33,7 +33,7 @@ package object configs {
 
     def opt[T: AtPath](path: String): Option[T] = get[Option[T]](path)
 
-    def getOrElse[T: AtPath](path: String, default: => T): T = opt[T](path) getOrElse default
+    def getOrElse[T: AtPath](path: String, default: => T): T = opt[T](path).getOrElse(default)
   }
 
 }

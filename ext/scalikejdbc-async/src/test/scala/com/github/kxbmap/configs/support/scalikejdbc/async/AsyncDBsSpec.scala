@@ -29,7 +29,7 @@ class AsyncDBsSpec extends FunSpec with Matchers with BeforeAndAfter {
 
   describe("setup") {
 
-    it ("should be available") {
+    it("should be available") {
       implicit val c = ConfigFactory.parseString(
         """db.default.url = "jdbc:mysql://localhost:3306/configs"
           |db.default.user = kxbmap
@@ -44,7 +44,7 @@ class AsyncDBsSpec extends FunSpec with Matchers with BeforeAndAfter {
 
   describe("setupAll") {
 
-    it ("should be available") {
+    it("should be available") {
       implicit val c = ConfigFactory.parseString(
         """db.db1.url = "jdbc:mysql://localhost:3306/configs"
           |db.db1.user = kxbmap
@@ -61,7 +61,7 @@ class AsyncDBsSpec extends FunSpec with Matchers with BeforeAndAfter {
 
   describe("close") {
 
-    it ("should be available") {
+    it("should be available") {
       implicit val c = ConfigFactory.parseString(
         """db.default.url = "jdbc:mysql://localhost:3306/configs"
           |db.default.user = kxbmap
@@ -77,7 +77,7 @@ class AsyncDBsSpec extends FunSpec with Matchers with BeforeAndAfter {
 
   describe("closeAll") {
 
-    it ("should be available") {
+    it("should be available") {
       implicit val c = ConfigFactory.parseString(
         """db.db1.url = "jdbc:mysql://localhost:3306/configs"
           |db.db1.user = kxbmap

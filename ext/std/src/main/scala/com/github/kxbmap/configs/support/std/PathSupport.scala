@@ -17,18 +17,18 @@
 package com.github.kxbmap.configs
 package support.std
 
-import java.nio.file.{Paths, Path}
+import java.nio.file.{Path, Paths}
 
 trait PathSupport {
 
   /**
    * AtPath for Path
    */
-  implicit val pathAtPath: AtPath[Path] = AtPath by { Paths.get(_: String) }
+  implicit val pathAtPath: AtPath[Path] = AtPath.by(Paths.get(_: String))
 
   /**
    * AtPath for List[Path]
    */
-  implicit val pathListAtPath: AtPath[List[Path]] = AtPath listBy { Paths.get(_: String) }
+  implicit val pathListAtPath: AtPath[List[Path]] = AtPath.listBy(Paths.get(_: String))
 
 }

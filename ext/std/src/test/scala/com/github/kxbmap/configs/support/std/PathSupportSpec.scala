@@ -19,7 +19,7 @@ package support.std
 
 import com.typesafe.config.ConfigFactory
 import java.nio.file.{Path, Paths}
-import org.scalatest.{Matchers, FunSpec}
+import org.scalatest.{FunSpec, Matchers}
 
 class PathSupportSpec extends FunSpec with Matchers {
 
@@ -32,11 +32,11 @@ class PathSupportSpec extends FunSpec with Matchers {
       """a="path/to/file"
         |b= ["a", "b/c"]""".stripMargin)
 
-    it ("should be available to get a value") {
+    it("should be available to get a value") {
       c.get[Path]("a") shouldBe Paths.get("path", "to", "file")
     }
 
-    it ("should be available to get values as list") {
+    it("should be available to get values as list") {
       c.get[List[Path]]("b") shouldBe List(Paths.get("a"), Paths.get("b", "c"))
     }
   }

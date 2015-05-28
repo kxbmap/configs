@@ -19,25 +19,25 @@ package support.std
 
 import com.typesafe.config.ConfigFactory
 import java.io.File
-import org.scalatest.{Matchers, FunSpec}
+import org.scalatest.{FunSpec, Matchers}
 
 class FileSupportSpec extends FunSpec with Matchers {
 
-   val support = new FileSupport {}
+  val support = new FileSupport {}
 
   import support._
 
   describe("java.io.File support") {
-     val c = ConfigFactory.parseString(
-       """a="path/to/file"
-         |b= ["a", "b/c"]""".stripMargin)
+    val c = ConfigFactory.parseString(
+      """a="path/to/file"
+        |b= ["a", "b/c"]""".stripMargin)
 
-     it ("should be available to get a value") {
-       c.get[File]("a") shouldBe new File("path/to/file")
-     }
+    it("should be available to get a value") {
+      c.get[File]("a") shouldBe new File("path/to/file")
+    }
 
-     it ("should be available to get values as list") {
-       c.get[List[File]]("b") shouldBe List(new File("a"), new File("b/c"))
-     }
+    it("should be available to get values as list") {
+      c.get[List[File]]("b") shouldBe List(new File("a"), new File("b/c"))
+    }
   }
 }

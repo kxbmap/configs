@@ -29,7 +29,7 @@ class ConfigsSpec extends FunSpec with Matchers with TypeCheckedTripleEquals {
 
   describe("Configs") {
 
-    it ("should be a instance of Functor") {
+    it("should be a instance of Functor") {
       val c = parseString("value = 42")
       val cs = Configs.configs(c => c.getInt("value"))
 
@@ -48,12 +48,12 @@ class ConfigsSpec extends FunSpec with Matchers with TypeCheckedTripleEquals {
           |b = [{}, {}]
           |""".stripMargin)
 
-      it ("should be available for AtPath[A]") {
-        c.get[A]("a") should === (A)
+      it("should be available for AtPath[A]") {
+        c.get[A]("a") should ===(A)
       }
 
-      it ("should be available for AtPath[List[A]]") {
-        c.get[List[A]]("b") should === (List(A, A))
+      it("should be available for AtPath[List[A]]") {
+        c.get[List[A]]("b") should ===(List(A, A))
       }
     }
 
@@ -65,12 +65,12 @@ class ConfigsSpec extends FunSpec with Matchers with TypeCheckedTripleEquals {
             |b = [42, 100]
             |""".stripMargin)
 
-        it ("should be available to get a value") {
-          c.get[Int]("a") should === (42)
+        it("should be available to get a value") {
+          c.get[Int]("a") should ===(42)
         }
 
-        it ("should be available to get values as list") {
-          c.get[List[Int]]("b") should === (List(42, 100))
+        it("should be available to get values as list") {
+          c.get[List[Int]]("b") should ===(List(42, 100))
         }
       }
 
@@ -80,11 +80,11 @@ class ConfigsSpec extends FunSpec with Matchers with TypeCheckedTripleEquals {
             |b = [42, 100]
             |""".stripMargin)
 
-        it ("should be available to get a value") {
-          c.get[Long]("a") should === (42L)
+        it("should be available to get a value") {
+          c.get[Long]("a") should ===(42L)
         }
-        it ("should be available to get values as list") {
-          c.get[List[Long]]("b") should === (List(42L, 100L))
+        it("should be available to get values as list") {
+          c.get[List[Long]]("b") should ===(List(42L, 100L))
         }
       }
 
@@ -94,11 +94,11 @@ class ConfigsSpec extends FunSpec with Matchers with TypeCheckedTripleEquals {
             |b = [2.3, 42]
             |""".stripMargin)
 
-        it ("should be available to get a value") {
-          c.get[Double]("a") should === (42.195)
+        it("should be available to get a value") {
+          c.get[Double]("a") should ===(42.195)
         }
-        it ("should be available to get values as list") {
-          c.get[List[Double]]("b") should === (List(2.3, 42d))
+        it("should be available to get values as list") {
+          c.get[List[Double]]("b") should ===(List(2.3, 42d))
         }
       }
 
@@ -108,11 +108,11 @@ class ConfigsSpec extends FunSpec with Matchers with TypeCheckedTripleEquals {
             |b = [on, off]
             |""".stripMargin)
 
-        it ("should be available to get a value") {
-          c.get[Boolean]("a") should === (true)
+        it("should be available to get a value") {
+          c.get[Boolean]("a") should ===(true)
         }
-        it ("should be available to get values as list") {
-          c.get[List[Boolean]]("b") should === (List(true, false))
+        it("should be available to get values as list") {
+          c.get[List[Boolean]]("b") should ===(List(true, false))
         }
       }
 
@@ -122,19 +122,19 @@ class ConfigsSpec extends FunSpec with Matchers with TypeCheckedTripleEquals {
             |b = [Hello, World]
             |""".stripMargin)
 
-        it ("should be available to get a value") {
-          c.get[String]("a") should === ("foo")
+        it("should be available to get a value") {
+          c.get[String]("a") should ===("foo")
         }
-        it ("should be available to get values as list") {
-          c.get[List[String]]("b") should === (List("Hello", "World"))
+        it("should be available to get values as list") {
+          c.get[List[String]]("b") should ===(List("Hello", "World"))
         }
       }
 
       describe("for Config") {
         val c = parseString("a = foo")
 
-        it ("should be extract value") {
-          c.extract[Config] should === (c)
+        it("should be extract value") {
+          c.extract[Config] should ===(c)
         }
       }
 
@@ -144,8 +144,8 @@ class ConfigsSpec extends FunSpec with Matchers with TypeCheckedTripleEquals {
             |b = 2
             |""".stripMargin)
 
-        it ("should be extract value") {
-          c.extract[Map[String, Int]] should === (Map("a" -> 1, "b" -> 2))
+        it("should be extract value") {
+          c.extract[Map[String, Int]] should ===(Map("a" -> 1, "b" -> 2))
         }
       }
 
@@ -155,8 +155,8 @@ class ConfigsSpec extends FunSpec with Matchers with TypeCheckedTripleEquals {
             |b = 2
             |""".stripMargin)
 
-        it ("should be extract value") {
-          c.extract[Map[Symbol, Int]] should === (Map('a -> 1, 'b -> 2))
+        it("should be extract value") {
+          c.extract[Map[Symbol, Int]] should ===(Map('a -> 1, 'b -> 2))
         }
       }
 
@@ -166,11 +166,11 @@ class ConfigsSpec extends FunSpec with Matchers with TypeCheckedTripleEquals {
             |b = [Hello, World]
             |""".stripMargin)
 
-        it ("should be available to get a value") {
-          c.get[Symbol]("a") should === ('foo)
+        it("should be available to get a value") {
+          c.get[Symbol]("a") should ===('foo)
         }
-        it ("should be available to get values as list") {
-          c.get[List[Symbol]]("b") should === (List('Hello, 'World))
+        it("should be available to get values as list") {
+          c.get[List[Symbol]]("b") should ===(List('Hello, 'World))
         }
       }
 
@@ -180,11 +180,11 @@ class ConfigsSpec extends FunSpec with Matchers with TypeCheckedTripleEquals {
             |b = [1ms, 42h]
             |""".stripMargin)
 
-        it ("should be available to get a value") {
-          c.get[Duration]("a") should === (10.days)
+        it("should be available to get a value") {
+          c.get[Duration]("a") should ===(10.days)
         }
-        it ("should be available to get values as list") {
-          c.get[List[Duration]]("b") should === (List(1.milli, 42.hours))
+        it("should be available to get values as list") {
+          c.get[List[Duration]]("b") should ===(List(1.milli, 42.hours))
         }
       }
 
@@ -194,11 +194,11 @@ class ConfigsSpec extends FunSpec with Matchers with TypeCheckedTripleEquals {
             |b = [1ms, 42h]
             |""".stripMargin)
 
-        it ("should be available to get a value") {
-          c.get[java.time.Duration]("a") should === (java.time.Duration.ofDays(10))
+        it("should be available to get a value") {
+          c.get[java.time.Duration]("a") should ===(java.time.Duration.ofDays(10))
         }
-        it ("should be available to get values as list") {
-          c.get[List[java.time.Duration]]("b") should === (List(java.time.Duration.ofMillis(1), java.time.Duration.ofHours(42)))
+        it("should be available to get values as list") {
+          c.get[List[java.time.Duration]]("b") should ===(List(java.time.Duration.ofMillis(1), java.time.Duration.ofHours(42)))
         }
       }
 
@@ -208,11 +208,11 @@ class ConfigsSpec extends FunSpec with Matchers with TypeCheckedTripleEquals {
             |b = [1KiB, 1024b]
             |""".stripMargin)
 
-        it ("should be available to get a value") {
-          c.get[ConfigMemorySize]("a") should === (ConfigMemorySize.ofBytes(42 * 1024 * 1024))
+        it("should be available to get a value") {
+          c.get[ConfigMemorySize]("a") should ===(ConfigMemorySize.ofBytes(42 * 1024 * 1024))
         }
-        it ("should be available to get values as list") {
-          c.get[List[ConfigMemorySize]]("b") should === (List(ConfigMemorySize.ofBytes(1024), ConfigMemorySize.ofBytes(1024)))
+        it("should be available to get values as list") {
+          c.get[List[ConfigMemorySize]]("b") should ===(List(ConfigMemorySize.ofBytes(1024), ConfigMemorySize.ofBytes(1024)))
         }
       }
 
@@ -222,19 +222,19 @@ class ConfigsSpec extends FunSpec with Matchers with TypeCheckedTripleEquals {
             |b = [Hello, World]
             |""".stripMargin)
 
-        it ("should be available to get a value") {
-          c.opt[String]("a") should === (Some("foo"))
+        it("should be available to get a value") {
+          c.opt[String]("a") should ===(Some("foo"))
         }
 
-        it ("should be available to get values as list") {
-          c.opt[List[String]]("b") should === (Some(List("Hello", "World")))
+        it("should be available to get values as list") {
+          c.opt[List[String]]("b") should ===(Some(List("Hello", "World")))
         }
 
-        it ("should catch ConfigException.Missing") {
-          c.opt[String]("c") should === (None)
+        it("should catch ConfigException.Missing") {
+          c.opt[String]("c") should ===(None)
         }
 
-        it ("should not catch others") {
+        it("should not catch others") {
           intercept[ConfigException.WrongType] {
             c.opt[Int]("a")
           }
@@ -247,28 +247,28 @@ class ConfigsSpec extends FunSpec with Matchers with TypeCheckedTripleEquals {
             |b = [Hello, World]
             |""".stripMargin)
 
-        it ("should be available to get a value") {
-          c.get[Either[Throwable, String]]("a") should === (Right("foo"))
+        it("should be available to get a value") {
+          c.get[Either[Throwable, String]]("a") should ===(Right("foo"))
         }
 
-        it ("should be available to get values as list") {
-          c.get[Either[Throwable, List[String]]]("b") should === (Right(List("Hello", "World")))
+        it("should be available to get values as list") {
+          c.get[Either[Throwable, List[String]]]("b") should ===(Right(List("Hello", "World")))
         }
 
         implicit val cs = Configs.atPath[A]((_, _) => throw FatalError)
 
         describe("with Throwable") {
-          it ("should catch all error") {
-            c.get[Either[Throwable, A]]("a") should === (Left(FatalError))
+          it("should catch all error") {
+            c.get[Either[Throwable, A]]("a") should ===(Left(FatalError))
           }
         }
 
         describe("with FatalError") {
-          it ("should catch FatalError") {
-            c.get[Either[FatalError, A]]("a") should === (Left(FatalError))
+          it("should catch FatalError") {
+            c.get[Either[FatalError, A]]("a") should ===(Left(FatalError))
           }
 
-          it ("should not catch others") {
+          it("should not catch others") {
             intercept[ConfigException.WrongType] {
               c.get[Either[FatalError, Int]]("a")
             }
@@ -282,21 +282,21 @@ class ConfigsSpec extends FunSpec with Matchers with TypeCheckedTripleEquals {
             |b = [Hello, World]
             |""".stripMargin)
 
-        it ("should be available to get a value") {
-          c.get[Try[String]]("a") should === (Success("foo"))
+        it("should be available to get a value") {
+          c.get[Try[String]]("a") should ===(Success("foo"))
         }
 
-        it ("should be available to get values as list") {
-          c.get[Try[List[String]]]("b") should === (Success(List("Hello", "World")))
+        it("should be available to get values as list") {
+          c.get[Try[List[String]]]("b") should ===(Success(List("Hello", "World")))
         }
 
-        it ("should catch non fatal error") {
+        it("should catch non fatal error") {
           c.get[Try[Int]]("a") shouldBe 'failure
         }
 
         implicit val cs = Configs.atPath[A]((_, _) => throw new FatalError())
 
-        it ("should not catch fatal error") {
+        it("should not catch fatal error") {
           intercept[FatalError] {
             c.get[Try[A]]("a")
           }
@@ -307,8 +307,11 @@ class ConfigsSpec extends FunSpec with Matchers with TypeCheckedTripleEquals {
 
 
   sealed trait A
+
   case object A extends A
 
   class FatalError extends ControlThrowable
+
   object FatalError extends FatalError
+
 }

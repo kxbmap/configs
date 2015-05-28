@@ -47,11 +47,11 @@ object DBSettings {
     }
 
   private def supportedDrivers = Map(
-    "jdbc:mysql:"       -> "com.mysql.jdbc.Driver",
-    "mysql:"            -> "com.mysql.jdbc.Driver",
-    "jdbc:postgresql:"  -> "org.postgresql.Driver",
-    "postgres:"         -> "org.postgresql.Driver",
-    "jdbc:h2:"          -> "org.h2.Driver",
-    "jdbc:hsqldb:"      -> "org.hsqldb.jdbcDriver"
+    "jdbc:mysql:" -> "com.mysql.jdbc.Driver",
+    "mysql:" -> "com.mysql.jdbc.Driver",
+    "jdbc:postgresql:" -> "org.postgresql.Driver",
+    "postgres:" -> "org.postgresql.Driver",
+    "jdbc:h2:" -> "org.h2.Driver",
+    "jdbc:hsqldb:" -> "org.hsqldb.jdbcDriver"
   )
 }

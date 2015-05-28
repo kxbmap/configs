@@ -18,7 +18,7 @@ package com.github.kxbmap.configs
 package support.std
 
 import com.typesafe.config.ConfigException
-import java.net.{UnknownHostException, InetSocketAddress, InetAddress}
+import java.net.{InetAddress, InetSocketAddress, UnknownHostException}
 
 trait NetSupport {
 

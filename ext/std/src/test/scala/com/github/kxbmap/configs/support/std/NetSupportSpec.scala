@@ -18,8 +18,8 @@ package com.github.kxbmap.configs
 package support.std
 
 import com.typesafe.config.{ConfigException, ConfigFactory}
-import java.net.{InetSocketAddress, InetAddress}
-import org.scalatest.{Matchers, FunSpec}
+import java.net.{InetAddress, InetSocketAddress}
+import org.scalatest.{FunSpec, Matchers}
 
 class NetSupportSpec extends FunSpec with Matchers {
 
@@ -34,11 +34,11 @@ class NetSupportSpec extends FunSpec with Matchers {
           |b = ["::1", "127.0.0.1"]
           |""".stripMargin)
 
-      it ("should be available to get a value") {
+      it("should be available to get a value") {
         c.get[InetAddress]("a") shouldBe InetAddress.getByAddress(Array(0xc0, 0xa8, 0x00, 0x01).map(_.toByte))
       }
 
-      it ("should be available to get values as list") {
+      it("should be available to get values as list") {
         c.get[List[InetAddress]]("b") shouldBe List(
           InetAddress.getByAddress(Array[Byte](0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1)),
           InetAddress.getByAddress(Array[Byte](0x7f, 0, 0, 1))
@@ -52,13 +52,13 @@ class NetSupportSpec extends FunSpec with Matchers {
           |b = ["::1", "some-unknown-host"]
           |""".stripMargin)
 
-      it ("should throw a ConfigException.BadValue") {
+      it("should throw a ConfigException.BadValue") {
         intercept[ConfigException.BadValue] {
           c.get[InetAddress]("a")
         }
       }
 
-      it ("should throw a ConfigException.BadValue (List)") {
+      it("should throw a ConfigException.BadValue (List)") {
         intercept[ConfigException.BadValue] {
           c.get[List[InetAddress]]("b")
         }
@@ -69,7 +69,7 @@ class NetSupportSpec extends FunSpec with Matchers {
   describe("java.net.InetSocketAddress support") {
     describe("(valid address)") {
       describe("(addr)") {
-        it ("should be available to extract a value") {
+        it("should be available to extract a value") {
           val c = ConfigFactory.parseString(
             """addr = "192.168.0.1"
               |port = 8080
@@ -86,7 +86,7 @@ class NetSupportSpec extends FunSpec with Matchers {
             |port = 8080
             |""".stripMargin)
 
-        it ("should be available to extract a value") {
+        it("should be available to extract a value") {
           c.extract[InetSocketAddress] shouldBe new InetSocketAddress(
             InetAddress.getByAddress(Array(0xc0, 0xa8, 0x00, 0x01).map(_.toByte)), 8080)
         }
@@ -95,7 +95,7 @@ class NetSupportSpec extends FunSpec with Matchers {
 
     describe("(unknown host)") {
       describe("(addr)") {
-        it ("should throw a ConfigException.BadValue") {
+        it("should throw a ConfigException.BadValue") {
           val c = ConfigFactory.parseString(
             """addr = "some-unknown-host"
               |port = 8080
@@ -113,7 +113,7 @@ class NetSupportSpec extends FunSpec with Matchers {
             |port = 8080
             |""".stripMargin)
 
-        it ("should be available to extract a value") {
+        it("should be available to extract a value") {
           c.extract[InetSocketAddress] shouldBe new InetSocketAddress("some-unknown-host", 8080)
         }
       }

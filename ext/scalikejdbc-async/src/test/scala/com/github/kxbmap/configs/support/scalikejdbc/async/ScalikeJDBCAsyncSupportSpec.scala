@@ -25,12 +25,12 @@ class ScalikeJDBCAsyncSupportSpec extends FunSpec with Matchers {
 
   describe("asyncConnectionPoolSettingsConfigs") {
 
-    it ("should be available") {
+    it("should be available") {
       val c = ConfigFactory.empty()
       c.extract[AsyncConnectionPoolSettings] shouldBe AsyncConnectionPoolSettings()
     }
 
-    it ("should be available with parameters") {
+    it("should be available with parameters") {
       val c = ConfigFactory.parseString(
         """maxPoolSize = 16
           |maxQueueSize = 42
@@ -44,7 +44,7 @@ class ScalikeJDBCAsyncSupportSpec extends FunSpec with Matchers {
       )
     }
 
-    it ("should be available with a duration parameter") {
+    it("should be available with a duration parameter") {
       val c = ConfigFactory.parseString("maxIdle = 3s")
       c.extract[AsyncConnectionPoolSettings] shouldBe AsyncConnectionPoolSettings(
         maxIdleMillis = 3000L

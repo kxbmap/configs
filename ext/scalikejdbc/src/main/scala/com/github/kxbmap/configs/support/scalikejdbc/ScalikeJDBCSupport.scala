@@ -17,13 +17,11 @@
 package com.github.kxbmap.configs
 package support.scalikejdbc
 
-import java.util.Locale
-
 import com.typesafe.config.ConfigException
+import java.util.Locale
+import scala.concurrent.duration.Duration
 import scalikejdbc.globalsettings.{ExceptionForIgnoredParams, IgnoredParamsValidation, InfoLoggingForIgnoredParams, NoCheckForIgnoredParams, WarnLoggingForIgnoredParams}
 import scalikejdbc.{ConnectionPoolSettings, LoggingSQLAndTimeSettings, NameBindingSQLValidatorSettings, SQLFormatterSettings}
-
-import scala.concurrent.duration.Duration
 
 
 trait ScalikeJDBCSupport {

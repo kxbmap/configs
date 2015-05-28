@@ -16,27 +16,34 @@
 
 package com.github.kxbmap.configs
 
+import scala.collection.JavaConversions._
 
 case class Bytes(value: Long) extends Ordered[Bytes] {
-  def compare(that: Bytes): Int = value compare that.value
 
-  def +(other: Bytes): Bytes = Bytes(value + other.value)
-  def -(other: Bytes): Bytes = Bytes(value - other.value)
-  def *(factor: Double): Bytes = Bytes((value * factor).toLong)
-  def /(divisor: Double): Bytes = Bytes((value / divisor).toLong)
-  def /(other: Bytes): Double = value / other.value.toDouble
+  def compare(rhs: Bytes): Int = value.compare(rhs.value)
+
+  def +(rhs: Bytes): Bytes = Bytes(value + rhs.value)
+
+  def -(rhs: Bytes): Bytes = Bytes(value - rhs.value)
+
+  def *(rhs: Double): Bytes = Bytes((value * rhs).toLong)
+
+  def /(rhs: Double): Bytes = Bytes((value / rhs).toLong)
+
+  def /(rhs: Bytes): Double = value / rhs.value.toDouble
+
   def unary_+ : Bytes = this
+
   def unary_- : Bytes = Bytes(-value)
 }
-
 
 object Bytes {
 
   implicit val bytesAtPath: AtPath[Bytes] = Configs.atPath {
-    Bytes apply _.getBytes(_)
+    (c, p) => Bytes(c.getBytes(p))
   }
+
   implicit val bytesListAtPath: AtPath[List[Bytes]] = Configs.atPath {
-    import scala.collection.JavaConversions._
     _.getBytesList(_).map(Bytes(_)).toList
   }
 
