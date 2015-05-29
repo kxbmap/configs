@@ -18,12 +18,15 @@ package com.github.kxbmap
 
 import com.typesafe.config.Config
 import scala.annotation.implicitNotFound
+import scala.collection.generic.CanBuildFrom
 
 
 package object configs {
 
   @implicitNotFound("No implicit AtPath defined for ${T}.")
   type AtPath[T] = Configs[String => T]
+
+  private[configs] type CBF[To[_], Elem] = CanBuildFrom[Nothing, Elem, To[Elem]]
 
 
   final implicit class EnrichTypesafeConfig(val c: Config) extends AnyVal {

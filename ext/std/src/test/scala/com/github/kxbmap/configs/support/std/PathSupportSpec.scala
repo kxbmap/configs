@@ -14,18 +14,13 @@
  * limitations under the License.
  */
 
-package com.github.kxbmap.configs
-package support.std
+package com.github.kxbmap.configs.support.std
 
+import com.github.kxbmap.configs._
 import com.typesafe.config.ConfigFactory
 import java.nio.file.{Path, Paths}
-import org.scalatest.{FunSpec, Matchers}
 
-class PathSupportSpec extends FunSpec with Matchers {
-
-  val support = new PathSupport {}
-
-  import support._
+class PathSupportSpec extends UnitSpec with PathSupport {
 
   describe("java.nio.file.Path support") {
     val c = ConfigFactory.parseString(
@@ -33,11 +28,15 @@ class PathSupportSpec extends FunSpec with Matchers {
         |b= ["a", "b/c"]""".stripMargin)
 
     it("should be available to get a value") {
-      c.get[Path]("a") shouldBe Paths.get("path", "to", "file")
+      assert(c.get[Path]("a") == (Paths.get("path", "to", "file"): Path))
     }
 
     it("should be available to get values as list") {
-      c.get[List[Path]]("b") shouldBe List(Paths.get("a"), Paths.get("b", "c"))
+      assert(c.get[List[Path]]("b") === (List(Paths.get("a"), Paths.get("b", "c")): List[Path]))
+    }
+
+    it("should be available to get values as vector") {
+      assert(c.get[Vector[Path]]("b") === (Vector(Paths.get("a"), Paths.get("b", "c")): Vector[Path]))
     }
   }
 }

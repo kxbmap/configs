@@ -22,5 +22,6 @@ object AtPath {
 
   def by[S: AtPath, T](f: S => T): AtPath[T] = AtPath[S].map(f.compose)
 
-  def listBy[S, T](f: S => T)(implicit ev: AtPath[List[S]]): AtPath[List[T]] = by((_: List[S]).map(f))
+  def listBy[C[_], S, T](f: S => T)(implicit ev: AtPath[List[S]], cbf: CBF[C, T]): AtPath[C[T]] =
+    by((_: List[S]).map(f).to[C])
 }

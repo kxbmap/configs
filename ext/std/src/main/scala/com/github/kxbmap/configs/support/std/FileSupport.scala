@@ -29,6 +29,6 @@ trait FileSupport {
   /**
    * AtPath for List[File]
    */
-  implicit val fileListAtPath: AtPath[List[File]] = AtPath.listBy(new File(_: String))
+  implicit def filesAtPath[C[_]](implicit cbf: CBF[C, File]): AtPath[C[File]] = AtPath.listBy(new File(_: String))
 
 }

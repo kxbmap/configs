@@ -14,18 +14,13 @@
  * limitations under the License.
  */
 
-package com.github.kxbmap.configs
-package support.std
+package com.github.kxbmap.configs.support.std
 
+import com.github.kxbmap.configs._
 import com.typesafe.config.{ConfigException, ConfigFactory}
 import java.net.{InetAddress, InetSocketAddress}
-import org.scalatest.{FunSpec, Matchers}
 
-class NetSupportSpec extends FunSpec with Matchers {
-
-  val support = new NetSupport {}
-
-  import support._
+class NetSupportSpec extends UnitSpec with NetSupport {
 
   describe("java.net.InetAddress support") {
     describe("(valid address)") {
@@ -35,14 +30,15 @@ class NetSupportSpec extends FunSpec with Matchers {
           |""".stripMargin)
 
       it("should be available to get a value") {
-        c.get[InetAddress]("a") shouldBe InetAddress.getByAddress(Array(0xc0, 0xa8, 0x00, 0x01).map(_.toByte))
+        assert(c.get[InetAddress]("a") == (InetAddress.getByName("192.168.0.1"): InetAddress))
       }
 
       it("should be available to get values as list") {
-        c.get[List[InetAddress]]("b") shouldBe List(
-          InetAddress.getByAddress(Array[Byte](0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1)),
-          InetAddress.getByAddress(Array[Byte](0x7f, 0, 0, 1))
-        )
+        assert(c.get[List[InetAddress]]("b") === (List(InetAddress.getByName("::1"), InetAddress.getByName("127.0.0.1")): List[InetAddress]))
+      }
+
+      it("should be available to get values as vector") {
+        assert(c.get[Vector[InetAddress]]("b") === (Vector(InetAddress.getByName("::1"), InetAddress.getByName("127.0.0.1")): Vector[InetAddress]))
       }
     }
 
@@ -75,8 +71,7 @@ class NetSupportSpec extends FunSpec with Matchers {
               |port = 8080
               |""".stripMargin)
 
-          c.extract[InetSocketAddress] shouldBe new InetSocketAddress(
-            InetAddress.getByAddress(Array(0xc0, 0xa8, 0x00, 0x01).map(_.toByte)), 8080)
+          assert(c.extract[InetSocketAddress] == (new InetSocketAddress(InetAddress.getByName("192.168.0.1"), 8080): InetSocketAddress))
         }
       }
 
@@ -87,8 +82,7 @@ class NetSupportSpec extends FunSpec with Matchers {
             |""".stripMargin)
 
         it("should be available to extract a value") {
-          c.extract[InetSocketAddress] shouldBe new InetSocketAddress(
-            InetAddress.getByAddress(Array(0xc0, 0xa8, 0x00, 0x01).map(_.toByte)), 8080)
+          assert(c.extract[InetSocketAddress] == (new InetSocketAddress(InetAddress.getByName("192.168.0.1"), 8080): InetSocketAddress))
         }
       }
     }
@@ -114,7 +108,7 @@ class NetSupportSpec extends FunSpec with Matchers {
             |""".stripMargin)
 
         it("should be available to extract a value") {
-          c.extract[InetSocketAddress] shouldBe new InetSocketAddress("some-unknown-host", 8080)
+          assert(c.extract[InetSocketAddress] == (new InetSocketAddress("some-unknown-host", 8080): InetSocketAddress))
         }
       }
     }

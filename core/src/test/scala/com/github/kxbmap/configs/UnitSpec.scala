@@ -16,7 +16,8 @@
 
 package com.github.kxbmap.configs
 
-import org.scalatest.FunSpec
+import org.scalactic.TypeCheckedTripleEquals
 import org.scalatest.prop.PropertyChecks
+import org.scalatest.{DiagrammedAssertions, FunSpec}
 
-class UnitSpec extends FunSpec with PropertyChecks
+class UnitSpec extends FunSpec with DiagrammedAssertions with TypeCheckedTripleEquals with PropertyChecks

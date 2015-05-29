@@ -17,6 +17,7 @@
 package com.github.kxbmap.configs
 
 import com.typesafe.config.{Config, ConfigMemorySize}
+import java.time.{Duration => JDuration}
 import java.util.concurrent.TimeUnit
 import scala.annotation.implicitNotFound
 import scala.collection.JavaConversions._
@@ -46,27 +47,38 @@ trait ConfigsInstances {
 
   import Configs._
 
-  implicit val configsIdentity: Configs[Config] = configs(identity)
+  implicit val configConfigs: Configs[Config] = configs(identity)
+
 
   implicit val intAtPath: AtPath[Int] = atPath(_.getInt(_))
 
-  implicit val intListAtPath: AtPath[List[Int]] = atPath(_.getIntList(_).map(_.toInt).toList)
+  implicit def intsAtPath[C[_]](implicit cbf: CBF[C, Int]): AtPath[C[Int]] = atPath {
+    _.getIntList(_).map(_.toInt).to[C]
+  }
 
   implicit val longAtPath: AtPath[Long] = atPath(_.getLong(_))
 
-  implicit val longListAtPath: AtPath[List[Long]] = atPath(_.getLongList(_).map(_.toLong).toList)
+  implicit def longsAtPath[C[_]](implicit cbf: CBF[C, Long]): AtPath[C[Long]] = atPath {
+    _.getLongList(_).map(_.toLong).to[C]
+  }
 
   implicit val doubleAtPath: AtPath[Double] = atPath(_.getDouble(_))
 
-  implicit val doubleListAtPath: AtPath[List[Double]] = atPath(_.getDoubleList(_).map(_.toDouble).toList)
+  implicit def doublesAtPath[C[_]](implicit cbf: CBF[C, Double]): AtPath[C[Double]] = atPath {
+    _.getDoubleList(_).map(_.toDouble).to[C]
+  }
 
   implicit val booleanAtPath: AtPath[Boolean] = atPath(_.getBoolean(_))
 
-  implicit val booleanListAtPath: AtPath[List[Boolean]] = atPath(_.getBooleanList(_).map(_.booleanValue()).toList)
+  implicit def booleansAtPath[C[_]](implicit cbf: CBF[C, Boolean]): AtPath[C[Boolean]] = atPath {
+    _.getBooleanList(_).map(_.booleanValue()).to[C]
+  }
 
   implicit val stringAtPath: AtPath[String] = atPath(_.getString(_))
 
-  implicit val stringListAtPath: AtPath[List[String]] = atPath(_.getStringList(_).toList)
+  implicit def stringsAtPath[C[_]](implicit cbf: CBF[C, String]): AtPath[C[String]] = atPath {
+    _.getStringList(_).to[C]
+  }
 
   def mapConfigs[K, T: AtPath](f: String => K): Configs[Map[K, T]] = configs { c =>
     c.root().keysIterator.map { k => f(k) -> c.get[T](k) }.toMap
@@ -78,14 +90,14 @@ trait ConfigsInstances {
 
   implicit val symbolAtPath: AtPath[Symbol] = AtPath.by(Symbol.apply)
 
-  implicit val symbolListAtPath: AtPath[List[Symbol]] = AtPath.listBy(Symbol.apply)
+  implicit def symbolsAtPath[C[_]](implicit cbf: CBF[C, Symbol]): AtPath[C[Symbol]] = AtPath.listBy(Symbol.apply)
 
   implicit def configsAtPath[T: Configs]: AtPath[T] = atPath {
     _.getConfig(_).extract[T]
   }
 
-  implicit def configsListAtPath[T: Configs]: AtPath[List[T]] = atPath {
-    _.getConfigList(_).map(_.extract[T]).toList
+  implicit def configsCollectionAtPath[C[_], T: Configs](implicit cbf: CBF[C, T]): AtPath[C[T]] = atPath {
+    _.getConfigList(_).map(_.extract[T]).to[C]
   }
 
   implicit def optionConfigs[T: Configs]: Configs[Option[T]] = configs { c =>
@@ -122,24 +134,24 @@ trait ConfigsInstances {
     Duration.fromNanos(c.getDuration(p, TimeUnit.NANOSECONDS))
   }
 
-  implicit val durationListAtPath: AtPath[List[Duration]] = atPath {
-    _.getDurationList(_, TimeUnit.NANOSECONDS).map(Duration.fromNanos(_)).toList
+  implicit def durationsAtPath[C[_]](implicit cbf: CBF[C, Duration]): AtPath[C[Duration]] = atPath {
+    _.getDurationList(_, TimeUnit.NANOSECONDS).map(Duration.fromNanos(_): Duration).to[C]
   }
 
-  implicit val javaTimeDurationAtPath: AtPath[java.time.Duration] = atPath {
+  implicit val javaTimeDurationAtPath: AtPath[JDuration] = atPath {
     _.getDuration(_)
   }
 
-  implicit val javaTimeDurationListAtPath: AtPath[List[java.time.Duration]] = atPath {
-    _.getDurationList(_).toList
+  implicit def javaTimeDurationsAtPath[C[_]](implicit cbf: CBF[C, JDuration]): AtPath[C[JDuration]] = atPath {
+    _.getDurationList(_).to[C]
   }
 
   implicit val configMemorySizeAtPath: AtPath[ConfigMemorySize] = atPath {
     _.getMemorySize(_)
   }
 
-  implicit val configMemorySizeListAtPath: AtPath[List[ConfigMemorySize]] = atPath {
-    _.getMemorySizeList(_).toList
+  implicit def configMemorySizesAtPath[C[_]](implicit cbf: CBF[C, ConfigMemorySize]): AtPath[C[ConfigMemorySize]] = atPath {
+    _.getMemorySizeList(_).to[C]
   }
 
 }

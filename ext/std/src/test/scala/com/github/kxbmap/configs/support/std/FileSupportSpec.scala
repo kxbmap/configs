@@ -14,18 +14,13 @@
  * limitations under the License.
  */
 
-package com.github.kxbmap.configs
-package support.std
+package com.github.kxbmap.configs.support.std
 
+import com.github.kxbmap.configs._
 import com.typesafe.config.ConfigFactory
 import java.io.File
-import org.scalatest.{FunSpec, Matchers}
 
-class FileSupportSpec extends FunSpec with Matchers {
-
-  val support = new FileSupport {}
-
-  import support._
+class FileSupportSpec extends UnitSpec with FileSupport {
 
   describe("java.io.File support") {
     val c = ConfigFactory.parseString(
@@ -33,11 +28,15 @@ class FileSupportSpec extends FunSpec with Matchers {
         |b= ["a", "b/c"]""".stripMargin)
 
     it("should be available to get a value") {
-      c.get[File]("a") shouldBe new File("path/to/file")
+      assert(c.get[File]("a") == (new File("path/to/file"): File))
     }
 
     it("should be available to get values as list") {
-      c.get[List[File]]("b") shouldBe List(new File("a"), new File("b/c"))
+      assert(c.get[List[File]]("b") === (List(new File("a"), new File("b/c")): List[File]))
+    }
+
+    it("should be available to get values as vector") {
+      assert(c.get[Vector[File]]("b") === (Vector(new File("a"), new File("b/c")): Vector[File]))
     }
   }
 }

@@ -43,8 +43,8 @@ object Bytes {
     (c, p) => Bytes(c.getBytes(p))
   }
 
-  implicit val bytesListAtPath: AtPath[List[Bytes]] = Configs.atPath {
-    _.getBytesList(_).map(Bytes(_)).toList
+  implicit def bytesCollectionAtPath[C[_]](implicit cbf: CBF[C, Bytes]): AtPath[C[Bytes]] = Configs.atPath {
+    _.getBytesList(_).map(Bytes(_)).to[C]
   }
 
   implicit val bytesOrdering: Ordering[Bytes] = Ordering.by(_.value)

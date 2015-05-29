@@ -37,9 +37,9 @@ trait NetSupport {
   /**
    * AtPath for `List[InetAddress]`
    */
-  implicit val inetAddressListAtPath: AtPath[List[InetAddress]] = Configs.atPath { (c, p) =>
+  implicit def inetAddressesAtPath[C[_]](implicit cbf: CBF[C, InetAddress]): AtPath[C[InetAddress]] = Configs.atPath { (c, p) =>
     try
-      c.get[List[String]](p) map InetAddress.getByName
+      c.get[List[String]](p).map(InetAddress.getByName).to[C]
     catch {
       case e: UnknownHostException =>
         throw new ConfigException.BadValue(c.origin(), p, e.getMessage, e)

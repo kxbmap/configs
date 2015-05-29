@@ -29,6 +29,6 @@ trait PathSupport {
   /**
    * AtPath for List[Path]
    */
-  implicit val pathListAtPath: AtPath[List[Path]] = AtPath.listBy(Paths.get(_: String))
+  implicit def pathsAtPath[C[_]](implicit cbf: CBF[C, Path]): AtPath[C[Path]] = AtPath.listBy(Paths.get(_: String))
 
 }
