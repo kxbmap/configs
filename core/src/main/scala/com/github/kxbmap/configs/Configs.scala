@@ -53,25 +53,25 @@ trait ConfigsInstances {
   implicit val intAtPath: AtPath[Int] = atPath(_.getInt(_))
 
   implicit def intsAtPath[C[_]](implicit cbf: CBF[C, Int]): AtPath[C[Int]] = atPath {
-    _.getIntList(_).map(_.toInt).to[C]
+    _.getIntList(_).map(_.toInt)(collection.breakOut)
   }
 
   implicit val longAtPath: AtPath[Long] = atPath(_.getLong(_))
 
   implicit def longsAtPath[C[_]](implicit cbf: CBF[C, Long]): AtPath[C[Long]] = atPath {
-    _.getLongList(_).map(_.toLong).to[C]
+    _.getLongList(_).map(_.toLong)(collection.breakOut)
   }
 
   implicit val doubleAtPath: AtPath[Double] = atPath(_.getDouble(_))
 
   implicit def doublesAtPath[C[_]](implicit cbf: CBF[C, Double]): AtPath[C[Double]] = atPath {
-    _.getDoubleList(_).map(_.toDouble).to[C]
+    _.getDoubleList(_).map(_.toDouble)(collection.breakOut)
   }
 
   implicit val booleanAtPath: AtPath[Boolean] = atPath(_.getBoolean(_))
 
   implicit def booleansAtPath[C[_]](implicit cbf: CBF[C, Boolean]): AtPath[C[Boolean]] = atPath {
-    _.getBooleanList(_).map(_.booleanValue()).to[C]
+    _.getBooleanList(_).map(_.booleanValue())(collection.breakOut)
   }
 
   implicit val stringAtPath: AtPath[String] = atPath(_.getString(_))
@@ -97,7 +97,7 @@ trait ConfigsInstances {
   }
 
   implicit def configsCollectionAtPath[C[_], T: Configs](implicit cbf: CBF[C, T]): AtPath[C[T]] = atPath {
-    _.getConfigList(_).map(_.extract[T]).to[C]
+    _.getConfigList(_).map(_.extract[T])(collection.breakOut)
   }
 
   implicit def optionConfigs[T: Configs]: Configs[Option[T]] = configs { c =>
@@ -135,7 +135,7 @@ trait ConfigsInstances {
   }
 
   implicit def durationsAtPath[C[_]](implicit cbf: CBF[C, Duration]): AtPath[C[Duration]] = atPath {
-    _.getDurationList(_, TimeUnit.NANOSECONDS).map(Duration.fromNanos(_): Duration).to[C]
+    _.getDurationList(_, TimeUnit.NANOSECONDS).map(Duration.fromNanos(_): Duration)(collection.breakOut)
   }
 
   implicit val javaTimeDurationAtPath: AtPath[JDuration] = atPath {

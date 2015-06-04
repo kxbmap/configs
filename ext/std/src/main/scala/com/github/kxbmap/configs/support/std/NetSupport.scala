@@ -39,7 +39,7 @@ trait NetSupport {
    */
   implicit def inetAddressesAtPath[C[_]](implicit cbf: CBF[C, InetAddress]): AtPath[C[InetAddress]] = Configs.atPath { (c, p) =>
     try
-      c.get[List[String]](p).map(InetAddress.getByName).to[C]
+      c.get[List[String]](p).map(InetAddress.getByName)(collection.breakOut)
     catch {
       case e: UnknownHostException =>
         throw new ConfigException.BadValue(c.origin(), p, e.getMessage, e)
