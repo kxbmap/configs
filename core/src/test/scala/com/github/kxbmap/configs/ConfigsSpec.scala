@@ -193,10 +193,10 @@ class ConfigsSpec extends UnitSpec {
             |""".stripMargin)
 
         it("should be available to get a value") {
-          assert(c.get[java.time.Duration]("a") === (java.time.Duration.ofDays(10): java.time.Duration))
+          assert(c.get[java.time.Duration]("a") === java.time.Duration.ofDays(10))
         }
         it("should be available to get values as list") {
-          assert(c.get[List[java.time.Duration]]("b") === (List(java.time.Duration.ofMillis(1), java.time.Duration.ofHours(42)): List[java.time.Duration]))
+          assert(c.get[List[java.time.Duration]]("b") === List(java.time.Duration.ofMillis(1), java.time.Duration.ofHours(42)))
         }
       }
 
@@ -207,10 +207,10 @@ class ConfigsSpec extends UnitSpec {
             |""".stripMargin)
 
         it("should be available to get a value") {
-          assert(c.get[ConfigMemorySize]("a") === (ConfigMemorySize.ofBytes(42 * 1024 * 1024): ConfigMemorySize))
+          assert(c.get[ConfigMemorySize]("a") === ConfigMemorySize.ofBytes(42 * 1024 * 1024))
         }
         it("should be available to get values as list") {
-          assert(c.get[List[ConfigMemorySize]]("b") === (List(ConfigMemorySize.ofBytes(1024), ConfigMemorySize.ofBytes(1024)): List[ConfigMemorySize]))
+          assert(c.get[List[ConfigMemorySize]]("b") === List(ConfigMemorySize.ofBytes(1024), ConfigMemorySize.ofBytes(1024)))
         }
       }
 

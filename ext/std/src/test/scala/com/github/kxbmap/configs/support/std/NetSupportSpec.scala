@@ -30,15 +30,15 @@ class NetSupportSpec extends UnitSpec with NetSupport {
           |""".stripMargin)
 
       it("should be available to get a value") {
-        assert(c.get[InetAddress]("a") == (InetAddress.getByName("192.168.0.1"): InetAddress))
+        assert(c.get[InetAddress]("a") == InetAddress.getByName("192.168.0.1"))
       }
 
       it("should be available to get values as list") {
-        assert(c.get[List[InetAddress]]("b") === (List(InetAddress.getByName("::1"), InetAddress.getByName("127.0.0.1")): List[InetAddress]))
+        assert(c.get[List[InetAddress]]("b") === List(InetAddress.getByName("::1"), InetAddress.getByName("127.0.0.1")))
       }
 
       it("should be available to get values as vector") {
-        assert(c.get[Vector[InetAddress]]("b") === (Vector(InetAddress.getByName("::1"), InetAddress.getByName("127.0.0.1")): Vector[InetAddress]))
+        assert(c.get[Vector[InetAddress]]("b") === Vector(InetAddress.getByName("::1"), InetAddress.getByName("127.0.0.1")))
       }
     }
 
@@ -71,7 +71,7 @@ class NetSupportSpec extends UnitSpec with NetSupport {
               |port = 8080
               |""".stripMargin)
 
-          assert(c.extract[InetSocketAddress] == (new InetSocketAddress(InetAddress.getByName("192.168.0.1"), 8080): InetSocketAddress))
+          assert(c.extract[InetSocketAddress] == new InetSocketAddress(InetAddress.getByName("192.168.0.1"), 8080))
         }
       }
 
@@ -82,7 +82,7 @@ class NetSupportSpec extends UnitSpec with NetSupport {
             |""".stripMargin)
 
         it("should be available to extract a value") {
-          assert(c.extract[InetSocketAddress] == (new InetSocketAddress(InetAddress.getByName("192.168.0.1"), 8080): InetSocketAddress))
+          assert(c.extract[InetSocketAddress] == new InetSocketAddress(InetAddress.getByName("192.168.0.1"), 8080))
         }
       }
     }
@@ -108,7 +108,7 @@ class NetSupportSpec extends UnitSpec with NetSupport {
             |""".stripMargin)
 
         it("should be available to extract a value") {
-          assert(c.extract[InetSocketAddress] == (new InetSocketAddress("some-unknown-host", 8080): InetSocketAddress))
+          assert(c.extract[InetSocketAddress] == new InetSocketAddress("some-unknown-host", 8080))
         }
       }
     }

@@ -28,15 +28,15 @@ class FileSupportSpec extends UnitSpec with FileSupport {
         |b= ["a", "b/c"]""".stripMargin)
 
     it("should be available to get a value") {
-      assert(c.get[File]("a") == (new File("path/to/file"): File))
+      assert(c.get[File]("a") == new File("path/to/file"))
     }
 
     it("should be available to get values as list") {
-      assert(c.get[List[File]]("b") === (List(new File("a"), new File("b/c")): List[File]))
+      assert(c.get[List[File]]("b") === List(new File("a"), new File("b/c")))
     }
 
     it("should be available to get values as vector") {
-      assert(c.get[Vector[File]]("b") === (Vector(new File("a"), new File("b/c")): Vector[File]))
+      assert(c.get[Vector[File]]("b") === Vector(new File("a"), new File("b/c")))
     }
   }
 }

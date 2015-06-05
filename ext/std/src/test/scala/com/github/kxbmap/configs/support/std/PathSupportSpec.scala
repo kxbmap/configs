@@ -28,15 +28,15 @@ class PathSupportSpec extends UnitSpec with PathSupport {
         |b= ["a", "b/c"]""".stripMargin)
 
     it("should be available to get a value") {
-      assert(c.get[Path]("a") == (Paths.get("path", "to", "file"): Path))
+      assert(c.get[Path]("a") == Paths.get("path", "to", "file"))
     }
 
     it("should be available to get values as list") {
-      assert(c.get[List[Path]]("b") === (List(Paths.get("a"), Paths.get("b", "c")): List[Path]))
+      assert(c.get[List[Path]]("b") === List(Paths.get("a"), Paths.get("b", "c")))
     }
 
     it("should be available to get values as vector") {
-      assert(c.get[Vector[Path]]("b") === (Vector(Paths.get("a"), Paths.get("b", "c")): Vector[Path]))
+      assert(c.get[Vector[Path]]("b") === Vector(Paths.get("a"), Paths.get("b", "c")))
     }
   }
 }
