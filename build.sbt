@@ -36,12 +36,6 @@ lazy val scalikejdbcAsync = extension("scalikejdbc-async").settings(
   )
 )
 
-lazy val bonecp = extension("bonecp").settings(
-  libraryDependencies ++= Seq(
-    "com.jolbox" % "bonecp" % "0.8.0.RELEASE"
-  )
-)
-
 lazy val commonSettings = Seq(
   scalaVersion := "2.11.6",
   organization := "com.github.kxbmap",
