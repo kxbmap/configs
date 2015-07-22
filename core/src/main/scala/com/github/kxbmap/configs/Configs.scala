@@ -21,7 +21,7 @@ import java.time.{Duration => JDuration}
 import java.util.concurrent.TimeUnit
 import scala.annotation.implicitNotFound
 import scala.collection.JavaConversions._
-import scala.concurrent.duration.Duration
+import scala.concurrent.duration.{Duration, FiniteDuration}
 import scala.reflect.{ClassTag, classTag}
 import scala.util.Try
 
@@ -130,12 +130,14 @@ trait ConfigsInstances {
     Try(c.get[T](p))
   }
 
-  implicit val durationAtPath: AtPath[Duration] = atPath { (c, p) =>
+  implicit val finiteDurationAtPath: AtPath[FiniteDuration] = atPath { (c, p) =>
     Duration.fromNanos(c.getDuration(p, TimeUnit.NANOSECONDS))
   }
 
-  implicit def durationsAtPath[C[_]](implicit cbf: CBF[C, Duration]): AtPath[C[Duration]] = atPath {
-    _.getDurationList(_, TimeUnit.NANOSECONDS).map(Duration.fromNanos(_): Duration)(collection.breakOut)
+  implicit val durationAtPath: AtPath[Duration] = finiteDurationAtPath.asInstanceOf[AtPath[Duration]]
+
+  implicit def durationsAtPath[C[_], D >: FiniteDuration <: Duration](implicit cbf: CBF[C, D]): AtPath[C[D]] = atPath {
+    _.getDurationList(_, TimeUnit.NANOSECONDS).map(Duration.fromNanos(_))(collection.breakOut)
   }
 
   implicit val javaTimeDurationAtPath: AtPath[JDuration] = atPath {

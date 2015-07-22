@@ -186,6 +186,20 @@ class ConfigsSpec extends UnitSpec {
         }
       }
 
+      describe("for FiniteDuration") {
+        val c = parseString(
+          """a = 10days
+            |b = [1ms, 42h]
+            |""".stripMargin)
+
+        it("should be available to get a value") {
+          assert(c.get[FiniteDuration]("a") === 10.days)
+        }
+        it("should be available to get values as list") {
+          assert(c.get[List[FiniteDuration]]("b") === List(1.milli, 42.hours))
+        }
+      }
+
       describe("for java.time.Duration") {
         val c = parseString(
           """a = 10days
