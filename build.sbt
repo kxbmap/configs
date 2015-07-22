@@ -31,8 +31,7 @@ lazy val commonSettings = Seq(
   ),
   libraryDependencies ++= Seq(
     "org.scalatest" %% "scalatest" % "2.2.4" % "test",
-    "org.scalacheck" %% "scalacheck" % "1.12.2" % "test",
-    "org.slf4j" % "slf4j-simple" % "1.7.12" % "test"
+    "org.scalacheck" %% "scalacheck" % "1.12.2" % "test"
   )
 )
 
