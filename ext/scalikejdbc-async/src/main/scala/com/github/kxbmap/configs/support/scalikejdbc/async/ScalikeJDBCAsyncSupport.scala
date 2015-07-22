@@ -17,18 +17,18 @@
 package com.github.kxbmap.configs
 package support.scalikejdbc.async
 
-import scala.concurrent.duration.Duration
+import scala.concurrent.duration.FiniteDuration
 import scalikejdbc.async.AsyncConnectionPoolSettings
 
 trait ScalikeJDBCAsyncSupport {
 
-  implicit val asyncConnectionPoolSettingsConfigs: Configs[AsyncConnectionPoolSettings] = Configs.configs { c =>
+  implicit val asyncConnectionPoolSettingsConfigs: Configs[AsyncConnectionPoolSettings] = c => {
     lazy val default = AsyncConnectionPoolSettings()
     AsyncConnectionPoolSettings(
       maxPoolSize = c.getOrElse("maxPoolSize", default.maxPoolSize),
       maxQueueSize = c.getOrElse("maxQueueSize", default.maxQueueSize),
-      maxIdleMillis = c.opt[Long]("maxIdleMillis") getOrElse
-        c.opt[Duration]("maxIdle").fold(default.maxIdleMillis)(_.toMillis)
+      maxIdleMillis = c.opt[Long]("maxIdleMillis")
+        .getOrElse(c.opt[FiniteDuration]("maxIdle").fold(default.maxIdleMillis)(_.toMillis))
     )
   }
 }

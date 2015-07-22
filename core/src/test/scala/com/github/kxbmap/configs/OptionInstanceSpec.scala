@@ -28,7 +28,7 @@ class OptionInstanceSpec extends UnitSpec {
 
   case class Foo(v: Int)
 
-  implicit val fooConfigs = Configs.configs(c => Foo(c.getInt("v")))
+  implicit val fooConfigs: Configs[Foo] = c => Foo(c.getInt("v"))
 
 
   describe("Configs[Option[T]]") {

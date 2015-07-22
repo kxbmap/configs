@@ -39,17 +39,14 @@ case class Bytes(value: Long) extends Ordered[Bytes] {
 
 object Bytes {
 
-  implicit val bytesAtPath: AtPath[Bytes] = Configs.atPath {
-    (c, p) => Bytes(c.getBytes(p))
-  }
+  implicit val bytesAtPath: AtPath[Bytes] = c => p => Bytes(c.getBytes(p))
 
-  implicit def bytesCollectionAtPath[C[_]](implicit cbf: CBF[C, Bytes]): AtPath[C[Bytes]] = Configs.atPath {
-    _.getBytesList(_).map(Bytes(_))(collection.breakOut)
-  }
+  implicit def bytesCollectionAtPath[C[_]](implicit cbf: CBF[C, Bytes]): AtPath[C[Bytes]] = c =>
+    c.getBytesList(_).map(Bytes(_))(collection.breakOut)
 
   implicit val bytesOrdering: Ordering[Bytes] = Ordering.by(_.value)
 
-  final implicit class BytesMultiplication(val factor: Double) extends AnyVal {
+  implicit class BytesMultiplication(val factor: Double) extends AnyVal {
     def *(bytes: Bytes): Bytes = bytes * factor
   }
 

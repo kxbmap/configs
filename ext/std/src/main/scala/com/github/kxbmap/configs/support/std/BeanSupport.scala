@@ -25,30 +25,28 @@ trait BeanSupport {
 
   object Beans {
 
-    def apply[T](f: => T): Configs[T] = Configs.configs {
-      _.entrySet().foldLeft(f) { (o, e) =>
-        val k = e.getKey
-        val v = e.getValue
-        val n = s"set${k.capitalize}"
-        val u = v.unwrapped()
-        // Assume only one matching setter
-        o.getClass.getMethods.find { m =>
-          m.getName == n && m.getParameterTypes.length == 1
-        } match {
-          case Some(m) =>
-            try
-              m.invoke(o, u)
-            catch {
-              case e: IllegalArgumentException =>
-                throw new ConfigException.WrongType(v.origin(),
-                  s"Bean ${o.getClass.getName} property '$k' cannot be assigned type ${u.getClass.getName}");
-            }
-          case None =>
-            throw new ConfigException.BadPath(v.origin(),
-              s"Bean ${o.getClass.getName} does not have property '$k'")
-        }
-        o
+    def apply[T](f: => T): Configs[T] = _.entrySet().foldLeft(f) { (o, e) =>
+      val k = e.getKey
+      val v = e.getValue
+      val n = s"set${k.capitalize}"
+      val u = v.unwrapped()
+      // Assume only one matching setter
+      o.getClass.getMethods.find { m =>
+        m.getName == n && m.getParameterTypes.length == 1
+      } match {
+        case Some(m) =>
+          try
+            m.invoke(o, u)
+          catch {
+            case e: IllegalArgumentException =>
+              throw new ConfigException.WrongType(v.origin(),
+                s"Bean ${o.getClass.getName} property '$k' cannot be assigned type ${u.getClass.getName}");
+          }
+        case None    =>
+          throw new ConfigException.BadPath(v.origin(),
+            s"Bean ${o.getClass.getName} does not have property '$k'")
       }
+      o
     }
 
     def apply[T: Manifest]: Configs[T] = Beans {

@@ -29,7 +29,7 @@ class ConfigsSpec extends UnitSpec {
 
     it("should be a instance of Functor") {
       val c = parseString("value = 42")
-      val cs = Configs.configs(c => c.getInt("value"))
+      val cs: Configs[Int] = _.getInt("value")
 
       assert(cs.map(identity).extract(c) === identity(cs).extract(c))
 
@@ -39,7 +39,7 @@ class ConfigsSpec extends UnitSpec {
     }
 
     describe("conversions") {
-      implicit val cs: Configs[A] = Configs.configs(_ => A)
+      implicit val cs: Configs[A] = _ => A
 
       val c = parseString(
         """a = {}
@@ -242,7 +242,7 @@ class ConfigsSpec extends UnitSpec {
           assert(c.get[Either[Throwable, List[String]]]("b") === Right(List("Hello", "World")))
         }
 
-        implicit val cs = Configs.atPath[A]((_, _) => throw FatalError)
+        implicit val at: AtPath[A] = _ => _ => throw FatalError
 
         describe("with Throwable") {
           it("should catch all error") {
@@ -281,7 +281,7 @@ class ConfigsSpec extends UnitSpec {
           assert(c.get[Try[Int]]("a").isFailure)
         }
 
-        implicit val cs = Configs.atPath[A]((_, _) => throw new FatalError())
+        implicit val at: AtPath[A] = _ => _ => throw FatalError
 
         it("should not catch fatal error") {
           intercept[FatalError] {

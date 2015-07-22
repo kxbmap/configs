@@ -26,12 +26,11 @@ case class AsyncDBSettings(url: String,
 
 object AsyncDBSettings {
 
-  implicit val asyncDBSettingsConfigs: Configs[AsyncDBSettings] = Configs.configs { c =>
+  implicit val asyncDBSettingsConfigs: Configs[AsyncDBSettings] = c =>
     AsyncDBSettings(
       url = c.getString("url"),
       user = c.getOrElse[String]("user", null),
       password = c.getOrElse[String]("password", null),
       asyncPool = c.getOrElse("asyncPool", AsyncConnectionPoolSettings())
     )
-  }
 }

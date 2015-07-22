@@ -19,26 +19,26 @@ package support.scalikejdbc
 
 import com.typesafe.config.ConfigException
 import java.util.Locale
-import scala.concurrent.duration.Duration
+import scala.concurrent.duration.FiniteDuration
 import scalikejdbc.globalsettings.{ExceptionForIgnoredParams, IgnoredParamsValidation, InfoLoggingForIgnoredParams, NoCheckForIgnoredParams, WarnLoggingForIgnoredParams}
 import scalikejdbc.{ConnectionPoolSettings, LoggingSQLAndTimeSettings, NameBindingSQLValidatorSettings, SQLFormatterSettings}
 
 
 trait ScalikeJDBCSupport {
 
-  implicit val connectionPoolSettingsConfigs: Configs[ConnectionPoolSettings] = Configs.configs { c =>
+  implicit val connectionPoolSettingsConfigs: Configs[ConnectionPoolSettings] = c => {
     lazy val default = ConnectionPoolSettings()
     ConnectionPoolSettings(
       initialSize = c.getOrElse("initialSize", default.initialSize),
       maxSize = c.getOrElse("maxSize", default.maxSize),
-      connectionTimeoutMillis = c.opt[Long]("connectionTimeoutMillis") getOrElse
-        c.opt[Duration]("connectionTimeout").fold(default.connectionTimeoutMillis)(_.toMillis),
+      connectionTimeoutMillis = c.opt[Long]("connectionTimeoutMillis")
+        .getOrElse(c.opt[FiniteDuration]("connectionTimeout").fold(default.connectionTimeoutMillis)(_.toMillis)),
       validationQuery = c.getOrElse("validationQuery", default.validationQuery),
       connectionPoolFactoryName = c.getOrElse("connectionPoolFactoryName", default.connectionPoolFactoryName)
     )
   }
 
-  implicit val loggingSQLAndTimeSettingsConfigs: Configs[LoggingSQLAndTimeSettings] = Configs.configs { c =>
+  implicit val loggingSQLAndTimeSettingsConfigs: Configs[LoggingSQLAndTimeSettings] = c => {
     lazy val default = LoggingSQLAndTimeSettings()
     LoggingSQLAndTimeSettings(
       enabled = c.getOrElse("enabled", default.enabled),
@@ -47,19 +47,18 @@ trait ScalikeJDBCSupport {
       stackTraceDepth = c.getOrElse("stackTraceDepth", default.stackTraceDepth),
       logLevel = c.getOrElse("logLevel", default.logLevel),
       warningEnabled = c.getOrElse("warningEnabled", default.warningEnabled),
-      warningThresholdMillis = c.opt[Long]("warningThresholdMillis") getOrElse
-        c.opt[Duration]("warningThreshold").fold(default.warningThresholdMillis)(_.toMillis),
+      warningThresholdMillis = c.opt[Long]("warningThresholdMillis")
+        .getOrElse(c.opt[FiniteDuration]("warningThreshold").fold(default.warningThresholdMillis)(_.toMillis)),
       warningLogLevel = c.getOrElse("warningLogLevel", default.warningLogLevel)
     )
   }
 
-  implicit val sqlFormatterSettingsConfigs: Configs[SQLFormatterSettings] = Configs.configs { c =>
+  implicit val sqlFormatterSettingsConfigs: Configs[SQLFormatterSettings] = c =>
     SQLFormatterSettings(
       formatterClassName = c.opt[String]("formatterClassName")
     )
-  }
 
-  implicit val ignoredParamsValidationAtPath: AtPath[IgnoredParamsValidation] = Configs.atPath { (c, p) =>
+  implicit val ignoredParamsValidationAtPath: AtPath[IgnoredParamsValidation] = c => p => {
     val v = c.getString(p)
     v.toLowerCase(Locale.ENGLISH) match {
       case "nocheck"     => NoCheckForIgnoredParams
@@ -70,10 +69,11 @@ trait ScalikeJDBCSupport {
     }
   }
 
-  implicit val nameBindingSQLValidatorSettingsConfigs: Configs[NameBindingSQLValidatorSettings] = Configs.configs { c =>
+  implicit val nameBindingSQLValidatorSettingsConfigs: Configs[NameBindingSQLValidatorSettings] = c => {
     lazy val default = NameBindingSQLValidatorSettings()
     NameBindingSQLValidatorSettings(
       ignoredParams = c.getOrElse("ignoredParams", default.ignoredParams)
     )
   }
+
 }

@@ -28,12 +28,12 @@ case class DBSettings(driver: String,
 
 object DBSettings {
 
-  implicit val dbSettingsConfigs: Configs[DBSettings] = Configs.configs { c =>
+  implicit val dbSettingsConfigs: Configs[DBSettings] = c => {
     val url = c.getString("url")
     DBSettings(
-      driver = c.opt[String]("driver") orElse
-        guessDriverFromUrl(url) getOrElse (
-        throw new ConfigException.BadValue(c.origin(), "driver", s"Missing driver and cannot guess from url: $url")),
+      driver = c.opt[String]("driver")
+        .orElse(guessDriverFromUrl(url))
+        .getOrElse(throw new ConfigException.BadValue(c.origin(), "driver", s"Missing driver and cannot guess from url: $url")),
       url = url,
       user = c.getOrElse[String]("user", null),
       password = c.getOrElse[String]("password", null),
@@ -42,7 +42,7 @@ object DBSettings {
   }
 
   private def guessDriverFromUrl(url: String): Option[String] =
-    supportedDrivers collectFirst {
+    supportedDrivers.collectFirst {
       case (p, d) if url.startsWith(p) => d
     }
 

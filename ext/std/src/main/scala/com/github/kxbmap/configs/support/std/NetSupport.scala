@@ -25,39 +25,35 @@ trait NetSupport {
   /**
    * AtPath for `InetAddress`
    */
-  implicit val inetAddressAtPath: AtPath[InetAddress] = Configs.atPath { (c, p) =>
+  implicit val inetAddressAtPath: AtPath[InetAddress] = c => p =>
     try
       InetAddress.getByName(c.getString(p))
     catch {
       case e: UnknownHostException =>
         throw new ConfigException.BadValue(c.origin(), p, e.getMessage, e)
     }
-  }
 
   /**
    * AtPath for `List[InetAddress]`
    */
-  implicit def inetAddressesAtPath[C[_]](implicit cbf: CBF[C, InetAddress]): AtPath[C[InetAddress]] = Configs.atPath { (c, p) =>
+  implicit def inetAddressesAtPath[C[_]](implicit cbf: CBF[C, InetAddress]): AtPath[C[InetAddress]] = c => p =>
     try
       c.get[List[String]](p).map(InetAddress.getByName)(collection.breakOut)
     catch {
       case e: UnknownHostException =>
         throw new ConfigException.BadValue(c.origin(), p, e.getMessage, e)
     }
-  }
 
   /**
    * Configs for `InetSocketAddress`
    */
-  implicit val inetSocketAddressConfigs: Configs[InetSocketAddress] =
-    Configs.configs { c =>
-      val port = c.getInt("port")
-
-      c.opt[String]("hostname").fold {
-        new InetSocketAddress(c.get[InetAddress]("addr"), port)
-      } {
-        hostname => new InetSocketAddress(hostname, port)
-      }
+  implicit val inetSocketAddressConfigs: Configs[InetSocketAddress] = c => {
+    val port = c.getInt("port")
+    c.opt[String]("hostname").fold {
+      new InetSocketAddress(c.get[InetAddress]("addr"), port)
+    } {
+      hostname => new InetSocketAddress(hostname, port)
     }
+  }
 
 }
