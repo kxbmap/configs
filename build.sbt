@@ -18,16 +18,6 @@ def extension(id: String): Project = Project(id, file("ext") / id)
 
 lazy val std = extension("std")
 
-lazy val scalikejdbc = extension("scalikejdbc").settings(
-  libraryDependencies ++= Seq(
-    "org.scalikejdbc" %% "scalikejdbc" % "2.2.6",
-    "org.postgresql" % "postgresql" % "9.4-1201-jdbc41" % "test",
-    "mysql" % "mysql-connector-java" % "5.1.35" % "test",
-    "com.h2database" % "h2" % "1.4.187" % "test",
-    "org.hsqldb" % "hsqldb" % "2.3.2" % "test"
-  )
-)
-
 lazy val commonSettings = Seq(
   scalaVersion := "2.11.6",
   organization := "com.github.kxbmap",
