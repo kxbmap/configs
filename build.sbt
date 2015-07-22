@@ -28,14 +28,6 @@ lazy val scalikejdbc = extension("scalikejdbc").settings(
   )
 )
 
-lazy val scalikejdbcAsync = extension("scalikejdbc-async").settings(
-  libraryDependencies ++= Seq(
-    "org.scalikejdbc" %% "scalikejdbc-async" % "0.5.5",
-    "com.github.mauricio" %% "postgresql-async" % "0.2.16" % "test",
-    "com.github.mauricio" %% "mysql-async" % "0.2.16" % "test"
-  )
-)
-
 lazy val commonSettings = Seq(
   scalaVersion := "2.11.6",
   organization := "com.github.kxbmap",
