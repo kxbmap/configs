@@ -45,7 +45,6 @@ lazy val bonecp = extension("bonecp").settings(
 lazy val commonSettings = Seq(
   scalaVersion := "2.11.6",
   organization := "com.github.kxbmap",
-  crossScalaVersions := Seq(scalaVersion.value, "2.10.5"),
   scalacOptions ++= Seq(
     "-deprecation",
     "-unchecked",
