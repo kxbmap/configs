@@ -20,8 +20,8 @@ package com.github.kxbmap.configs
 object AtPath {
   @inline def apply[T](implicit A: AtPath[T]): AtPath[T] = A
 
-  def by[S: AtPath, T](f: S => T): AtPath[T] = AtPath[S].map(f.compose)
+  def by[S: AtPath, T](f: S => T): AtPath[T] = f compose _.get[S]
 
-  def listBy[C[_], S, T](f: S => T)(implicit ev: AtPath[List[S]], cbf: CBF[C, T]): AtPath[C[T]] =
-    by((_: List[S]).map(f)(collection.breakOut))
+  def listBy[C[_], S, T](f: S => T)(implicit ev: AtPath[Seq[S]], cbf: CBF[C, T]): AtPath[C[T]] =
+    by((_: Seq[S]).map(f)(collection.breakOut))
 }

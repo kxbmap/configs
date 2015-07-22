@@ -36,11 +36,9 @@ trait Configs[T] {
 object Configs extends ConfigsInstances {
   @inline def apply[T](implicit C: Configs[T]): Configs[T] = C
 
-  def configs[T](f: Config => T): Configs[T] = new Configs[T] {
-    def extract(config: Config): T = f(config)
-  }
+  def configs[T](f: Config => T): Configs[T] = f(_)
 
-  def atPath[T](f: (Config, String) => T): AtPath[T] = configs(c => f(c, _))
+  def atPath[T](f: (Config, String) => T): AtPath[T] = c => f(c, _)
 }
 
 trait ConfigsInstances {
