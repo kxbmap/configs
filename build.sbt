@@ -51,6 +51,7 @@ lazy val commonSettings = Seq(
     "-unchecked",
     "-feature",
     "-Xlint",
+    "-Xexperimental",
     "-language:higherKinds"
   ),
   libraryDependencies ++= Seq(
