@@ -48,6 +48,9 @@ object Configs extends ConfigsInstances {
 
 trait ConfigsInstances {
 
+  implicit def materializeConfigs[T]: Configs[T] = macro ConfigsMacro.materialize[T]
+
+
   implicit lazy val configConfigs: Configs[Config] = identity
 
 
