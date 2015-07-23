@@ -15,45 +15,43 @@
  */
 
 package com.github.kxbmap.configs
-package support.std
 
 import com.typesafe.config.ConfigException
-import scala.collection.convert.WrapAsScala._
+import scala.collection.JavaConversions._
+import scala.reflect.{ClassTag, classTag}
 
 
-trait BeanSupport {
+object Beans {
 
-  object Beans {
-
-    def apply[T](f: => T): Configs[T] = _.entrySet().foldLeft(f) { (o, e) =>
+  def apply[T](f: => T): Configs[T] = c => {
+    val o = f
+    c.entrySet().foreach { e =>
       val k = e.getKey
       val v = e.getValue
       val n = s"set${k.capitalize}"
       val u = v.unwrapped()
       // Assume only one matching setter
       o.getClass.getMethods.find { m =>
-        m.getName == n && m.getParameterTypes.length == 1
+        m.getName == n && m.getParameterCount == 1
       } match {
         case Some(m) =>
           try
             m.invoke(o, u)
           catch {
             case e: IllegalArgumentException =>
-              throw new ConfigException.WrongType(v.origin(),
-                s"Bean ${o.getClass.getName} property '$k' cannot be assigned type ${u.getClass.getName}");
+              throw new ConfigException.WrongType(
+                v.origin(), s"Bean ${o.getClass.getName} property '$k' cannot be assigned type ${u.getClass.getName}");
           }
-        case None    =>
-          throw new ConfigException.BadPath(v.origin(),
-            s"Bean ${o.getClass.getName} does not have property '$k'")
+
+        case None =>
+          throw new ConfigException.BadPath(v.origin(), s"Bean ${o.getClass.getName} does not have property '$k'")
       }
-      o
     }
+    o
+  }
 
-    def apply[T: Manifest]: Configs[T] = Beans {
-      implicitly[Manifest[T]].runtimeClass.asInstanceOf[Class[T]].
-        getConstructor().newInstance()
-    }
-
+  def apply[T: ClassTag]: Configs[T] = Beans {
+    classTag[T].runtimeClass.asInstanceOf[Class[T]].getConstructor().newInstance()
   }
 
 }

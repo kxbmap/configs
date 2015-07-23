@@ -16,7 +16,10 @@
 
 package com.github.kxbmap.configs
 
-import com.typesafe.config.{Config, ConfigMemorySize}
+import com.typesafe.config.{Config, ConfigException, ConfigMemorySize}
+import java.io.File
+import java.net.{InetAddress, InetSocketAddress, UnknownHostException}
+import java.nio.file.{Path, Paths}
 import java.time.{Duration => JDuration}
 import java.util.concurrent.TimeUnit
 import scala.annotation.implicitNotFound
@@ -132,5 +135,42 @@ trait ConfigsInstances {
 
   implicit def configMemorySizesAtPath[C[_]](implicit cbf: CBF[C, ConfigMemorySize]): AtPath[C[ConfigMemorySize]] = c =>
     c.getMemorySizeList(_).to[C]
+
+
+  implicit lazy val fileAtPath: AtPath[File] = AtPath.by(new File(_: String))
+
+  implicit def filesAtPath[C[_]](implicit cbf: CBF[C, File]): AtPath[C[File]] = AtPath.listBy(new File(_: String))
+
+
+  implicit lazy val pathAtPath: AtPath[Path] = AtPath.by(Paths.get(_: String))
+
+  implicit def pathsAtPath[C[_]](implicit cbf: CBF[C, Path]): AtPath[C[Path]] = AtPath.listBy(Paths.get(_: String))
+
+
+  implicit lazy val inetAddressAtPath: AtPath[InetAddress] = c => p =>
+    try
+      InetAddress.getByName(c.get[String](p))
+    catch {
+      case e: UnknownHostException =>
+        throw new ConfigException.BadValue(c.origin(), p, e.getMessage, e)
+    }
+
+  implicit def inetAddressesAtPath[C[_]](implicit cbf: CBF[C, InetAddress]): AtPath[C[InetAddress]] = c => p =>
+    try
+      c.get[Seq[String]](p).map(InetAddress.getByName)(collection.breakOut)
+    catch {
+      case e: UnknownHostException =>
+        throw new ConfigException.BadValue(c.origin(), p, e.getMessage, e)
+    }
+
+
+  implicit lazy val inetSocketAddressConfigs: Configs[InetSocketAddress] = c => {
+    val port = c.getInt("port")
+    c.opt[String]("hostname").fold {
+      new InetSocketAddress(c.get[InetAddress]("addr"), port)
+    } {
+      hostname => new InetSocketAddress(hostname, port)
+    }
+  }
 
 }

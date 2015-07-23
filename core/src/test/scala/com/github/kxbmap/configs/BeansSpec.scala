@@ -15,13 +15,14 @@
  */
 
 package com.github.kxbmap.configs
-package support.std
 
 import com.typesafe.config.{ConfigException, ConfigFactory}
 import java.util.{List => JList}
 import org.scalatest.{FunSpec, Matchers}
 
-class BeanSupportSpec extends FunSpec with Matchers with BeanSupport {
+class BeansSpec extends FunSpec with Matchers {
+
+  import BeansSpec._
 
   class Inner extends Obj
 
@@ -85,44 +86,30 @@ class BeanSupportSpec extends FunSpec with Matchers with BeanSupport {
 
 }
 
-trait Obj {
+object BeansSpec {
 
-  var _boolean: Boolean = _
-  var _double: Double = _
-  var _int: Int = _
-  var _list: JList[String] = _
-  var _long: Long = _
-  var _string: String = _
+  trait Obj {
+    var _boolean: Boolean = _
+    var _double: Double = _
+    var _int: Int = _
+    var _list: JList[String] = _
+    var _long: Long = _
+    var _string: String = _
 
-  def setBoolean(b: Boolean): Unit = _boolean = b
+    def setBoolean(b: Boolean): Unit = _boolean = b
 
-  def setDouble(d: Double): Unit = _double = d
+    def setDouble(d: Double): Unit = _double = d
 
-  def setInt(i: Int): Unit = _int = i
+    def setInt(i: Int): Unit = _int = i
 
-  def setList(l: JList[String]): Unit = _list = l
+    def setList(l: JList[String]): Unit = _list = l
 
-  def setLong(l: Long): Unit = _long = l
+    def setLong(l: Long): Unit = _long = l
 
-  def setString(s: String): Unit = _string = s
+    def setString(s: String): Unit = _string = s
 
-}
+  }
 
-class Top extends Obj
-
-class Primitives {
-
-  var _boolean: Boolean = _
-  var _double: Double = _
-  var _int: Int = _
-  var _long: Long = _
-
-  def setBoolean(b: Boolean): Unit = _boolean = b
-
-  def setDouble(d: Double): Unit = _double = d
-
-  def setInt(i: Int): Unit = _int = i
-
-  def setLong(l: Long): Unit = _long = l
+  class Top extends Obj
 
 }

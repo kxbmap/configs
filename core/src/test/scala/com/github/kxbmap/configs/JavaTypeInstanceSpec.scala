@@ -14,13 +14,54 @@
  * limitations under the License.
  */
 
-package com.github.kxbmap.configs.support.std
+package com.github.kxbmap.configs
 
-import com.github.kxbmap.configs._
 import com.typesafe.config.{ConfigException, ConfigFactory}
-import java.net.{InetAddress, InetSocketAddress}
+import java.io.File
+import java.net.{InetSocketAddress, InetAddress}
+import java.nio.file.{Paths, Path}
 
-class NetSupportSpec extends UnitSpec with NetSupport {
+class JavaTypeInstanceSpec extends UnitSpec {
+
+  describe("java.io.File support") {
+
+    val c = ConfigFactory.parseString(
+      """a="path/to/file"
+        |b= ["a", "b/c"]""".stripMargin)
+
+    it("should be available to get a value") {
+      assert(c.get[File]("a") == new File("path/to/file"))
+    }
+
+    it("should be available to get values as list") {
+      assert(c.get[List[File]]("b") === List(new File("a"), new File("b/c")))
+    }
+
+    it("should be available to get values as vector") {
+      assert(c.get[Vector[File]]("b") === Vector(new File("a"), new File("b/c")))
+    }
+  }
+
+
+  describe("java.nio.file.Path support") {
+
+    val c = ConfigFactory.parseString(
+      """a="path/to/file"
+        |b= ["a", "b/c"]""".stripMargin)
+
+    it("should be available to get a value") {
+      assert(c.get[Path]("a") == Paths.get("path", "to", "file"))
+    }
+
+    it("should be available to get values as list") {
+      assert(c.get[List[Path]]("b") === List(Paths.get("a"), Paths.get("b", "c")))
+    }
+
+    it("should be available to get values as vector") {
+      assert(c.get[Vector[Path]]("b") === Vector(Paths.get("a"), Paths.get("b", "c")))
+    }
+  }
+
 
   describe("java.net.InetAddress support") {
     describe("(valid address)") {
@@ -113,4 +154,5 @@ class NetSupportSpec extends UnitSpec with NetSupport {
       }
     }
   }
+
 }

@@ -11,13 +11,6 @@ lazy val core = project.settings(commonSettings ++ publishSettings).settings(
   )
 )
 
-def extension(id: String): Project = Project(id, file("ext") / id)
-  .settings(name := s"configs-$id")
-  .settings(commonSettings ++ publishSettings)
-  .dependsOn(core % "compile->compile;test->test")
-
-lazy val std = extension("std")
-
 lazy val commonSettings = Seq(
   scalaVersion := "2.11.6",
   organization := "com.github.kxbmap",
