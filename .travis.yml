@@ -1,9 +1,13 @@
-language: scala
-
 sudo: false
+
+language: scala
 
 jdk:
   - oraclejdk8
 
 scala:
   - 2.11.7
+
+# Workaround, see https://github.com/travis-ci/travis-ci/issues/4527
+before_script:
+  - curl -L -o $HOME/.sbt/launchers/0.13.8/sbt-launch.jar http://repo.typesafe.com/typesafe/ivy-releases/org.scala-sbt/sbt-launch/0.13.8/sbt-launch.jar
