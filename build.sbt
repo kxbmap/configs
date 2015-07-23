@@ -12,7 +12,7 @@ lazy val core = project.settings(
 )
 
 lazy val commonSettings = Seq(
-  scalaVersion := "2.11.6",
+  scalaVersion := "2.11.7",
   organization := "com.github.kxbmap",
   scalacOptions ++= Seq(
     "-deprecation",
