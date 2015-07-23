@@ -38,6 +38,54 @@ class ConfigsSpec extends UnitSpec {
       assert(cs.map(g compose f).extract(c) === cs.map(f).map(g).extract(c))
     }
 
+
+    describe("orElse") {
+
+      val c1: Configs[Int] = _.getInt("value1")
+      val c2: Configs[Int] = _.getInt("value2")
+      val error: Configs[Int] = _ => sys.error("error")
+
+      it("should extract a first value") {
+        val config = parseString("""
+          value1 = 42
+          value2 = 0
+          """)
+        val n = c1.orElse(c2).extract(config)
+        assert(n == 42)
+      }
+
+      it("should extract a second value if first one is failed") {
+        val config = parseString("""
+          value1 = not int
+          value2 = 0
+          """)
+        val n = c1.orElse(c2).extract(config)
+        assert(n == 0)
+      }
+
+      it("should throw an error if both first and second are failed") {
+        val config = parseString("""
+          value1 = not int
+          """)
+        intercept[ConfigException.Missing] {
+          c1.orElse(c2).extract(config)
+        }
+      }
+
+      it("should throw immediately if occurred an error other than ConfigException") {
+        val config = parseString("""
+          value1 = 42
+          value2 = 0
+          """)
+        val e = intercept[RuntimeException] {
+          error.orElse(c2).extract(config)
+        }
+        assert(e.getMessage == "error")
+      }
+
+    }
+
+
     describe("conversions") {
       implicit val cs: Configs[A] = _ => A
 

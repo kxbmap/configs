@@ -35,6 +35,14 @@ trait Configs[T] {
   def extract(config: Config): T
 
   def map[U](f: T => U): Configs[U] = f.compose(extract)(_)
+
+  def orElse[U >: T](other: Configs[U]): Configs[U] = c =>
+    try
+      extract(c)
+    catch {
+      case _: ConfigException =>
+        other.extract(c)
+    }
 }
 
 object Configs extends ConfigsInstances {
