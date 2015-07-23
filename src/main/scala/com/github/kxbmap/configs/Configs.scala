@@ -48,30 +48,30 @@ object Configs extends ConfigsInstances {
 
 trait ConfigsInstances {
 
-  implicit val configConfigs: Configs[Config] = identity
+  implicit lazy val configConfigs: Configs[Config] = identity
 
 
-  implicit val intAtPath: AtPath[Int] = _.getInt
+  implicit lazy val intAtPath: AtPath[Int] = _.getInt
 
   implicit def intsAtPath[C[_]](implicit cbf: CBF[C, Int]): AtPath[C[Int]] = c =>
     c.getIntList(_).map(_.toInt)(collection.breakOut)
 
-  implicit val longAtPath: AtPath[Long] = _.getLong
+  implicit lazy val longAtPath: AtPath[Long] = _.getLong
 
   implicit def longsAtPath[C[_]](implicit cbf: CBF[C, Long]): AtPath[C[Long]] = c =>
     c.getLongList(_).map(_.toLong)(collection.breakOut)
 
-  implicit val doubleAtPath: AtPath[Double] = _.getDouble
+  implicit lazy val doubleAtPath: AtPath[Double] = _.getDouble
 
   implicit def doublesAtPath[C[_]](implicit cbf: CBF[C, Double]): AtPath[C[Double]] = c =>
     c.getDoubleList(_).map(_.toDouble)(collection.breakOut)
 
-  implicit val booleanAtPath: AtPath[Boolean] = _.getBoolean
+  implicit lazy val booleanAtPath: AtPath[Boolean] = _.getBoolean
 
   implicit def booleansAtPath[C[_]](implicit cbf: CBF[C, Boolean]): AtPath[C[Boolean]] = c =>
     c.getBooleanList(_).map(_.booleanValue())(collection.breakOut)
 
-  implicit val stringAtPath: AtPath[String] = _.getString
+  implicit lazy val stringAtPath: AtPath[String] = _.getString
 
   implicit def stringsAtPath[C[_]](implicit cbf: CBF[C, String]): AtPath[C[String]] = c => c.getStringList(_).to[C]
 
@@ -84,7 +84,7 @@ trait ConfigsInstances {
   implicit def symbolMapConfigs[T: AtPath]: Configs[Map[Symbol, T]] = mapConfigs(Symbol.apply)
 
 
-  implicit val symbolAtPath: AtPath[Symbol] = AtPath.by(Symbol.apply)
+  implicit lazy val symbolAtPath: AtPath[Symbol] = AtPath.by(Symbol.apply)
 
   implicit def symbolsAtPath[C[_]](implicit cbf: CBF[C, Symbol]): AtPath[C[Symbol]] = AtPath.listBy(Symbol.apply)
 
@@ -117,21 +117,21 @@ trait ConfigsInstances {
   implicit def tryAtPath[T: AtPath]: AtPath[Try[T]] = c => p => Try(c.get[T](p))
 
 
-  implicit val finiteDurationAtPath: AtPath[FiniteDuration] = c => p =>
+  implicit lazy val finiteDurationAtPath: AtPath[FiniteDuration] = c => p =>
     Duration.fromNanos(c.getDuration(p, TimeUnit.NANOSECONDS))
 
-  implicit val durationAtPath: AtPath[Duration] = finiteDurationAtPath.asInstanceOf[AtPath[Duration]]
+  implicit lazy val durationAtPath: AtPath[Duration] = finiteDurationAtPath.asInstanceOf[AtPath[Duration]]
 
   implicit def durationsAtPath[C[_], D >: FiniteDuration <: Duration](implicit cbf: CBF[C, D]): AtPath[C[D]] = c =>
     c.getDurationList(_, TimeUnit.NANOSECONDS).map(Duration.fromNanos(_))(collection.breakOut)
 
 
-  implicit val javaTimeDurationAtPath: AtPath[JDuration] = _.getDuration
+  implicit lazy val javaTimeDurationAtPath: AtPath[JDuration] = _.getDuration
 
   implicit def javaTimeDurationsAtPath[C[_]](implicit cbf: CBF[C, JDuration]): AtPath[C[JDuration]] = c =>
     c.getDurationList(_).to[C]
 
-  implicit val configMemorySizeAtPath: AtPath[ConfigMemorySize] = _.getMemorySize
+  implicit lazy val configMemorySizeAtPath: AtPath[ConfigMemorySize] = _.getMemorySize
 
   implicit def configMemorySizesAtPath[C[_]](implicit cbf: CBF[C, ConfigMemorySize]): AtPath[C[ConfigMemorySize]] = c =>
     c.getMemorySizeList(_).to[C]
