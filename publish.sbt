@@ -1,8 +1,3 @@
-publish := {}
-publishLocal := {}
-publishM2 := {}
-publishArtifact := false
-
 publishMavenStyle in ThisBuild := true
 
 publishTo in ThisBuild := {
