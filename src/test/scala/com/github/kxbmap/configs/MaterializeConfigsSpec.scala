@@ -84,6 +84,20 @@ class MaterializeConfigsSpec extends UnitSpec {
       assert(s == SpecifiedSetting("Alice", "secret"))
     }
 
+    it("should provide for class that has multi parameter list") {
+      val config = ConfigFactory.parseString("""
+        firstName = John
+        lastName = Doe
+        age = 42
+        """)
+
+      val s = config.extract[HasParamLists]
+
+      assert(s.firstName == "John")
+      assert(s.lastName == "Doe")
+      assert(s.age == 42)
+    }
+
   }
 
 }
@@ -108,5 +122,8 @@ object MaterializeConfigsSpec {
       password = c.get[String]("p")
     )
   }
+
+
+  class HasParamLists(val firstName: String, val lastName: String)(val age: Int)
 
 }

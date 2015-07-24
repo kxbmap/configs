@@ -34,24 +34,20 @@ class ConfigsMacro(val c: blackbox.Context) {
     }.getOrElse {
       c.abort(c.enclosingPosition, s"$tpe must have a public primary constructor")
     }
-    if (ctor.paramLists.lengthCompare(1) != 0) {
-      c.abort(c.enclosingPosition, s"$ctor must have a single parameter list")
-    }
-    val params = ctor.paramLists.head
 
     val config = TermName("config")
-    val args = params.map { p =>
-      val key = p.name.decodedName.toString
-      q"$config.get[${p.info}]($key)"
+    val argLists = ctor.paramLists.map { params =>
+      params.map { p =>
+        val key = p.name.decodedName.toString
+        q"$config.get[${p.info}]($key)"
+      }
     }
 
-    val result = q"""
+    c.Expr[Configs[T]](q"""
       new ${configsType(tpe)} {
-        def extract($config: $configType): $tpe = new $tpe(..$args)
+        def extract($config: $configType): $tpe = new $tpe(...$argLists)
       }
-    """
-
-    c.Expr[Configs[T]](result)
+    """)
   }
 
 }
