@@ -16,7 +16,7 @@
 
 package com.github.kxbmap.configs
 
-import com.typesafe.config.ConfigFactory
+import com.typesafe.config.{ConfigException, ConfigFactory}
 
 class MaterializeConfigsSpec extends UnitSpec {
 
@@ -98,6 +98,71 @@ class MaterializeConfigsSpec extends UnitSpec {
       assert(s.age == 42)
     }
 
+
+    describe("for class that has sub constructors") {
+
+      it("should extract by primary constructor") {
+        val config = ConfigFactory.parseString("""
+          name = John Doe
+          age = 42
+          country = USA
+          """)
+
+        val s = config.extract[HasSubConstructors]
+
+        assert(s == HasSubConstructors("John Doe", 42, "USA"))
+      }
+
+      it("should extract by most specific sub constructor") {
+        val config = ConfigFactory.parseString("""
+          firstName = John
+          lastName = Doe
+          age = 42
+          """)
+
+        val s = config.extract[HasSubConstructors]
+
+        assert(s == HasSubConstructors("John Doe", 42, "JPN"))
+      }
+
+      it("should extract by other sub constructor") {
+        val config = ConfigFactory.parseString("""
+          firstName = John
+          lastName = Doe
+          """)
+
+        val s = config.extract[HasSubConstructors]
+
+        assert(s == HasSubConstructors("John Doe", 0, "JPN"))
+      }
+
+      it("should not extract by private constructor") {
+        val config = ConfigFactory.parseString("""
+          name = John Doe
+          age = 42
+          """)
+
+        intercept[ConfigException.Missing] {
+          config.extract[HasSubConstructors]
+        }
+      }
+
+      it("should use primary constructor first") {
+        val config = ConfigFactory.parseString("""
+          firstName = John
+          lastName = Doe
+          name = Alice
+          age = 10
+          country = USA
+          """)
+
+        val s = config.extract[HasSubConstructors]
+
+        assert(s == HasSubConstructors("Alice", 10, "USA"))
+      }
+
+    }
+
   }
 
 }
@@ -125,5 +190,15 @@ object MaterializeConfigsSpec {
 
 
   class HasParamLists(val firstName: String, val lastName: String)(val age: Int)
+
+
+  case class HasSubConstructors(name: String, age: Int, country: String) {
+
+    private def this(name: String, age: Int) = this(name, age, "JPN")
+
+    def this(firstName: String, lastName: String) = this(s"$firstName $lastName", 0)
+
+    def this(firstName: String, lastName: String, age: Int) = this(s"$firstName $lastName", age)
+  }
 
 }

@@ -29,25 +29,29 @@ class ConfigsMacro(val c: blackbox.Context) {
 
   def materialize[T: WeakTypeTag]: Expr[Configs[T]] = {
     val tpe = weakTypeOf[T]
-    val ctor = tpe.decls.collectFirst {
-      case m: MethodSymbol if m.isPrimaryConstructor && m.isPublic => m
-    }.getOrElse {
-      c.abort(c.enclosingPosition, s"$tpe must have a public primary constructor")
+    val ctors = tpe.decls.collect {
+      case m: MethodSymbol if m.isConstructor && m.isPublic => m
+    }.toSeq.sortBy {
+      m => (!m.isPrimaryConstructor, -m.paramLists.map(_.length).sum)
     }
-
-    val config = TermName("config")
-    val argLists = ctor.paramLists.map { params =>
-      params.map { p =>
-        val key = p.name.decodedName.toString
-        q"$config.get[${p.info}]($key)"
+    if (ctors.isEmpty) {
+      c.abort(c.enclosingPosition, s"$tpe must have a public constructor")
+    }
+    val cs = ctors.map { ctor =>
+      val config = TermName("config")
+      val argLists = ctor.paramLists.map { params =>
+        params.map { p =>
+          val key = p.name.decodedName.toString
+          q"$config.get[${p.info}]($key)"
+        }
       }
-    }
-
-    c.Expr[Configs[T]](q"""
+      q"""
       new ${configsType(tpe)} {
         def extract($config: $configType): $tpe = new $tpe(...$argLists)
       }
-    """)
+      """
+    }
+    c.Expr[Configs[T]](cs.reduceLeft((l, r) => q"$l orElse $r"))
   }
 
 }
