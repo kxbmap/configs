@@ -4,8 +4,6 @@ organization := "com.github.kxbmap"
 
 scalaVersion := "2.11.7"
 
-addCompilerPlugin("org.scalamacros" % "paradise" % "2.1.0-M5" cross CrossVersion.full)
-
 scalacOptions ++= Seq(
   "-deprecation",
   "-unchecked",
