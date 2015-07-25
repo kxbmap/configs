@@ -14,12 +14,10 @@
  * limitations under the License.
  */
 
-package com.github.kxbmap.configs
+package com.github.kxbmap.configs.macros
 
+import com.github.kxbmap.configs.{AtPath, Configs}
 import com.typesafe.config.Config
-import java.util.Locale
-import java.util.regex.Pattern
-import scala.annotation.tailrec
 import scala.reflect.macros.blackbox
 
 class ConfigsMacro(val c: blackbox.Context) {
@@ -65,7 +63,7 @@ class ConfigsMacro(val c: blackbox.Context) {
         params.map { p =>
           val (cn, on, _) = instances(p.info)
           val key = p.name.decodedName.toString
-          val hyphen = MacroImplUtil.toLowerHyphenCase(key)
+          val hyphen = toLowerHyphenCase(key)
           if (key == hyphen) {
             q"$cn.extract($config)($key)"
           } else {
@@ -88,41 +86,6 @@ class ConfigsMacro(val c: blackbox.Context) {
         ${cs.reduceLeft((l, r) => q"$l orElse $r")}
       }
       """)
-  }
-
-}
-
-
-object MacroImplUtil {
-
-  private[this] val sep = Pattern.compile("[_-]+")
-
-  def toLowerHyphenCase(s: String): String = sep.split(s) match {
-    case ps if ps.length > 1 =>
-      ps.mkString("-").toLowerCase(Locale.ENGLISH)
-
-    case _ =>
-      def append(sb: StringBuilder, s: String): StringBuilder =
-        if (sb.isEmpty) sb.append(s)
-        else sb.append('-').append(s)
-
-      @tailrec
-      def format(s: String, sb: StringBuilder = new StringBuilder()): String =
-        if (s.length == 0) sb.result().toLowerCase(Locale.ENGLISH)
-        else {
-          val (us, rest) = s.span(_.isUpper)
-          us.length match {
-            case 0 =>
-              val (ls, next) = rest.span(!_.isUpper)
-              format(next, append(sb, ls))
-            case 1 =>
-              val (ls, next) = rest.span(!_.isUpper)
-              format(next, append(sb, us + ls))
-            case _ =>
-              format(us.last + rest, append(sb, us.init))
-          }
-        }
-      format(s)
   }
 
 }
