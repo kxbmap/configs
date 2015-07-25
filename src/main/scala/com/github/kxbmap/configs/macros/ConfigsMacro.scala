@@ -18,6 +18,8 @@ package com.github.kxbmap.configs.macros
 
 import com.github.kxbmap.configs.{AtPath, Configs}
 import com.typesafe.config.Config
+import scala.collection.mutable
+import scala.collection.mutable.ArrayBuffer
 import scala.reflect.macros.blackbox
 
 class ConfigsMacro(val c: blackbox.Context) {
@@ -45,31 +47,31 @@ class ConfigsMacro(val c: blackbox.Context) {
     if (ctors.isEmpty) {
       c.abort(c.enclosingPosition, s"$tpe must have a public constructor")
     }
-    val ts = ctors.flatMap(_.paramLists.flatMap(_.map(_.info))).distinct
-
-    val instances: Map[Type, (TermName, TermName, Seq[Tree])] = ts.map { t =>
-      val cn = TermName(c.freshName("c"))
-      val ct = atPathType(t)
-      val ci = c.inferImplicitValue(ct, silent = false)
-      val on = TermName(c.freshName("o"))
-      val ot = atPathType(optionType(t))
-      val oi = q"$configsCompanion.optionAtPath[$t]($cn)"
-      (t, (cn, on, Seq(q"val $cn: $ct = $ci", q"val $on: $ot = $oi")))
-    }(collection.breakOut)
-
+    val m = new mutable.HashMap[Type, TermName]()
+    val vs = new ArrayBuffer[Tree]()
     val config = TermName("config")
     val cs = ctors.map { ctor =>
       val argLists = ctor.paramLists.map { params =>
         params.map { p =>
-          val (cn, on, _) = instances(p.info)
-          val key = p.name.decodedName.toString
-          val hyphen = toLowerHyphenCase(key)
-          if (key == hyphen) {
-            q"$cn.extract($config)($key)"
+          val t = p.info
+          val k = p.name.decodedName.toString
+          val h = toLowerHyphenCase(k)
+          val cn = m.getOrElseUpdate(t, {
+            val cn = TermName(c.freshName("c"))
+            val ci = c.inferImplicitValue(atPathType(t), silent = false)
+            vs += q"val $cn = $ci"
+            cn
+          })
+          if (k == h) {
+            q"$cn.extract($config)($k)"
           } else {
-            val ov = q"$on.extract($config)($key)"
-            val cv = q"$cn.extract($config)($hyphen)"
-            q"$ov.getOrElse($cv)"
+            val o = optionType(t)
+            val on = m.getOrElseUpdate(o, {
+              val on = TermName(c.freshName("c"))
+              vs += q"val $on = $configsCompanion.optionAtPath[$t]($cn)"
+              on
+            })
+            q"$on.extract($config)($k).getOrElse($cn.extract($config)($h))"
           }
         }
       }
@@ -79,13 +81,12 @@ class ConfigsMacro(val c: blackbox.Context) {
       }
       """
     }
-
-    c.Expr[Configs[T]](q"""
-      {
-        ..${instances.values.flatMap(_._3)}
-        ${cs.reduceLeft((l, r) => q"$l orElse $r")}
-      }
-      """)
+    c.Expr[Configs[T]](
+      q"""
+      ..$vs
+      ${cs.reduceLeft((l, r) => q"$l orElse $r")}
+      """
+    )
   }
 
 }
