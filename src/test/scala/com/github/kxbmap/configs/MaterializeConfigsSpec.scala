@@ -25,7 +25,8 @@ class MaterializeConfigsSpec extends UnitSpec {
   describe("Configs auto materialization") {
 
     it("should provide for simple class") {
-      val config = ConfigFactory.parseString("""
+      val config = ConfigFactory.parseString(
+        """
         user = Alice
         password = secret
         """)
@@ -36,7 +37,8 @@ class MaterializeConfigsSpec extends UnitSpec {
     }
 
     it("should provide for nested class") {
-      val config = ConfigFactory.parseString("""
+      val config = ConfigFactory.parseString(
+        """
         simple = {
           user = Alice
           password = secret
@@ -74,7 +76,8 @@ class MaterializeConfigsSpec extends UnitSpec {
     }
 
     it("should prevail the specified instance") {
-      val config = ConfigFactory.parseString("""
+      val config = ConfigFactory.parseString(
+        """
         u = Alice
         p = secret
         """)
@@ -85,7 +88,8 @@ class MaterializeConfigsSpec extends UnitSpec {
     }
 
     it("should provide for class that has multi parameter list") {
-      val config = ConfigFactory.parseString("""
+      val config = ConfigFactory.parseString(
+        """
         firstName = John
         lastName = Doe
         age = 42
@@ -102,7 +106,8 @@ class MaterializeConfigsSpec extends UnitSpec {
     describe("for class that has sub constructors") {
 
       it("should extract by primary constructor") {
-        val config = ConfigFactory.parseString("""
+        val config = ConfigFactory.parseString(
+          """
           name = John Doe
           age = 42
           country = USA
@@ -114,7 +119,8 @@ class MaterializeConfigsSpec extends UnitSpec {
       }
 
       it("should extract by most specific sub constructor") {
-        val config = ConfigFactory.parseString("""
+        val config = ConfigFactory.parseString(
+          """
           firstName = John
           lastName = Doe
           age = 42
@@ -126,7 +132,8 @@ class MaterializeConfigsSpec extends UnitSpec {
       }
 
       it("should extract by other sub constructor") {
-        val config = ConfigFactory.parseString("""
+        val config = ConfigFactory.parseString(
+          """
           firstName = John
           lastName = Doe
           """)
@@ -137,7 +144,8 @@ class MaterializeConfigsSpec extends UnitSpec {
       }
 
       it("should not extract by private constructor") {
-        val config = ConfigFactory.parseString("""
+        val config = ConfigFactory.parseString(
+          """
           name = John Doe
           age = 42
           """)
@@ -148,7 +156,8 @@ class MaterializeConfigsSpec extends UnitSpec {
       }
 
       it("should use primary constructor first") {
-        val config = ConfigFactory.parseString("""
+        val config = ConfigFactory.parseString(
+          """
           firstName = John
           lastName = Doe
           name = Alice
@@ -167,7 +176,8 @@ class MaterializeConfigsSpec extends UnitSpec {
     describe("format key to lower-hyphen-case") {
 
       it("should extract config") {
-        val config = ConfigFactory.parseString("""
+        val config = ConfigFactory.parseString(
+          """
           lower-camel-case = 0
           upper-camel-case = 1
           lower-snake-case = 2
@@ -182,7 +192,8 @@ class MaterializeConfigsSpec extends UnitSpec {
       }
 
       it("should prevail original key") {
-        val config = ConfigFactory.parseString("""
+        val config = ConfigFactory.parseString(
+          """
           lower-camel-case = 0
           upper-camel-case = 1
           lower-snake-case = 2
@@ -199,6 +210,30 @@ class MaterializeConfigsSpec extends UnitSpec {
         val s = config.extract[FormatCase]
 
         assert(s == FormatCase(42, 42, 42, 42, 42, 42))
+      }
+
+      it("should not use formatted key if duplicates") {
+        val config = ConfigFactory.parseString(
+          """
+          duplicate-name = 0
+          """)
+
+        val e = intercept[ConfigException.Missing] {
+          config.extract[Duplicate1]
+        }
+        assert(e.getMessage.contains("duplicateName"))
+      }
+
+      it("should not use formatted key if duplicate with other parameter name") {
+        val config = ConfigFactory.parseString(
+          """
+          duplicate-name = 0
+          """)
+
+        val e = intercept[ConfigException.Missing] {
+          config.extract[Duplicate2]
+        }
+        assert(e.getMessage.contains("duplicateName"))
       }
 
     }
@@ -249,5 +284,10 @@ object MaterializeConfigsSpec {
     UPPER_SNAKE_CASE: Int,
     `lower-hyphen-case`: Int,
     UPPERThenCamel: Int)
+
+
+  case class Duplicate1(duplicateName: Int, DuplicateName: Int)
+
+  case class Duplicate2(duplicateName: Int, `duplicate-name`: Int)
 
 }

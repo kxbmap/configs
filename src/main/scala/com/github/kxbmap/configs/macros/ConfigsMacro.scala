@@ -54,30 +54,31 @@ class ConfigsMacro(val c: blackbox.Context) {
     val vs = new ArrayBuffer[Tree]()
     val config = TermName("config")
     val cs = ctors.map { ctor =>
-      val argLists = ctor.paramLists.map { params =>
-        params.map { p =>
-          val t = p.info
-          val k = p.name.decodedName.toString
-          val h = toLowerHyphenCase(k)
-          val cn = m.getOrElseUpdate(t, {
-            val cn = TermName(c.freshName("c"))
-            val ci = c.inferImplicitValue(atPathType(t), silent = false)
-            vs += q"val $cn = $ci"
-            cn
+      val khs: Map[String, String] = ctor.paramLists.flatMap(_.map { p =>
+        val k = p.name.decodedName.toString
+        k -> toLowerHyphenCase(k)
+      })(collection.breakOut)
+      val argLists = ctor.paramLists.map(_.map { p =>
+        val t = p.info
+        val k = p.name.decodedName.toString
+        val h = khs(k)
+        val cn = m.getOrElseUpdate(t, {
+          val cn = TermName(c.freshName("c"))
+          val ci = c.inferImplicitValue(atPathType(t), silent = false)
+          vs += q"val $cn = $ci"
+          cn
+        })
+        if (khs.contains(h) || khs.valuesIterator.count(_ == h) > 1) {
+          q"$cn.extract($config)($k)"
+        } else {
+          val on = m.getOrElseUpdate(optionType(t), {
+            val on = TermName(c.freshName("c"))
+            vs += q"val $on = $configsCompanion.optionAtPath[$t]($cn)"
+            on
           })
-          if (k == h) {
-            q"$cn.extract($config)($k)"
-          } else {
-            val o = optionType(t)
-            val on = m.getOrElseUpdate(o, {
-              val on = TermName(c.freshName("c"))
-              vs += q"val $on = $configsCompanion.optionAtPath[$t]($cn)"
-              on
-            })
-            q"$on.extract($config)($k).getOrElse($cn.extract($config)($h))"
-          }
+          q"$on.extract($config)($k).getOrElse($cn.extract($config)($h))"
         }
-      }
+      })
       q"""
       new ${configsType(tpe)} {
         def extract($config: $configType): $tpe = new $tpe(...$argLists)
