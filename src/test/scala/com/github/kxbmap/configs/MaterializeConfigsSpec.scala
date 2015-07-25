@@ -163,6 +163,46 @@ class MaterializeConfigsSpec extends UnitSpec {
 
     }
 
+
+    describe("format key to lower-hyphen-case") {
+
+      it("should extract config") {
+        val config = ConfigFactory.parseString("""
+          lower-camel-case = 0
+          upper-camel-case = 1
+          lower-snake-case = 2
+          upper-snake-case = 3
+          lower-hyphen-case = 4
+          upper-then-camel = 5
+          """)
+
+        val s = config.extract[FormatCase]
+
+        assert(s == FormatCase(0, 1, 2, 3, 4, 5))
+      }
+
+      it("should prevail original key") {
+        val config = ConfigFactory.parseString("""
+          lower-camel-case = 0
+          upper-camel-case = 1
+          lower-snake-case = 2
+          upper-snake-case = 3
+          upper-then-camel = 5
+          lowerCamelCase = 42
+          UpperCamelCase = 42
+          lower_snake_case = 42
+          UPPER_SNAKE_CASE = 42
+          lower-hyphen-case = 42
+          UPPERThenCamel = 42
+          """)
+
+        val s = config.extract[FormatCase]
+
+        assert(s == FormatCase(42, 42, 42, 42, 42, 42))
+      }
+
+    }
+
   }
 
 }
@@ -200,5 +240,14 @@ object MaterializeConfigsSpec {
 
     def this(firstName: String, lastName: String, age: Int) = this(s"$firstName $lastName", age)
   }
+
+
+  case class FormatCase(
+    lowerCamelCase: Int,
+    UpperCamelCase: Int,
+    lower_snake_case: Int,
+    UPPER_SNAKE_CASE: Int,
+    `lower-hyphen-case`: Int,
+    UPPERThenCamel: Int)
 
 }

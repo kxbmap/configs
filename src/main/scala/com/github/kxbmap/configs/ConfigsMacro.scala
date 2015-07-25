@@ -17,6 +17,9 @@
 package com.github.kxbmap.configs
 
 import com.typesafe.config.Config
+import java.util.Locale
+import java.util.regex.Pattern
+import scala.annotation.tailrec
 import scala.reflect.macros.blackbox
 
 class ConfigsMacro(val c: blackbox.Context) {
@@ -28,6 +31,10 @@ class ConfigsMacro(val c: blackbox.Context) {
   def configsType(arg: Type) = appliedType(typeOf[Configs[_]].typeConstructor, arg)
 
   def atPathType(arg: Type) = appliedType(typeOf[AtPath[_]].typeConstructor, arg)
+
+  def optionType(arg: Type) = appliedType(typeOf[Option[_]].typeConstructor, arg)
+
+  lazy val configsCompanion = symbolOf[Configs[_]].companion
 
 
   def materialize[T: WeakTypeTag]: Expr[Configs[T]] = {
@@ -42,20 +49,30 @@ class ConfigsMacro(val c: blackbox.Context) {
     }
     val ts = ctors.flatMap(_.paramLists.flatMap(_.map(_.info))).distinct
 
-    val instances: Map[Type, (TermName, Tree)] = ts.map { t =>
+    val instances: Map[Type, (TermName, TermName, Seq[Tree])] = ts.map { t =>
       val cn = TermName(c.freshName("c"))
       val ct = atPathType(t)
       val ci = c.inferImplicitValue(ct, silent = false)
-      (t, (cn, q"val $cn: $ct = $ci"))
+      val on = TermName(c.freshName("o"))
+      val ot = atPathType(optionType(t))
+      val oi = q"$configsCompanion.optionAtPath[$t]($cn)"
+      (t, (cn, on, Seq(q"val $cn: $ct = $ci", q"val $on: $ot = $oi")))
     }(collection.breakOut)
 
     val config = TermName("config")
     val cs = ctors.map { ctor =>
       val argLists = ctor.paramLists.map { params =>
         params.map { p =>
-          val (cn, _) = instances(p.info)
+          val (cn, on, _) = instances(p.info)
           val key = p.name.decodedName.toString
-          q"$cn.extract($config)($key)"
+          val hyphen = MacroImplUtil.toLowerHyphenCase(key)
+          if (key == hyphen) {
+            q"$cn.extract($config)($key)"
+          } else {
+            val ov = q"$on.extract($config)($key)"
+            val cv = q"$cn.extract($config)($hyphen)"
+            q"$ov.getOrElse($cv)"
+          }
         }
       }
       q"""
@@ -67,10 +84,45 @@ class ConfigsMacro(val c: blackbox.Context) {
 
     c.Expr[Configs[T]](q"""
       {
-        ..${instances.values.map(_._2)}
+        ..${instances.values.flatMap(_._3)}
         ${cs.reduceLeft((l, r) => q"$l orElse $r")}
       }
       """)
+  }
+
+}
+
+
+object MacroImplUtil {
+
+  private[this] val sep = Pattern.compile("[_-]+")
+
+  def toLowerHyphenCase(s: String): String = sep.split(s) match {
+    case ps if ps.length > 1 =>
+      ps.mkString("-").toLowerCase(Locale.ENGLISH)
+
+    case _ =>
+      def append(sb: StringBuilder, s: String): StringBuilder =
+        if (sb.isEmpty) sb.append(s)
+        else sb.append('-').append(s)
+
+      @tailrec
+      def format(s: String, sb: StringBuilder = new StringBuilder()): String =
+        if (s.length == 0) sb.result().toLowerCase(Locale.ENGLISH)
+        else {
+          val (us, rest) = s.span(_.isUpper)
+          us.length match {
+            case 0 =>
+              val (ls, next) = rest.span(!_.isUpper)
+              format(next, append(sb, ls))
+            case 1 =>
+              val (ls, next) = rest.span(!_.isUpper)
+              format(next, append(sb, us + ls))
+            case _ =>
+              format(us.last + rest, append(sb, us.init))
+          }
+        }
+      format(s)
   }
 
 }
