@@ -23,9 +23,12 @@ class ConfigsMacro(val c: blackbox.Context) {
 
   import c.universe._
 
-  def configType = typeOf[Config]
+  lazy val configType = typeOf[Config]
 
   def configsType(arg: Type) = appliedType(typeOf[Configs[_]].typeConstructor, arg)
+
+  def atPathType(arg: Type) = appliedType(typeOf[AtPath[_]].typeConstructor, arg)
+
 
   def materialize[T: WeakTypeTag]: Expr[Configs[T]] = {
     val tpe = weakTypeOf[T]
@@ -37,12 +40,22 @@ class ConfigsMacro(val c: blackbox.Context) {
     if (ctors.isEmpty) {
       c.abort(c.enclosingPosition, s"$tpe must have a public constructor")
     }
+    val ts = ctors.flatMap(_.paramLists.flatMap(_.map(_.info))).distinct
+
+    val instances: Map[Type, (TermName, Tree)] = ts.map { t =>
+      val cn = TermName(c.freshName("c"))
+      val ct = atPathType(t)
+      val ci = c.inferImplicitValue(ct, silent = false)
+      (t, (cn, q"val $cn: $ct = $ci"))
+    }(collection.breakOut)
+
+    val config = TermName("config")
     val cs = ctors.map { ctor =>
-      val config = TermName("config")
       val argLists = ctor.paramLists.map { params =>
         params.map { p =>
+          val (cn, _) = instances(p.info)
           val key = p.name.decodedName.toString
-          q"$config.get[${p.info}]($key)"
+          q"$cn.extract($config)($key)"
         }
       }
       q"""
@@ -51,7 +64,13 @@ class ConfigsMacro(val c: blackbox.Context) {
       }
       """
     }
-    c.Expr[Configs[T]](cs.reduceLeft((l, r) => q"$l orElse $r"))
+
+    c.Expr[Configs[T]](q"""
+      {
+        ..${instances.values.map(_._2)}
+        ${cs.reduceLeft((l, r) => q"$l orElse $r")}
+      }
+      """)
   }
 
 }
