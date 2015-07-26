@@ -90,13 +90,19 @@ class BeanConfigsSpec extends FunSpec with Matchers {
           |  first-name = John
           |  lastName = Doe
           |}
-          |top.int = 42
+          |simple-beans = [
+          |  { firstName = Alice },
+          |  { firstName = Bob }
+          |]
           |""".stripMargin)
 
-      val b = Configs.bean[NestedBean].extract(config)
+      val b = config.extract[NestedBean]
+
       assert(b.simpleBean.firstName == "John")
       assert(b.simpleBean.lastName == "Doe")
-      assert(b.top.int == 42)
+      //noinspection ZeroIndexToHead
+      assert(b.simpleBeans(0).firstName == "Alice" )
+      assert(b.simpleBeans(1).firstName == "Bob" )
     }
 
   }
@@ -122,9 +128,17 @@ object BeanConfigsSpec {
     @BeanProperty var lastName: String = _
   }
 
+  object SimpleBean {
+    implicit val configs: Configs[SimpleBean] = Configs.bean[SimpleBean]
+  }
+
   class NestedBean {
     @BeanProperty var simpleBean: SimpleBean = _
-    @BeanProperty var top: Top = _
+    @BeanProperty var simpleBeans: Seq[SimpleBean] = _
+  }
+
+  object NestedBean {
+    implicit val configs: Configs[NestedBean] = Configs.bean[NestedBean]
   }
 
 }

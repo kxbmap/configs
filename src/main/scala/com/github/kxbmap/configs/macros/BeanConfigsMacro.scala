@@ -63,11 +63,7 @@ class BeanConfigsMacro(val c: blackbox.Context) extends Helper {
         val hn = toLowerHyphenCase(n)
         val on = cns.getOrElse(ot, {
           val on = freshName("c")
-          val oi = c.inferImplicitValue(atPathType(ot), withMacrosDisabled = true).orElse {
-            val b = q"$configsCompanion.bean[$t]"
-            val a = q"$configsCompanion.configsAtPath[$t]($b)"
-            q"$configsCompanion.optionAtPath[$t]($a)"
-          }
+          val oi = c.inferImplicitValue(atPathType(ot), silent = false, withMacrosDisabled = true)
           vs += q"val $on = $oi"
           on
         })
