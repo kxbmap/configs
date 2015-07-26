@@ -84,6 +84,21 @@ class BeanConfigsSpec extends FunSpec with Matchers {
       o.string shouldBe "x" // Omitted from config
     }
 
+    it("should extract nested bean") {
+      val config = ConfigFactory.parseString(
+        """simple-bean {
+          |  first-name = John
+          |  lastName = Doe
+          |}
+          |top.int = 42
+          |""".stripMargin)
+
+      val b = Configs.bean[NestedBean].extract(config)
+      assert(b.simpleBean.firstName == "John")
+      assert(b.simpleBean.lastName == "Doe")
+      assert(b.top.int == 42)
+    }
+
   }
 
 }
@@ -100,5 +115,16 @@ object BeanConfigsSpec {
   }
 
   class Top extends Obj
+
+
+  class SimpleBean {
+    @BeanProperty var firstName: String = _
+    @BeanProperty var lastName: String = _
+  }
+
+  class NestedBean {
+    @BeanProperty var simpleBean: SimpleBean = _
+    @BeanProperty var top: Top = _
+  }
 
 }
