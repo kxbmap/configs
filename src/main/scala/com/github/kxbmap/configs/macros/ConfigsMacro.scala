@@ -36,6 +36,9 @@ class ConfigsMacro(val c: blackbox.Context) {
 
   lazy val configsCompanion = symbolOf[Configs[_]].companion
 
+  def nonEmptyParam(m: MethodSymbol): Boolean = m.paramLists.exists(_.nonEmpty)
+
+  def hasParamType(m: MethodSymbol, tpe: Type): Boolean = m.paramLists.exists(_.exists(_.info == tpe))
 
   def materialize[T: WeakTypeTag]: Expr[Configs[T]] = {
     val tpe = weakTypeOf[T]
@@ -43,9 +46,9 @@ class ConfigsMacro(val c: blackbox.Context) {
       c.abort(c.enclosingPosition, s"$tpe must be concrete class")
     }
     val ctors = tpe.decls.collect {
-      case m: MethodSymbol if m.isConstructor && m.isPublic => m
+      case m: MethodSymbol if m.isConstructor && m.isPublic && nonEmptyParam(m) && !hasParamType(m, tpe) => m
     }.toSeq.sortBy {
-      m => (!m.isPrimaryConstructor, -m.paramLists.map(_.length).sum)
+      m => (!m.isPrimaryConstructor, -m.paramLists.foldLeft(0)(_ + _.length))
     }
     if (ctors.isEmpty) {
       c.abort(c.enclosingPosition, s"$tpe must have a public constructor")
