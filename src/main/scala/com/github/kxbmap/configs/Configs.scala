@@ -47,7 +47,10 @@ trait Configs[T] {
 
 object Configs extends ConfigsInstances {
 
-  @inline def apply[T](implicit C: Configs[T]): Configs[T] = C
+  @inline
+  def apply[T](implicit C: Configs[T]): Configs[T] = C
+
+  def of[T]: Configs[T] = macro macros.ConfigsMacro.materialize[T]
 
   def configs[T](f: Config => T): Configs[T] = f(_)
 
