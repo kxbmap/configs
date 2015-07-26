@@ -39,6 +39,9 @@ class ConfigsMacro(val c: blackbox.Context) {
 
   def materialize[T: WeakTypeTag]: Expr[Configs[T]] = {
     val tpe = weakTypeOf[T]
+    if (tpe.typeSymbol.isAbstract) {
+      c.abort(c.enclosingPosition, s"$tpe must be concrete class")
+    }
     val ctors = tpe.decls.collect {
       case m: MethodSymbol if m.isConstructor && m.isPublic => m
     }.toSeq.sortBy {
