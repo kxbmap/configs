@@ -52,6 +52,10 @@ object Configs extends ConfigsInstances {
 
   def of[T]: Configs[T] = macro macros.ConfigsMacro.materialize[T]
 
+  def bean[T]: Configs[T] = macro macros.BeanConfigsMacro.materializeT[T]
+
+  def bean[T](newInstance: T): Configs[T] = macro macros.BeanConfigsMacro.materializeI[T]
+
   def configs[T](f: Config => T): Configs[T] = f(_)
 
   def atPath[T](f: (Config, String) => T): AtPath[T] = c => f(c, _)

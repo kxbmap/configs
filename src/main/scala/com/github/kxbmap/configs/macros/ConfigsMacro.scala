@@ -16,70 +16,52 @@
 
 package com.github.kxbmap.configs.macros
 
-import com.github.kxbmap.configs.{AtPath, Configs}
-import com.typesafe.config.Config
+import com.github.kxbmap.configs.Configs
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
 import scala.reflect.macros.blackbox
 
-class ConfigsMacro(val c: blackbox.Context) {
+class ConfigsMacro(val c: blackbox.Context) extends Helper {
 
   import c.universe._
 
-  lazy val configType = typeOf[Config]
-
-  def configsType(arg: Type) = appliedType(typeOf[Configs[_]].typeConstructor, arg)
-
-  def atPathType(arg: Type) = appliedType(typeOf[AtPath[_]].typeConstructor, arg)
-
-  def optionType(arg: Type) = appliedType(typeOf[Option[_]].typeConstructor, arg)
-
-  lazy val configsCompanion = symbolOf[Configs[_]].companion
-
-  def nonEmptyParam(m: MethodSymbol): Boolean = m.paramLists.exists(_.nonEmpty)
-
-  def hasParamType(m: MethodSymbol, tpe: Type): Boolean = m.paramLists.exists(_.exists(_.info == tpe))
-
   def materialize[T: WeakTypeTag]: Expr[Configs[T]] = {
-    val tpe = weakTypeOf[T]
-    if (tpe.typeSymbol.isAbstract) {
-      c.abort(c.enclosingPosition, s"$tpe must be concrete class")
-    }
+    val tpe = abortIfAbstract(weakTypeOf[T])
     val ctors = tpe.decls.collect {
-      case m: MethodSymbol if m.isConstructor && m.isPublic && nonEmptyParam(m) && !hasParamType(m, tpe) => m
+      case m: MethodSymbol if m.isConstructor && m.isPublic && nonEmptyParams(m) && !hasParamType(m, tpe) => m
     }.toSeq.sortBy {
       m => (!m.isPrimaryConstructor, -m.paramLists.foldLeft(0)(_ + _.length))
     }
     if (ctors.isEmpty) {
-      c.abort(c.enclosingPosition, s"$tpe must have a public constructor")
+      abort(s"$tpe must have a public constructor")
     }
     val m = new mutable.HashMap[Type, TermName]()
     val vs = new ArrayBuffer[Tree]()
     val config = TermName("config")
     val cs = ctors.map { ctor =>
-      val khs: Map[String, String] = ctor.paramLists.flatMap(_.map { p =>
-        val k = p.name.decodedName.toString
-        k -> toLowerHyphenCase(k)
+      val hns: Map[String, String] = ctor.paramLists.flatMap(_.map { p =>
+        val n = name(p)
+        n -> toLowerHyphenCase(n)
       })(collection.breakOut)
       val argLists = ctor.paramLists.map(_.map { p =>
         val t = p.info
-        val k = p.name.decodedName.toString
-        val h = khs(k)
+        val n = name(p)
+        val hn = hns(n)
         val cn = m.getOrElseUpdate(t, {
-          val cn = TermName(c.freshName("c"))
+          val cn = freshName("c")
           val ci = c.inferImplicitValue(atPathType(t), silent = false)
           vs += q"val $cn = $ci"
           cn
         })
-        if (khs.contains(h) || khs.valuesIterator.count(_ == h) > 1) {
-          q"$cn.extract($config)($k)"
+        if (hns.contains(hn) || hns.valuesIterator.count(_ == hn) > 1) {
+          q"$cn.extract($config)($n)"
         } else {
           val on = m.getOrElseUpdate(optionType(t), {
-            val on = TermName(c.freshName("c"))
+            val on = freshName("c")
             vs += q"val $on = $configsCompanion.optionAtPath[$t]($cn)"
             on
           })
-          q"$on.extract($config)($k).getOrElse($cn.extract($config)($h))"
+          q"$on.extract($config)($n).getOrElse($cn.extract($config)($hn))"
         }
       })
       q"""

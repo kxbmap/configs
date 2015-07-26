@@ -17,13 +17,12 @@
 package com.github.kxbmap.configs
 
 import com.typesafe.config.{ConfigException, ConfigFactory}
-import java.util.{List => JList}
 import org.scalatest.{FunSpec, Matchers}
 import scala.beans.BeanProperty
 
-class BeansSpec extends FunSpec with Matchers {
+class BeanConfigsSpec extends FunSpec with Matchers {
 
-  import BeansSpec._
+  import BeanConfigsSpec._
 
   class Inner extends Obj
 
@@ -39,8 +38,8 @@ class BeansSpec extends FunSpec with Matchers {
         |d.long=2
         |d.string=x""".stripMargin)
 
-    implicit val topConfigs = Beans[Top]
-    implicit val innerConfigs = Beans(new Inner)
+    implicit val topConfigs = Configs.bean[Top]
+    implicit val innerConfigs = Configs.bean(new Inner)
 
     it("should be available to get a value with a no-arg constructor") {
       val o = c.get[Top]("a")
@@ -63,22 +62,24 @@ class BeansSpec extends FunSpec with Matchers {
     }
 
     it("should throw an exception for incorrect property types") {
-      intercept[ConfigException.WrongType] {
+      val e = intercept[ConfigException.WrongType] {
         c.get[Inner]("b")
       }
+      assert(e.getMessage.contains("int"))
     }
 
     it("should throw an exception for unknown property names") {
-      intercept[ConfigException.BadPath] {
+      val e = intercept[ConfigException.BadPath] {
         c.get[Inner]("c")
       }
+      assert(e.getMessage.contains("missing"))
     }
 
     it("should support both primitive types and objects") {
       val o = c.get[Top]("d")
       o.boolean shouldBe true
       o.int shouldBe 1
-      o.list should have length 3
+      o.list shouldBe List("foo", "bar", "baz")
       o.long shouldBe 2
       o.string shouldBe "x" // Omitted from config
     }
@@ -87,13 +88,13 @@ class BeansSpec extends FunSpec with Matchers {
 
 }
 
-object BeansSpec {
+object BeanConfigsSpec {
 
   trait Obj {
     @BeanProperty var boolean: Boolean = _
     @BeanProperty var double: Double = _
     @BeanProperty var int: Int = _
-    @BeanProperty var list: JList[String] = _
+    @BeanProperty var list: List[String] = _
     @BeanProperty var long: Long = _
     @BeanProperty var string: String = _
   }
