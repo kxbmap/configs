@@ -93,7 +93,7 @@ class BytesSpec extends UnitSpec {
     }
   }
 
-  implicit val BytesArb = Arbitrary {
+  implicit val BytesArb: Arbitrary[Bytes] = Arbitrary {
     Arbitrary.arbitrary[Long].map(Bytes.apply)
   }
 }
