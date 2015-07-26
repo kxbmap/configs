@@ -19,6 +19,7 @@ package com.github.kxbmap.configs
 import com.typesafe.config.{ConfigException, ConfigFactory}
 import java.util.{List => JList}
 import org.scalatest.{FunSpec, Matchers}
+import scala.beans.BeanProperty
 
 class BeansSpec extends FunSpec with Matchers {
 
@@ -43,8 +44,8 @@ class BeansSpec extends FunSpec with Matchers {
 
     it("should be available to get a value with a no-arg constructor") {
       val o = c.get[Top]("a")
-      o._string shouldBe "x"
-      o._list shouldBe null // Omitted from config
+      o.string shouldBe "x"
+      o.list shouldBe null // Omitted from config
     }
 
     it("should return different instances with a no-arg constructor") {
@@ -53,8 +54,8 @@ class BeansSpec extends FunSpec with Matchers {
 
     it("should be available to get a value via factory function") {
       val o = c.get[Inner]("a")
-      o._string shouldBe "x"
-      o._list shouldBe null
+      o.string shouldBe "x"
+      o.list shouldBe null
     }
 
     it("should return different instances with factory function") {
@@ -75,11 +76,11 @@ class BeansSpec extends FunSpec with Matchers {
 
     it("should support both primitive types and objects") {
       val o = c.get[Top]("d")
-      o._boolean shouldBe true
-      o._int shouldBe 1
-      o._list should have length 3
-      o._long shouldBe 2
-      o._string shouldBe "x" // Omitted from config
+      o.boolean shouldBe true
+      o.int shouldBe 1
+      o.list should have length 3
+      o.long shouldBe 2
+      o.string shouldBe "x" // Omitted from config
     }
 
   }
@@ -89,25 +90,12 @@ class BeansSpec extends FunSpec with Matchers {
 object BeansSpec {
 
   trait Obj {
-    var _boolean: Boolean = _
-    var _double: Double = _
-    var _int: Int = _
-    var _list: JList[String] = _
-    var _long: Long = _
-    var _string: String = _
-
-    def setBoolean(b: Boolean): Unit = _boolean = b
-
-    def setDouble(d: Double): Unit = _double = d
-
-    def setInt(i: Int): Unit = _int = i
-
-    def setList(l: JList[String]): Unit = _list = l
-
-    def setLong(l: Long): Unit = _long = l
-
-    def setString(s: String): Unit = _string = s
-
+    @BeanProperty var boolean: Boolean = _
+    @BeanProperty var double: Double = _
+    @BeanProperty var int: Int = _
+    @BeanProperty var list: JList[String] = _
+    @BeanProperty var long: Long = _
+    @BeanProperty var string: String = _
   }
 
   class Top extends Obj
