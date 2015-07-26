@@ -29,24 +29,21 @@ package object macros {
       ps.mkString("-").toLowerCase(Locale.ENGLISH)
 
     case _ =>
-      def append(sb: StringBuilder, s: String): StringBuilder =
-        if (sb.isEmpty) sb.append(s)
-        else sb.append('-').append(s)
-
       @tailrec
       def format(s: String, sb: StringBuilder = new StringBuilder()): String =
         if (s.length == 0) sb.result().toLowerCase(Locale.ENGLISH)
         else {
-          val (us, rest) = s.span(_.isUpper)
+          def append(s: String) = (if (sb.isEmpty) sb else sb.append('-')).append(s)
+          val (us, rs) = s.span(_.isUpper)
           us.length match {
             case 0 =>
-              val (ls, next) = rest.span(!_.isUpper)
-              format(next, append(sb, ls))
+              val (ls, rest) = rs.span(!_.isUpper)
+              format(rest, append(ls))
             case 1 =>
-              val (ls, next) = rest.span(!_.isUpper)
-              format(next, append(sb, us + ls))
+              val (ls, rest) = rs.span(!_.isUpper)
+              format(rest, append(us + ls))
             case _ =>
-              format(us.last + rest, append(sb, us.init))
+              format(us.last + rs, append(us.init))
           }
         }
       format(s)
