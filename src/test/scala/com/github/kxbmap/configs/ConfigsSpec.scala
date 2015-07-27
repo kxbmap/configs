@@ -29,7 +29,7 @@ class ConfigsSpec extends UnitSpec {
 
     it("should be a instance of Functor") {
       val c = parseString("value = 42")
-      val cs: Configs[Int] = _.getInt("value")
+      val cs: Configs[Int] = Configs.onPath(_.getInt("value"))
 
       assert(cs.map(identity).extract(c) === identity(cs).extract(c))
 
@@ -41,9 +41,9 @@ class ConfigsSpec extends UnitSpec {
 
     describe("orElse") {
 
-      val c1: Configs[Int] = _.getInt("value1")
-      val c2: Configs[Int] = _.getInt("value2")
-      val error: Configs[Int] = _ => sys.error("error")
+      val c1: Configs[Int] = Configs.onPath(_.getInt("value1"))
+      val c2: Configs[Int] = Configs.onPath(_.getInt("value2"))
+      val error: Configs[Int] = Configs.onPath[Int](_ => sys.error("error"))
 
       it("should extract a first value") {
         val config = parseString("""
@@ -87,18 +87,18 @@ class ConfigsSpec extends UnitSpec {
 
 
     describe("conversions") {
-      implicit val cs: Configs[A] = _ => A
+      implicit val cs: Configs[A] = Configs.onPath[A](_ => A)
 
       val c = parseString(
         """a = {}
           |b = [{}, {}]
           |""".stripMargin)
 
-      it("should be available for AtPath[A]") {
+      it("should be available for Configs[A]") {
         assert(c.get[A]("a") === A)
       }
 
-      it("should be available for AtPath[List[A]]") {
+      it("should be available for Configs[List[A]]") {
         assert(c.get[List[A]]("b") === List(A, A))
       }
     }
@@ -290,7 +290,7 @@ class ConfigsSpec extends UnitSpec {
           assert(c.get[Either[Throwable, List[String]]]("b") === Right(List("Hello", "World")))
         }
 
-        implicit val at: AtPath[A] = _ => _ => throw FatalError
+        implicit val at: Configs[A] = (_, _) => throw FatalError
 
         describe("with Throwable") {
           it("should catch all error") {
@@ -329,7 +329,7 @@ class ConfigsSpec extends UnitSpec {
           assert(c.get[Try[Int]]("a").isFailure)
         }
 
-        implicit val at: AtPath[A] = _ => _ => throw FatalError
+        implicit val at: Configs[A] = (_, _) => throw FatalError
 
         it("should not catch fatal error") {
           intercept[FatalError] {

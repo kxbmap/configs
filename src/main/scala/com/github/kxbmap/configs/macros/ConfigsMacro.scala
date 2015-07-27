@@ -16,7 +16,6 @@
 
 package com.github.kxbmap.configs.macros
 
-import com.github.kxbmap.configs.Configs
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
 import scala.reflect.macros.blackbox
@@ -25,7 +24,7 @@ class ConfigsMacro(val c: blackbox.Context) extends Helper {
 
   import c.universe._
 
-  def materialize[T: WeakTypeTag]: Expr[Configs[T]] = {
+  def materialize[T: WeakTypeTag]: Tree = {
     val tpe = abortIfAbstract(weakTypeOf[T])
     val ctors = tpe.decls.collect {
       case m: MethodSymbol if m.isConstructor && m.isPublic && nonEmptyParams(m) && !hasParamType(m, tpe) => m
@@ -49,33 +48,31 @@ class ConfigsMacro(val c: blackbox.Context) extends Helper {
         val hn = hns(n)
         val cn = m.getOrElseUpdate(t, {
           val cn = freshName("c")
-          val ci = c.inferImplicitValue(atPathType(t), silent = false)
+          val ci = c.inferImplicitValue(configsType(t), silent = false)
           vs += q"val $cn = $ci"
           cn
         })
         if (hns.contains(hn) || hns.valuesIterator.count(_ == hn) > 1) {
-          q"$cn.extract($config)($n)"
+          q"$cn.get($config, $n)"
         } else {
           val on = m.getOrElseUpdate(optionType(t), {
             val on = freshName("c")
-            vs += q"val $on = $configsCompanion.optionAtPath[$t]($cn)"
+            vs += q"val $on = $configsCompanion.optionConfigs[$t]($cn)"
             on
           })
-          q"$on.extract($config)($n).getOrElse($cn.extract($config)($hn))"
+          q"$on.get($config, $n).getOrElse($cn.get($config, $hn))"
         }
       })
       q"""
-      new ${configsType(tpe)} {
-        def extract($config: $configType): $tpe = new $tpe(...$argLists)
+      $configsCompanion.onPath { $config: $configType =>
+        new $tpe(...$argLists)
       }
       """
     }
-    c.Expr[Configs[T]](
-      q"""
-      ..$vs
-      ${cs.reduceLeft((l, r) => q"$l orElse $r")}
-      """
-    )
+    q"""
+    ..$vs
+    ${cs.reduceLeft((l, r) => q"$l.orElse($r)")}
+    """
   }
 
 }

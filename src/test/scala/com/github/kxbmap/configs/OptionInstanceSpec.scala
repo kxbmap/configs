@@ -28,25 +28,20 @@ class OptionInstanceSpec extends UnitSpec {
 
   case class Foo(v: Int)
 
-  implicit val fooConfigs: Configs[Foo] = c => Foo(c.getInt("v"))
+  implicit val fooConfigs: Configs[Foo] = Configs.onPath(c => Foo(c.getInt("v")))
 
 
   describe("Configs[Option[T]]") {
 
-    val C = Configs[Option[Foo]]
+    val C: Configs[Option[Foo]] = Configs[Option[Foo]]
 
     it("extract Some[T]") {
       assert(C.extract(config.getConfig("foo")) == Some(Foo(42)))
     }
-  }
-
-  describe("AtPath[Option[T]]") {
-
-    val A = AtPath[Option[Foo]]
 
     describe("extract a path to value function") {
 
-      val f = A.extract(config)
+      val f = C.get(config, _: String)
 
       it("returns Some[T] if value exists") {
         assert(f("foo") == Some(Foo(42)))
@@ -63,22 +58,6 @@ class OptionInstanceSpec extends UnitSpec {
       }
     }
 
-    describe("behave same as Configs[Option[T]]") {
-
-      val C = Configs[Option[Foo]]
-
-      it("`getConfig and then Configs.extract` == `AtPath.extract and then apply`") {
-        assert(C.extract(config.getConfig("foo")) == A.extract(config)("foo"))
-
-        val e1 = intercept[ConfigException.Missing] {
-          C.extract(config.getConfig("missing-v"))
-        }
-        val e2 = intercept[ConfigException.Missing] {
-          A.extract(config)("missing-v")
-        }
-        assert(e1.getMessage == e2.getMessage)
-      }
-    }
   }
 
 }

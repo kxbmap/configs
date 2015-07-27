@@ -257,10 +257,12 @@ object MaterializeConfigsSpec {
   case class SpecifiedSetting(user: String, password: String)
 
   object SpecifiedSetting {
-    implicit val configs: Configs[SpecifiedSetting] = c => SpecifiedSetting(
-      user = c.get[String]("u"),
-      password = c.get[String]("p")
-    )
+    implicit val configs: Configs[SpecifiedSetting] = Configs.onPath { c =>
+      SpecifiedSetting(
+        user = c.get[String]("u"),
+        password = c.get[String]("p")
+      )
+    }
   }
 
 

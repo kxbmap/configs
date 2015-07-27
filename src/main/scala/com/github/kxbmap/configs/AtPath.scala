@@ -16,12 +16,17 @@
 
 package com.github.kxbmap.configs
 
-
+@deprecated("Use Configs", "0.3.0")
 object AtPath {
-  @inline def apply[T](implicit A: AtPath[T]): AtPath[T] = A
 
-  def by[S: AtPath, T](f: S => T): AtPath[T] = f compose _.get[S]
+  @deprecated("Use Configs", "0.3.0")
+  def apply[T](implicit T: Configs[T]): Configs[T] = T
 
-  def listBy[C[_], S, T](f: S => T)(implicit ev: AtPath[Seq[S]], cbf: CBF[C, T]): AtPath[C[T]] =
-    by((_: Seq[S]).map(f)(collection.breakOut))
+  @deprecated("Use Configs.map", "0.3.0")
+  def by[S: Configs, T](f: S => T): Configs[T] = Configs[S].map(f)
+
+  @deprecated("Use Configs", "0.3.0")
+  def listBy[C[_], S, T](f: S => T)(implicit ev: Configs[Seq[S]], cbf: CBF[C, T]): Configs[C[T]] =
+    ev.map(_.map(f)(collection.breakOut))
+
 }

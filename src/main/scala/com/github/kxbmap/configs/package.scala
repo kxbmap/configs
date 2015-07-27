@@ -17,26 +17,27 @@
 package com.github.kxbmap
 
 import com.typesafe.config.Config
-import scala.annotation.implicitNotFound
 import scala.collection.generic.CanBuildFrom
 
 
 package object configs {
 
-  @implicitNotFound("No implicit AtPath defined for ${T}.")
-  type AtPath[T] = Configs[String => T]
-
   private[configs] type CBF[To[_], Elem] = CanBuildFrom[Nothing, Elem, To[Elem]]
 
 
+  @deprecated("Use Configs[T]", "0.3.0")
+  type AtPath[T] = Configs[T]
+
+
   final implicit class EnrichTypesafeConfig(val c: Config) extends AnyVal {
+
     def extract[T: Configs]: T = Configs[T].extract(c)
 
-    def get[T: AtPath](path: String): T = extract[String => T].apply(path)
+    def get[T: Configs](path: String): T = Configs[T].get(c, path)
 
-    def opt[T: AtPath](path: String): Option[T] = get[Option[T]](path)
+    def opt[T: Configs](path: String): Option[T] = get[Option[T]](path)
 
-    def getOrElse[T: AtPath](path: String, default: => T): T = opt[T](path).getOrElse(default)
+    def getOrElse[T: Configs](path: String, default: => T): T = opt[T](path).getOrElse(default)
   }
 
 }

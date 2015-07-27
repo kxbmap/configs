@@ -16,7 +16,7 @@
 
 package com.github.kxbmap.configs
 
-import com.typesafe.config.{Config, ConfigException, ConfigMemorySize}
+import com.typesafe.config.{Config, ConfigException, ConfigMemorySize, ConfigValue}
 import java.io.File
 import java.net.{InetAddress, InetSocketAddress, UnknownHostException}
 import java.nio.file.{Path, Paths}
@@ -32,23 +32,33 @@ import scala.util.Try
 @implicitNotFound("No implicit Configs defined for ${T}.")
 trait Configs[T] {
 
-  def extract(config: Config): T
+  def get(config: Config, path: String): T
 
-  def map[U](f: T => U): Configs[U] = f.compose(extract)(_)
+  def extract(config: Config): T = get(config.atPath(Configs.DummyPath), Configs.DummyPath)
 
-  def orElse[U >: T](other: Configs[U]): Configs[U] = c =>
+  def extract(value: ConfigValue): T = get(value.atPath(Configs.DummyPath), Configs.DummyPath)
+
+  def map[U](f: T => U): Configs[U] = (c, p) => f(get(c, p))
+
+  def orElse[U >: T](other: Configs[U]): Configs[U] = (c, p) =>
     try
-      extract(c)
+      get(c, p)
     catch {
       case _: ConfigException =>
-        other.extract(c)
+        other.get(c, p)
     }
 }
 
 object Configs extends ConfigsInstances {
 
+  private final val DummyPath = "configs-extract-path"
+
   @inline
-  def apply[T](implicit C: Configs[T]): Configs[T] = C
+  def apply[T](implicit T: Configs[T]): Configs[T] = T
+
+  def from[T](f: (Config, String) => T): Configs[T] = f(_, _)
+
+  def onPath[T](f: Config => T): Configs[T] = (c, p) => f(c.getConfig(p))
 
   def of[T]: Configs[T] = macro macros.ConfigsMacro.materialize[T]
 
@@ -56,9 +66,13 @@ object Configs extends ConfigsInstances {
 
   def bean[T](newInstance: T): Configs[T] = macro macros.BeanConfigsMacro.materializeI[T]
 
-  def configs[T](f: Config => T): Configs[T] = f(_)
 
-  def atPath[T](f: (Config, String) => T): AtPath[T] = c => f(c, _)
+  @deprecated("Use Configs.onPath", "0.3.0")
+  def configs[T](f: Config => T): Configs[T] = onPath(f)
+
+  @deprecated("Use Configs.from", "0.3.0")
+  def atPath[T](f: (Config, String) => T): Configs[T] = from(f)
+
 }
 
 trait ConfigsInstances {
@@ -66,106 +80,95 @@ trait ConfigsInstances {
   implicit def materializeConfigs[T]: Configs[T] = macro macros.ConfigsMacro.materialize[T]
 
 
-  implicit lazy val configConfigs: Configs[Config] = identity
+  implicit def collectionConfigs[C[_], T: Configs](implicit cbf: CBF[C, T]): Configs[C[T]] = (c, p) =>
+    c.getList(p).map(Configs[T].extract).to[C]
 
 
-  implicit lazy val intAtPath: AtPath[Int] = _.getInt
+  implicit def stringMapConfigs[T: Configs]: Configs[Map[String, T]] = Configs.onPath { c =>
+    c.root().keysIterator.map(k => k -> c.get[T](k)).toMap
+  }
 
-  implicit def intsAtPath[C[_]](implicit cbf: CBF[C, Int]): AtPath[C[Int]] = c =>
-    c.getIntList(_).map(_.toInt)(collection.breakOut)
-
-  implicit lazy val longAtPath: AtPath[Long] = _.getLong
-
-  implicit def longsAtPath[C[_]](implicit cbf: CBF[C, Long]): AtPath[C[Long]] = c =>
-    c.getLongList(_).map(_.toLong)(collection.breakOut)
-
-  implicit lazy val doubleAtPath: AtPath[Double] = _.getDouble
-
-  implicit def doublesAtPath[C[_]](implicit cbf: CBF[C, Double]): AtPath[C[Double]] = c =>
-    c.getDoubleList(_).map(_.toDouble)(collection.breakOut)
-
-  implicit lazy val booleanAtPath: AtPath[Boolean] = _.getBoolean
-
-  implicit def booleansAtPath[C[_]](implicit cbf: CBF[C, Boolean]): AtPath[C[Boolean]] = c =>
-    c.getBooleanList(_).map(_.booleanValue())(collection.breakOut)
-
-  implicit lazy val stringAtPath: AtPath[String] = _.getString
-
-  implicit def stringsAtPath[C[_]](implicit cbf: CBF[C, String]): AtPath[C[String]] = c => c.getStringList(_).to[C]
+  implicit def symbolMapConfigs[T: Configs]: Configs[Map[Symbol, T]] = Configs.onPath { c =>
+    c.root().keysIterator.map(k => Symbol(k) -> c.get[T](k)).toMap
+  }
 
 
-  def mapConfigs[K, T: AtPath](f: String => K): Configs[Map[K, T]] = c =>
-    c.root().keysIterator.map(k => f(k) -> c.get[T](k)).toMap
+  implicit lazy val configConfigs: Configs[Config] = _.getConfig(_)
 
-  implicit def stringMapConfigs[T: AtPath]: Configs[Map[String, T]] = mapConfigs(identity)
-
-  implicit def symbolMapConfigs[T: AtPath]: Configs[Map[Symbol, T]] = mapConfigs(Symbol.apply)
+  implicit def configsConfigs[C[_]](implicit cbf: CBF[C, Config]): Configs[C[Config]] =
+    _.getConfigList(_).map(c => c: Config)(collection.breakOut)
 
 
-  implicit lazy val symbolAtPath: AtPath[Symbol] = AtPath.by(Symbol.apply)
+  implicit lazy val intConfigs: Configs[Int] = _.getInt(_)
 
-  implicit def symbolsAtPath[C[_]](implicit cbf: CBF[C, Symbol]): AtPath[C[Symbol]] = AtPath.listBy(Symbol.apply)
-
-
-  implicit def configsAtPath[T: Configs]: AtPath[T] = c => c.getConfig(_).extract[T]
-
-  implicit def configsCollectionAtPath[C[_], T: Configs](implicit cbf: CBF[C, T]): AtPath[C[T]] = c =>
-    c.getConfigList(_).map(_.extract[T])(collection.breakOut)
+  implicit def intsConfigs[C[_]](implicit cbf: CBF[C, Int]): Configs[C[Int]] =
+    _.getIntList(_).map(_.toInt)(collection.breakOut)
 
 
-  implicit def optionConfigs[T: Configs]: Configs[Option[T]] = c => Some(c.extract[T])
+  implicit lazy val longConfigs: Configs[Long] = _.getLong(_)
 
-  implicit def optionAtPath[T: AtPath]: AtPath[Option[T]] = c => p =>
+  implicit def longsConfigs[C[_]](implicit cbf: CBF[C, Long]): Configs[C[Long]] =
+    _.getLongList(_).map(_.toLong)(collection.breakOut)
+
+
+  implicit lazy val doubleConfigs: Configs[Double] = _.getDouble(_)
+
+  implicit def doublesConfigs[C[_]](implicit cbf: CBF[C, Double]): Configs[C[Double]] =
+    _.getDoubleList(_).map(_.toDouble)(collection.breakOut)
+
+
+  implicit lazy val booleanConfigs: Configs[Boolean] = _.getBoolean(_)
+
+  implicit def booleansConfigs[C[_]](implicit cbf: CBF[C, Boolean]): Configs[C[Boolean]] =
+    _.getBooleanList(_).map(_.booleanValue())(collection.breakOut)
+
+
+  implicit lazy val stringConfigs: Configs[String] = _.getString(_)
+
+  implicit def stringsConfigs[C[_]](implicit cbf: CBF[C, String]): Configs[C[String]] = _.getStringList(_).to[C]
+
+
+  implicit lazy val symbolConfigs: Configs[Symbol] = Configs[String].map(Symbol.apply)
+
+
+  implicit def optionConfigs[T: Configs]: Configs[Option[T]] = (c, p) =>
     if (c.hasPathOrNull(p) && !c.getIsNull(p)) Some(c.get[T](p)) else None
 
 
-  implicit def eitherConfigs[E <: Throwable : ClassTag, T: Configs]: Configs[Either[E, T]] = c => eitherFrom(c.extract[T])
-
-  implicit def eitherAtPath[E <: Throwable : ClassTag, T: AtPath]: AtPath[Either[E, T]] = c => p => eitherFrom(c.get[T](p))
-
-  private def eitherFrom[E <: Throwable : ClassTag, T](value: => T): Either[E, T] =
-    try Right(value) catch {
+  implicit def eitherConfigs[E <: Throwable : ClassTag, T: Configs]: Configs[Either[E, T]] = (c, p) =>
+    try Right(c.get[T](p)) catch {
       case e if classTag[E].runtimeClass.isAssignableFrom(e.getClass) =>
         Left(e.asInstanceOf[E])
     }
 
 
-  implicit def tryConfigs[T: Configs]: Configs[Try[T]] = c => Try(c.extract[T])
-
-  implicit def tryAtPath[T: AtPath]: AtPath[Try[T]] = c => p => Try(c.get[T](p))
+  implicit def tryConfigs[T: Configs]: Configs[Try[T]] = (c, p) => Try(c.get[T](p))
 
 
-  implicit lazy val finiteDurationAtPath: AtPath[FiniteDuration] = c => p =>
+  implicit lazy val finiteDurationConfigs: Configs[FiniteDuration] = (c, p) =>
     Duration.fromNanos(c.getDuration(p, TimeUnit.NANOSECONDS))
 
-  implicit lazy val durationAtPath: AtPath[Duration] = finiteDurationAtPath.asInstanceOf[AtPath[Duration]]
-
-  implicit def durationsAtPath[C[_], D >: FiniteDuration <: Duration](implicit cbf: CBF[C, D]): AtPath[C[D]] = c =>
-    c.getDurationList(_, TimeUnit.NANOSECONDS).map(Duration.fromNanos(_))(collection.breakOut)
+  implicit lazy val durationConfigs: Configs[Duration] = finiteDurationConfigs.asInstanceOf[Configs[Duration]]
 
 
-  implicit lazy val javaTimeDurationAtPath: AtPath[JDuration] = _.getDuration
+  implicit lazy val javaTimeDurationConfigs: Configs[JDuration] = _.getDuration(_)
 
-  implicit def javaTimeDurationsAtPath[C[_]](implicit cbf: CBF[C, JDuration]): AtPath[C[JDuration]] = c =>
-    c.getDurationList(_).to[C]
-
-  implicit lazy val configMemorySizeAtPath: AtPath[ConfigMemorySize] = _.getMemorySize
-
-  implicit def configMemorySizesAtPath[C[_]](implicit cbf: CBF[C, ConfigMemorySize]): AtPath[C[ConfigMemorySize]] = c =>
-    c.getMemorySizeList(_).to[C]
+  implicit def javaTimeDurationsConfigs[C[_]](implicit cbf: CBF[C, JDuration]): Configs[C[JDuration]] =
+    _.getDurationList(_).to[C]
 
 
-  implicit lazy val fileAtPath: AtPath[File] = AtPath.by(new File(_: String))
+  implicit lazy val configMemorySizeConfigs: Configs[ConfigMemorySize] = _.getMemorySize(_)
 
-  implicit def filesAtPath[C[_]](implicit cbf: CBF[C, File]): AtPath[C[File]] = AtPath.listBy(new File(_: String))
-
-
-  implicit lazy val pathAtPath: AtPath[Path] = AtPath.by(Paths.get(_: String))
-
-  implicit def pathsAtPath[C[_]](implicit cbf: CBF[C, Path]): AtPath[C[Path]] = AtPath.listBy(Paths.get(_: String))
+  implicit def configMemorySizesConfigs[C[_]](implicit cbf: CBF[C, ConfigMemorySize]): Configs[C[ConfigMemorySize]] =
+    _.getMemorySizeList(_).to[C]
 
 
-  implicit lazy val inetAddressAtPath: AtPath[InetAddress] = c => p =>
+  implicit lazy val fileConfigs: Configs[File] = Configs[String].map(new File(_))
+
+  implicit lazy val pathConfigs: Configs[Path] = Configs[String].map(Paths.get(_))
+
+
+  implicit lazy val inetAddressConfigs: Configs[InetAddress] = (c, p) =>
     try
       InetAddress.getByName(c.get[String](p))
     catch {
@@ -173,16 +176,8 @@ trait ConfigsInstances {
         throw new ConfigException.BadValue(c.origin(), p, e.getMessage, e)
     }
 
-  implicit def inetAddressesAtPath[C[_]](implicit cbf: CBF[C, InetAddress]): AtPath[C[InetAddress]] = c => p =>
-    try
-      c.get[Seq[String]](p).map(InetAddress.getByName)(collection.breakOut)
-    catch {
-      case e: UnknownHostException =>
-        throw new ConfigException.BadValue(c.origin(), p, e.getMessage, e)
-    }
 
-
-  implicit lazy val inetSocketAddressConfigs: Configs[InetSocketAddress] = c => {
+  implicit lazy val inetSocketAddressConfigs: Configs[InetSocketAddress] = Configs.onPath { c =>
     val port = c.getInt("port")
     c.opt[String]("hostname").fold {
       new InetSocketAddress(c.get[InetAddress]("addr"), port)

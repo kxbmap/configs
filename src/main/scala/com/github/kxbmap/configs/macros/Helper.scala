@@ -16,7 +16,7 @@
 
 package com.github.kxbmap.configs.macros
 
-import com.github.kxbmap.configs.{AtPath, Configs}
+import com.github.kxbmap.configs.Configs
 import com.typesafe.config.{Config, ConfigException}
 import scala.reflect.macros.blackbox
 
@@ -29,8 +29,6 @@ private[macros] abstract class Helper {
   lazy val configType = typeOf[Config]
 
   def configsType(arg: Type) = appliedType(typeOf[Configs[_]].typeConstructor, arg)
-
-  def atPathType(arg: Type) = appliedType(typeOf[AtPath[_]].typeConstructor, arg)
 
   def optionType(arg: Type) = appliedType(typeOf[Option[_]].typeConstructor, arg)
 
