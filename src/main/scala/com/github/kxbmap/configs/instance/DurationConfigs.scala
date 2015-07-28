@@ -14,21 +14,17 @@
  * limitations under the License.
  */
 
-package com.github.kxbmap.configs
+package com.github.kxbmap.configs.instance
 
-import scala.collection.generic.CanBuildFrom
+import com.github.kxbmap.configs.Configs
+import java.util.concurrent.TimeUnit
+import scala.concurrent.duration.{Duration, FiniteDuration}
 
-@deprecated("Use Configs", "0.3.0")
-object AtPath {
+trait DurationConfigs {
 
-  @deprecated("Use Configs", "0.3.0")
-  def apply[T](implicit T: Configs[T]): Configs[T] = T
+  implicit lazy val finiteDurationConfigs: Configs[FiniteDuration] =
+    (c, p) => Duration.fromNanos(c.getDuration(p, TimeUnit.NANOSECONDS))
 
-  @deprecated("Use Configs.map", "0.3.0")
-  def by[S: Configs, T](f: S => T): Configs[T] = Configs[S].map(f)
-
-  @deprecated("Use Configs", "0.3.0")
-  def listBy[C[_], S, T](f: S => T)(implicit ev: Configs[Seq[S]], cbf: CanBuildFrom[Nothing, T, C[T]]): Configs[C[T]] =
-    ev.map(_.map(f)(collection.breakOut))
+  implicit lazy val durationConfigs: Configs[Duration] = finiteDurationConfigs.asInstanceOf[Configs[Duration]]
 
 }

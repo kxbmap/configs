@@ -14,21 +14,16 @@
  * limitations under the License.
  */
 
-package com.github.kxbmap.configs
+package com.github.kxbmap.configs.instance
 
-import scala.collection.generic.CanBuildFrom
+import com.github.kxbmap.configs.Configs
+import java.io.File
+import java.nio.file.{Path, Paths}
 
-@deprecated("Use Configs", "0.3.0")
-object AtPath {
+trait JavaFileConfigs {
 
-  @deprecated("Use Configs", "0.3.0")
-  def apply[T](implicit T: Configs[T]): Configs[T] = T
+  implicit lazy val fileConfigs: Configs[File] = Configs[String].map(new File(_))
 
-  @deprecated("Use Configs.map", "0.3.0")
-  def by[S: Configs, T](f: S => T): Configs[T] = Configs[S].map(f)
-
-  @deprecated("Use Configs", "0.3.0")
-  def listBy[C[_], S, T](f: S => T)(implicit ev: Configs[Seq[S]], cbf: CanBuildFrom[Nothing, T, C[T]]): Configs[C[T]] =
-    ev.map(_.map(f)(collection.breakOut))
+  implicit lazy val pathConfigs: Configs[Path] = Configs[String].map(Paths.get(_))
 
 }

@@ -17,13 +17,9 @@
 package com.github.kxbmap
 
 import com.typesafe.config.Config
-import scala.collection.generic.CanBuildFrom
 
 
 package object configs {
-
-  private[configs] type CBF[To[_], Elem] = CanBuildFrom[Nothing, Elem, To[Elem]]
-
 
   @deprecated("Use Configs[T]", "0.3.0")
   type AtPath[T] = Configs[T]

@@ -14,21 +14,17 @@
  * limitations under the License.
  */
 
-package com.github.kxbmap.configs
+package com.github.kxbmap.configs.instance
 
-import scala.collection.generic.CanBuildFrom
+import com.github.kxbmap.configs.Configs
+import scala.reflect.{ClassTag, classTag}
 
-@deprecated("Use Configs", "0.3.0")
-object AtPath {
+trait EitherConfigs {
 
-  @deprecated("Use Configs", "0.3.0")
-  def apply[T](implicit T: Configs[T]): Configs[T] = T
-
-  @deprecated("Use Configs.map", "0.3.0")
-  def by[S: Configs, T](f: S => T): Configs[T] = Configs[S].map(f)
-
-  @deprecated("Use Configs", "0.3.0")
-  def listBy[C[_], S, T](f: S => T)(implicit ev: Configs[Seq[S]], cbf: CanBuildFrom[Nothing, T, C[T]]): Configs[C[T]] =
-    ev.map(_.map(f)(collection.breakOut))
+  implicit def eitherConfigs[E <: Throwable : ClassTag, T: Configs]: Configs[Either[E, T]] = (c, p) =>
+    try Right(Configs[T].get(c, p)) catch {
+      case e if classTag[E].runtimeClass.isAssignableFrom(e.getClass) =>
+        Left(e.asInstanceOf[E])
+    }
 
 }

@@ -17,6 +17,7 @@
 package com.github.kxbmap.configs
 
 import scala.collection.JavaConversions._
+import scala.collection.generic.CanBuildFrom
 
 case class Bytes(value: Long) extends Ordered[Bytes] {
 
@@ -41,7 +42,7 @@ object Bytes {
 
   implicit val bytesConfigs: Configs[Bytes] = (c, p) => Bytes(c.getBytes(p))
 
-  implicit def bytesCollectionConfigs[C[_]](implicit cbf: CBF[C, Bytes]): Configs[C[Bytes]] =
+  implicit def bytesCollectionConfigs[C[_]](implicit cbf: CanBuildFrom[Nothing, Bytes, C[Bytes]]): Configs[C[Bytes]] =
     _.getBytesList(_).map(Bytes(_))(collection.breakOut)
 
   implicit val bytesOrdering: Ordering[Bytes] = Ordering.by(_.value)

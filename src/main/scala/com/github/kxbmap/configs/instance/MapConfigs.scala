@@ -14,21 +14,19 @@
  * limitations under the License.
  */
 
-package com.github.kxbmap.configs
+package com.github.kxbmap.configs.instance
 
-import scala.collection.generic.CanBuildFrom
+import com.github.kxbmap.configs.Configs
+import scala.collection.JavaConversions._
 
-@deprecated("Use Configs", "0.3.0")
-object AtPath {
+trait MapConfigs {
 
-  @deprecated("Use Configs", "0.3.0")
-  def apply[T](implicit T: Configs[T]): Configs[T] = T
+  private def mapConfigs[K, T: Configs](key: String => K): Configs[Map[K, T]] = Configs.onPath { c =>
+    c.root().keysIterator.map(k => key(k) -> Configs[T].get(c, k)).toMap
+  }
 
-  @deprecated("Use Configs.map", "0.3.0")
-  def by[S: Configs, T](f: S => T): Configs[T] = Configs[S].map(f)
+  implicit def stringMapConfigs[T: Configs]: Configs[Map[String, T]] = mapConfigs(identity)
 
-  @deprecated("Use Configs", "0.3.0")
-  def listBy[C[_], S, T](f: S => T)(implicit ev: Configs[Seq[S]], cbf: CanBuildFrom[Nothing, T, C[T]]): Configs[C[T]] =
-    ev.map(_.map(f)(collection.breakOut))
+  implicit def symbolMapConfigs[T: Configs]: Configs[Map[Symbol, T]] = mapConfigs(Symbol.apply)
 
 }

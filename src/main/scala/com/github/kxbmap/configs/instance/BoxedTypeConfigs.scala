@@ -14,21 +14,19 @@
  * limitations under the License.
  */
 
-package com.github.kxbmap.configs
+package com.github.kxbmap.configs.instance
 
-import scala.collection.generic.CanBuildFrom
+import com.github.kxbmap.configs.Configs
+import java.{lang => jl}
 
-@deprecated("Use Configs", "0.3.0")
-object AtPath {
+trait BoxedTypeConfigs {
 
-  @deprecated("Use Configs", "0.3.0")
-  def apply[T](implicit T: Configs[T]): Configs[T] = T
+  implicit lazy val boxedIntegerConfigs: Configs[jl.Integer] = (c, p) => Int.box(c.getInt(p))
 
-  @deprecated("Use Configs.map", "0.3.0")
-  def by[S: Configs, T](f: S => T): Configs[T] = Configs[S].map(f)
+  implicit lazy val boxedLongConfigs: Configs[jl.Long] = (c, p) => Long.box(c.getLong(p))
 
-  @deprecated("Use Configs", "0.3.0")
-  def listBy[C[_], S, T](f: S => T)(implicit ev: Configs[Seq[S]], cbf: CanBuildFrom[Nothing, T, C[T]]): Configs[C[T]] =
-    ev.map(_.map(f)(collection.breakOut))
+  implicit lazy val boxedDoubleConfigs: Configs[jl.Double] = (c, p) => Double.box(c.getDouble(p))
+
+  implicit lazy val boxedBooleanConfigs: Configs[jl.Boolean] = (c, p) => Boolean.box(c.getBoolean(p))
 
 }

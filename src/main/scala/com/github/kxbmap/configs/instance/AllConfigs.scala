@@ -14,21 +14,18 @@
  * limitations under the License.
  */
 
-package com.github.kxbmap.configs
+package com.github.kxbmap.configs.instance
 
-import scala.collection.generic.CanBuildFrom
-
-@deprecated("Use Configs", "0.3.0")
-object AtPath {
-
-  @deprecated("Use Configs", "0.3.0")
-  def apply[T](implicit T: Configs[T]): Configs[T] = T
-
-  @deprecated("Use Configs.map", "0.3.0")
-  def by[S: Configs, T](f: S => T): Configs[T] = Configs[S].map(f)
-
-  @deprecated("Use Configs", "0.3.0")
-  def listBy[C[_], S, T](f: S => T)(implicit ev: Configs[Seq[S]], cbf: CanBuildFrom[Nothing, T, C[T]]): Configs[C[T]] =
-    ev.map(_.map(f)(collection.breakOut))
-
-}
+trait AllConfigs
+  extends BasicTypeConfigs
+  with BoxedTypeConfigs
+  with SymbolConfigs
+  with DurationConfigs
+  with JavaFileConfigs
+  with JavaNetConfigs
+  with OptionConfigs
+  with EitherConfigs
+  with TryConfigs
+  with MapConfigs
+  with CollectionConfigs
+  with MaterializeConfigs
