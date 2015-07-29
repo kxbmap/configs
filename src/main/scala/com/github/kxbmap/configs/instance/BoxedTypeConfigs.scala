@@ -21,12 +21,12 @@ import java.{lang => jl}
 
 trait BoxedTypeConfigs {
 
-  implicit lazy val boxedIntegerConfigs: Configs[jl.Integer] = (c, p) => Int.box(c.getInt(p))
+  implicit lazy val javaIntegerConfigs: Configs[jl.Integer] = (c, p) => Int.box(c.getInt(p))
 
-  implicit lazy val boxedLongConfigs: Configs[jl.Long] = (c, p) => Long.box(c.getLong(p))
+  implicit lazy val javaLongConfigs: Configs[jl.Long] = (c, p) => Long.box(c.getLong(p))
 
-  implicit lazy val boxedDoubleConfigs: Configs[jl.Double] = (c, p) => Double.box(c.getDouble(p))
+  implicit lazy val javaDoubleConfigs: Configs[jl.Double] = (c, p) => Double.box(c.getDouble(p))
 
-  implicit lazy val boxedBooleanConfigs: Configs[jl.Boolean] = (c, p) => Boolean.box(c.getBoolean(p))
+  implicit lazy val javaBooleanConfigs: Configs[jl.Boolean] = (c, p) => Boolean.box(c.getBoolean(p))
 
 }

@@ -16,18 +16,15 @@
 
 package com.github.kxbmap.configs.instance
 
-import com.github.kxbmap.configs.Configs
-import com.typesafe.config.ConfigUtil
-import scala.collection.JavaConversions._
+import com.github.kxbmap.configs.ConfigProp
+import java.{lang => jl}
+import scalaprops.Scalaprops
 
-trait MapConfigs {
+object BoxedTypeConfigsTest extends Scalaprops with ConfigProp {
 
-  private def mapConfigs[K, T: Configs](key: String => K): Configs[Map[K, T]] = Configs.onPath { c =>
-    c.root().keysIterator.map(k => key(k) -> Configs[T].get(c, ConfigUtil.quoteString(k))).toMap
-  }
-
-  implicit def stringMapConfigs[T: Configs]: Configs[Map[String, T]] = mapConfigs(identity)
-
-  implicit def symbolMapConfigs[T: Configs]: Configs[Map[Symbol, T]] = mapConfigs(Symbol.apply)
+  val javaInteger = check[jl.Integer]
+  val javaLong = check[jl.Long]
+  val javaDouble = check[jl.Double]
+  val javaBoolean = check[jl.Boolean]
 
 }

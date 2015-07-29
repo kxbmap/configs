@@ -22,8 +22,7 @@ libraryDependencies ++= Seq(
   "com.typesafe" % "config" % "1.3.0",
   "org.scala-lang" % "scala-reflect" % scalaVersion.value % "provided",
   "com.github.scalaprops" %% "scalaprops" % "0.1.11" % "test",
-  "org.scalatest" %% "scalatest" % scalaTestVersion.value % "test",
-  "org.scalacheck" %% "scalacheck" % "1.12.4" % "test"
+  "org.scalatest" %% "scalatest" % scalaTestVersion.value % "test"
 )
 
 lazy val scalaTestVersion = settingKey[String]("Version of ScalaTest")

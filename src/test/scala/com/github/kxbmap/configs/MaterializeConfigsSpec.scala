@@ -17,8 +17,9 @@
 package com.github.kxbmap.configs
 
 import com.typesafe.config.{ConfigException, ConfigFactory}
+import org.scalatest.FunSpec
 
-class MaterializeConfigsSpec extends UnitSpec {
+class MaterializeConfigsSpec extends FunSpec {
 
   import MaterializeConfigsSpec._
 

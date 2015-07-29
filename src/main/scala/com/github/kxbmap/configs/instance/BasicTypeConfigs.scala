@@ -29,22 +29,22 @@ trait BasicTypeConfigs {
 
   implicit lazy val intConfigs: Configs[Int] = _.getInt(_)
 
-  implicit lazy val integerListConfigs: Configs[ju.List[jl.Integer]] = _.getIntList(_)
+  implicit lazy val javaIntegerListConfigs: Configs[ju.List[jl.Integer]] = _.getIntList(_)
 
 
   implicit lazy val longConfigs: Configs[Long] = _.getLong(_)
 
-  implicit lazy val longListsConfigs: Configs[ju.List[jl.Long]] = _.getLongList(_)
+  implicit lazy val javaLongListsConfigs: Configs[ju.List[jl.Long]] = _.getLongList(_)
 
 
   implicit lazy val doubleConfigs: Configs[Double] = _.getDouble(_)
 
-  implicit lazy val doubleListConfigs: Configs[ju.List[jl.Double]] = _.getDoubleList(_)
+  implicit lazy val javaDoubleListConfigs: Configs[ju.List[jl.Double]] = _.getDoubleList(_)
 
 
   implicit lazy val booleanConfigs: Configs[Boolean] = _.getBoolean(_)
 
-  implicit lazy val booleanListConfigs: Configs[ju.List[jl.Boolean]] = _.getBooleanList(_)
+  implicit lazy val javaBooleanListConfigs: Configs[ju.List[jl.Boolean]] = _.getBooleanList(_)
 
 
   implicit lazy val stringConfigs: Configs[String] = _.getString(_)
@@ -52,9 +52,9 @@ trait BasicTypeConfigs {
   implicit lazy val stringListConfigs: Configs[ju.List[String]] = _.getStringList(_)
 
 
-  implicit lazy val javaTimeDurationConfigs: Configs[jt.Duration] = _.getDuration(_)
+  implicit lazy val javaDurationConfigs: Configs[jt.Duration] = _.getDuration(_)
 
-  implicit lazy val javaTimeDurationListConfigs: Configs[ju.List[jt.Duration]] = _.getDurationList(_)
+  implicit lazy val javaDurationListConfigs: Configs[ju.List[jt.Duration]] = _.getDurationList(_)
 
 
   implicit lazy val configMemorySizeConfigs: Configs[ConfigMemorySize] = _.getMemorySize(_)

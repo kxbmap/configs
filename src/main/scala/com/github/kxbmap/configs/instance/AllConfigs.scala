@@ -27,5 +27,6 @@ trait AllConfigs
   with EitherConfigs
   with TryConfigs
   with MapConfigs
+  with BasicTypeCollectionConfigs
   with CollectionConfigs
   with MaterializeConfigs
