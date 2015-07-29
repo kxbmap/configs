@@ -42,7 +42,9 @@ trait ConfigProp {
       "vector" -> check[Vector[T]],
       "stream" -> check[Stream[T]],
       "array" -> check[Array[T]]
-    ).map(t => (t._1, t._2.mapSize(_ / 10 + 1)))
+    ).map {
+      case (id, p) => (id, p.mapSize(_ / 3 + 1))
+    }
     Properties.properties("collection of " + classTag[T].runtimeClass.getSimpleName)(props: _*)
   }
 
