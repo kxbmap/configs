@@ -56,16 +56,12 @@ trait ConfigProp {
   implicit def generalEqual[T]: Equal[T] =
     Equal.equalA[T]
 
+  implicit def arrayEqual[T: Equal]: Equal[Array[T]] =
+    Equal.equalBy(_.toList)
+
 
   implicit def javaListGen[T: Gen]: Gen[ju.List[T]] =
     Gen.list[T].map(_.asJava)
-
-  implicit def javaListEqual[T: Equal]: Equal[ju.List[T]] =
-    Equal.equalBy(_.asScala.toList)
-
-
-  implicit def arrayEqual[T: Equal]: Equal[Array[T]] =
-    Equal.equalBy(_.toList)
 
 
   implicit lazy val stringGen: Gen[String] =
