@@ -20,6 +20,7 @@ import com.github.kxbmap.configs.{CValue, ConfigProp}
 import java.net.{InetAddress, InetSocketAddress}
 import scala.collection.JavaConverters._
 import scalaprops.{Gen, Scalaprops}
+import scalaz.Apply
 
 object JavaNetConfigsTest extends Scalaprops with ConfigProp {
 
@@ -29,13 +30,8 @@ object JavaNetConfigsTest extends Scalaprops with ConfigProp {
     inetAddressStringGen.map(InetAddress.getByName)
 
   implicit lazy val inetAddressStringGen: Gen[String] = {
-    val partGen = Gen.choose(0, 255)
-    for {
-      a <- partGen
-      b <- partGen
-      c <- partGen
-      d <- partGen
-    } yield s"$a.$b.$c.$d"
+    val part = Gen.choose(0, 255)
+    Apply[Gen].apply4(part, part, part, part)((a, b, c, d) => s"$a.$b.$c.$d")
   }
 
   implicit lazy val inetAddressCValue: CValue[InetAddress] = a => a.getHostAddress
@@ -43,10 +39,8 @@ object JavaNetConfigsTest extends Scalaprops with ConfigProp {
 
   val inetSocketAddress = {
     val addr = {
-      implicit val gen: Gen[InetSocketAddress] = for {
-        a <- inetAddressGen
-        p <- Gen.choose(0, Short.MaxValue)
-      } yield new InetSocketAddress(a, p)
+      implicit val gen: Gen[InetSocketAddress] =
+        Apply[Gen].apply2(inetAddressGen, Gen.choose(0, Short.MaxValue))(new InetSocketAddress(_, _))
 
       implicit val cv: CValue[InetSocketAddress] = a => Map[String, Any](
         "addr" -> a.getAddress.getHostAddress,
@@ -56,10 +50,8 @@ object JavaNetConfigsTest extends Scalaprops with ConfigProp {
       check[InetSocketAddress]("addr")
     }
     val hostname = {
-      implicit val gen: Gen[InetSocketAddress] = for {
-        h <- Gen.value("localhost")
-        p <- Gen.choose(0, Short.MaxValue)
-      } yield new InetSocketAddress(h, p)
+      implicit val gen: Gen[InetSocketAddress] =
+        Apply[Gen].apply2(Gen.value("localhost"), Gen.choose(0, Short.MaxValue))(new InetSocketAddress(_, _))
 
       implicit val cv: CValue[InetSocketAddress] = a => Map[String, Any](
         "hostname" -> a.getHostName,

@@ -20,8 +20,8 @@ import com.github.kxbmap.configs.{CValue, ConfigProp, Configs}
 import scala.collection.JavaConverters._
 import scala.reflect.ClassTag
 import scalaprops.{Gen, Properties, Scalaprops}
-import scalaz.Equal
 import scalaz.std.string._
+import scalaz.{Apply, Equal}
 
 object CollectionConfigsTest extends Scalaprops with ConfigProp {
 
@@ -41,10 +41,7 @@ object CollectionConfigsTest extends Scalaprops with ConfigProp {
 
     implicit val fooConfigs: Configs[Foo] = Configs.onPath(c => Foo(c.getString("a"), c.getInt("b")))
 
-    implicit val fooGen: Gen[Foo] = for {
-      a <- Gen[String]
-      b <- Gen[Int]
-    } yield Foo(a, b)
+    implicit val fooGen: Gen[Foo] = Apply[Gen].apply2(Gen[String], Gen[Int])(Foo(_, _))
 
     implicit val fooCValue: CValue[Foo] = f => Map[String, Any]("a" -> f.a, "b" -> f.b).asJava
   }
