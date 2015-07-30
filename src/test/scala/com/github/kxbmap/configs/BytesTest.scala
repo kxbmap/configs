@@ -16,7 +16,7 @@
 
 package com.github.kxbmap.configs
 
-import scalaprops.Property.{forAll, forAllG}
+import scalaprops.Property.forAll
 import scalaprops.{Gen, Properties, Scalaprops}
 import scalaz.std.list._
 import scalaz.std.stream._
@@ -25,25 +25,6 @@ import scalaz.std.vector._
 
 
 object BytesTest extends Scalaprops with ConfigProp {
-
-  implicit val bytesGen: Gen[Bytes] =
-    Gen[Long].map(Bytes.apply)
-
-  implicit val bytesValue: CValue[Bytes] = _.value
-
-  val nonZeroLongGen: Gen[Long] =
-    Gen.oneOf(Gen.negativeLong, Gen.positiveLong)
-
-  val nonZeroBytesGen: Gen[Bytes] =
-    nonZeroLongGen.map(Bytes.apply)
-
-  val nonZeroDoubleGen: Gen[Double] =
-    Gen.genLongAll.map { n =>
-      import java.lang.Double.{isInfinite, isNaN, longBitsToDouble}
-      val x = longBitsToDouble(n)
-      if (isNaN(x) || isInfinite(x)) Double.MinPositiveValue else x
-    }
-
 
   val bytes = check[Bytes]
 
@@ -84,11 +65,13 @@ object BytesTest extends Scalaprops with ConfigProp {
   }
 
   val divide = {
-    val bdd = forAllG(Gen[Bytes], nonZeroDoubleGen) { (l, r) =>
+    val bdd = forAll { (l: Bytes, r: Double) =>
       l / r == Bytes((l.value / r).toLong)
     }
-    val bdb = forAllG(Gen[Bytes], nonZeroBytesGen) { (l, r) =>
-      l / r == l.value.toDouble / r.value.toDouble
+    val bdb = forAll { (l: Bytes, r: Bytes) =>
+      val result = l / r
+      val expected = l.value.toDouble / r.value.toDouble
+      if (result.isNaN) expected.isNaN else result == expected
     }
     Properties.list(
       bdd.toProperties("Bytes / Double"),
@@ -103,5 +86,10 @@ object BytesTest extends Scalaprops with ConfigProp {
   val unary_+ = forAll { b: Bytes =>
     +b == b
   }
+
+
+  implicit lazy val bytesGen: Gen[Bytes] = Gen[Long].map(Bytes.apply)
+
+  implicit lazy val bytesCValue: CValue[Bytes] = _.value
 
 }
