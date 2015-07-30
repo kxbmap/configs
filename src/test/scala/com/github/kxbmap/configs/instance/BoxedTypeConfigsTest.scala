@@ -16,7 +16,7 @@
 
 package com.github.kxbmap.configs.instance
 
-import com.github.kxbmap.configs.ConfigProp
+import com.github.kxbmap.configs._
 import java.{lang => jl}
 import scalaprops.Scalaprops
 

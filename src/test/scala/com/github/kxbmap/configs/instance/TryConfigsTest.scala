@@ -16,33 +16,27 @@
 
 package com.github.kxbmap.configs.instance
 
-import com.github.kxbmap.configs.{CValue, ConfigProp, Configs}
+import com.github.kxbmap.configs._
 import com.typesafe.config.ConfigException
-import scala.collection.JavaConverters._
 import scala.util.{Failure, Success, Try}
-import scalaprops.{Gen, Properties, Scalaprops}
+import scalaprops.{Gen, Scalaprops}
 import scalaz.Equal
-import scalaz.std.anyVal._
-import scalaz.std.string._
 
 object TryConfigsTest extends Scalaprops with ConfigProp {
 
-  def checkTry[T: Configs : Gen : CValue : Equal] =
-    Properties.list(
-      check[Try[T]].toProperties("try"),
-      checkCollectionsOf[Try[T]],
-      checkMissing[Try[T]](isMissing).toProperties("missing")
-    )
-
-  val tryInt = checkTry[Int]
-
-  val tryFoo = checkTry[Foo]
+  val `try` = check[Try[java.time.Duration]]
 
 
-  def isMissing[T](e: Try[T]): Boolean = e match {
+  implicit def isMissing[T]: IsMissing[T] = _.value match {
     case Failure(_: ConfigException.Missing) => true
     case _                                   => false
   }
+
+  implicit def isWrongType[T]: IsWrongType[T] = _.value match {
+    case Failure(_: ConfigException.WrongType) => true
+    case _                                     => false
+  }
+
 
   implicit def tryGen[T: Gen]: Gen[Try[T]] =
     Gen.option[T].map {
@@ -59,20 +53,5 @@ object TryConfigsTest extends Scalaprops with ConfigProp {
 
   implicit def tryCValue[T: CValue]: CValue[Try[T]] =
     _.map(CValue[T].toConfigValue).getOrElse(null)
-
-
-  case class Foo(a: String, b: Int)
-
-  object Foo {
-
-    implicit val fooConfigs: Configs[Foo] = Configs.onPath(c => Foo(c.getString("a"), c.getInt("b")))
-
-    implicit val fooGen: Gen[Foo] = for {
-      a <- Gen[String]
-      b <- Gen[Int]
-    } yield Foo(a, b)
-
-    implicit val fooCValue: CValue[Foo] = f => Map[String, Any]("a" -> f.a, "b" -> f.b).asJava
-  }
 
 }

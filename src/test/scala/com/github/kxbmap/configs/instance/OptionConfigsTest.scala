@@ -16,44 +16,18 @@
 
 package com.github.kxbmap.configs.instance
 
-import com.github.kxbmap.configs.{CValue, ConfigProp, Configs}
-import scala.collection.JavaConverters._
-import scalaprops.{Gen, Properties, Scalaprops}
-import scalaz.Equal
-import scalaz.std.anyVal._
+import com.github.kxbmap.configs.{CValue, ConfigProp, IsMissing}
+import scalaprops.Scalaprops
 import scalaz.std.option._
-import scalaz.std.string._
 
 object OptionConfigsTest extends Scalaprops with ConfigProp {
 
-  def checkOption[T: Configs : Gen : CValue : Equal] =
-    Properties.list(
-      check[Option[T]].toProperties("option"),
-      checkCollectionsOf[Option[T]],
-      checkMissing[Option[T]](_.isEmpty).toProperties("missing")
-    )
+  val option = check[Option[java.time.Duration]]
 
-  val optionInt = checkOption[Int]
-
-  val optionFoo = checkOption[Foo]
-
+  implicit def isMissing[T]: IsMissing[Option[T]] =
+    _.value.isEmpty
 
   implicit def optionCValue[T: CValue]: CValue[Option[T]] =
     _.map(CValue[T].toConfigValue).orNull
-
-
-  case class Foo(a: String, b: Int)
-
-  object Foo {
-
-    implicit val fooConfigs: Configs[Foo] = Configs.onPath(c => Foo(c.getString("a"), c.getInt("b")))
-
-    implicit val fooGen: Gen[Foo] = for {
-      a <- Gen[String]
-      b <- Gen[Int]
-    } yield Foo(a, b)
-
-    implicit val fooCValue: CValue[Foo] = f => Map[String, Any]("a" -> f.a, "b" -> f.b).asJava
-  }
 
 }

@@ -23,10 +23,7 @@ object SymbolConfigsTest extends Scalaprops with ConfigProp {
 
   val symbol = check[Symbol]
 
-  val symbols = checkCollectionsOf[Symbol]
-
-
-  implicit lazy val symbolGen: Gen[Symbol] = Gen.asciiString.map(Symbol.apply)
+  implicit lazy val symbolGen: Gen[Symbol] = Gen[String].map(Symbol.apply)
 
   implicit lazy val symbolCValue: CValue[Symbol] = _.name
 

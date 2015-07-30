@@ -23,22 +23,17 @@ import scalaprops.{Gen, Scalaprops}
 object DurationConfigsTest extends Scalaprops with ConfigProp {
 
   val finiteDuration = check[FiniteDuration]
-  val finiteDurations = checkCollectionsOf[FiniteDuration]
-
   val duration = check[Duration]
-  val durations = checkCollectionsOf[Duration]
 
 
   implicit lazy val finiteDurationGen: Gen[FiniteDuration] =
     Gen.chooseLong(0, Long.MaxValue).map(Duration.fromNanos)
 
-  implicit lazy val finiteDurationValue: CValue[FiniteDuration] =
-    d => s"${d.toNanos}ns"
+  implicit lazy val finiteDurationValue: CValue[FiniteDuration] = d => s"${d.toNanos}ns"
 
-  implicit lazy val durationGen: Gen[Duration] =
-    finiteDurationGen.asInstanceOf[Gen[Duration]]
 
-  implicit lazy val durationValue: CValue[Duration] =
-    finiteDurationValue.asInstanceOf[CValue[Duration]]
+  implicit lazy val durationGen: Gen[Duration] = finiteDurationGen.asInstanceOf[Gen[Duration]]
+
+  implicit lazy val durationValue: CValue[Duration] = finiteDurationValue.asInstanceOf[CValue[Duration]]
 
 }

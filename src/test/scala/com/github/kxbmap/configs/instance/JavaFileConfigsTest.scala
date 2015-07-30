@@ -24,14 +24,11 @@ import scalaprops.{Gen, Scalaprops}
 object JavaFileConfigsTest extends Scalaprops with ConfigProp {
 
   val path = check[Path]
-  val paths = checkCollectionsOf[Path]
-
   val file = check[File]
-  val files = checkCollectionsOf[File]
 
 
   implicit lazy val pathGen: Gen[Path] =
-    Gen.nonEmptyList[String](Gen.alphaString).mapSize(_ / 10 + 1).map(ss => Paths.get(ss.head, ss.tail: _*))
+    Gen.nonEmptyList[String](Gen.alphaString).map(ss => Paths.get(ss.head, ss.tail: _*))
 
   implicit lazy val pathCValue: CValue[Path] = _.toString
 

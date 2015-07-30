@@ -28,11 +28,11 @@ object BytesTest extends Scalaprops with ConfigProp {
 
   val bytes = check[Bytes]
 
-  val collection = Properties.list(
-    check[List[Bytes]].toProperties("list"),
-    check[Vector[Bytes]].toProperties("vector"),
-    check[Stream[Bytes]].toProperties("stream"),
-    check[Array[Bytes]].toProperties("array")
+  val collections = Properties.list(
+    check[List[Bytes]].mapId("list " + _),
+    check[Vector[Bytes]].mapId("vector " + _),
+    check[Stream[Bytes]].mapId("stream " + _),
+    check[Array[Bytes]].mapId("array " + _)
   )
 
   val ordering = forAll { bs: List[Bytes] =>

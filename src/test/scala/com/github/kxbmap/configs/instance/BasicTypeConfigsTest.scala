@@ -16,17 +16,16 @@
 
 package com.github.kxbmap.configs.instance
 
-import com.github.kxbmap.configs.ConfigProp
+import com.github.kxbmap.configs._
 import com.typesafe.config.ConfigMemorySize
 import java.{lang => jl, time => jt, util => ju}
 import scalaprops.Scalaprops
 import scalaz.std.anyVal._
-import scalaz.std.string._
 
 object BasicTypeConfigsTest extends Scalaprops with ConfigProp {
 
-//  val config = ???
-//  val configList = ???
+  //  val config = ???
+  //  val configList = ???
 
   val int = check[Int]
   val javaIntegerList = check[ju.List[jl.Integer]]

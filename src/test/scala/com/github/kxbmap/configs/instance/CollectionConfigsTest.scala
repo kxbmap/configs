@@ -18,11 +18,22 @@ package com.github.kxbmap.configs.instance
 
 import com.github.kxbmap.configs.{CValue, ConfigProp, Configs}
 import scala.collection.JavaConverters._
-import scalaprops.{Gen, Scalaprops}
+import scala.reflect.ClassTag
+import scalaprops.{Gen, Properties, Scalaprops}
+import scalaz.Equal
+import scalaz.std.string._
 
 object CollectionConfigsTest extends Scalaprops with ConfigProp {
 
-  val collection = checkCollectionsOf[Foo].product(checkCollectionsOf[Bar])
+  def checkC[A: Configs : Gen : Equal : CValue : ClassTag] = Properties.list(
+    check[List[A]].mapId("list " + _),
+    check[Vector[A]].mapId("vector " + _),
+    check[Stream[A]].mapId("stream " + _),
+    check[Array[A]].mapId("array " + _)
+  )
+
+  val collections = checkC[Foo]
+
 
   case class Foo(a: String, b: Int)
 
@@ -36,20 +47,6 @@ object CollectionConfigsTest extends Scalaprops with ConfigProp {
     } yield Foo(a, b)
 
     implicit val fooCValue: CValue[Foo] = f => Map[String, Any]("a" -> f.a, "b" -> f.b).asJava
-  }
-
-  case class Bar(c: String, d: Int)
-
-  object Bar {
-
-    implicit val barConfigs: Configs[Bar] = Configs.onPath(c => Bar(c.getString("c"), c.getInt("d")))
-
-    implicit val barGen: Gen[Bar] = for {
-      c <- Gen[String]
-      d <- Gen[Int]
-    } yield Bar(c, d)
-
-    implicit val barCValue: CValue[Bar] = f => Map[String, Any]("c" -> f.c, "d" -> f.d).asJava
   }
 
 }

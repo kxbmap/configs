@@ -16,42 +16,50 @@
 
 package com.github.kxbmap.configs
 
-import com.typesafe.config.{ConfigFactory, ConfigMemorySize, ConfigUtil}
+import com.typesafe.config.{ConfigException, ConfigFactory, ConfigMemorySize, ConfigValueFactory}
 import java.{lang => jl, time => jt, util => ju}
 import scala.collection.JavaConverters._
-import scala.reflect.{ClassTag, classTag}
+import scalaprops.Or.Empty
 import scalaprops.Property.forAll
-import scalaprops.{Gen, Properties}
-import scalaz.Equal
+import scalaprops.{:-:, Gen, Properties}
+import scalaz.std.anyVal._
 import scalaz.std.list._
-import scalaz.std.stream._
 import scalaz.std.string._
-import scalaz.std.vector._
+import scalaz.{Equal, Need, Order}
 
 trait ConfigProp {
 
-  def check[T: Configs : Gen : CValue : Equal] = forAll { value: T =>
+  def check[A: Configs : Gen : Equal : CValue : IsMissing : IsWrongType : WrongTypeValue]: Properties[Unit :-: String :-: Empty] =
+    checkId(())
+
+  def check[A: Configs : Gen : Equal : CValue : IsMissing : IsWrongType : WrongTypeValue](id: String): Properties[String :-: String :-: Empty] =
+    checkId(id)
+
+  private def checkId[A: Order, B: Configs : Gen : Equal : CValue : IsMissing : IsWrongType : WrongTypeValue](id: A) =
+    Properties.either(
+      id,
+      checkGet[B].toProperties("get"),
+      checkMissing[B].toProperties("missing"),
+      checkWrongType[B].toProperties("wrong type")
+    )
+
+
+  def checkGet[T: Configs : Gen : Equal : CValue] = forAll { value: T =>
     val p = "dummy-path"
     val c = CValue[T].toConfigValue(value).atPath(p)
     Equal[T].equal(Configs[T].get(c, p), value)
   }
 
-  def checkCollectionsOf[T: Configs : Gen : Equal : CValue : ClassTag] = {
-    val props = Seq(
-      "list" -> check[List[T]],
-      "vector" -> check[Vector[T]],
-      "stream" -> check[Stream[T]],
-      "array" -> check[Array[T]]
-    ).map {
-      case (id, p) => (id, p.mapSize(_ / 3 + 1))
-    }
-    Properties.properties("collection of " + classTag[T].runtimeClass.getSimpleName)(props: _*)
+  def checkMissing[A: Configs : IsMissing] = forAll {
+    val p = "missing"
+    val c = ConfigFactory.empty()
+    IsMissing[A].check(Need(Configs[A].get(c, p)))
   }
 
-  def checkMissing[T: Configs](f: T => Boolean) = forAll { path: String =>
-    val c = ConfigFactory.empty()
-    val p = ConfigUtil.quoteString(path)
-    f(Configs[T].get(c, p))
+  def checkWrongType[A: Configs : IsWrongType : WrongTypeValue] = forAll {
+    val p = "dummy-path"
+    val c = ConfigValueFactory.fromAnyRef(WrongTypeValue[A].value).atPath(p)
+    IsWrongType[A].check(Need(Configs[A].get(c, p)))
   }
 
 
@@ -86,5 +94,66 @@ trait ConfigProp {
 
   implicit lazy val configMemorySizeGen: Gen[ConfigMemorySize] =
     Gen.chooseLong(0, Long.MaxValue).map(ConfigMemorySize.ofBytes)
+
+}
+
+
+trait IsMissing[A] {
+  def check(a: Need[A]): Boolean
+}
+
+object IsMissing {
+
+  def apply[A](implicit A: IsMissing[A]): IsMissing[A] = A
+
+  implicit def defaultIsMissing[A]: IsMissing[A] = a =>
+    try {
+      a.value
+      false
+    } catch {
+      case _: ConfigException.Missing => true
+    }
+}
+
+trait IsWrongType[A] {
+  def check(a: Need[A]): Boolean
+}
+
+object IsWrongType {
+
+  def apply[A](implicit A: IsWrongType[A]): IsWrongType[A] = A
+
+  implicit def defaultIsWrong[A]: IsWrongType[A] = a =>
+    try {
+      a.value
+      false
+    } catch {
+      case _: ConfigException.WrongType => true
+    }
+}
+
+trait WrongTypeValue[A] {
+  def value: Any
+}
+
+object WrongTypeValue {
+
+  def apply[A](implicit A: WrongTypeValue[A]): WrongTypeValue[A] = A
+
+  private[this] final val string: WrongTypeValue[Any] = new WrongTypeValue[Any] {
+    val value: Any = "wrong type value"
+  }
+
+  private[this] final val list: WrongTypeValue[Any] = new WrongTypeValue[Any] {
+    val value: Any = ju.Collections.emptyList()
+  }
+
+  implicit def defaultWrongTypeValue[A]: WrongTypeValue[A] = list.asInstanceOf[WrongTypeValue[A]]
+
+  implicit def javaListWrongTypeValue[A]: WrongTypeValue[ju.List[A]] = string.asInstanceOf[WrongTypeValue[ju.List[A]]]
+
+  implicit def seqWrongTypeValue[F[_] <: Seq[_], A]: WrongTypeValue[F[A]] = string.asInstanceOf[WrongTypeValue[F[A]]]
+
+  implicit def arrayWrongTypeValue[A]: WrongTypeValue[Array[A]] = string.asInstanceOf[WrongTypeValue[Array[A]]]
 
 }

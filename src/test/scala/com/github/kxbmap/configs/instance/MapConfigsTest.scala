@@ -18,25 +18,16 @@ package com.github.kxbmap.configs.instance
 
 import com.github.kxbmap.configs.{CValue, ConfigProp, Configs}
 import scala.collection.JavaConverters._
-import scalaprops.{Gen, Properties, Scalaprops}
+import scalaprops.{Gen, Scalaprops}
 import scalaz.Equal
-import scalaz.std.anyVal._
-import scalaz.std.string._
 
 
 object MapConfigsTest extends Scalaprops with ConfigProp {
 
-  def checkMap[T: Configs : Gen : CValue : Equal] =
-    Properties.list(
-      check[Map[String, T]].toProperties("string map"),
-      checkCollectionsOf[Map[String, T]].mapId(_ + " (string)"),
-      check[Map[Symbol, T]].toProperties("symbol map"),
-      checkCollectionsOf[Map[Symbol, T]].mapId(_ + " (symbol)")
-    )
+  def checkMap[A: Configs : Gen : CValue : Equal] =
+    check[Map[String, A]]("string key").product(check[Map[Symbol, A]]("symbol key"))
 
-  val mapInt = checkMap[Int]
-
-  val mapFoo = checkMap[Foo]
+  val map = checkMap[java.time.Duration]
 
 
   implicit lazy val nonEmptyStringGen: Gen[String] =
@@ -58,20 +49,5 @@ object MapConfigsTest extends Scalaprops with ConfigProp {
 
   implicit def symbolMapCValue[T: CValue]: CValue[Map[Symbol, T]] =
     _.map(t => t._1.name -> CValue[T].toConfigValue(t._2)).asJava
-
-
-  case class Foo(a: String, b: Int)
-
-  object Foo {
-
-    implicit val fooConfigs: Configs[Foo] = Configs.onPath(c => Foo(c.getString("a"), c.getInt("b")))
-
-    implicit val fooGen: Gen[Foo] = for {
-      a <- Gen[String]
-      b <- Gen[Int]
-    } yield Foo(a, b)
-
-    implicit val fooCValue: CValue[Foo] = f => Map[String, Any]("a" -> f.a, "b" -> f.b).asJava
-  }
 
 }

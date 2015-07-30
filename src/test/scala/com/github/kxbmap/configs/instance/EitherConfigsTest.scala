@@ -16,29 +16,22 @@
 
 package com.github.kxbmap.configs.instance
 
-import com.github.kxbmap.configs.{CValue, ConfigProp, Configs}
+import com.github.kxbmap.configs._
 import com.typesafe.config.ConfigException
-import scala.collection.JavaConverters._
-import scalaprops.{Gen, Properties, Scalaprops}
+import scalaprops.{Gen, Scalaprops}
 import scalaz.Equal
-import scalaz.std.anyVal._
-import scalaz.std.string._
 
 object EitherConfigsTest extends Scalaprops with ConfigProp {
 
-  def checkEither[T: Configs : Gen : CValue : Equal] =
-    Properties.list(
-      check[Either[Throwable, T]].toProperties("either"),
-      checkCollectionsOf[Either[Throwable, T]],
-      checkMissing[Either[Throwable, T]](isMissing).toProperties("missing")
-    )
-
-  val eitherInt = checkEither[Int]
-
-  val eitherFoo = checkEither[Foo]
+  val either = check[Either[Throwable, java.time.Duration]]
 
 
-  def isMissing[T](e: Either[Throwable, T]): Boolean = e.left.exists(_.isInstanceOf[ConfigException.Missing])
+  implicit def isMissing[T]: IsMissing[Either[Throwable, T]] =
+    _.value.left.exists(_.isInstanceOf[ConfigException.Missing])
+
+  implicit def isWrongType[T]: IsWrongType[Either[Throwable, T]] =
+    _.value.left.exists(_.isInstanceOf[ConfigException.WrongType])
+
 
   implicit def eitherGen[T: Gen]: Gen[Either[Throwable, T]] =
     Gen.option[T].map(_.toRight(new RuntimeException("dummy")))
@@ -52,20 +45,5 @@ object EitherConfigsTest extends Scalaprops with ConfigProp {
 
   implicit def eitherCValue[T: CValue]: CValue[Either[Throwable, T]] =
     _.right.toOption.map(CValue[T].toConfigValue).orNull
-
-
-  case class Foo(a: String, b: Int)
-
-  object Foo {
-
-    implicit val fooConfigs: Configs[Foo] = Configs.onPath(c => Foo(c.getString("a"), c.getInt("b")))
-
-    implicit val fooGen: Gen[Foo] = for {
-      a <- Gen[String]
-      b <- Gen[Int]
-    } yield Foo(a, b)
-
-    implicit val fooCValue: CValue[Foo] = f => Map[String, Any]("a" -> f.a, "b" -> f.b).asJava
-  }
 
 }

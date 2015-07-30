@@ -28,55 +28,55 @@ import scalaz.std.vector._
 
 object BasicTypeCollectionConfigsTest extends Scalaprops with ConfigProp {
 
-  //  val configCollection = ???
+  //  val configCollections = ???
 
-  val intCollection = Properties.list(
-    check[List[Int]].toProperties("list"),
-    check[Vector[Int]].toProperties("vector"),
-    check[Stream[Int]].toProperties("stream"),
-    check[Array[Int]].toProperties("array")
+  val intCollections = Properties.list(
+    check[List[Int]].mapId("list " + _),
+    check[Vector[Int]].mapId("vector " + _),
+    check[Stream[Int]].mapId("stream " + _),
+    check[Array[Int]].mapId("array " + _)
   )
 
-  val longCollection = Properties.list(
-    check[List[Long]].toProperties("list"),
-    check[Vector[Long]].toProperties("vector"),
-    check[Stream[Long]].toProperties("stream"),
-    check[Array[Long]].toProperties("array")
+  val longCollections = Properties.list(
+    check[List[Long]].mapId("list " + _),
+    check[Vector[Long]].mapId("vector " + _),
+    check[Stream[Long]].mapId("stream " + _),
+    check[Array[Long]].mapId("array " + _)
   )
 
-  val doubleCollection = Properties.list(
-    check[List[Double]].toProperties("list"),
-    check[Vector[Double]].toProperties("vector"),
-    check[Stream[Double]].toProperties("stream"),
-    check[Array[Double]].toProperties("array")
+  val doubleCollections = Properties.list(
+    check[List[Double]].mapId("list " + _),
+    check[Vector[Double]].mapId("vector " + _),
+    check[Stream[Double]].mapId("stream " + _),
+    check[Array[Double]].mapId("array " + _)
   )
 
-  val booleanCollection = Properties.list(
-    check[List[Boolean]].toProperties("list"),
-    check[Vector[Boolean]].toProperties("vector"),
-    check[Stream[Boolean]].toProperties("stream"),
-    check[Array[Boolean]].toProperties("array")
+  val booleanCollections = Properties.list(
+    check[List[Boolean]].mapId("list " + _),
+    check[Vector[Boolean]].mapId("vector " + _),
+    check[Stream[Boolean]].mapId("stream " + _),
+    check[Array[Boolean]].mapId("array " + _)
   )
 
-  val stringCollection = Properties.list(
-    check[List[String]].toProperties("list"),
-    check[Vector[String]].toProperties("vector"),
-    check[Stream[String]].toProperties("stream"),
-    check[Array[String]].toProperties("array")
+  val stringCollections = Properties.list(
+    check[List[String]].mapId("list " + _),
+    check[Vector[String]].mapId("vector " + _),
+    check[Stream[String]].mapId("stream " + _),
+    check[Array[String]].mapId("array " + _)
   )
 
-  val javaDurationCollection = Properties.list(
-    check[List[jt.Duration]].toProperties("list"),
-    check[Vector[jt.Duration]].toProperties("vector"),
-    check[Stream[jt.Duration]].toProperties("stream"),
-    check[Array[jt.Duration]].toProperties("array")
+  val javaDurationCollections = Properties.list(
+    check[List[jt.Duration]].mapId("list " + _),
+    check[Vector[jt.Duration]].mapId("vector " + _),
+    check[Stream[jt.Duration]].mapId("stream " + _),
+    check[Array[jt.Duration]].mapId("array " + _)
   )
 
-  val configMemorySizeCollection = Properties.list(
-    check[List[ConfigMemorySize]].toProperties("list"),
-    check[Vector[ConfigMemorySize]].toProperties("vector"),
-    check[Stream[ConfigMemorySize]].toProperties("stream"),
-    check[Array[ConfigMemorySize]].toProperties("array")
+  val configMemorySizeCollections = Properties.list(
+    check[List[ConfigMemorySize]].mapId("list " + _),
+    check[Vector[ConfigMemorySize]].mapId("vector " + _),
+    check[Stream[ConfigMemorySize]].mapId("stream " + _),
+    check[Array[ConfigMemorySize]].mapId("array " + _)
   )
 
 }

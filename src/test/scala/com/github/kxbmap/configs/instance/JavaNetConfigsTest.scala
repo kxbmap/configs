@@ -19,13 +19,11 @@ package com.github.kxbmap.configs.instance
 import com.github.kxbmap.configs.{CValue, ConfigProp}
 import java.net.{InetAddress, InetSocketAddress}
 import scala.collection.JavaConverters._
-import scalaprops.{Gen, Properties, Scalaprops}
-import scalaz.std.string._
+import scalaprops.{Gen, Scalaprops}
 
 object JavaNetConfigsTest extends Scalaprops with ConfigProp {
 
   val inetAddress = check[InetAddress]
-  val inetAddresses = checkCollectionsOf[InetAddress]
 
   implicit lazy val inetAddressGen: Gen[InetAddress] =
     inetAddressStringGen.map(InetAddress.getByName)
@@ -40,8 +38,7 @@ object JavaNetConfigsTest extends Scalaprops with ConfigProp {
     } yield s"$a.$b.$c.$d"
   }
 
-  implicit lazy val inetAddressCValue: CValue[InetAddress] =
-    a => a.getHostAddress
+  implicit lazy val inetAddressCValue: CValue[InetAddress] = a => a.getHostAddress
 
 
   val inetSocketAddress = {
@@ -56,11 +53,7 @@ object JavaNetConfigsTest extends Scalaprops with ConfigProp {
         "port" -> a.getPort
       ).asJava
 
-      Properties.either(
-        "addr",
-        check[InetSocketAddress].toProperties("InetSocketAddress"),
-        checkCollectionsOf[InetSocketAddress]
-      )
+      check[InetSocketAddress]("addr")
     }
     val hostname = {
       implicit val gen: Gen[InetSocketAddress] = for {
@@ -73,11 +66,7 @@ object JavaNetConfigsTest extends Scalaprops with ConfigProp {
         "port" -> a.getPort
       ).asJava
 
-      Properties.either(
-        "hostname",
-        check[InetSocketAddress].toProperties("InetSocketAddress"),
-        checkCollectionsOf[InetSocketAddress]
-      )
+      check[InetSocketAddress]("hostname")
     }
     addr.product(hostname)
   }
