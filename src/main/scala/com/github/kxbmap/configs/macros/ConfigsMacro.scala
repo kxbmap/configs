@@ -34,7 +34,7 @@ class ConfigsMacro(val c: blackbox.Context) extends Helper {
     if (ctors.isEmpty) {
       abort(s"$tpe must have a public constructor")
     }
-    val m = new mutable.HashMap[Type, TermName]()
+    val m = new mutable.ArrayBuffer[(Type, TermName)]()
     val vs = new ArrayBuffer[Tree]()
     val config = TermName("config")
     val cs = ctors.map { ctor =>
@@ -46,7 +46,7 @@ class ConfigsMacro(val c: blackbox.Context) extends Helper {
         val t = p.info
         val n = name(p)
         val hn = hns(n)
-        val cn = m.getOrElseUpdate(t, {
+        val cn = tpeGetOrElseAppend(m, t, {
           val cn = freshName("c")
           val ci = c.inferImplicitValue(configsType(t), silent = false)
           vs += q"val $cn = $ci"
@@ -55,7 +55,7 @@ class ConfigsMacro(val c: blackbox.Context) extends Helper {
         if (hns.contains(hn) || hns.valuesIterator.count(_ == hn) > 1) {
           q"$cn.get($config, $n)"
         } else {
-          val on = m.getOrElseUpdate(optionType(t), {
+          val on = tpeGetOrElseAppend(m, optionType(t), {
             val on = freshName("c")
             vs += q"val $on = $configsCompanion.optionConfigs[$t]($cn)"
             on

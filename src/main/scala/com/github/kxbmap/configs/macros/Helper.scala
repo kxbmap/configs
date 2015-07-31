@@ -18,6 +18,8 @@ package com.github.kxbmap.configs.macros
 
 import com.github.kxbmap.configs.Configs
 import com.typesafe.config.{Config, ConfigException}
+import scala.collection.mutable
+import scala.language.implicitConversions
 import scala.reflect.macros.blackbox
 
 private[macros] abstract class Helper {
@@ -49,7 +51,14 @@ private[macros] abstract class Helper {
 
   def nonEmptyParams(m: MethodSymbol): Boolean = m.paramLists.exists(_.nonEmpty)
 
-  def hasParamType(m: MethodSymbol, tpe: Type): Boolean = m.paramLists.exists(_.exists(_.info == tpe))
+  def hasParamType(m: MethodSymbol, tpe: Type): Boolean = m.paramLists.exists(_.exists(_.info =:= tpe))
+
+  def tpeGetOrElseAppend[A](m: mutable.Buffer[(Type, A)], key: Type, op: => A): A =
+    m.find(_._1 =:= key).fold {
+      val v = op
+      m += key -> v
+      v
+    }(_._2)
 
 
   def abort(msg: String): Nothing = c.abort(c.enclosingPosition, msg)

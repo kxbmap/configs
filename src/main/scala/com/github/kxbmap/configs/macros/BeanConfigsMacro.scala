@@ -40,7 +40,7 @@ class BeanConfigsMacro(val c: blackbox.Context) extends Helper {
 
   def materializeI[T: WeakTypeTag](newInstance: Tree): Tree = {
     val tpe = weakTypeOf[T]
-    val cns = new mutable.HashMap[Type, TermName]()
+    val cns = new mutable.ArrayBuffer[(Type, TermName)]()
     val ns = new mutable.HashSet[String]()
     val vs = new ArrayBuffer[Tree]()
     val config = TermName("config")
@@ -56,7 +56,7 @@ class BeanConfigsMacro(val c: blackbox.Context) extends Helper {
           s.head.toLower +: s.tail
         }
         val hn = toLowerHyphenCase(n)
-        val on = cns.getOrElseUpdate(ot, {
+        val on = tpeGetOrElseAppend(cns, ot, {
           val on = freshName("c")
           val oi = c.inferImplicitValue(configsType(ot), silent = false, withMacrosDisabled = true)
           vs += q"val $on = $oi"
