@@ -1,6 +1,6 @@
 configs
 =======
-[![Build Status](https://travis-ci.org/kxbmap/configs.png)](https://travis-ci.org/kxbmap/configs)
+[![Build Status](https://travis-ci.org/kxbmap/configs.svg?branch=master)](https://travis-ci.org/kxbmap/configs)
 
 A Scala wrapper for Typesafe config
 
