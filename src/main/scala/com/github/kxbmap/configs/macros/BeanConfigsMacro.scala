@@ -56,7 +56,7 @@ class BeanConfigsMacro(val c: blackbox.Context) extends Helper {
           s.head.toLower +: s.tail
         }
         val hn = toLowerHyphenCase(n)
-        val on = cns.getOrElse(ot, {
+        val on = cns.getOrElseUpdate(ot, {
           val on = freshName("c")
           val oi = c.inferImplicitValue(configsType(ot), silent = false, withMacrosDisabled = true)
           vs += q"val $on = $oi"
