@@ -19,7 +19,6 @@ package com.github.kxbmap.configs.macros
 import com.github.kxbmap.configs.Configs
 import com.typesafe.config.{Config, ConfigException}
 import scala.collection.mutable
-import scala.language.implicitConversions
 import scala.reflect.macros.blackbox
 
 private[macros] abstract class Helper {
