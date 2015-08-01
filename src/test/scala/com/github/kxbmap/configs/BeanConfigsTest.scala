@@ -52,17 +52,21 @@ object BeanConfigsTest extends Scalaprops with ConfigProp {
   }
 
   val factory = {
-    val C = Configs.bean(new SimpleBean())
+    val C = Configs.bean {
+      val b = new SimpleBean()
+      b.string = "foo"
+      b
+    }
     val p1 = forAll { (n: Int) =>
       val config = ConfigFactory.parseString(s"int = $n")
       val o = C.extract(config)
-      o.int == n
+      o.string == "foo" && o.int == n
     }
     val p2 = forAll {
       val config = ConfigFactory.empty()
       val o1 = C.extract(config)
       val o2 = C.extract(config)
-      o1 ne o2
+      (o1 ne o2) && o1.string == "foo" && o2.string == "foo"
     }
     Properties.list(
       p1.toProperties("get"),
