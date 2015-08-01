@@ -30,19 +30,11 @@ object MapConfigsTest extends Scalaprops with ConfigProp {
   val map = checkMap[java.time.Duration]
 
 
-  implicit lazy val nonEmptyStringGen: Gen[String] =
-    Gen.parameterised { (size, r) =>
-      for {
-        n <- Gen.chooseR(1, size, r)
-        c <- Gen.sequenceNArray(n, Gen.asciiChar)
-      } yield String.valueOf(c)
-    }
-
   implicit def stringMapCValue[T: CValue]: CValue[Map[String, T]] =
     _.map(t => t._1 -> CValue[T].toConfigValue(t._2)).asJava
 
 
-  implicit lazy val nonEmptySymbolGen = nonEmptyStringGen.map(Symbol.apply)
+  implicit lazy val symbolKeyGen = Gen[String].map(Symbol.apply)
 
   implicit def symbolMapGen[T: Gen]: Gen[Map[Symbol, T]] =
     Gen.mapGen[String, T].map(_.map(t => Symbol(t._1) -> t._2))
