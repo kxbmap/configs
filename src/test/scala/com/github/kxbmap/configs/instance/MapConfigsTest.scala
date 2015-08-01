@@ -16,7 +16,8 @@
 
 package com.github.kxbmap.configs.instance
 
-import com.github.kxbmap.configs.{CValue, ConfigProp, Configs}
+import com.github.kxbmap.configs.util.CValue
+import com.github.kxbmap.configs.{ConfigProp, Configs}
 import scala.collection.JavaConverters._
 import scalaprops.{Gen, Scalaprops}
 import scalaz.Equal

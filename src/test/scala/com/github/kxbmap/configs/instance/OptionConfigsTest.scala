@@ -16,7 +16,8 @@
 
 package com.github.kxbmap.configs.instance
 
-import com.github.kxbmap.configs.{CValue, ConfigProp, IsMissing}
+import com.github.kxbmap.configs.ConfigProp
+import com.github.kxbmap.configs.util.{CValue, IsMissing}
 import scalaprops.Scalaprops
 import scalaz.std.option._
 

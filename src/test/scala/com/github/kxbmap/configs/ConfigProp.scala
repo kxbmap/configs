@@ -16,7 +16,8 @@
 
 package com.github.kxbmap.configs
 
-import com.typesafe.config.{ConfigException, ConfigFactory, ConfigMemorySize, ConfigValueFactory}
+import com.github.kxbmap.configs.util.{CValue, IsMissing, IsWrongType, WrongTypeValue}
+import com.typesafe.config.{ConfigFactory, ConfigMemorySize, ConfigValueFactory}
 import java.{lang => jl, time => jt, util => ju}
 import scala.collection.JavaConverters._
 import scalaprops.Or.Empty
@@ -94,66 +95,5 @@ trait ConfigProp {
 
   implicit lazy val configMemorySizeGen: Gen[ConfigMemorySize] =
     Gen.chooseLong(0, Long.MaxValue).map(ConfigMemorySize.ofBytes)
-
-}
-
-
-trait IsMissing[A] {
-  def check(a: Need[A]): Boolean
-}
-
-object IsMissing {
-
-  def apply[A](implicit A: IsMissing[A]): IsMissing[A] = A
-
-  implicit def defaultIsMissing[A]: IsMissing[A] = a =>
-    try {
-      a.value
-      false
-    } catch {
-      case _: ConfigException.Missing => true
-    }
-}
-
-trait IsWrongType[A] {
-  def check(a: Need[A]): Boolean
-}
-
-object IsWrongType {
-
-  def apply[A](implicit A: IsWrongType[A]): IsWrongType[A] = A
-
-  implicit def defaultIsWrong[A]: IsWrongType[A] = a =>
-    try {
-      a.value
-      false
-    } catch {
-      case _: ConfigException.WrongType => true
-    }
-}
-
-trait WrongTypeValue[A] {
-  def value: Any
-}
-
-object WrongTypeValue {
-
-  def apply[A](implicit A: WrongTypeValue[A]): WrongTypeValue[A] = A
-
-  private[this] final val string: WrongTypeValue[Any] = new WrongTypeValue[Any] {
-    val value: Any = "wrong type value"
-  }
-
-  private[this] final val list: WrongTypeValue[Any] = new WrongTypeValue[Any] {
-    val value: Any = ju.Collections.emptyList()
-  }
-
-  implicit def defaultWrongTypeValue[A]: WrongTypeValue[A] = list.asInstanceOf[WrongTypeValue[A]]
-
-  implicit def javaListWrongTypeValue[A]: WrongTypeValue[ju.List[A]] = string.asInstanceOf[WrongTypeValue[ju.List[A]]]
-
-  implicit def seqWrongTypeValue[F[_] <: Seq[_], A]: WrongTypeValue[F[A]] = string.asInstanceOf[WrongTypeValue[F[A]]]
-
-  implicit def arrayWrongTypeValue[A]: WrongTypeValue[Array[A]] = string.asInstanceOf[WrongTypeValue[Array[A]]]
 
 }

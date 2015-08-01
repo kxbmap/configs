@@ -16,7 +16,8 @@
 
 package com.github.kxbmap.configs.instance
 
-import com.github.kxbmap.configs.{CValue, ConfigProp}
+import com.github.kxbmap.configs.ConfigProp
+import com.github.kxbmap.configs.util.CValue
 import scala.concurrent.duration._
 import scalaprops.{Gen, Scalaprops}
 

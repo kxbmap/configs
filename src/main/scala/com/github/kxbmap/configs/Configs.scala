@@ -53,7 +53,7 @@ object Configs extends AllConfigs {
 
   def bean[T]: Configs[T] = macro macros.BeanConfigsMacro.materializeT[T]
 
-  def bean[T](newInstance: T): Configs[T] = macro macros.BeanConfigsMacro.materializeI[T]
+  def bean[T](newInstance: => T): Configs[T] = macro macros.BeanConfigsMacro.materializeI[T]
 
 
   def from[T](f: (Config, String) => T): Configs[T] = f(_, _)

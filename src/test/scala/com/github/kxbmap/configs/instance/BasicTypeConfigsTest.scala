@@ -16,7 +16,7 @@
 
 package com.github.kxbmap.configs.instance
 
-import com.github.kxbmap.configs._
+import com.github.kxbmap.configs.ConfigProp
 import com.typesafe.config.ConfigMemorySize
 import java.{lang => jl, time => jt, util => ju}
 import scalaprops.Scalaprops

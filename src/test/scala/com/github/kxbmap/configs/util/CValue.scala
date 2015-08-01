@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.github.kxbmap.configs
+package com.github.kxbmap.configs.util
 
 import com.typesafe.config.{ConfigValue, ConfigValueFactory}
 import scala.collection.JavaConverters._

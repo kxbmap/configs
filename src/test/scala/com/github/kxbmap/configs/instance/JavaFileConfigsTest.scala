@@ -16,7 +16,8 @@
 
 package com.github.kxbmap.configs.instance
 
-import com.github.kxbmap.configs.{CValue, ConfigProp}
+import com.github.kxbmap.configs.ConfigProp
+import com.github.kxbmap.configs.util.CValue
 import java.io.File
 import java.nio.file.{Path, Paths}
 import scalaprops.{Gen, Scalaprops}

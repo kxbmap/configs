@@ -16,7 +16,8 @@
 
 package com.github.kxbmap.configs.instance
 
-import com.github.kxbmap.configs._
+import com.github.kxbmap.configs.ConfigProp
+import com.github.kxbmap.configs.util.{CValue, IsMissing, IsWrongType}
 import com.typesafe.config.ConfigException
 import scala.util.{Failure, Success, Try}
 import scalaprops.{Gen, Scalaprops}

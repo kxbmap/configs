@@ -14,17 +14,13 @@
  * limitations under the License.
  */
 
-package com.github.kxbmap.configs.instance
+package com.github.kxbmap.configs
 
-import com.github.kxbmap.configs.ConfigProp
-import java.{lang => jl}
-import scalaprops.Scalaprops
+package object util {
 
-object BoxedTypeConfigsTest extends Scalaprops with ConfigProp {
+  implicit class UtilOps[A](private val self: A) {
 
-  val javaInteger = check[jl.Integer]
-  val javaLong = check[jl.Long]
-  val javaDouble = check[jl.Double]
-  val javaBoolean = check[jl.Boolean]
+    def configString(implicit A: ConfigString[A]): String = A.configString(self)
+  }
 
 }

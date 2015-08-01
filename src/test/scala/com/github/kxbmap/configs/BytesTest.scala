@@ -16,6 +16,7 @@
 
 package com.github.kxbmap.configs
 
+import com.github.kxbmap.configs.util.CValue
 import scalaprops.Property.forAll
 import scalaprops.{Gen, Properties, Scalaprops}
 import scalaz.std.list._
