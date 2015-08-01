@@ -17,7 +17,7 @@
 package com.github.kxbmap.configs.instance
 
 import com.github.kxbmap.configs.ConfigProp
-import com.github.kxbmap.configs.util.{CValue, IsMissing, IsWrongType}
+import com.github.kxbmap.configs.util.{ConfigVal, IsMissing, IsWrongType}
 import com.typesafe.config.ConfigException
 import scala.util.{Failure, Success, Try}
 import scalaprops.{Gen, Scalaprops}
@@ -28,31 +28,27 @@ object TryConfigsTest extends Scalaprops with ConfigProp {
   val `try` = check[Try[java.time.Duration]]
 
 
-  implicit def isMissing[T]: IsMissing[T] = _.value match {
+  implicit def isMissing[A]: IsMissing[A] = _.value match {
     case Failure(_: ConfigException.Missing) => true
     case _                                   => false
   }
 
-  implicit def isWrongType[T]: IsWrongType[T] = _.value match {
+  implicit def isWrongType[A]: IsWrongType[A] = _.value match {
     case Failure(_: ConfigException.WrongType) => true
     case _                                     => false
   }
 
 
-  implicit def tryGen[T: Gen]: Gen[Try[T]] =
-    Gen.option[T].map {
+  implicit def tryGen[A: Gen]: Gen[Try[A]] =
+    Gen.option[A].map {
       case Some(v) => Success(v)
       case None    => Failure(new RuntimeException("dummy"))
     }
 
-  implicit def tryEqual[T: Equal]: Equal[Try[T]] = (a1, a2) =>
-    (a1, a2) match {
-      case (Success(r1), Success(r2)) => Equal[T].equal(r1, r2)
-      case (Failure(_), Failure(_))   => true
-      case _                          => false
-    }
+  implicit def tryEqual[A: Equal]: Equal[Try[A]] =
+    Equal[Option[A]].contramap(_.toOption)
 
-  implicit def tryCValue[T: CValue]: CValue[Try[T]] =
-    _.map(CValue[T].toConfigValue).getOrElse(null)
+  implicit def tryConfigVal[A: ConfigVal]: ConfigVal[Try[A]] =
+    ConfigVal[Option[A]].contramap(_.toOption)
 
 }

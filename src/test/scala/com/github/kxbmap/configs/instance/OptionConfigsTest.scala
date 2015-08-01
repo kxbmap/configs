@@ -17,7 +17,7 @@
 package com.github.kxbmap.configs.instance
 
 import com.github.kxbmap.configs.ConfigProp
-import com.github.kxbmap.configs.util.{CValue, IsMissing}
+import com.github.kxbmap.configs.util.IsMissing
 import scalaprops.Scalaprops
 import scalaz.std.option._
 
@@ -25,10 +25,6 @@ object OptionConfigsTest extends Scalaprops with ConfigProp {
 
   val option = check[Option[java.time.Duration]]
 
-  implicit def isMissing[T]: IsMissing[Option[T]] =
-    _.value.isEmpty
-
-  implicit def optionCValue[T: CValue]: CValue[Option[T]] =
-    _.map(CValue[T].toConfigValue).orNull
+  implicit def isMissing[A]: IsMissing[Option[A]] = _.value.isEmpty
 
 }

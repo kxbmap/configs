@@ -16,8 +16,8 @@
 
 package com.github.kxbmap.configs
 
-import com.github.kxbmap.configs.util.{CValue, IsMissing, IsWrongType, WrongTypeValue}
-import com.typesafe.config.{ConfigFactory, ConfigMemorySize, ConfigValueFactory}
+import com.github.kxbmap.configs.util._
+import com.typesafe.config.{ConfigUtil, ConfigFactory, ConfigMemorySize, ConfigValueFactory}
 import java.{lang => jl, time => jt, util => ju}
 import scala.collection.JavaConverters._
 import scalaprops.Or.Empty
@@ -30,13 +30,16 @@ import scalaz.{Equal, Need, Order}
 
 trait ConfigProp {
 
-  def check[A: Configs : Gen : Equal : CValue : IsMissing : IsWrongType : WrongTypeValue]: Properties[Unit :-: String :-: Empty] =
+  val q = ConfigUtil.quoteString _
+
+
+  def check[A: Configs : Gen : Equal : ConfigVal : IsMissing : IsWrongType : WrongTypeValue]: Properties[Unit :-: String :-: Empty] =
     checkId(())
 
-  def check[A: Configs : Gen : Equal : CValue : IsMissing : IsWrongType : WrongTypeValue](id: String): Properties[String :-: String :-: Empty] =
+  def check[A: Configs : Gen : Equal : ConfigVal : IsMissing : IsWrongType : WrongTypeValue](id: String): Properties[String :-: String :-: Empty] =
     checkId(id)
 
-  private def checkId[A: Order, B: Configs : Gen : Equal : CValue : IsMissing : IsWrongType : WrongTypeValue](id: A) =
+  private def checkId[A: Order, B: Configs : Gen : Equal : ConfigVal : IsMissing : IsWrongType : WrongTypeValue](id: A) =
     Properties.either(
       id,
       checkGet[B].toProperties("get"),
@@ -45,10 +48,8 @@ trait ConfigProp {
     )
 
 
-  def checkGet[T: Configs : Gen : Equal : CValue] = forAll { value: T =>
-    val p = "dummy-path"
-    val c = CValue[T].toConfigValue(value).atPath(p)
-    Equal[T].equal(Configs[T].get(c, p), value)
+  def checkGet[A: Configs : Gen : Equal : ConfigVal] = forAll { value: A =>
+    Equal[A].equal(Configs[A].extract(value.configValue), value)
   }
 
   def checkMissing[A: Configs : IsMissing] = forAll {
@@ -64,15 +65,15 @@ trait ConfigProp {
   }
 
 
-  implicit def generalEqual[T]: Equal[T] =
-    Equal.equalA[T]
+  implicit def generalEqual[A]: Equal[A] =
+    Equal.equalA[A]
 
-  implicit def arrayEqual[T: Equal]: Equal[Array[T]] =
+  implicit def arrayEqual[A: Equal]: Equal[Array[A]] =
     Equal.equalBy(_.toList)
 
 
-  implicit def javaListGen[T: Gen]: Gen[ju.List[T]] =
-    Gen.list[T].map(_.asJava)
+  implicit def javaListGen[A: Gen]: Gen[ju.List[A]] =
+    Gen.list[A].map(_.asJava)
 
 
   implicit lazy val stringGen: Gen[String] =
@@ -89,7 +90,7 @@ trait ConfigProp {
   implicit lazy val javaDurationGen: Gen[jt.Duration] =
     Gen.chooseLong(0, Long.MaxValue).map(jt.Duration.ofNanos)
 
-  implicit lazy val javaDurationCValue: CValue[jt.Duration] =
+  implicit lazy val javaDurationConfigVal: ConfigVal[jt.Duration] =
     d => s"${d.toNanos}ns"
 
 

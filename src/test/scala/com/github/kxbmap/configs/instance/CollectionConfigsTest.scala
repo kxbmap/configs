@@ -16,9 +16,8 @@
 
 package com.github.kxbmap.configs.instance
 
-import com.github.kxbmap.configs.util.CValue
+import com.github.kxbmap.configs.util._
 import com.github.kxbmap.configs.{ConfigProp, Configs}
-import scala.collection.JavaConverters._
 import scala.reflect.ClassTag
 import scalaprops.{Gen, Properties, Scalaprops}
 import scalaz.std.string._
@@ -26,7 +25,7 @@ import scalaz.{Apply, Equal}
 
 object CollectionConfigsTest extends Scalaprops with ConfigProp {
 
-  def checkC[A: Configs : Gen : Equal : CValue : ClassTag] = Properties.list(
+  def checkC[A: Configs : Gen : Equal : ConfigVal : ClassTag] = Properties.list(
     check[List[A]].mapId("list " + _),
     check[Vector[A]].mapId("vector " + _),
     check[Stream[A]].mapId("stream " + _),
@@ -44,7 +43,7 @@ object CollectionConfigsTest extends Scalaprops with ConfigProp {
 
     implicit val fooGen: Gen[Foo] = Apply[Gen].apply2(Gen[String], Gen[Int])(Foo(_, _))
 
-    implicit val fooCValue: CValue[Foo] = f => Map[String, Any]("a" -> f.a, "b" -> f.b).asJava
+    implicit val fooConfigVal: ConfigVal[Foo] = ConfigVal.asMap(f => Map("a" -> f.a, "b" -> f.b))
   }
 
 }

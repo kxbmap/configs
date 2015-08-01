@@ -16,7 +16,7 @@
 
 package com.github.kxbmap.configs
 
-import com.github.kxbmap.configs.util.CValue
+import com.github.kxbmap.configs.util.ConfigVal
 import scalaprops.Property.forAll
 import scalaprops.{Gen, Properties, Scalaprops}
 import scalaz.std.list._
@@ -91,6 +91,6 @@ object BytesTest extends Scalaprops with ConfigProp {
 
   implicit lazy val bytesGen: Gen[Bytes] = Gen[Long].map(Bytes.apply)
 
-  implicit lazy val bytesCValue: CValue[Bytes] = _.value
+  implicit lazy val bytesConfigVal: ConfigVal[Bytes] = _.value
 
 }

@@ -17,7 +17,7 @@
 package com.github.kxbmap.configs.instance
 
 import com.github.kxbmap.configs.ConfigProp
-import com.github.kxbmap.configs.util.CValue
+import com.github.kxbmap.configs.util.ConfigVal
 import java.io.File
 import java.nio.file.{Path, Paths}
 import scalaprops.{Gen, Scalaprops}
@@ -31,11 +31,11 @@ object JavaFileConfigsTest extends Scalaprops with ConfigProp {
   implicit lazy val pathGen: Gen[Path] =
     Gen.nonEmptyList[String](Gen.alphaString).map(ss => Paths.get(ss.head, ss.tail: _*))
 
-  implicit lazy val pathCValue: CValue[Path] = _.toString
+  implicit lazy val pathConfigVal: ConfigVal[Path] = _.toString
 
 
   implicit lazy val fileGen: Gen[File] = pathGen.map(_.toFile)
 
-  implicit lazy val fileCValue: CValue[File] = _.toString
+  implicit lazy val fileConfigVal: ConfigVal[File] = _.toString
 
 }

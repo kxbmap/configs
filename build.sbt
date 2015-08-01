@@ -12,6 +12,7 @@ scalacOptions ++= Seq(
   "-Xlint",
   "-Xexperimental",
   "-language:higherKinds",
+  "-language:implicitConversions",
   "-language:experimental.macros"
 )
 

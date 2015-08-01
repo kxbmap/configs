@@ -16,11 +16,15 @@
 
 package com.github.kxbmap.configs
 
+import com.typesafe.config.ConfigValue
+
 package object util {
+
+  implicit def anyToConfigValue[A: ConfigVal](value: A): ConfigValue = value.configValue
 
   implicit class UtilOps[A](private val self: A) {
 
-    def configString(implicit A: ConfigString[A]): String = A.configString(self)
+    def configValue(implicit A: ConfigVal[A]): ConfigValue = A.configValue(self)
   }
 
 }

@@ -17,7 +17,7 @@
 package com.github.kxbmap.configs.instance
 
 import com.github.kxbmap.configs.ConfigProp
-import com.github.kxbmap.configs.util.{CValue, IsMissing, IsWrongType}
+import com.github.kxbmap.configs.util.{ConfigVal, IsMissing, IsWrongType}
 import com.typesafe.config.ConfigException
 import scalaprops.{Gen, Scalaprops}
 import scalaz.Equal
@@ -27,24 +27,20 @@ object EitherConfigsTest extends Scalaprops with ConfigProp {
   val either = check[Either[Throwable, java.time.Duration]]
 
 
-  implicit def isMissing[T]: IsMissing[Either[Throwable, T]] =
+  implicit def isMissing[A]: IsMissing[Either[Throwable, A]] =
     _.value.left.exists(_.isInstanceOf[ConfigException.Missing])
 
-  implicit def isWrongType[T]: IsWrongType[Either[Throwable, T]] =
+  implicit def isWrongType[A]: IsWrongType[Either[Throwable, A]] =
     _.value.left.exists(_.isInstanceOf[ConfigException.WrongType])
 
 
-  implicit def eitherGen[T: Gen]: Gen[Either[Throwable, T]] =
-    Gen.option[T].map(_.toRight(new RuntimeException("dummy")))
+  implicit def eitherGen[A: Gen]: Gen[Either[Throwable, A]] =
+    Gen.option[A].map(_.toRight(new RuntimeException("dummy")))
 
-  implicit def eitherEqual[T: Equal]: Equal[Either[Throwable, T]] = (a1, a2) =>
-    (a1, a2) match {
-      case (Right(r1), Right(r2)) => Equal[T].equal(r1, r2)
-      case (Left(_), Left(_))     => true
-      case _                      => false
-    }
+  implicit def eitherEqual[A: Equal]: Equal[Either[Throwable, A]] =
+    Equal[Option[A]].contramap(_.right.toOption)
 
-  implicit def eitherCValue[T: CValue]: CValue[Either[Throwable, T]] =
-    _.right.toOption.map(CValue[T].toConfigValue).orNull
+  implicit def eitherConfigVal[A: ConfigVal]: ConfigVal[Either[Throwable, A]] =
+    ConfigVal[Option[A]].contramap(_.right.toOption)
 
 }

@@ -16,10 +16,10 @@
 
 package com.github.kxbmap.configs
 
-import com.github.kxbmap.configs.util._
 import com.typesafe.config.{ConfigException, ConfigFactory}
 import java.{lang => jl, util => ju}
 import scala.beans.BeanProperty
+import scala.collection.JavaConversions._
 import scalaprops.Property.forAll
 import scalaprops.{Properties, Scalaprops}
 import scalaz.std.string._
@@ -27,7 +27,7 @@ import scalaz.std.string._
 object BeanConfigsTest extends Scalaprops with ConfigProp {
 
   val simple = forAll { (s: String) =>
-    val config = ConfigFactory.parseString(s"string = ${s.configString}")
+    val config = ConfigFactory.parseString(s"string = ${q(s)}")
     val o = Configs[SimpleBean].extract(config)
     o.string == s && o.list == null
   }
@@ -101,7 +101,7 @@ object BeanConfigsTest extends Scalaprops with ConfigProp {
          |double = $d
          |int = $n
          |long = $l
-         |list = ${ss.configString}
+         |list = ${ss.map(q).mkString("[", ",", "]")}
          |""".stripMargin)
     val o = Configs[JavaTypes].extract(config)
     o.boolean == b && o.double == d && o.int == n && o.long == l && o.list == ss

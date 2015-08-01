@@ -16,31 +16,26 @@
 
 package com.github.kxbmap.configs.instance
 
-import com.github.kxbmap.configs.util.CValue
+import com.github.kxbmap.configs.util.ConfigVal
 import com.github.kxbmap.configs.{ConfigProp, Configs}
-import scala.collection.JavaConverters._
 import scalaprops.{Gen, Scalaprops}
 import scalaz.Equal
 
 
 object MapConfigsTest extends Scalaprops with ConfigProp {
 
-  def checkMap[A: Configs : Gen : CValue : Equal] =
+  def checkMap[A: Configs : Gen : ConfigVal : Equal] =
     check[Map[String, A]]("string key").product(check[Map[Symbol, A]]("symbol key"))
 
   val map = checkMap[java.time.Duration]
 
 
-  implicit def stringMapCValue[T: CValue]: CValue[Map[String, T]] =
-    _.map(t => t._1 -> CValue[T].toConfigValue(t._2)).asJava
-
-
   implicit lazy val symbolKeyGen = Gen[String].map(Symbol.apply)
 
-  implicit def symbolMapGen[T: Gen]: Gen[Map[Symbol, T]] =
-    Gen.mapGen[String, T].map(_.map(t => Symbol(t._1) -> t._2))
+  implicit def symbolMapGen[A: Gen]: Gen[Map[Symbol, A]] =
+    Gen.mapGen[String, A].map(_.map(t => Symbol(t._1) -> t._2))
 
-  implicit def symbolMapCValue[T: CValue]: CValue[Map[Symbol, T]] =
-    _.map(t => t._1.name -> CValue[T].toConfigValue(t._2)).asJava
+  implicit def symbolMapConfigVal[A: ConfigVal]: ConfigVal[Map[Symbol, A]] =
+    ConfigVal[Map[String, A]].contramap(_.map(t => t._1.name -> t._2))
 
 }
