@@ -71,22 +71,27 @@ class BeanConfigsMacro(val c: blackbox.Context) extends Helper {
         ns ++= nn
         q"$e.foreach($obj.$m(_))"
     }
+    val names = TermName("names")
     q"""
-    val ns = Set(..$ns)
+    val $names = Set(..$ns)
     ..$vs
     $configsCompanion.onPath { $config: $configType =>
-      import scala.collection.JavaConversions._
-      val ks = $config.root().keySet().toSet
-      if (!ks.forall(ns.contains)) {
-        val bean = ${fullName(tpe)}
-        val ps = ks.diff(ns).mkString(",")
-        throw new $badPathType($config.origin(), "Bean " + bean + " does not have properties: " + ps)
-      }
+      ${checkKeys(tpe, config, names)}
       val $obj = $newInstance
       ..$sets
       $obj
     }
     """
   }
+
+  private def checkKeys(bean: Type, config: TermName, names: TermName): Tree =
+    q"""
+    import scala.collection.JavaConversions._
+    val ks = $config.root().keySet().toSet
+    if (!ks.forall($names.contains)) {
+      val ps = ks.diff($names).mkString(",")
+      throw new $badPathType($config.origin(), s"Bean $${${fullName(bean)}} does not have properties: $$ps")
+    }
+    """
 
 }
