@@ -83,7 +83,8 @@ object ConfigsTest extends Scalaprops {
         ce.orElse(ce).get(config, "dummy")
         false
       } catch {
-        case e: ConfigException => e.getMessage == "CE"
+        case e: ConfigException =>
+          e.getMessage == "CE" && e.getSuppressed.exists(_.getMessage == "CE")
       }
     }
     val p4 = forAll {

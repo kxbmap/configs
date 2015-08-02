@@ -19,6 +19,7 @@ package com.github.kxbmap.configs
 import com.github.kxbmap.configs.instance.AllConfigs
 import com.typesafe.config.{Config, ConfigException, ConfigValue}
 import scala.annotation.implicitNotFound
+import scala.util.control.NonFatal
 
 
 @implicitNotFound("No implicit Configs defined for ${A}.")
@@ -36,8 +37,14 @@ trait Configs[A] {
     try
       get(c, p)
     catch {
-      case _: ConfigException =>
-        other.get(c, p)
+      case suppress: ConfigException =>
+        try
+          other.get(c, p)
+        catch {
+          case NonFatal(e) =>
+            e.addSuppressed(suppress)
+            throw e
+        }
     }
 }
 
