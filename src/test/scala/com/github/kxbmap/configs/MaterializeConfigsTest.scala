@@ -73,9 +73,6 @@ object MaterializeConfigsTest extends Scalaprops with ConfigProp {
 
   case class RecursiveSetting(value: Int, next: Option[RecursiveSetting])
 
-  implicit lazy val recursiveSettingConfigs: Configs[RecursiveSetting] =
-    Configs.of[RecursiveSetting]
-
   implicit lazy val recursiveSettingConfigVal: ConfigVal[RecursiveSetting] =
     ConfigVal.asMap(s => Map(
       "value" -> s.value,

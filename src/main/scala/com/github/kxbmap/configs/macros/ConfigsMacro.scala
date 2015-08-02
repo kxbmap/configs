@@ -34,6 +34,7 @@ class ConfigsMacro(val c: blackbox.Context) extends Helper {
     if (ctors.isEmpty) {
       abort(s"$targetType must have a public constructor")
     }
+    val self = TermName("self")
     val terms = new mutable.ArrayBuffer[(Type, TermName)]()
     val values = new ArrayBuffer[Tree]()
     val config = TermName("config")
@@ -70,7 +71,8 @@ class ConfigsMacro(val c: blackbox.Context) extends Helper {
     }
     q"""
     ..$values
-    ${cs.reduceLeft((l, r) => q"$l.orElse($r)")}
+    implicit lazy val $self: ${configsType(targetType)} = ${cs.reduceLeft((l, r) => q"$l.orElse($r)")}
+    $self
     """
   }
 
