@@ -17,7 +17,7 @@
 package com.github.kxbmap.configs
 
 import com.github.kxbmap.configs.util._
-import com.typesafe.config.{ConfigUtil, ConfigFactory, ConfigMemorySize, ConfigValueFactory}
+import com.typesafe.config._
 import java.{lang => jl, time => jt, util => ju}
 import scala.collection.JavaConverters._
 import scalaprops.Or.Empty
@@ -96,5 +96,45 @@ trait ConfigProp {
 
   implicit lazy val configMemorySizeGen: Gen[ConfigMemorySize] =
     Gen.chooseLong(0, Long.MaxValue).map(ConfigMemorySize.ofBytes)
+
+
+  private def genConfigValue[A: Gen]: Gen[ConfigValue] =
+    Gen[A].map(ConfigValueFactory.fromAnyRef)
+
+  lazy val configStringGen: Gen[ConfigValue] =
+    genConfigValue[String]
+
+  lazy val configNumberGen: Gen[ConfigValue] =
+    Gen.oneOf(
+      genConfigValue[Byte],
+      genConfigValue[Int],
+      genConfigValue[Long],
+      genConfigValue[Double]
+    )
+
+  lazy val configBooleanGen: Gen[ConfigValue] =
+    Gen.elements(
+      ConfigValueFactory.fromAnyRef(true),
+      ConfigValueFactory.fromAnyRef(false)
+    )
+
+  lazy val configListGen: Gen[ConfigList] =
+    Gen.list(configValueGen).map(xs => ConfigValueFactory.fromIterable(xs.asJava))
+
+  lazy val configObjectGen: Gen[ConfigObject] =
+    Gen.mapGen(Gen[String], configValueGen).map(m => ConfigValueFactory.fromMap(m.asJava))
+
+  lazy val configValueGen: Gen[ConfigValue] =
+    Gen.oneOfLazy(
+      Need(Gen.value(ConfigValueFactory.fromAnyRef(null))),
+      Need(configStringGen),
+      Need(configNumberGen),
+      Need(configBooleanGen),
+      Need(configListGen.asInstanceOf[Gen[ConfigValue]]),
+      Need(configObjectGen.asInstanceOf[Gen[ConfigValue]])
+    ).mapSize(_ / 7 + 1)
+
+  implicit lazy val configGen: Gen[Config] =
+    configObjectGen.map(_.toConfig)
 
 }

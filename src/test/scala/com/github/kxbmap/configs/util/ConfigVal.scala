@@ -16,7 +16,7 @@
 
 package com.github.kxbmap.configs.util
 
-import com.typesafe.config.{ConfigValue, ConfigValueFactory}
+import com.typesafe.config.{Config, ConfigValue, ConfigValueFactory}
 import scala.collection.JavaConverters._
 
 trait ConfigVal[A] {
@@ -51,6 +51,9 @@ object ConfigVal extends Value0 {
 
   implicit def stringMapConfigVal[A: ConfigVal]: ConfigVal[Map[String, A]] =
     _.mapValues(_.configValue).asJava
+
+  implicit val configConfigVal: ConfigVal[Config] =
+    _.root()
 
 }
 

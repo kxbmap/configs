@@ -17,7 +17,7 @@
 package com.github.kxbmap.configs.instance
 
 import com.github.kxbmap.configs.ConfigProp
-import com.typesafe.config.ConfigMemorySize
+import com.typesafe.config.{Config, ConfigMemorySize}
 import java.{time => jt}
 import scalaprops.{Properties, Scalaprops}
 import scalaz.std.anyVal._
@@ -28,7 +28,12 @@ import scalaz.std.vector._
 
 object BasicTypeCollectionConfigsTest extends Scalaprops with ConfigProp {
 
-  //  val configCollections = ???
+  val configCollections = Properties.list(
+    check[List[Config]].mapId("list " + _),
+    check[Vector[Config]].mapId("vector " + _),
+    check[Stream[Config]].mapId("stream " + _),
+    check[Array[Config]].mapId("array " + _)
+  )
 
   val intCollections = Properties.list(
     check[List[Int]].mapId("list " + _),
