@@ -43,40 +43,46 @@ class BeanConfigsMacro(val c: blackbox.Context) extends Helper {
   }
 
   private def materializeImpl[A: WeakTypeTag](newInstance: Tree): Tree = {
-    val tpe = weakTypeOf[A]
+    val targetType = weakTypeOf[A]
+    val setters = targetType.members.sorted.collect {
+      case m: MethodSymbol
+        if m.isPublic && nameOf(m).length > 3 && nameOf(m).startsWith("set") &&
+          m.paramLists.lengthCompare(1) == 0 && m.paramLists.head.lengthCompare(1) == 0 =>
+        val name = {
+          val s = nameOf(m).drop(3)
+          s.head.toLower +: s.tail
+        }
+        (name, m, m.paramLists.head.head.info)
+    }
+    if (setters.isEmpty) {
+      warning(s"${fullNameOf(targetType)} has no setters")
+    }
+    val config = TermName("config")
+    val obj = TermName("obj")
+    val names = TermName("names")
     val cns = new mutable.ArrayBuffer[(Type, TermName)]()
     val ns = new mutable.HashSet[String]()
     val vs = new ArrayBuffer[Tree]()
-    val config = TermName("config")
-    val obj = TermName("obj")
-    val sets = tpe.members.sorted.collect {
-      case m: MethodSymbol
-        if m.isPublic && name(m).length > 3 && name(m).startsWith("set") &&
-          m.paramLists.lengthCompare(1) == 0 && m.paramLists.head.lengthCompare(1) == 0 =>
-        val t = m.paramLists.head.head.info
-        val ot = optionType(t)
-        val n = {
-          val s = name(m).drop(3)
-          s.head.toLower +: s.tail
-        }
-        val hn = toLowerHyphenCase(n)
+    val sets = setters.map {
+      case (name, method, paramType) =>
+        val hyphen = toLowerHyphenCase(name)
+        val ot = optionType(paramType)
         val on = tpeGetOrElseAppend(cns, ot, {
           val on = freshName("c")
-          val oi = c.inferImplicitValue(configsType(ot), silent = false, withMacrosDisabled = true)
+          val oi = c.inferImplicitValue(configsType(ot), silent = false)
           vs += q"val $on = $oi"
           on
         })
-        val nn = Seq(n, hn).distinct
+        val nn = Seq(name, hyphen).distinct
         val e = nn.map(n => q"$on.get($config, $n)").reduceLeft((l, r) => q"$l.orElse($r)")
         ns ++= nn
-        q"$e.foreach($obj.$m(_))"
+        q"$e.foreach($obj.$method(_))"
     }
-    val names = TermName("names")
     q"""
     val $names = Set(..$ns)
     ..$vs
     $configsCompanion.onPath { $config: $configType =>
-      ${checkKeys(tpe, config, names)}
+      ${checkKeys(targetType, config, names)}
       val $obj = $newInstance
       ..$sets
       $obj
@@ -90,7 +96,7 @@ class BeanConfigsMacro(val c: blackbox.Context) extends Helper {
     val ks = $config.root().keySet().toSet
     if (!ks.forall($names.contains)) {
       val ps = ks.diff($names).mkString(",")
-      throw new $badPathType($config.origin(), s"Bean $${${fullName(bean)}} does not have properties: $$ps")
+      throw new $badPathType($config.origin(), s"Bean $${${fullNameOf(bean)}} does not have properties: $$ps")
     }
     """
 

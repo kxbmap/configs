@@ -40,13 +40,13 @@ private[macros] abstract class Helper {
 
   def freshName(name: String): TermName = TermName(c.freshName(name))
 
-  def name(sym: Symbol): String = sym.name.decodedName.toString
+  def nameOf(sym: Symbol): String = sym.name.decodedName.toString
 
-  def name(tpe: Type): String = name(tpe.typeSymbol)
+  def nameOf(tpe: Type): String = nameOf(tpe.typeSymbol)
 
-  def fullName(sym: Symbol): String = sym.fullName
+  def fullNameOf(sym: Symbol): String = sym.fullName
 
-  def fullName(tpe: Type): String = fullName(tpe.typeSymbol)
+  def fullNameOf(tpe: Type): String = fullNameOf(tpe.typeSymbol)
 
   def nonEmptyParams(m: MethodSymbol): Boolean = m.paramLists.exists(_.nonEmpty)
 
@@ -67,5 +67,7 @@ private[macros] abstract class Helper {
       abort(s"$tpe must be concrete class")
     else
       tpe
+
+  def warning(msg: String): Unit = c.warning(c.enclosingPosition, msg)
 
 }

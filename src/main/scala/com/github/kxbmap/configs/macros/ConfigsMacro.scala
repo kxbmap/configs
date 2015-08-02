@@ -39,12 +39,12 @@ class ConfigsMacro(val c: blackbox.Context) extends Helper {
     val config = TermName("config")
     val cs = ctors.map { ctor =>
       val hns: Map[String, String] = ctor.paramLists.flatMap(_.map { p =>
-        val n = name(p)
+        val n = nameOf(p)
         n -> toLowerHyphenCase(n)
       })(collection.breakOut)
       val argLists = ctor.paramLists.map(_.map { p =>
         val t = p.info
-        val n = name(p)
+        val n = nameOf(p)
         val hn = hns(n)
         val cn = tpeGetOrElseAppend(m, t, {
           val cn = freshName("c")
