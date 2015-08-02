@@ -25,11 +25,11 @@ package object configs {
   type AtPath[A] = Configs[A]
 
 
-  final implicit class EnrichTypesafeConfig(val c: Config) extends AnyVal {
+  implicit class ConfigOps(private val self: Config) extends AnyVal {
 
-    def extract[A: Configs]: A = Configs[A].extract(c)
+    def extract[A: Configs]: A = Configs[A].extract(self)
 
-    def get[A: Configs](path: String): A = Configs[A].get(c, path)
+    def get[A: Configs](path: String): A = Configs[A].get(self, path)
 
     def opt[A: Configs](path: String): Option[A] = get[Option[A]](path)
 
