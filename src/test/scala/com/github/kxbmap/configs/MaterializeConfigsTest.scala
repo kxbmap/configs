@@ -108,25 +108,25 @@ object MaterializeConfigsTest extends Scalaprops with ConfigProp {
   ////
   val subCtors = Properties.list(
     checkMat[SubCtorsSetting].toProperties("primary"),
-    sub1.toProperties("sub decl order"),
-    sub2.toProperties("sub next"),
-    primaryFirst.toProperties("primary first"),
-    ignorePrivate.toProperties("ignore private")
+    subCtor1.toProperties("sub decl order"),
+    subCtor2.toProperties("sub next"),
+    primaryCtorFirst.toProperties("primary first"),
+    ignorePrivateCtor.toProperties("ignore private")
   )
 
-  private lazy val sub1 = forAll { (first: String, last: String, age: Int) =>
+  private lazy val subCtor1 = forAll { (first: String, last: String, age: Int) =>
     val expected = new SubCtorsSetting(first, last, age)
     val config = ConfigFactory.parseString(s"firstName = ${q(first)}, lastName = ${q(last)}, age = $age")
     Equal[SubCtorsSetting].equal(Configs[SubCtorsSetting].extract(config), expected)
   }
 
-  private lazy val sub2 = forAll { (first: String, last: String) =>
+  private lazy val subCtor2 = forAll { (first: String, last: String) =>
     val expected = new SubCtorsSetting(first, last)
     val config = ConfigFactory.parseString(s"firstName = ${q(first)}, lastName = ${q(last)}")
     Equal[SubCtorsSetting].equal(Configs[SubCtorsSetting].extract(config), expected)
   }
 
-  private lazy val primaryFirst = forAll { (first: String, last: String, name: String, age: Int, country: String) =>
+  private lazy val primaryCtorFirst = forAll { (first: String, last: String, name: String, age: Int, country: String) =>
     val expected = new SubCtorsSetting(name, age, country)
     val config = ConfigFactory.parseString(
       s"""firstName = ${q(first)}
@@ -138,7 +138,7 @@ object MaterializeConfigsTest extends Scalaprops with ConfigProp {
     Equal[SubCtorsSetting].equal(Configs[SubCtorsSetting].extract(config), expected)
   }
 
-  private lazy val ignorePrivate = intercept { (name: String, age: Int) =>
+  private lazy val ignorePrivateCtor = intercept { (name: String, age: Int) =>
     val config = ConfigFactory.parseString(s"firstName = ${q(name)}, age = $age")
     Configs[SubCtorsSetting].extract(config)
   } {
@@ -166,6 +166,58 @@ object MaterializeConfigsTest extends Scalaprops with ConfigProp {
 
   implicit lazy val subCtorsSettingEqual: Equal[SubCtorsSetting] =
     (s1, s2) => s1.name == s2.name && s1.age == s2.age && s1.country == s2.country
+
+
+  ////
+  val multiApply = Properties.list(
+    checkMat[MultiApply].toProperties("synthetic"),
+    subApply1.toProperties("sub decl order"),
+    subApply2.toProperties("sub next"),
+    syntheticApplyFirst.toProperties("synthetic first")
+  )
+
+  private lazy val subApply1 = forAll { (a0: Int, b0: Int) =>
+    val expected = MultiApply(a0, b0)
+    val config = ConfigFactory.parseString(s"a0 = $a0, b0 = $b0")
+    Equal[MultiApply].equal(Configs[MultiApply].extract(config), expected)
+  }
+
+  private lazy val subApply2 = forAll { a0: Int =>
+    val expected = MultiApply(a0)
+    val config = ConfigFactory.parseString(s"a0 = $a0")
+    Equal[MultiApply].equal(Configs[MultiApply].extract(config), expected)
+  }
+
+  private lazy val syntheticApplyFirst = forAll { (a: Int, b: Int, c: Int, a0: Int, b0: Int) =>
+    val expected = new MultiApply(a, b, c)
+    val config = ConfigFactory.parseString(
+      s"""a = $a
+         |b = $b
+         |c = $c
+         |a0 = $a0
+         |b0 = $b0
+         |""".stripMargin)
+    Equal[MultiApply].equal(Configs[MultiApply].extract(config), expected)
+  }
+
+  case class MultiApply(a: Int, b: Int, c: Int)
+
+  object MultiApply {
+
+    def apply(a0: Int, b0: Int): MultiApply = MultiApply(a0, b0, 0)
+
+    def apply(a0: Int): MultiApply = MultiApply(a0, 0, 0)
+  }
+
+  implicit lazy val multiApplyConfigVal: ConfigVal[MultiApply] =
+    ConfigVal.fromMap(s => Map(
+      "a" -> s.a,
+      "b" -> s.b,
+      "c" -> s.c
+    ))
+
+  implicit lazy val multiApplyGen: Gen[MultiApply] =
+    Apply[Gen].apply3(Gen[Int], Gen[Int], Gen[Int])(MultiApply(_, _, _))
 
 
   ////

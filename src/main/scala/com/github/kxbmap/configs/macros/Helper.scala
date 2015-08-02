@@ -28,11 +28,13 @@ private[macros] abstract class Helper {
 
   lazy val configType = typeOf[Config]
 
-  def configsType(arg: Type) = appliedType(typeOf[Configs[_]].typeConstructor, arg)
+  def configsType[T: WeakTypeTag]: Type = configsType(weakTypeOf[T])
 
-  def optionType(arg: Type) = appliedType(typeOf[Option[_]].typeConstructor, arg)
+  def configsType(arg: Type): Type = appliedType(typeOf[Configs[_]].typeConstructor, arg)
 
-  def setType(arg: Type) = appliedType(typeOf[Set[_]].typeConstructor, arg)
+  def optionType(arg: Type): Type = appliedType(typeOf[Option[_]].typeConstructor, arg)
+
+  def setType(arg: Type): Type = appliedType(typeOf[Set[_]].typeConstructor, arg)
 
   lazy val configsCompanion = symbolOf[Configs[_]].companion
 

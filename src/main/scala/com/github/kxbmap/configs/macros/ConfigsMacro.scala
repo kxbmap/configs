@@ -24,21 +24,57 @@ class ConfigsMacro(val c: blackbox.Context) extends Helper {
   import c.universe._
 
   def materialize[A: WeakTypeTag]: Tree = {
-    val targetType = abortIfAbstract(weakTypeOf[A])
-    val ctors = constructors(targetType)
+    val targetType = weakTypeOf[A]
+    val ctors = constructors[A]
     if (ctors.isEmpty) {
       abort(s"$targetType must have a public constructor")
     }
     val self = TermName("self")
     val terms = new mutable.ArrayBuffer[(Type, TermName)]()
     val values = new mutable.ArrayBuffer[Tree]()
-    val config = TermName("config")
-    val cs = ctors.map { ctor =>
-      val hyphens: Map[String, String] = ctor.paramLists.flatMap(_.map { p =>
+    val cs = ctors.map(ctorConfigs(_, terms, values))
+    q"""
+    ..$values
+    implicit lazy val $self: ${configsType[A]} = ${cs.reduceLeft((l, r) => q"$l.orElse($r)")}
+    $self
+    """
+  }
+
+
+  sealed trait Ctor
+  case class CtorCtor(tpe: Type, m: MethodSymbol) extends Ctor
+  case class ApplyCtor(companion: ModuleSymbol, m: MethodSymbol) extends Ctor
+
+  def constructors[A: WeakTypeTag]: Seq[Ctor] = {
+    val tpe = weakTypeOf[A]
+    val sym = symbolOf[A].asClass
+
+    def ctorCtors: Seq[CtorCtor] =
+      tpe.decls.sorted.collect {
+        case m: MethodSymbol if m.isConstructor && m.isPublic && nonEmptyParams(m) && !hasParamType(m, tpe) =>
+          CtorCtor(tpe, m)
+      }
+
+    def applyCtors: Seq[ApplyCtor] = {
+      val companion = sym.companion.asModule
+      val (synthetic, others) = companion.info.decls.sorted.collect {
+        case m: MethodSymbol if m.isPublic && m.returnType =:= tpe && nameOf(m) == "apply" =>
+          ApplyCtor(companion, m)
+      }.partition(_.m.isSynthetic)
+      synthetic ::: others
+    }
+
+    if (sym.isCaseClass) applyCtors else ctorCtors
+  }
+
+  def ctorConfigs(ctor: Ctor, terms: mutable.Buffer[(Type, TermName)], values: mutable.Buffer[Tree]): Tree = {
+    def onPath(m: MethodSymbol, newInstance: Seq[Seq[Tree]] => Tree): Tree = {
+      val config = TermName("config")
+      val hyphens: Map[String, String] = m.paramLists.flatMap(_.map { p =>
         val n = nameOf(p)
         n -> toLowerHyphenCase(n)
       })(collection.breakOut)
-      val argLists = ctor.paramLists.map(_.map { p =>
+      val argLists = m.paramLists.map(_.map { p =>
         val paramType = p.info
         val paramName = nameOf(p)
         val hyphen = hyphens(paramName)
@@ -60,21 +96,16 @@ class ConfigsMacro(val c: blackbox.Context) extends Helper {
       })
       q"""
       $configsCompanion.onPath { $config: $configType =>
-        new $targetType(...$argLists)
+        ${newInstance(argLists)}
       }
       """
     }
-    q"""
-    ..$values
-    implicit lazy val $self: ${configsType(targetType)} = ${cs.reduceLeft((l, r) => q"$l.orElse($r)")}
-    $self
-    """
+    ctor match {
+      case CtorCtor(tpe, m)  => onPath(m, argLists => q"new $tpe(...$argLists)")
+      case ApplyCtor(cmp, m) => onPath(m, argLists => q"$cmp(...$argLists)")
+    }
   }
 
-  def constructors(tpe: Type): Seq[MethodSymbol] =
-    tpe.decls.sorted.collect {
-      case m: MethodSymbol if m.isConstructor && m.isPublic && nonEmptyParams(m) && !hasParamType(m, tpe) => m
-    }
 
   def nonEmptyParams(m: MethodSymbol): Boolean = m.paramLists.exists(_.nonEmpty)
 
