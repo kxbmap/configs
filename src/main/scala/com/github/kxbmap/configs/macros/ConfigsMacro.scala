@@ -17,7 +17,6 @@
 package com.github.kxbmap.configs.macros
 
 import scala.collection.mutable
-import scala.collection.mutable.ArrayBuffer
 import scala.reflect.macros.blackbox
 
 class ConfigsMacro(val c: blackbox.Context) extends Helper {
@@ -36,7 +35,7 @@ class ConfigsMacro(val c: blackbox.Context) extends Helper {
     }
     val self = TermName("self")
     val terms = new mutable.ArrayBuffer[(Type, TermName)]()
-    val values = new ArrayBuffer[Tree]()
+    val values = new mutable.ArrayBuffer[Tree]()
     val config = TermName("config")
     val cs = ctors.map { ctor =>
       val hyphens: Map[String, String] = ctor.paramLists.flatMap(_.map { p =>
@@ -75,6 +74,10 @@ class ConfigsMacro(val c: blackbox.Context) extends Helper {
     $self
     """
   }
+
+  def nonEmptyParams(m: MethodSymbol): Boolean = m.paramLists.exists(_.nonEmpty)
+
+  def hasParamType(m: MethodSymbol, tpe: Type): Boolean = m.paramLists.exists(_.exists(_.info =:= tpe))
 
   def getOrAppend[A](m: mutable.Buffer[(Type, A)], key: Type, op: => A): A =
     m.find(_._1 =:= key).fold {

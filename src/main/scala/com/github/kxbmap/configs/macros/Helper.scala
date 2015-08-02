@@ -32,7 +32,7 @@ private[macros] abstract class Helper {
 
   def optionType(arg: Type) = appliedType(typeOf[Option[_]].typeConstructor, arg)
 
-  def setType(arg: Type) = appliedType(typeOf[Set[_]], arg)
+  def setType(arg: Type) = appliedType(typeOf[Set[_]].typeConstructor, arg)
 
   lazy val configsCompanion = symbolOf[Configs[_]].companion
 
@@ -48,10 +48,6 @@ private[macros] abstract class Helper {
   def fullNameOf(sym: Symbol): String = sym.fullName
 
   def fullNameOf(tpe: Type): String = fullNameOf(tpe.typeSymbol)
-
-  def nonEmptyParams(m: MethodSymbol): Boolean = m.paramLists.exists(_.nonEmpty)
-
-  def hasParamType(m: MethodSymbol, tpe: Type): Boolean = m.paramLists.exists(_.exists(_.info =:= tpe))
 
 
   def abort(msg: String): Nothing = c.abort(c.enclosingPosition, msg)
