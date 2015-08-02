@@ -36,7 +36,7 @@ object MaterializeConfigsTest extends Scalaprops with ConfigProp {
   case class SimpleSetting(user: String, password: String)
 
   implicit lazy val simpleSettingConfigVal: ConfigVal[SimpleSetting] =
-    ConfigVal.asMap(s => Map("user" -> s.user, "password" -> s.password))
+    ConfigVal.fromMap(s => Map("user" -> s.user, "password" -> s.password))
 
   implicit lazy val simpleSettingGen: Gen[SimpleSetting] =
     Apply[Gen].apply2(Gen[String], Gen[String])(SimpleSetting.apply)
@@ -52,7 +52,7 @@ object MaterializeConfigsTest extends Scalaprops with ConfigProp {
     optional: Option[SimpleSetting])
 
   implicit lazy val nestedSettingConfigVal: ConfigVal[NestedSetting] =
-    ConfigVal.asMap(s => Map(
+    ConfigVal.fromMap(s => Map(
       "simple" -> s.simple,
       "simples" -> s.simples,
       "simpleMap" -> s.simpleMap,
@@ -74,7 +74,7 @@ object MaterializeConfigsTest extends Scalaprops with ConfigProp {
   case class RecursiveSetting(value: Int, next: Option[RecursiveSetting])
 
   implicit lazy val recursiveSettingConfigVal: ConfigVal[RecursiveSetting] =
-    ConfigVal.asMap(s => Map(
+    ConfigVal.fromMap(s => Map(
       "value" -> s.value,
       "next" -> s.next
     ))
@@ -92,7 +92,7 @@ object MaterializeConfigsTest extends Scalaprops with ConfigProp {
   class ParamListsSetting(val firstName: String, val lastName: String)(val age: Int)
 
   implicit lazy val paramListsSettingConfigVal: ConfigVal[ParamListsSetting] =
-    ConfigVal.asMap(s => Map(
+    ConfigVal.fromMap(s => Map(
       "firstName" -> s.firstName,
       "lastName" -> s.lastName,
       "age" -> s.age
@@ -155,7 +155,7 @@ object MaterializeConfigsTest extends Scalaprops with ConfigProp {
   }
 
   implicit lazy val subCtorsSettingConfigVal: ConfigVal[SubCtorsSetting] =
-    ConfigVal.asMap(s => Map(
+    ConfigVal.fromMap(s => Map(
       "name" -> s.name,
       "age" -> s.age,
       "country" -> s.country
@@ -217,7 +217,7 @@ object MaterializeConfigsTest extends Scalaprops with ConfigProp {
     UPPERThenCamel: Int)
 
   implicit lazy val formatCaseSettingConfigVal: ConfigVal[FormatCaseSetting] =
-    ConfigVal.asMap(s => Map(
+    ConfigVal.fromMap(s => Map(
       "lower-camel" -> s.lowerCamel,
       "upper-camel" -> s.UpperCamel,
       "lower-snake" -> s.lower_snake,

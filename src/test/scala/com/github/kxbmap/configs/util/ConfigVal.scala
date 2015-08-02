@@ -33,7 +33,7 @@ object ConfigVal extends Value0 {
 
   def apply[A](implicit v: ConfigVal[A]): ConfigVal[A] = v
 
-  def asMap[A](f: A => Map[String, ConfigValue]): ConfigVal[A] =
+  def fromMap[A](f: A => Map[String, ConfigValue]): ConfigVal[A] =
     ConfigVal[Map[String, ConfigValue]].contramap(f)
 
 
