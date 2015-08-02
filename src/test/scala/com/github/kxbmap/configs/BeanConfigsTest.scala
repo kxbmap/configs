@@ -44,6 +44,17 @@ object BeanConfigsTest extends Scalaprops with ConfigProp {
     o.value == n && o.simple.boolean == b && o.simple.long == l
   }
 
+  val recursive = forAll { (n: Int, m: Int) =>
+    val config = ConfigFactory.parseString(
+      s"""value = $n
+         |next = {
+         |  value = $m
+         |}
+         |""".stripMargin)
+    val o = Configs[RecursiveBean].extract(config)
+    o.value == n && o.next.value == m && o.next.next == null
+  }
+
   val differentInstance = forAll {
     val config = ConfigFactory.empty()
     val o1 = Configs[SimpleBean].extract(config)
@@ -128,6 +139,15 @@ object BeanConfigsTest extends Scalaprops with ConfigProp {
 
   object NestedBean {
     implicit val configs: Configs[NestedBean] = Configs.bean[NestedBean]
+  }
+
+  class RecursiveBean {
+    @BeanProperty var value: Int = _
+    @BeanProperty var next: RecursiveBean = _
+  }
+
+  object RecursiveBean {
+    implicit val configs: Configs[RecursiveBean] = Configs.bean[RecursiveBean]
   }
 
 
