@@ -33,6 +33,8 @@ private[macros] abstract class Helper {
 
   def optionType(arg: Type) = appliedType(typeOf[Option[_]].typeConstructor, arg)
 
+  def setType(arg: Type) = appliedType(typeOf[Set[_]], arg)
+
   lazy val configsCompanion = symbolOf[Configs[_]].companion
 
   lazy val badPathType = typeOf[ConfigException.BadPath]

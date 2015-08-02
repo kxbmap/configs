@@ -67,10 +67,10 @@ class BeanConfigsMacro(val c: blackbox.Context) extends Helper {
         (nn, set)
     }.unzip
     q"""
-    val $names = ${ns.flatten.toSet}
+    val $names: ${setType(typeOf[String])} = ${ns.flatten.toSet}
     $configsCompanion.onPath { $config: $configType =>
       ${checkKeys(targetType, config, names)}
-      val $obj = $newInstance
+      val $obj: $targetType = $newInstance
       ..$sets
       $obj
     }
@@ -79,8 +79,8 @@ class BeanConfigsMacro(val c: blackbox.Context) extends Helper {
 
   private def checkKeys(bean: Type, config: TermName, names: TermName): Tree =
     q"""
-    import scala.collection.JavaConversions._
-    val ks = $config.root().keySet().toSet
+    import scala.collection.JavaConverters._
+    val ks = $config.root().keySet().asScala
     if (!ks.forall($names.contains)) {
       val ps = ks.diff($names).mkString(",")
       throw new $badPathType($config.origin(), s"Bean $${${fullNameOf(bean)}} does not have properties: $$ps")

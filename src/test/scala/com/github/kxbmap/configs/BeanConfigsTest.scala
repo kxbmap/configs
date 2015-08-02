@@ -45,15 +45,18 @@ object BeanConfigsTest extends Scalaprops with ConfigProp {
     o.value == n && o.simple.boolean == b && o.simple.long == l
   }
 
-  val recursive = forAll { (n: Int, m: Int) =>
+  val recursive = forAll { (n: Int, m: Int, l: Int) =>
     val config = ConfigFactory.parseString(
       s"""value = $n
          |next = {
          |  value = $m
+         |  next = {
+         |    value = $l
+         |  }
          |}
          |""".stripMargin)
     val o = Configs[RecursiveBean].extract(config)
-    o.value == n && o.next.value == m && o.next.next == null
+    o.value == n && o.next.value == m && o.next.next.value == l && o.next.next.next == null
   }
 
   val differentInstance = forAll {
