@@ -108,10 +108,10 @@ object MaterializeConfigsTest extends Scalaprops with ConfigProp {
   ////
   val subCtors = Properties.list(
     checkMat[SubCtorsSetting].toProperties("primary"),
-    sub1.toProperties("most specific"),
-    sub2.toProperties("others"),
-    ignorePrivate.toProperties("ignore private"),
-    primaryFirst.toProperties("primary first")
+    sub1.toProperties("sub decl order"),
+    sub2.toProperties("sub next"),
+    primaryFirst.toProperties("primary first"),
+    ignorePrivate.toProperties("ignore private")
   )
 
   private lazy val sub1 = forAll { (first: String, last: String, age: Int) =>
@@ -126,13 +126,6 @@ object MaterializeConfigsTest extends Scalaprops with ConfigProp {
     Equal[SubCtorsSetting].equal(Configs[SubCtorsSetting].extract(config), expected)
   }
 
-  private lazy val ignorePrivate = intercept { (name: String, age: Int) =>
-    val config = ConfigFactory.parseString(s"firstName = ${q(name)}, age = $age")
-    Configs[SubCtorsSetting].extract(config)
-  } {
-    case _: ConfigException => true
-  }
-
   private lazy val primaryFirst = forAll { (first: String, last: String, name: String, age: Int, country: String) =>
     val expected = new SubCtorsSetting(name, age, country)
     val config = ConfigFactory.parseString(
@@ -145,13 +138,20 @@ object MaterializeConfigsTest extends Scalaprops with ConfigProp {
     Equal[SubCtorsSetting].equal(Configs[SubCtorsSetting].extract(config), expected)
   }
 
+  private lazy val ignorePrivate = intercept { (name: String, age: Int) =>
+    val config = ConfigFactory.parseString(s"firstName = ${q(name)}, age = $age")
+    Configs[SubCtorsSetting].extract(config)
+  } {
+    case _: ConfigException => true
+  }
+
   class SubCtorsSetting(val name: String, val age: Int, val country: String) {
 
     private def this(name: String, age: Int) = this(name, age, "JPN")
 
-    def this(firstName: String, lastName: String) = this(s"$firstName $lastName", 0)
-
     def this(firstName: String, lastName: String, age: Int) = this(s"$firstName $lastName", age)
+
+    def this(firstName: String, lastName: String) = this(firstName, lastName, 0)
   }
 
   implicit lazy val subCtorsSettingConfigVal: ConfigVal[SubCtorsSetting] =

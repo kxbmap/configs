@@ -25,11 +25,7 @@ class ConfigsMacro(val c: blackbox.Context) extends Helper {
 
   def materialize[A: WeakTypeTag]: Tree = {
     val targetType = abortIfAbstract(weakTypeOf[A])
-    val ctors = targetType.decls.collect {
-      case m: MethodSymbol if m.isConstructor && m.isPublic && nonEmptyParams(m) && !hasParamType(m, targetType) => m
-    }.toSeq.sortBy {
-      m => (!m.isPrimaryConstructor, -m.paramLists.foldLeft(0)(_ + _.length))
-    }
+    val ctors = constructors(targetType)
     if (ctors.isEmpty) {
       abort(s"$targetType must have a public constructor")
     }
@@ -74,6 +70,11 @@ class ConfigsMacro(val c: blackbox.Context) extends Helper {
     $self
     """
   }
+
+  def constructors(tpe: Type): Seq[MethodSymbol] =
+    tpe.decls.sorted.collect {
+      case m: MethodSymbol if m.isConstructor && m.isPublic && nonEmptyParams(m) && !hasParamType(m, tpe) => m
+    }
 
   def nonEmptyParams(m: MethodSymbol): Boolean = m.paramLists.exists(_.nonEmpty)
 
