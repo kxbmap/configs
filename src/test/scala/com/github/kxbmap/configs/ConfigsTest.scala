@@ -16,7 +16,8 @@
 
 package com.github.kxbmap.configs
 
-import com.typesafe.config._
+import com.github.kxbmap.configs.util._
+import com.typesafe.config.{ConfigException, ConfigFactory, ConfigUtil, ConfigValueFactory}
 import scala.collection.JavaConverters._
 import scalaprops.Property.forAll
 import scalaprops.{Gen, Properties, Scalaprops}
@@ -78,23 +79,16 @@ object ConfigsTest extends Scalaprops {
       val cv: Configs[Int] = (_, _) => v
       ce.orElse(cv).get(config, "dummy") == v
     }
-    val p3 = forAll {
-      try {
-        ce.orElse(ce).get(config, "dummy")
-        false
-      } catch {
-        case e: ConfigException =>
-          e.getMessage == "CE" && e.getSuppressed.exists(_.getMessage == "CE")
-      }
+    val p3 = intercept {
+      ce.orElse(ce).get(config, "dummy")
+    } {
+      case e: ConfigException => e.getMessage == "CE" && e.getSuppressed.exists(_.getMessage == "CE")
     }
-    val p4 = forAll {
+    val p4 = intercept {
       val cv: Configs[Int] = (_, _) => 42
-      try {
-        re.orElse(cv).get(config, "dummy")
-        false
-      } catch {
-        case e: RuntimeException => e.getMessage == "RE"
-      }
+      re.orElse(cv).get(config, "dummy")
+    } {
+      case e: RuntimeException => e.getMessage == "RE"
     }
     Properties.list(
       p1.toProperties("value orElse CE"),

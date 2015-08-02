@@ -108,14 +108,11 @@ object MaterializeConfigsTest extends Scalaprops with ConfigProp {
     Equal[SubCtorsSetting].equal(Configs[SubCtorsSetting].extract(config), expected)
   }
 
-  private lazy val ignorePrivate = forAll { (name: String, age: Int) =>
+  private lazy val ignorePrivate = intercept { (name: String, age: Int) =>
     val config = ConfigFactory.parseString(s"firstName = ${q(name)}, age = $age")
-    try {
-      Configs[SubCtorsSetting].extract(config)
-      false
-    } catch {
-      case _: ConfigException => true
-    }
+    Configs[SubCtorsSetting].extract(config)
+  } {
+    case _: ConfigException => true
   }
 
   private lazy val primaryFirst = forAll { (first: String, last: String, name: String, age: Int, country: String) =>
@@ -179,24 +176,18 @@ object MaterializeConfigsTest extends Scalaprops with ConfigProp {
     Equal[FormatCaseSetting].equal(Configs[FormatCaseSetting].extract(config), o)
   }
 
-  private lazy val duplicate1 = forAll { (n: Int) =>
+  private lazy val duplicate1 = intercept { (n: Int) =>
     val config = ConfigFactory.parseString(s"duplicate-name = $n")
-    try {
-      config.extract[Duplicate1]
-      false
-    } catch {
-      case e: ConfigException.Missing => e.getMessage.contains("duplicateName")
-    }
+    config.extract[Duplicate1]
+  } {
+    case e: ConfigException.Missing => e.getMessage.contains("duplicateName")
   }
 
-  private lazy val duplicate2 = forAll { (n: Int) =>
+  private lazy val duplicate2 = intercept { (n: Int) =>
     val config = ConfigFactory.parseString(s"duplicate-name = $n")
-    try {
-      config.extract[Duplicate2]
-      false
-    } catch {
-      case e: ConfigException.Missing => e.getMessage.contains("duplicateName")
-    }
+    config.extract[Duplicate2]
+  } {
+    case e: ConfigException.Missing => e.getMessage.contains("duplicateName")
   }
 
   case class FormatCaseSetting(

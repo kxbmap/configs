@@ -16,9 +16,14 @@
 
 package com.github.kxbmap.configs
 
-import com.typesafe.config.ConfigValue
+import com.typesafe.config.{ConfigUtil, ConfigValue}
+import scalaprops.Property.forAll
+import scalaprops.{Gen, Property}
 
 package object util {
+
+  val q = ConfigUtil.quoteString _
+
 
   implicit def anyToConfigValue[A: ConfigVal](value: A): ConfigValue = value.configValue
 
@@ -26,5 +31,27 @@ package object util {
 
     def configValue(implicit A: ConfigVal[A]): ConfigValue = A.configValue(self)
   }
+
+
+  private[util] def intercept0(block: => Unit)(cond: PartialFunction[Throwable, Boolean]): Boolean =
+    try {
+      block
+      false
+    } catch cond
+
+  def intercept[A](block: => A)(cond: PartialFunction[Throwable, Boolean]): Property =
+    forAll {
+      intercept0(block)(cond)
+    }
+
+  def intercept[R, A1: Gen](block: A1 => R)(cond: PartialFunction[Throwable, Boolean]): Property =
+    forAll { a1: A1 =>
+      intercept0(block(a1))(cond)
+    }
+
+  def intercept[R, A1: Gen, A2: Gen](block: (A1, A2) => R)(cond: PartialFunction[Throwable, Boolean]): Property =
+    forAll { (a1: A1, a2: A2) =>
+      intercept0(block(a1, a2))(cond)
+    }
 
 }

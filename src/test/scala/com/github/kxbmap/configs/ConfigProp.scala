@@ -17,7 +17,7 @@
 package com.github.kxbmap.configs
 
 import com.github.kxbmap.configs.util._
-import com.typesafe.config._
+import com.typesafe.config.{Config, ConfigFactory, ConfigList, ConfigMemorySize, ConfigObject, ConfigValue, ConfigValueFactory}
 import java.{lang => jl, time => jt, util => ju}
 import scala.collection.JavaConverters._
 import scalaprops.Or.Empty
@@ -29,9 +29,6 @@ import scalaz.std.string._
 import scalaz.{Equal, Need, Order}
 
 trait ConfigProp {
-
-  val q = ConfigUtil.quoteString _
-
 
   def check[A: Configs : Gen : Equal : ConfigVal : IsMissing : IsWrongType : WrongTypeValue]: Properties[Unit :-: String :-: Empty] =
     checkId(())

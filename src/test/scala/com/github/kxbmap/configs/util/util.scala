@@ -30,10 +30,7 @@ object IsMissing {
   def apply[A](implicit A: IsMissing[A]): IsMissing[A] = A
 
   implicit def defaultIsMissing[A]: IsMissing[A] = a =>
-    try {
-      a.value
-      false
-    } catch {
+    intercept0(a.value) {
       case _: ConfigException.Missing => true
     }
 }
@@ -48,10 +45,7 @@ object IsWrongType {
   def apply[A](implicit A: IsWrongType[A]): IsWrongType[A] = A
 
   implicit def defaultIsWrong[A]: IsWrongType[A] = a =>
-    try {
-      a.value
-      false
-    } catch {
+    intercept0(a.value) {
       case _: ConfigException.WrongType => true
     }
 }

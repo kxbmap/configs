@@ -16,6 +16,7 @@
 
 package com.github.kxbmap.configs
 
+import com.github.kxbmap.configs.util._
 import com.typesafe.config.{ConfigException, ConfigFactory}
 import java.{lang => jl, util => ju}
 import scala.beans.BeanProperty
@@ -85,24 +86,18 @@ object BeanConfigsTest extends Scalaprops with ConfigProp {
     )
   }
 
-  val wrongType = forAll {
+  val wrongType = intercept {
     val config = ConfigFactory.parseString(s"int = one")
-    try {
-      Configs[SimpleBean].extract(config)
-      false
-    } catch {
-      case e: ConfigException.WrongType => e.getMessage.contains("int")
-    }
+    Configs[SimpleBean].extract(config)
+  } {
+    case e: ConfigException.WrongType => e.getMessage.contains("int")
   }
 
-  val badPath = forAll {
+  val badPath = intercept {
     val config = ConfigFactory.parseString(s"bad-path = prop")
-    try {
-      Configs[SimpleBean].extract(config)
-      false
-    } catch {
-      case e: ConfigException.BadPath => e.getMessage.contains("bad-path")
-    }
+    Configs[SimpleBean].extract(config)
+  } {
+    case e: ConfigException.BadPath => e.getMessage.contains("bad-path")
   }
 
 
