@@ -20,6 +20,6 @@ import com.github.kxbmap.configs.{Configs, macros}
 
 trait MaterializeConfigs {
 
-  implicit def materializeConfigs[T]: Configs[T] = macro macros.ConfigsMacro.materialize[T]
+  implicit def materializeConfigs[A]: Configs[A] = macro macros.ConfigsMacro.materialize[A]
 
 }

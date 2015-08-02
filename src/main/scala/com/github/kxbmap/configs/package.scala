@@ -21,19 +21,19 @@ import com.typesafe.config.Config
 
 package object configs {
 
-  @deprecated("Use Configs[T]", "0.3.0")
-  type AtPath[T] = Configs[T]
+  @deprecated("Use Configs[A]", "0.3.0")
+  type AtPath[A] = Configs[A]
 
 
   final implicit class EnrichTypesafeConfig(val c: Config) extends AnyVal {
 
-    def extract[T: Configs]: T = Configs[T].extract(c)
+    def extract[A: Configs]: A = Configs[A].extract(c)
 
-    def get[T: Configs](path: String): T = Configs[T].get(c, path)
+    def get[A: Configs](path: String): A = Configs[A].get(c, path)
 
-    def opt[T: Configs](path: String): Option[T] = get[Option[T]](path)
+    def opt[A: Configs](path: String): Option[A] = get[Option[A]](path)
 
-    def getOrElse[T: Configs](path: String, default: => T): T = opt[T](path).getOrElse(default)
+    def getOrElse[A: Configs](path: String, default: => A): A = opt[A](path).getOrElse(default)
   }
 
 }

@@ -22,7 +22,7 @@ import scala.collection.generic.CanBuildFrom
 
 trait CollectionConfigs {
 
-  implicit def collectionConfigs[C[_], T: Configs](implicit cbf: CanBuildFrom[Nothing, T, C[T]]): Configs[C[T]] = (c, p) =>
-    c.getList(p).map(Configs[T].extract).to[C]
+  implicit def collectionConfigs[F[_], A: Configs](implicit cbf: CanBuildFrom[Nothing, A, F[A]]): Configs[F[A]] = (c, p) =>
+    c.getList(p).map(Configs[A].extract).to[F]
 
 }

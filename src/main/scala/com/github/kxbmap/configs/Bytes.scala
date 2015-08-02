@@ -42,7 +42,7 @@ object Bytes {
 
   implicit val bytesConfigs: Configs[Bytes] = (c, p) => Bytes(c.getBytes(p))
 
-  implicit def bytesCollectionConfigs[C[_]](implicit cbf: CanBuildFrom[Nothing, Bytes, C[Bytes]]): Configs[C[Bytes]] =
+  implicit def bytesCollectionConfigs[F[_]](implicit cbf: CanBuildFrom[Nothing, Bytes, F[Bytes]]): Configs[F[Bytes]] =
     _.getBytesList(_).map(Bytes(_))(collection.breakOut)
 
   implicit val bytesOrdering: Ordering[Bytes] = Ordering.by(_.value)

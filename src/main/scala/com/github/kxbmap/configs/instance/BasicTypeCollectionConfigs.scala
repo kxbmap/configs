@@ -24,35 +24,35 @@ import scala.collection.generic.CanBuildFrom
 
 trait BasicTypeCollectionConfigs {
 
-  implicit def configCollectionConfigs[C[_]](implicit cbf: CanBuildFrom[Nothing, Config, C[Config]]): Configs[C[Config]] =
+  implicit def configCollectionConfigs[F[_]](implicit cbf: CanBuildFrom[Nothing, Config, F[Config]]): Configs[F[Config]] =
     _.getConfigList(_).map(c => c: Config)(collection.breakOut)
 
 
-  implicit def intCollectionConfigs[C[_]](implicit cbf: CanBuildFrom[Nothing, Int, C[Int]]): Configs[C[Int]] =
+  implicit def intCollectionConfigs[F[_]](implicit cbf: CanBuildFrom[Nothing, Int, F[Int]]): Configs[F[Int]] =
     _.getIntList(_).map(_.toInt)(collection.breakOut)
 
 
-  implicit def longCollectionConfigs[C[_]](implicit cbf: CanBuildFrom[Nothing, Long, C[Long]]): Configs[C[Long]] =
+  implicit def longCollectionConfigs[F[_]](implicit cbf: CanBuildFrom[Nothing, Long, F[Long]]): Configs[F[Long]] =
     _.getLongList(_).map(_.toLong)(collection.breakOut)
 
 
-  implicit def doubleCollectionConfigs[C[_]](implicit cbf: CanBuildFrom[Nothing, Double, C[Double]]): Configs[C[Double]] =
+  implicit def doubleCollectionConfigs[F[_]](implicit cbf: CanBuildFrom[Nothing, Double, F[Double]]): Configs[F[Double]] =
     _.getDoubleList(_).map(_.toDouble)(collection.breakOut)
 
 
-  implicit def booleanCollectionConfigs[C[_]](implicit cbf: CanBuildFrom[Nothing, Boolean, C[Boolean]]): Configs[C[Boolean]] =
+  implicit def booleanCollectionConfigs[F[_]](implicit cbf: CanBuildFrom[Nothing, Boolean, F[Boolean]]): Configs[F[Boolean]] =
     _.getBooleanList(_).map(_.booleanValue())(collection.breakOut)
 
 
-  implicit def stringCollectionConfigs[C[_]](implicit cbf: CanBuildFrom[Nothing, String, C[String]]): Configs[C[String]] =
-    _.getStringList(_).to[C]
+  implicit def stringCollectionConfigs[F[_]](implicit cbf: CanBuildFrom[Nothing, String, F[String]]): Configs[F[String]] =
+    _.getStringList(_).to[F]
 
 
-  implicit def javaDurationCollectionConfigs[C[_]](implicit cbf: CanBuildFrom[Nothing, jt.Duration, C[jt.Duration]]): Configs[C[jt.Duration]] =
-    _.getDurationList(_).to[C]
+  implicit def javaDurationCollectionConfigs[F[_]](implicit cbf: CanBuildFrom[Nothing, jt.Duration, F[jt.Duration]]): Configs[F[jt.Duration]] =
+    _.getDurationList(_).to[F]
 
 
-  implicit def configMemorySizeCollectionConfigs[C[_]](implicit cbf: CanBuildFrom[Nothing, ConfigMemorySize, C[ConfigMemorySize]]): Configs[C[ConfigMemorySize]] =
-    _.getMemorySizeList(_).to[C]
+  implicit def configMemorySizeCollectionConfigs[F[_]](implicit cbf: CanBuildFrom[Nothing, ConfigMemorySize, F[ConfigMemorySize]]): Configs[F[ConfigMemorySize]] =
+    _.getMemorySizeList(_).to[F]
 
 }

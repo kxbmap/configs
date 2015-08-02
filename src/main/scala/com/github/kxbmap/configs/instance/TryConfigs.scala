@@ -21,6 +21,6 @@ import scala.util.Try
 
 trait TryConfigs {
 
-  implicit def tryConfigs[T: Configs]: Configs[Try[T]] = (c, p) => Try(Configs[T].get(c, p))
+  implicit def tryConfigs[A: Configs]: Configs[Try[A]] = (c, p) => Try(Configs[A].get(c, p))
 
 }

@@ -22,12 +22,12 @@ import scala.collection.JavaConversions._
 
 trait MapConfigs {
 
-  private def mapConfigs[K, T: Configs](key: String => K): Configs[Map[K, T]] = Configs.onPath { c =>
-    c.root().keysIterator.map(k => key(k) -> Configs[T].get(c, ConfigUtil.quoteString(k))).toMap
+  private def mapConfigs[A, B: Configs](key: String => A): Configs[Map[A, B]] = Configs.onPath { c =>
+    c.root().keysIterator.map(k => key(k) -> Configs[B].get(c, ConfigUtil.quoteString(k))).toMap
   }
 
-  implicit def stringMapConfigs[T: Configs]: Configs[Map[String, T]] = mapConfigs(identity)
+  implicit def stringMapConfigs[A: Configs]: Configs[Map[String, A]] = mapConfigs(identity)
 
-  implicit def symbolMapConfigs[T: Configs]: Configs[Map[Symbol, T]] = mapConfigs(Symbol.apply)
+  implicit def symbolMapConfigs[A: Configs]: Configs[Map[Symbol, A]] = mapConfigs(Symbol.apply)
 
 }

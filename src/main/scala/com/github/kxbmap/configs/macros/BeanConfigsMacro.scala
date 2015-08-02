@@ -24,8 +24,8 @@ class BeanConfigsMacro(val c: blackbox.Context) extends Helper {
 
   import c.universe._
 
-  def materializeT[T: WeakTypeTag]: Tree = {
-    val tpe = abortIfAbstract(weakTypeOf[T])
+  def materializeA[A: WeakTypeTag]: Tree = {
+    val tpe = abortIfAbstract(weakTypeOf[A])
     val hasNoArgCtor = tpe.decls.exists { s =>
       s.isConstructor && s.isPublic && {
         val pss = s.asMethod.paramLists
@@ -35,15 +35,15 @@ class BeanConfigsMacro(val c: blackbox.Context) extends Helper {
     if (!hasNoArgCtor) {
       abort(s"$tpe must have public no-arg constructor")
     }
-    materializeImpl[T](q"new $tpe()")
+    materializeImpl[A](q"new $tpe()")
   }
 
-  def materializeI[T: WeakTypeTag](newInstance: Tree): Tree = {
-    materializeImpl[T](c.untypecheck(newInstance))
+  def materializeI[A: WeakTypeTag](newInstance: Tree): Tree = {
+    materializeImpl[A](c.untypecheck(newInstance))
   }
 
-  private def materializeImpl[T: WeakTypeTag](newInstance: Tree): Tree = {
-    val tpe = weakTypeOf[T]
+  private def materializeImpl[A: WeakTypeTag](newInstance: Tree): Tree = {
+    val tpe = weakTypeOf[A]
     val cns = new mutable.ArrayBuffer[(Type, TermName)]()
     val ns = new mutable.HashSet[String]()
     val vs = new ArrayBuffer[Tree]()

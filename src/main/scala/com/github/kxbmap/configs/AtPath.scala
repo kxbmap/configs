@@ -22,13 +22,13 @@ import scala.collection.generic.CanBuildFrom
 object AtPath {
 
   @deprecated("Use Configs", "0.3.0")
-  def apply[T](implicit T: Configs[T]): Configs[T] = T
+  def apply[A](implicit A: Configs[A]): Configs[A] = A
 
   @deprecated("Use Configs.map", "0.3.0")
-  def by[S: Configs, T](f: S => T): Configs[T] = Configs[S].map(f)
+  def by[A: Configs, B](f: A => B): Configs[B] = Configs[A].map(f)
 
   @deprecated("Use Configs", "0.3.0")
-  def listBy[C[_], S, T](f: S => T)(implicit ev: Configs[Seq[S]], cbf: CanBuildFrom[Nothing, T, C[T]]): Configs[C[T]] =
+  def listBy[F[_], A, B](f: A => B)(implicit ev: Configs[Seq[A]], cbf: CanBuildFrom[Nothing, B, F[B]]): Configs[F[B]] =
     ev.map(_.map(f)(collection.breakOut))
 
 }

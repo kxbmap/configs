@@ -21,18 +21,18 @@ import com.typesafe.config.{Config, ConfigException, ConfigValue}
 import scala.annotation.implicitNotFound
 
 
-@implicitNotFound("No implicit Configs defined for ${T}.")
-trait Configs[T] {
+@implicitNotFound("No implicit Configs defined for ${A}.")
+trait Configs[A] {
 
-  def get(config: Config, path: String): T
+  def get(config: Config, path: String): A
 
-  def extract(config: Config): T = get(config.atPath(Configs.DummyPath), Configs.DummyPath)
+  def extract(config: Config): A = get(config.atPath(Configs.DummyPath), Configs.DummyPath)
 
-  def extract(value: ConfigValue): T = get(value.atPath(Configs.DummyPath), Configs.DummyPath)
+  def extract(value: ConfigValue): A = get(value.atPath(Configs.DummyPath), Configs.DummyPath)
 
-  def map[U](f: T => U): Configs[U] = (c, p) => f(get(c, p))
+  def map[B](f: A => B): Configs[B] = (c, p) => f(get(c, p))
 
-  def orElse[U >: T](other: Configs[U]): Configs[U] = (c, p) =>
+  def orElse[B >: A](other: Configs[B]): Configs[B] = (c, p) =>
     try
       get(c, p)
     catch {
@@ -46,25 +46,25 @@ object Configs extends AllConfigs {
   private final val DummyPath = "configs-extract-path"
 
   @inline
-  def apply[T](implicit T: Configs[T]): Configs[T] = T
+  def apply[A](implicit A: Configs[A]): Configs[A] = A
 
 
-  def of[T]: Configs[T] = macro macros.ConfigsMacro.materialize[T]
+  def of[A]: Configs[A] = macro macros.ConfigsMacro.materialize[A]
 
-  def bean[T]: Configs[T] = macro macros.BeanConfigsMacro.materializeT[T]
+  def bean[A]: Configs[A] = macro macros.BeanConfigsMacro.materializeA[A]
 
-  def bean[T](newInstance: => T): Configs[T] = macro macros.BeanConfigsMacro.materializeI[T]
+  def bean[A](newInstance: => A): Configs[A] = macro macros.BeanConfigsMacro.materializeI[A]
 
 
-  def from[T](f: (Config, String) => T): Configs[T] = f(_, _)
+  def from[A](f: (Config, String) => A): Configs[A] = f(_, _)
 
-  def onPath[T](f: Config => T): Configs[T] = (c, p) => f(c.getConfig(p))
+  def onPath[A](f: Config => A): Configs[A] = (c, p) => f(c.getConfig(p))
 
 
   @deprecated("Use Configs.onPath", "0.3.0")
-  def configs[T](f: Config => T): Configs[T] = onPath(f)
+  def configs[A](f: Config => A): Configs[A] = onPath(f)
 
   @deprecated("Use Configs.from", "0.3.0")
-  def atPath[T](f: (Config, String) => T): Configs[T] = from(f)
+  def atPath[A](f: (Config, String) => A): Configs[A] = from(f)
 
 }

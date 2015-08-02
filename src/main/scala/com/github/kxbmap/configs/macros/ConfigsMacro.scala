@@ -24,8 +24,8 @@ class ConfigsMacro(val c: blackbox.Context) extends Helper {
 
   import c.universe._
 
-  def materialize[T: WeakTypeTag]: Tree = {
-    val tpe = abortIfAbstract(weakTypeOf[T])
+  def materialize[A: WeakTypeTag]: Tree = {
+    val tpe = abortIfAbstract(weakTypeOf[A])
     val ctors = tpe.decls.collect {
       case m: MethodSymbol if m.isConstructor && m.isPublic && nonEmptyParams(m) && !hasParamType(m, tpe) => m
     }.toSeq.sortBy {

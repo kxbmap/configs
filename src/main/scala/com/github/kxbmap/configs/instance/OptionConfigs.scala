@@ -20,7 +20,7 @@ import com.github.kxbmap.configs.Configs
 
 trait OptionConfigs {
 
-  implicit def optionConfigs[T: Configs]: Configs[Option[T]] = (c, p) =>
-    if (c.hasPathOrNull(p) && !c.getIsNull(p)) Some(Configs[T].get(c, p)) else None
+  implicit def optionConfigs[A: Configs]: Configs[Option[A]] = (c, p) =>
+    if (c.hasPathOrNull(p) && !c.getIsNull(p)) Some(Configs[A].get(c, p)) else None
 
 }

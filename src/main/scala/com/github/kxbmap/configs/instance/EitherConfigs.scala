@@ -21,8 +21,8 @@ import scala.reflect.{ClassTag, classTag}
 
 trait EitherConfigs {
 
-  implicit def eitherConfigs[E <: Throwable : ClassTag, T: Configs]: Configs[Either[E, T]] = (c, p) =>
-    try Right(Configs[T].get(c, p)) catch {
+  implicit def eitherConfigs[E <: Throwable : ClassTag, A: Configs]: Configs[Either[E, A]] = (c, p) =>
+    try Right(Configs[A].get(c, p)) catch {
       case e if classTag[E].runtimeClass.isAssignableFrom(e.getClass) =>
         Left(e.asInstanceOf[E])
     }
