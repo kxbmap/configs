@@ -16,8 +16,6 @@
 
 package com.github.kxbmap.configs.macros
 
-import scala.collection.mutable
-import scala.collection.mutable.ArrayBuffer
 import scala.reflect.macros.blackbox
 
 class BeanConfigsMacro(val c: blackbox.Context) extends Helper {
@@ -26,11 +24,9 @@ class BeanConfigsMacro(val c: blackbox.Context) extends Helper {
 
   def materializeA[A: WeakTypeTag]: Tree = {
     val tpe = abortIfAbstract(weakTypeOf[A])
-    val hasNoArgCtor = tpe.decls.exists { s =>
-      s.isConstructor && s.isPublic && {
-        val pss = s.asMethod.paramLists
-        pss.lengthCompare(1) <= 0 && pss.forall(_.isEmpty)
-      }
+    val hasNoArgCtor = tpe.decls.exists {
+      case m: MethodSymbol => m.isConstructor && m.isPublic && m.paramLists.length <= 1 && m.paramLists.forall(_.isEmpty)
+      case _               => false
     }
     if (!hasNoArgCtor) {
       abort(s"$tpe must have public no-arg constructor")
@@ -46,13 +42,11 @@ class BeanConfigsMacro(val c: blackbox.Context) extends Helper {
     val targetType = weakTypeOf[A]
     val setters = targetType.members.sorted.collect {
       case m: MethodSymbol
-        if m.isPublic && nameOf(m).length > 3 && nameOf(m).startsWith("set") &&
-          m.paramLists.lengthCompare(1) == 0 && m.paramLists.head.lengthCompare(1) == 0 =>
-        val name = {
-          val s = nameOf(m).drop(3)
-          s.head.toLower +: s.tail
-        }
-        (name, m, m.paramLists.head.head.info)
+        if m.isPublic &&
+          nameOf(m).length > 3 && nameOf(m).startsWith("set") &&
+          m.paramLists.length == 1 && m.paramLists.head.length == 1 =>
+        val n = nameOf(m).drop(3)
+        (n.head.toLower +: n.tail, m, m.paramLists.head.head.info)
     }
     if (setters.isEmpty) {
       warning(s"${fullNameOf(targetType)} has no setters")
@@ -60,27 +54,20 @@ class BeanConfigsMacro(val c: blackbox.Context) extends Helper {
     val config = TermName("config")
     val obj = TermName("obj")
     val names = TermName("names")
-    val cns = new mutable.ArrayBuffer[(Type, TermName)]()
-    val ns = new mutable.HashSet[String]()
-    val vs = new ArrayBuffer[Tree]()
-    val sets = setters.map {
+    val (ns, sets) = setters.map {
       case (name, method, paramType) =>
-        val hyphen = toLowerHyphenCase(name)
-        val ot = optionType(paramType)
-        val on = tpeGetOrElseAppend(cns, ot, {
-          val on = freshName("c")
-          val oi = c.inferImplicitValue(configsType(ot), silent = false)
-          vs += q"val $on = $oi"
-          on
-        })
-        val nn = Seq(name, hyphen).distinct
-        val e = nn.map(n => q"$on.get($config, $n)").reduceLeft((l, r) => q"$l.orElse($r)")
-        ns ++= nn
-        q"$e.foreach($obj.$method(_))"
-    }
+        val cn = TermName("c")
+        val nn = Seq(name, toLowerHyphenCase(name)).distinct
+        val opt = nn.map(n => q"$cn.get($config, $n)").reduceLeft((l, r) => q"$l.orElse($r)")
+        val set =
+          q"""
+          val $cn = $configsCompanion[${optionType(paramType)}]
+          $opt.foreach($obj.$method)
+          """
+        (nn, set)
+    }.unzip
     q"""
-    val $names = Set(..$ns)
-    ..$vs
+    val $names = ${ns.flatten.toSet}
     $configsCompanion.onPath { $config: $configType =>
       ${checkKeys(targetType, config, names)}
       val $obj = $newInstance
