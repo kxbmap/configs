@@ -40,12 +40,18 @@ private[macros] abstract class Helper {
 
   lazy val badPathType = typeOf[ConfigException.BadPath]
 
+  lazy val badValueType = typeOf[ConfigException.BadValue]
+
+
+  def freshName(): TermName = TermName(c.freshName())
 
   def freshName(name: String): TermName = TermName(c.freshName(name))
 
   def nameOf(sym: Symbol): String = sym.name.decodedName.toString
 
   def nameOf(tpe: Type): String = nameOf(tpe.typeSymbol)
+
+  def nameOf[A: WeakTypeTag]: String = nameOf(weakTypeOf[A])
 
   def fullNameOf(sym: Symbol): String = sym.fullName
 

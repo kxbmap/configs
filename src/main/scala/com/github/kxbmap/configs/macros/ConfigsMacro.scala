@@ -24,98 +24,124 @@ class ConfigsMacro(val c: blackbox.Context) extends Helper {
   import c.universe._
 
   def materialize[A: WeakTypeTag]: Tree = {
-    val targetType = weakTypeOf[A]
-    val ctors = constructors[A]
-    if (ctors.isEmpty) {
-      abort(s"$targetType must have a public constructor")
-    }
     val self = TermName("self")
-    val terms = new mutable.ArrayBuffer[(Type, TermName)]()
-    val values = new mutable.ArrayBuffer[Tree]()
-    val cs = ctors.map(ctorConfigs(_, terms, values))
+    val (values, cs) = build[A]
     q"""
     ..$values
-    implicit lazy val $self: ${configsType[A]} = ${cs.reduceLeft((l, r) => q"$l.orElse($r)")}
+    implicit lazy val $self: ${configsType[A]} = $cs
     $self
     """
   }
 
+  type State = (mutable.ArrayBuffer[(Type, TermName)], mutable.ArrayBuffer[Tree])
 
-  sealed trait Ctor
-  case class CtorCtor(tpe: Type, m: MethodSymbol) extends Ctor
-  case class ApplyCtor(companion: ModuleSymbol, m: MethodSymbol) extends Ctor
-
-  def constructors[A: WeakTypeTag]: Seq[Ctor] = {
-    val tpe = weakTypeOf[A]
-    val sym = symbolOf[A].asClass
-
-    def ctorCtors: Seq[CtorCtor] =
-      tpe.decls.sorted.collect {
-        case m: MethodSymbol if m.isConstructor && m.isPublic && nonEmptyParams(m) && !hasParamType(m, tpe) =>
-          CtorCtor(tpe, m)
-      }
-
-    def applyCtors: Seq[ApplyCtor] = {
-      val companion = sym.companion.asModule
-      val (synthetic, others) = companion.info.decls.sorted.collect {
-        case m: MethodSymbol if m.isPublic && m.returnType =:= tpe && nameOf(m) == "apply" =>
-          ApplyCtor(companion, m)
-      }.partition(_.m.isSynthetic)
-      synthetic ::: others
+  def build[A: WeakTypeTag]: (Seq[Tree], Tree) = {
+    val terms = new mutable.ArrayBuffer[(Type, TermName)]()
+    val values = new mutable.ArrayBuffer[Tree]()
+    val state = (terms, values)
+    val cs = ctors[A].map(_.toConfigs(state))
+    if (cs.isEmpty) {
+      abort(s"No Configs[${nameOf[A]}] generated")
     }
-
-    if (sym.isCaseClass) applyCtors else ctorCtors
+    (values, cs.reduceLeft((l, r) => q"$l.orElse($r)"))
   }
 
-  def ctorConfigs(ctor: Ctor, terms: mutable.Buffer[(Type, TermName)], values: mutable.Buffer[Tree]): Tree = {
-    def onPath(m: MethodSymbol, newInstance: Seq[Seq[Tree]] => Tree): Tree = {
-      val config = TermName("config")
-      val hyphens: Map[String, String] = m.paramLists.flatMap(_.map { p =>
-        val n = nameOf(p)
-        n -> toLowerHyphenCase(n)
-      })(collection.breakOut)
-      val argLists = m.paramLists.map(_.map { p =>
-        val paramType = p.info
-        val paramName = nameOf(p)
-        val hyphen = hyphens(paramName)
-        val cn = getOrAppend(terms, paramType, {
-          val cn = freshName("c")
-          values += q"lazy val $cn = $configsCompanion[$paramType]"
-          cn
-        })
-        if (hyphens.contains(hyphen) || hyphens.valuesIterator.count(_ == hyphen) > 1) {
-          q"$cn.get($config, $paramName)"
-        } else {
-          val on = getOrAppend(terms, optionType(paramType), {
-            val on = freshName("c")
-            values += q"lazy val $on = $configsCompanion.optionConfigs[$paramType]($cn)"
-            on
-          })
-          q"$on.get($config, $paramName).getOrElse($cn.get($config, $hyphen))"
+  def ctors[A: WeakTypeTag]: Seq[Ctor] = {
+    val top = weakTypeOf[A]
+
+    def constructors(tpe: Type): Seq[CtorCtor] =
+      tpe.decls.sorted.collect {
+        case m: MethodSymbol if m.isConstructor && m.isPublic => CtorCtor(top, tpe, m)
+      }
+
+    def applies(cmp: ModuleSymbol): Seq[MethodCtor] =
+      cmp.info.decls.sorted.collect {
+        case m: MethodSymbol if m.isPublic && m.returnType <:< top && nameOf(m) == "apply" => MethodCtor(cmp, m)
+      }.sortBy(!_.method.isSynthetic)
+
+    def collect(tpe: Type, sym: ClassSymbol): Seq[Ctor] = {
+      if (sym.isSealed) {
+        sym.knownDirectSubclasses.toSeq.sortBy(nameOf(_)).flatMap { s =>
+          val cs = s.asClass
+          collect(cs.toType, cs)
         }
-      })
+      } else if (sym.isModuleClass) {
+        Seq(ModuleCtor(top, sym.module.asModule))
+      } else if (sym.isCaseClass) {
+        applies(sym.companion.asModule)
+      } else {
+        constructors(tpe)
+      }
+    }
+    collect(top, top.typeSymbol.asClass)
+  }
+
+
+  sealed trait Ctor {
+    def toConfigs(state: State): Tree
+  }
+
+  case class CtorCtor(retType: Type, tpe: Type, ctor: MethodSymbol) extends Ctor {
+    def toConfigs(state: State): Tree =
+      fromMethod(state, ctor, argLists => q"new $tpe(...$argLists): $retType")
+  }
+
+  case class MethodCtor(module: ModuleSymbol, method: MethodSymbol) extends Ctor {
+    def toConfigs(state: State): Tree =
+      fromMethod(state, method, argLists => q"$module.$method(...$argLists)")
+  }
+
+  case class ModuleCtor(tpe: Type, module: ModuleSymbol) extends Ctor {
+    def toConfigs(state: State): Tree =
       q"""
-      $configsCompanion.onPath { $config: $configType =>
-        ${newInstance(argLists)}
+      new ${configsType(tpe)} {
+        def get(c: $configType, p: ${typeOf[String]}): $tpe = {
+          val s = c.getString(p)
+          if (s == ${nameOf(module)}) $module
+          else throw new $badValueType(c.origin(), p, s)
+        }
       }
       """
-    }
-    ctor match {
-      case CtorCtor(tpe, m)  => onPath(m, argLists => q"new $tpe(...$argLists)")
-      case ApplyCtor(cmp, m) => onPath(m, argLists => q"$cmp(...$argLists)")
-    }
   }
 
+  def fromMethod(state: State, m: MethodSymbol, newInstance: Seq[Seq[Tree]] => Tree): Tree = {
+    def getOrAppendState(key: Type)(op: => (TermName, Tree)): TermName =
+      state._1.find(_._1 =:= key).fold {
+        val (n, v) = op
+        state._1 += key -> n
+        state._2 += v
+        n
+      }(_._2)
 
-  def nonEmptyParams(m: MethodSymbol): Boolean = m.paramLists.exists(_.nonEmpty)
+    val config = TermName("config")
+    val hyphens: Map[String, String] = m.paramLists.flatMap(_.map { p =>
+      val n = nameOf(p)
+      n -> toLowerHyphenCase(n)
+    })(collection.breakOut)
 
-  def hasParamType(m: MethodSymbol, tpe: Type): Boolean = m.paramLists.exists(_.exists(_.info =:= tpe))
-
-  def getOrAppend[A](m: mutable.Buffer[(Type, A)], key: Type, op: => A): A =
-    m.find(_._1 =:= key).fold {
-      val v = op
-      m += key -> v
-      v
-    }(_._2)
+    val argLists = m.paramLists.map(_.map { p =>
+      val paramType = p.info
+      val paramName = nameOf(p)
+      val hyphen = hyphens(paramName)
+      val cn = getOrAppendState(paramType) {
+        val fn = freshName()
+        fn -> q"lazy val $fn = $configsCompanion[$paramType]"
+      }
+      if (hyphens.contains(hyphen) || hyphens.valuesIterator.count(_ == hyphen) > 1) {
+        q"$cn.get($config, $paramName)"
+      } else {
+        val on = getOrAppendState(optionType(paramType)) {
+          val fn = freshName()
+          fn -> q"lazy val $fn = $configsCompanion.optionConfigs[$paramType]($cn)"
+        }
+        q"$on.get($config, $paramName).getOrElse($cn.get($config, $hyphen))"
+      }
+    })
+    q"""
+    $configsCompanion.onPath { $config: $configType =>
+      ${newInstance(argLists)}
+    }
+    """
+  }
 
 }

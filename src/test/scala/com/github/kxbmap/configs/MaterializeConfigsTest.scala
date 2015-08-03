@@ -18,6 +18,7 @@ package com.github.kxbmap.configs
 
 import com.github.kxbmap.configs.util._
 import com.typesafe.config.{ConfigException, ConfigFactory}
+import scala.collection.JavaConverters._
 import scalaprops.Property.forAll
 import scalaprops.{Gen, Properties, Scalaprops}
 import scalaz.std.string._
@@ -285,5 +286,48 @@ object MaterializeConfigsTest extends Scalaprops with ConfigProp {
   case class Duplicate1(duplicateName: Int, DuplicateName: Int)
 
   case class Duplicate2(duplicateName: Int, `duplicate-name`: Int)
+
+
+  ////
+  val sealedTrait = checkMat[SealedTrait]
+
+  sealed trait SealedTrait
+
+  case class SealedChild1(n: Int) extends SealedTrait
+
+  case object SealedChild2 extends SealedTrait
+
+  class SealedChild3(val m: Int) extends SealedTrait
+
+  object SealedChild4 extends SealedTrait
+
+  sealed trait SealedNest extends SealedTrait
+
+  case class SealedNestChild(nn: Int) extends SealedNest
+
+  implicit lazy val sealedTraitConfigs: Configs[SealedTrait] = Configs.of[SealedTrait]
+
+  implicit lazy val sealedTraitEqual: Equal[SealedTrait] = (a, b) =>
+    (a, b) match {
+      case (c3a: SealedChild3, c3b: SealedChild3) => c3a.m == c3b.m
+      case _                                      => a == b
+    }
+
+  implicit lazy val sealedTraitConfigVal: ConfigVal[SealedTrait] = {
+    case SealedChild1(n)     => Map("n" -> n).asJava
+    case SealedChild2        => "SealedChild2"
+    case s: SealedChild3     => Map("m" -> s.m).asJava
+    case SealedChild4        => "SealedChild4"
+    case SealedNestChild(nn) => Map("nn" -> nn).asJava
+  }
+
+  implicit lazy val sealedTraitGen: Gen[SealedTrait] =
+    Gen.oneOf(
+      Gen[Int].map(SealedChild1),
+      Gen.value(SealedChild2),
+      Gen[Int].map(new SealedChild3(_)),
+      Gen.value(SealedChild4),
+      Gen[Int].map(SealedNestChild)
+    )
 
 }
