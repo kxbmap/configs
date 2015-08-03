@@ -57,6 +57,22 @@ private[macros] abstract class Helper {
 
   def fullNameOf(tpe: Type): String = fullNameOf(tpe.typeSymbol)
 
+  def methodRepr(m: MethodSymbol): String =
+    s"${fullNameOf(m)}${m.paramLists.map(_.map(paramRepr).mkString("(", ", ", ")")).mkString}"
+
+  def paramRepr(s: Symbol): String = {
+    val t = s.asTerm
+    val d = if (t.isParamWithDefault) Some("default") else None
+    val i = if (t.isImplicit) Some("implicit") else None
+    val a = (d ++ i).mkString("|")
+    s"${nameOf(s)}: ${nameOf(t.info)}${if (a.nonEmpty) s" = <$a>" else ""}"
+  }
+
+  def zipWithParamPos(paramLists: List[List[Symbol]]): List[List[(Symbol, Int)]] =
+    paramLists.zip(paramLists.scanLeft(1)(_ + _.length)).map {
+      case (ps, s) => ps.zip(Stream.from(s))
+    }
+
 
   def abort(msg: String): Nothing = c.abort(c.enclosingPosition, msg)
 
@@ -67,5 +83,7 @@ private[macros] abstract class Helper {
       tpe
 
   def warning(msg: String): Unit = c.warning(c.enclosingPosition, msg)
+
+  def info(msg: String, force: Boolean = true) = c.info(c.enclosingPosition, msg, force)
 
 }

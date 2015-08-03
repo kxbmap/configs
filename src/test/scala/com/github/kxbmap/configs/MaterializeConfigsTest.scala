@@ -332,4 +332,74 @@ object MaterializeConfigsTest extends Scalaprops with ConfigProp {
       Gen[Int].map(SealedNestChild)
     )
 
+
+  ////
+  val defaults = Properties.list(
+    checkMat[Defaults].toProperties("w/o defaults"),
+    withAllDefaults.toProperties("w/ all defaults"),
+    withSomeDefaults.toProperties("w/ some defaults")
+  )
+
+  private lazy val withAllDefaults = forAll { a: Int =>
+    val config = ConfigFactory.parseString(s"a = $a")
+    val expected = new Defaults(a)()()
+    Equal[Defaults].equal(Configs[Defaults].extract(config), expected)
+  }
+
+  private lazy val withSomeDefaults = forAll { (a: Int, c: Int) =>
+    val config = ConfigFactory.parseString(s"a = $a, c = $c")
+    val expected = new Defaults(a)(c)()
+    Equal[Defaults].equal(Configs[Defaults].extract(config), expected)
+  }
+
+  class Defaults(val a: Int, val b: Int = 2)(val c: Int = a + b + 3)(val d: Int = b * c * 4)
+
+  implicit lazy val defaultsEqual: Equal[Defaults] = Equal.equalBy(d => (d.a, d.b, d.c, d.d))
+
+  implicit lazy val defaultsConfigVal: ConfigVal[Defaults] =
+    ConfigVal.fromMap(d => Map(
+      "a" -> d.a.cv,
+      "b" -> d.b.cv,
+      "c" -> d.c.cv,
+      "d" -> d.d.cv
+    ))
+
+  implicit lazy val defaultsGen: Gen[Defaults] =
+    Apply[Gen].apply4(Gen[Int], Gen[Int], Gen[Int], Gen[Int])(new Defaults(_, _)(_)(_))
+
+  
+  ///
+  val caseDefaults = Properties.list(
+    checkMat[CaseDefaults].toProperties("w/o defaults"),
+    caseWithAllDefaults.toProperties("w/ all defaults"),
+    caseWithSomeDefaults.toProperties("w/ some defaults")
+  )
+
+  private lazy val caseWithAllDefaults = forAll { a: Int =>
+    val config = ConfigFactory.parseString(s"a = $a")
+    val expected = CaseDefaults(a)()()
+    Equal[CaseDefaults].equal(Configs[CaseDefaults].extract(config), expected)
+  }
+
+  private lazy val caseWithSomeDefaults = forAll { (a: Int, c: Int) =>
+    val config = ConfigFactory.parseString(s"a = $a, c = $c")
+    val expected = CaseDefaults(a)(c)()
+    Equal[CaseDefaults].equal(Configs[CaseDefaults].extract(config), expected)
+  }
+
+  case class CaseDefaults(a: Int, b: Int = 2)(val c: Int = a + b + 3)(val d: Int = b * c * 4)
+
+  implicit lazy val caseDefaultsEqual: Equal[CaseDefaults] = Equal.equalBy(d => (d.a, d.b, d.c, d.d))
+
+  implicit lazy val caseDefaultsConfigVal: ConfigVal[CaseDefaults] =
+    ConfigVal.fromMap(d => Map(
+      "a" -> d.a.cv,
+      "b" -> d.b.cv,
+      "c" -> d.c.cv,
+      "d" -> d.d.cv
+    ))
+
+  implicit lazy val caseDefaultsGen: Gen[CaseDefaults] =
+    Apply[Gen].apply4(Gen[Int], Gen[Int], Gen[Int], Gen[Int])(CaseDefaults(_, _)(_)(_))
+
 }

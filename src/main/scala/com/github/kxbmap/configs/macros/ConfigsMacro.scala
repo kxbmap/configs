@@ -50,7 +50,7 @@ class ConfigsMacro(val c: blackbox.Context) extends Helper {
     val modules = ctors.collect {
       case ModuleCtor(_, module) => module
     }
-    val mc = if (modules.nonEmpty) Some(modulesConfigs(modules)) else None
+    val mc = if (modules.nonEmpty) Some(modulesConfigs[A](modules)) else None
     val others = ctors.filterNot(_.isModuleCtor).map(_.toConfigs(state))
     (mc.toSeq ++: others).reduceLeft((l, r) => q"$l.orElse($r)")
   }
@@ -64,11 +64,11 @@ class ConfigsMacro(val c: blackbox.Context) extends Helper {
           CtorCtor(top, tpe, m)
       }
 
-    def applies(cmp: ModuleSymbol): Seq[MethodCtor] =
+    def applies(tpe: Type, cmp: ModuleSymbol): Seq[MethodCtor] =
       cmp.info.decls.sorted
         .collect {
           case m: MethodSymbol if m.isPublic && m.returnType <:< top && nameOf(m) == "apply" =>
-            MethodCtor(top, cmp, m)
+            MethodCtor(top, tpe, cmp, m)
         }
         .sortBy(!_.method.isSynthetic)
 
@@ -81,7 +81,7 @@ class ConfigsMacro(val c: blackbox.Context) extends Helper {
       } else if (sym.isModuleClass) {
         Seq(ModuleCtor(top, sym.module.asModule))
       } else if (sym.isCaseClass) {
-        applies(sym.companion.asModule)
+        applies(tpe, sym.companion.asModule)
       } else {
         constructors(tpe)
       }
@@ -91,6 +91,9 @@ class ConfigsMacro(val c: blackbox.Context) extends Helper {
 
 
   sealed trait Ctor {
+
+    def retType: Type
+
     def toConfigs(state: State): Tree
 
     def isModuleCtor: Boolean = this match {
@@ -99,58 +102,109 @@ class ConfigsMacro(val c: blackbox.Context) extends Helper {
     }
   }
 
-  case class CtorCtor(retType: Type, tpe: Type, ctor: MethodSymbol) extends Ctor {
-    def toConfigs(state: State): Tree =
-      fromMethod(state, ctor, argLists => q"new $tpe(...$argLists): $retType")
+  case class CtorCtor(retType: Type, tpe: Type, method: MethodSymbol) extends Ctor with MethodBase {
+    def newInstance(argLists: List[List[TermName]]): Tree = q"new $tpe(...$argLists)"
   }
 
-  case class MethodCtor(retType: Type, module: ModuleSymbol, method: MethodSymbol) extends Ctor {
-    def toConfigs(state: State): Tree =
-      fromMethod(state, method, argLists => q"$module.$method(...$argLists): $retType")
+  case class MethodCtor(retType: Type, tpe: Type, module: ModuleSymbol, method: MethodSymbol) extends Ctor with MethodBase {
+    def newInstance(argLists: List[List[TermName]]): Tree = q"$module.$method(...$argLists)"
   }
 
   case class ModuleCtor(retType: Type, module: ModuleSymbol) extends Ctor {
     def toConfigs(state: State): Tree = EmptyTree
   }
 
-  def fromMethod(state: State, m: MethodSymbol, newInstance: Seq[Seq[Tree]] => Tree): Tree = {
-    def getOrAppendState(key: Type)(op: => (TermName, Tree)): TermName =
-      state._1.find(_._1 =:= key).fold {
-        val (n, v) = op
-        state._1 += key -> n
-        state._2 += v
-        n
-      }(_._2)
+  sealed trait MethodBase {
+    this: Ctor =>
 
-    val config = TermName("config")
-    val hyphens: Map[String, String] = m.paramLists.flatMap(_.map { p =>
-      val n = nameOf(p)
-      n -> toLowerHyphenCase(n)
-    })(collection.breakOut)
+    def newInstance(argLists: List[List[TermName]]): Tree
 
-    val argLists = m.paramLists.map(_.map { p =>
-      val paramType = p.info
-      val paramName = nameOf(p)
-      val hyphen = hyphens(paramName)
-      val cn = getOrAppendState(paramType) {
-        val fn = freshName()
-        fn -> q"lazy val $fn = $configsCompanion[$paramType]"
-      }
-      if (hyphens.contains(hyphen) || hyphens.valuesIterator.count(_ == hyphen) > 1) {
-        q"$cn.get($config, $paramName)"
-      } else {
-        val on = getOrAppendState(optionType(paramType)) {
-          val fn = freshName()
-          fn -> q"lazy val $fn = $configsCompanion.optionConfigs[$paramType]($cn)"
-        }
-        q"$on.get($config, $paramName).getOrElse($cn.get($config, $hyphen))"
-      }
-    })
-    q"""
-    $configsCompanion.onPath { $config: $configType =>
-      ${newInstance(argLists)}
+    def method: MethodSymbol
+
+    def tpe: Type
+
+    lazy val companion = tpe.typeSymbol.companion
+
+    lazy val defaultMethods: Map[Int, TermName] = companion match {
+      case NoSymbol => Map.empty
+      case cmp =>
+        val mn = method.name.encodedName.toString
+        val prefix = s"$mn$$default$$"
+        cmp.info.decls.map(_.name.encodedName.toString).collect {
+          case n if n.startsWith(prefix) =>
+            val di = n.lastIndexOf('$') + 1
+            n.drop(di).toInt -> TermName(n)
+        }(collection.breakOut)
     }
-    """
+
+    def toConfigs(state: State): Tree = {
+
+      def stateGetOrAppend(key: Type)(op: => (TermName, Tree)): TermName =
+        state._1.find(_._1 =:= key).fold {
+          val (n, v) = op
+          state._1 += key -> n
+          state._2 += v
+          n
+        }(_._2)
+
+      val config = TermName("config")
+      val hyphens: Map[String, String] = method.paramLists.flatMap(_.map { p =>
+        val n = nameOf(p)
+        n -> toLowerHyphenCase(n)
+      })(collection.breakOut)
+
+      val vals = new mutable.ArrayBuffer[Tree]()
+      val argLists = new mutable.ListBuffer[List[TermName]]()
+      zipWithParamPos(method.paramLists).foreach { ps =>
+        val args = ps.map {
+          case (p, pos) =>
+            val pt = p.asTerm
+            val pType = p.infoIn(tpe)
+            val optPType = optionType(pType)
+            val pName = nameOf(p)
+            val hName = hyphens(pName)
+            val hNameEnabled = !hyphens.contains(hName) && hyphens.valuesIterator.count(_ == hName) <= 1
+
+            val cn = stateGetOrAppend(pType) {
+              val fn = freshName("c")
+              fn -> q"lazy val $fn = $configsCompanion[$pType]"
+            }
+            def on = stateGetOrAppend(optPType) {
+              val fn = freshName("o")
+              fn -> q"lazy val $fn = $configsCompanion.optionConfigs[$pType]($cn)"
+            }
+
+            val sn = if (pt.isParamWithDefault) on else cn
+            val fn = if (hNameEnabled) on else sn
+
+            val first = q"$fn.get($config, $pName)"
+            val second = if (hNameEnabled) Some(q"$sn.get($config, $hName)") else None
+            val default =
+              if (pt.isParamWithDefault)
+                defaultMethods.get(pos).map(n => q"$companion.$n(...$argLists)")
+              else
+                None
+
+            val arg = freshName("a")
+            val v = second ++ default match {
+              case Seq(s, d) => q"$first.orElse($s).getOrElse($d)"
+              case Seq(s)    => q"$first.getOrElse($s)"
+              case Seq()     => first
+              case _         => abort("library bug")
+            }
+            vals += q"lazy val $arg = $v"
+            arg
+        }
+        argLists += args
+      }
+
+      q"""
+      $configsCompanion.onPath[$retType] { $config: $configType =>
+        ..$vals
+        ${newInstance(argLists.result())}
+      }
+      """
+    }
   }
 
   def modulesConfigs[A: WeakTypeTag](modules: Seq[ModuleSymbol]): Tree = {
