@@ -251,14 +251,14 @@ object MaterializeConfigsTest extends Scalaprops with ConfigProp {
 
   private lazy val duplicate1 = intercept { (n: Int) =>
     val config = ConfigFactory.parseString(s"duplicate-name = $n")
-    config.extract[Duplicate1]
+    Configs[Duplicate1].extract(config)
   } {
     case e: ConfigException.Missing => e.getMessage.contains("duplicateName")
   }
 
   private lazy val duplicate2 = intercept { (n: Int) =>
     val config = ConfigFactory.parseString(s"duplicate-name = $n")
-    config.extract[Duplicate2]
+    Configs[Duplicate2].extract(config)
   } {
     case e: ConfigException.Missing => e.getMessage.contains("duplicateName")
   }

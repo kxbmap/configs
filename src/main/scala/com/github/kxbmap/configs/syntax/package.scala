@@ -14,11 +14,24 @@
  * limitations under the License.
  */
 
-package com.github.kxbmap
+package com.github.kxbmap.configs
 
-package object configs {
+import com.typesafe.config.Config
 
-  @deprecated("Use Configs[A] instead", "0.3.0")
-  type AtPath[A] = Configs[A]
+package object syntax {
+
+  implicit class ConfigOps(private val self: Config) extends AnyVal {
+
+    def extract[A: Configs]: A = Configs[A].extract(self)
+
+    def get[A: Configs](path: String): A = Configs[A].get(self, path)
+
+    def getOpt[A: Configs](path: String): Option[A] = get[Option[A]](path)
+
+    @deprecated("Use getOpt instead", "0.3.0")
+    def opt[A: Configs](path: String): Option[A] = get[Option[A]](path)
+
+    def getOrElse[A: Configs](path: String, default: => A): A = getOpt[A](path).getOrElse(default)
+  }
 
 }
