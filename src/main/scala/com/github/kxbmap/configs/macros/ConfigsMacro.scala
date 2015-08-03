@@ -39,11 +39,20 @@ class ConfigsMacro(val c: blackbox.Context) extends Helper {
     val terms = new mutable.ArrayBuffer[(Type, TermName)]()
     val values = new mutable.ArrayBuffer[Tree]()
     val state = (terms, values)
-    val cs = ctors[A].map(_.toConfigs(state))
+    val cs = ctors[A]
     if (cs.isEmpty) {
       abort(s"No Configs[${nameOf[A]}] generated")
     }
-    (values, cs.reduceLeft((l, r) => q"$l.orElse($r)"))
+    (values, build[A](state, cs))
+  }
+
+  def build[A: WeakTypeTag](state: State, ctors: Seq[Ctor]): Tree = {
+    val modules = ctors.collect {
+      case ModuleCtor(_, module) => module
+    }
+    val mc = if (modules.nonEmpty) Some(modulesConfigs(modules)) else None
+    val others = ctors.filterNot(_.isModuleCtor).map(_.toConfigs(state))
+    (mc.toSeq ++: others).reduceLeft((l, r) => q"$l.orElse($r)")
   }
 
   def ctors[A: WeakTypeTag]: Seq[Ctor] = {
@@ -51,13 +60,17 @@ class ConfigsMacro(val c: blackbox.Context) extends Helper {
 
     def constructors(tpe: Type): Seq[CtorCtor] =
       tpe.decls.sorted.collect {
-        case m: MethodSymbol if m.isConstructor && m.isPublic => CtorCtor(top, tpe, m)
+        case m: MethodSymbol if m.isConstructor && m.isPublic =>
+          CtorCtor(top, tpe, m)
       }
 
     def applies(cmp: ModuleSymbol): Seq[MethodCtor] =
-      cmp.info.decls.sorted.collect {
-        case m: MethodSymbol if m.isPublic && m.returnType <:< top && nameOf(m) == "apply" => MethodCtor(cmp, m)
-      }.sortBy(!_.method.isSynthetic)
+      cmp.info.decls.sorted
+        .collect {
+          case m: MethodSymbol if m.isPublic && m.returnType <:< top && nameOf(m) == "apply" =>
+            MethodCtor(top, cmp, m)
+        }
+        .sortBy(!_.method.isSynthetic)
 
     def collect(tpe: Type, sym: ClassSymbol): Seq[Ctor] = {
       if (sym.isSealed) {
@@ -79,6 +92,11 @@ class ConfigsMacro(val c: blackbox.Context) extends Helper {
 
   sealed trait Ctor {
     def toConfigs(state: State): Tree
+
+    def isModuleCtor: Boolean = this match {
+      case _: ModuleCtor => true
+      case _             => false
+    }
   }
 
   case class CtorCtor(retType: Type, tpe: Type, ctor: MethodSymbol) extends Ctor {
@@ -86,22 +104,13 @@ class ConfigsMacro(val c: blackbox.Context) extends Helper {
       fromMethod(state, ctor, argLists => q"new $tpe(...$argLists): $retType")
   }
 
-  case class MethodCtor(module: ModuleSymbol, method: MethodSymbol) extends Ctor {
+  case class MethodCtor(retType: Type, module: ModuleSymbol, method: MethodSymbol) extends Ctor {
     def toConfigs(state: State): Tree =
-      fromMethod(state, method, argLists => q"$module.$method(...$argLists)")
+      fromMethod(state, method, argLists => q"$module.$method(...$argLists): $retType")
   }
 
-  case class ModuleCtor(tpe: Type, module: ModuleSymbol) extends Ctor {
-    def toConfigs(state: State): Tree =
-      q"""
-      new ${configsType(tpe)} {
-        def get(c: $configType, p: ${typeOf[String]}): $tpe = {
-          val s = c.getString(p)
-          if (s == ${nameOf(module)}) $module
-          else throw new $badValueType(c.origin(), p, s)
-        }
-      }
-      """
+  case class ModuleCtor(retType: Type, module: ModuleSymbol) extends Ctor {
+    def toConfigs(state: State): Tree = EmptyTree
   }
 
   def fromMethod(state: State, m: MethodSymbol, newInstance: Seq[Seq[Tree]] => Tree): Tree = {
@@ -140,6 +149,26 @@ class ConfigsMacro(val c: blackbox.Context) extends Helper {
     q"""
     $configsCompanion.onPath { $config: $configType =>
       ${newInstance(argLists)}
+    }
+    """
+  }
+
+  def modulesConfigs[A: WeakTypeTag](modules: Seq[ModuleSymbol]): Tree = {
+    val tpe = weakTypeOf[A]
+    val (names, cqs) = modules.map {
+      case m =>
+        val n = nameOf(m)
+        (n, cq"$n => $m")
+    }.unzip
+    q"""
+    new ${configsType(tpe)} {
+      private[this] final val names = ${names.mkString(",")}
+      def get(c: $configType, p: ${typeOf[String]}): $tpe = {
+        c.getString(p) match {
+          case ..$cqs
+          case s => throw new $badValueType(c.origin(), p, s"unknown: $$s, expected is one of: $$names")
+        }
+      }
     }
     """
   }
