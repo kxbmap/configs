@@ -21,7 +21,7 @@ import com.typesafe.config.Config
 
 package object configs {
 
-  @deprecated("Use Configs[A]", "0.3.0")
+  @deprecated("Use Configs[A] instead", "0.3.0")
   type AtPath[A] = Configs[A]
 
 
@@ -31,9 +31,12 @@ package object configs {
 
     def get[A: Configs](path: String): A = Configs[A].get(self, path)
 
+    def getOpt[A: Configs](path: String): Option[A] = get[Option[A]](path)
+
+    @deprecated("Use getOpt instead", "0.3.0")
     def opt[A: Configs](path: String): Option[A] = get[Option[A]](path)
 
-    def getOrElse[A: Configs](path: String, default: => A): A = opt[A](path).getOrElse(default)
+    def getOrElse[A: Configs](path: String, default: => A): A = getOpt[A](path).getOrElse(default)
   }
 
 }

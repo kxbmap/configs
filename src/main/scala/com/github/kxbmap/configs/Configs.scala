@@ -68,10 +68,10 @@ object Configs extends AllConfigs {
   def onPath[A](f: Config => A): Configs[A] = (c, p) => f(c.getConfig(p))
 
 
-  @deprecated("Use Configs.onPath", "0.3.0")
+  @deprecated("Use Configs.onPath instead", "0.3.0")
   def configs[A](f: Config => A): Configs[A] = onPath(f)
 
-  @deprecated("Use Configs.from", "0.3.0")
+  @deprecated("Use Configs.from instead", "0.3.0")
   def atPath[A](f: (Config, String) => A): Configs[A] = from(f)
 
 }
