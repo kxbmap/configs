@@ -67,6 +67,14 @@ object Configs extends AllConfigs {
 
   def onPath[A](f: Config => A): Configs[A] = (c, p) => f(c.getConfig(p))
 
+  def wrapNonFatal[A](f: (Config, String) => A): Configs[A] = (c, p) =>
+    try
+      f(c, p)
+    catch {
+      case e: ConfigException => throw e
+      case NonFatal(e)        => throw new ConfigException.BadValue(c.origin(), p, e.getMessage, e)
+    }
+
 
   @deprecated("Use Configs.onPath instead", "0.3.0")
   def configs[A](f: Config => A): Configs[A] = onPath(f)

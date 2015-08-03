@@ -17,32 +17,22 @@
 package com.github.kxbmap.configs.instance
 
 import com.github.kxbmap.configs.Configs
-import com.typesafe.config.ConfigException
-import java.net.{InetAddress, InetSocketAddress, UnknownHostException}
+import java.net.{InetAddress, InetSocketAddress}
 
 trait JavaNetConfigs {
 
-  implicit lazy val inetAddressConfigs: Configs[InetAddress] = (c, p) =>
-    try
-      InetAddress.getByName(c.getString(p))
-    catch {
-      case e: UnknownHostException =>
-        throw new ConfigException.BadValue(c.origin(), p, e.getMessage, e)
-    }
+  implicit lazy val inetAddressConfigs: Configs[InetAddress] = Configs.wrapNonFatal { (c, p) =>
+    InetAddress.getByName(c.getString(p))
+  }
 
 
-  implicit lazy val inetSocketAddressConfigs: Configs[InetSocketAddress] = (c, p) => {
+  implicit lazy val inetSocketAddressConfigs: Configs[InetSocketAddress] = Configs.wrapNonFatal { (c, p) =>
     val cc = c.getConfig(p)
     val port = cc.getInt("port")
-    try
-      Configs[Option[String]].get(cc, "hostname").fold {
-        new InetSocketAddress(Configs[InetAddress].get(cc, "addr"), port)
-      } {
-        hostname => new InetSocketAddress(hostname, port)
-      }
-    catch {
-      case e: IllegalArgumentException =>
-        throw new ConfigException.BadValue(c.origin(), p, e.getMessage, e)
+    Configs[Option[String]].get(cc, "hostname").fold {
+      new InetSocketAddress(Configs[InetAddress].get(cc, "addr"), port)
+    } {
+      hostname => new InetSocketAddress(hostname, port)
     }
   }
 
