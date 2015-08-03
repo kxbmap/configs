@@ -17,7 +17,7 @@
 package com.github.kxbmap.configs.instance
 
 import com.github.kxbmap.configs.ConfigProp
-import com.github.kxbmap.configs.util.ConfigVal
+import com.github.kxbmap.configs.util._
 import scala.concurrent.duration._
 import scalaprops.{Gen, Scalaprops}
 
@@ -30,7 +30,8 @@ object DurationConfigsTest extends Scalaprops with ConfigProp {
   implicit lazy val finiteDurationGen: Gen[FiniteDuration] =
     Gen.chooseLong(0, Long.MaxValue).map(Duration.fromNanos)
 
-  implicit lazy val finiteDurationValue: ConfigVal[FiniteDuration] = d => s"${d.toNanos}ns"
+  implicit lazy val finiteDurationValue: ConfigVal[FiniteDuration] =
+    ConfigVal[String].contramap(d => s"${d.toNanos}ns")
 
 
   implicit lazy val durationGen: Gen[Duration] = finiteDurationGen.asInstanceOf[Gen[Duration]]

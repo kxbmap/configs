@@ -34,7 +34,7 @@ object JavaNetConfigsTest extends Scalaprops with ConfigProp {
     Apply[Gen].apply4(part, part, part, part)((a, b, c, d) => s"$a.$b.$c.$d")
   }
 
-  implicit lazy val inetAddressConfigVal: ConfigVal[InetAddress] = _.getHostAddress
+  implicit lazy val inetAddressConfigVal: ConfigVal[InetAddress] = ConfigVal[String].contramap(_.getHostAddress)
 
 
   val inetSocketAddress = {
@@ -43,8 +43,8 @@ object JavaNetConfigsTest extends Scalaprops with ConfigProp {
         Apply[Gen].apply2(inetAddressGen, Gen.choose(0, Short.MaxValue))(new InetSocketAddress(_, _))
 
       implicit val cv: ConfigVal[InetSocketAddress] = ConfigVal.fromMap(a => Map(
-        "addr" -> a.getAddress,
-        "port" -> a.getPort
+        "addr" -> a.getAddress.cv,
+        "port" -> a.getPort.cv
       ))
 
       check[InetSocketAddress]("addr")
@@ -54,8 +54,8 @@ object JavaNetConfigsTest extends Scalaprops with ConfigProp {
         Apply[Gen].apply2(Gen.value("localhost"), Gen.choose(0, Short.MaxValue))(new InetSocketAddress(_, _))
 
       implicit val cv: ConfigVal[InetSocketAddress] = ConfigVal.fromMap(a => Map(
-        "hostname" -> a.getHostName,
-        "port" -> a.getPort
+        "hostname" -> a.getHostName.cv,
+        "port" -> a.getPort.cv
       ))
 
       check[InetSocketAddress]("hostname")

@@ -18,7 +18,6 @@ package com.github.kxbmap.configs
 
 import com.github.kxbmap.configs.util._
 import com.typesafe.config.{ConfigException, ConfigFactory}
-import scala.collection.JavaConverters._
 import scalaprops.Property.forAll
 import scalaprops.{Gen, Properties, Scalaprops}
 import scalaz.std.string._
@@ -27,7 +26,7 @@ import scalaz.{Apply, Equal}
 object MaterializeConfigsTest extends Scalaprops with ConfigProp {
 
   def checkMat[A: Gen : Configs : ConfigVal : Equal] = forAll { a: A =>
-    Equal[A].equal(Configs[A].extract(a.configValue), a)
+    Equal[A].equal(Configs[A].extract(a.cv), a)
   }
 
 
@@ -37,7 +36,10 @@ object MaterializeConfigsTest extends Scalaprops with ConfigProp {
   case class SimpleSetting(user: String, password: String)
 
   implicit lazy val simpleSettingConfigVal: ConfigVal[SimpleSetting] =
-    ConfigVal.fromMap(s => Map("user" -> s.user, "password" -> s.password))
+    ConfigVal.fromMap(s => Map(
+      "user" -> s.user.cv,
+      "password" -> s.password.cv
+    ))
 
   implicit lazy val simpleSettingGen: Gen[SimpleSetting] =
     Apply[Gen].apply2(Gen[String], Gen[String])(SimpleSetting.apply)
@@ -54,10 +56,10 @@ object MaterializeConfigsTest extends Scalaprops with ConfigProp {
 
   implicit lazy val nestedSettingConfigVal: ConfigVal[NestedSetting] =
     ConfigVal.fromMap(s => Map(
-      "simple" -> s.simple,
-      "simples" -> s.simples,
-      "simpleMap" -> s.simpleMap,
-      "optional" -> s.optional
+      "simple" -> s.simple.cv,
+      "simples" -> s.simples.cv,
+      "simpleMap" -> s.simpleMap.cv,
+      "optional" -> s.optional.cv
     ))
 
   implicit lazy val nestedSettingGen: Gen[NestedSetting] =
@@ -76,8 +78,8 @@ object MaterializeConfigsTest extends Scalaprops with ConfigProp {
 
   implicit lazy val recursiveSettingConfigVal: ConfigVal[RecursiveSetting] =
     ConfigVal.fromMap(s => Map(
-      "value" -> s.value,
-      "next" -> s.next
+      "value" -> s.value.cv,
+      "next" -> s.next.cv
     ))
 
   implicit lazy val recursiveSettingGen: Gen[RecursiveSetting] =
@@ -94,9 +96,9 @@ object MaterializeConfigsTest extends Scalaprops with ConfigProp {
 
   implicit lazy val paramListsSettingConfigVal: ConfigVal[ParamListsSetting] =
     ConfigVal.fromMap(s => Map(
-      "firstName" -> s.firstName,
-      "lastName" -> s.lastName,
-      "age" -> s.age
+      "firstName" -> s.firstName.cv,
+      "lastName" -> s.lastName.cv,
+      "age" -> s.age.cv
     ))
 
   implicit lazy val paramListsSettingGen: Gen[ParamListsSetting] =
@@ -157,9 +159,9 @@ object MaterializeConfigsTest extends Scalaprops with ConfigProp {
 
   implicit lazy val subCtorsSettingConfigVal: ConfigVal[SubCtorsSetting] =
     ConfigVal.fromMap(s => Map(
-      "name" -> s.name,
-      "age" -> s.age,
-      "country" -> s.country
+      "name" -> s.name.cv,
+      "age" -> s.age.cv,
+      "country" -> s.country.cv
     ))
 
   implicit lazy val subCtorsSettingGen: Gen[SubCtorsSetting] =
@@ -212,9 +214,9 @@ object MaterializeConfigsTest extends Scalaprops with ConfigProp {
 
   implicit lazy val multiApplyConfigVal: ConfigVal[MultiApply] =
     ConfigVal.fromMap(s => Map(
-      "a" -> s.a,
-      "b" -> s.b,
-      "c" -> s.c
+      "a" -> s.a.cv,
+      "b" -> s.b.cv,
+      "c" -> s.c.cv
     ))
 
   implicit lazy val multiApplyGen: Gen[MultiApply] =
@@ -271,12 +273,12 @@ object MaterializeConfigsTest extends Scalaprops with ConfigProp {
 
   implicit lazy val formatCaseSettingConfigVal: ConfigVal[FormatCaseSetting] =
     ConfigVal.fromMap(s => Map(
-      "lower-camel" -> s.lowerCamel,
-      "upper-camel" -> s.UpperCamel,
-      "lower-snake" -> s.lower_snake,
-      "upper-snake" -> s.UPPER_SNAKE,
-      "lower-hyphen" -> s.`lower-hyphen`,
-      "upper-then-camel" -> s.UPPERThenCamel
+      "lower-camel" -> s.lowerCamel.cv,
+      "upper-camel" -> s.UpperCamel.cv,
+      "lower-snake" -> s.lower_snake.cv,
+      "upper-snake" -> s.UPPER_SNAKE.cv,
+      "lower-hyphen" -> s.`lower-hyphen`.cv,
+      "upper-then-camel" -> s.UPPERThenCamel.cv
     ))
 
   implicit lazy val formatCaseSettingGen: Gen[FormatCaseSetting] =
@@ -314,11 +316,11 @@ object MaterializeConfigsTest extends Scalaprops with ConfigProp {
     }
 
   implicit lazy val sealedTraitConfigVal: ConfigVal[SealedTrait] = {
-    case SealedChild1(n)     => Map("n" -> n).asJava
-    case SealedChild2        => "SealedChild2"
-    case s: SealedChild3     => Map("m" -> s.m).asJava
-    case SealedChild4        => "SealedChild4"
-    case SealedNestChild(nn) => Map("nn" -> nn).asJava
+    case SealedChild1(n)     => Map("n" -> n).cv
+    case SealedChild2        => "SealedChild2".cv
+    case s: SealedChild3     => Map("m" -> s.m).cv
+    case SealedChild4        => "SealedChild4".cv
+    case SealedNestChild(nn) => Map("nn" -> nn).cv
   }
 
   implicit lazy val sealedTraitGen: Gen[SealedTrait] =

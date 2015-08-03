@@ -46,7 +46,7 @@ trait ConfigProp {
 
 
   def checkGet[A: Configs : Gen : Equal : ConfigVal] = forAll { value: A =>
-    Equal[A].equal(Configs[A].extract(value.configValue), value)
+    Equal[A].equal(Configs[A].extract(value.cv), value)
   }
 
   def checkMissing[A: Configs : IsMissing] = forAll {
@@ -88,7 +88,7 @@ trait ConfigProp {
     Gen.chooseLong(0, Long.MaxValue).map(jt.Duration.ofNanos)
 
   implicit lazy val javaDurationConfigVal: ConfigVal[jt.Duration] =
-    d => s"${d.toNanos}ns"
+    ConfigVal[String].contramap(d => s"${d.toNanos}ns")
 
 
   implicit lazy val configMemorySizeGen: Gen[ConfigMemorySize] =

@@ -17,7 +17,7 @@
 package com.github.kxbmap.configs.instance
 
 import com.github.kxbmap.configs.ConfigProp
-import com.github.kxbmap.configs.util.ConfigVal
+import com.github.kxbmap.configs.util._
 import scalaprops.{Gen, Scalaprops}
 
 object SymbolConfigsTest extends Scalaprops with ConfigProp {
@@ -26,6 +26,6 @@ object SymbolConfigsTest extends Scalaprops with ConfigProp {
 
   implicit lazy val symbolGen: Gen[Symbol] = Gen[String].map(Symbol.apply)
 
-  implicit lazy val symbolConfigVal: ConfigVal[Symbol] = _.name
+  implicit lazy val symbolConfigVal: ConfigVal[Symbol] = ConfigVal[String].contramap(_.name)
 
 }

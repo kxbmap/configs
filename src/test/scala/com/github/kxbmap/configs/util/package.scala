@@ -25,11 +25,11 @@ package object util {
   val q = ConfigUtil.quoteString _
 
 
-  implicit def anyToConfigValue[A: ConfigVal](value: A): ConfigValue = value.configValue
-
   implicit class UtilOps[A](private val self: A) {
 
     def configValue(implicit A: ConfigVal[A]): ConfigValue = A.configValue(self)
+
+    def cv(implicit A: ConfigVal[A]): ConfigValue = configValue
   }
 
 

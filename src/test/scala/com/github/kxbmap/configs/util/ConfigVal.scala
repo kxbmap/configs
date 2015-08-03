@@ -21,9 +21,7 @@ import scala.collection.JavaConverters._
 
 trait ConfigVal[A] {
 
-  def rawValue(value: A): Any
-
-  def configValue(value: A): ConfigValue = ConfigValueFactory.fromAnyRef(rawValue(value))
+  def configValue(value: A): ConfigValue
 
   def contramap[B](f: B => A): ConfigVal[B] = b => configValue(f(b))
 
@@ -38,19 +36,19 @@ object ConfigVal extends Value0 {
 
 
   implicit def traversableConfigVal[F[_], A: ConfigVal](implicit ev: F[A] <:< Traversable[A]): ConfigVal[F[A]] =
-    _.map(_.configValue).toSeq.asJava
+    fa => ConfigValueFactory.fromAnyRef(fa.map(_.cv).toSeq.asJava)
 
   implicit def arrayConfigVal[A: ConfigVal]: ConfigVal[Array[A]] =
-    _.map(_.configValue).toSeq.asJava
+    ConfigVal[Seq[A]].contramap(_.toSeq)
 
   implicit def javaListConfigVal[A: ConfigVal]: ConfigVal[java.util.List[A]] =
-    _.asScala.configValue
+    ConfigVal[Seq[A]].contramap(_.asScala)
 
   implicit def optionConfigVal[A: ConfigVal]: ConfigVal[Option[A]] =
-    _.map(_.configValue).orNull
+    o => ConfigValueFactory.fromAnyRef(o.map(_.cv).orNull)
 
   implicit def stringMapConfigVal[A: ConfigVal]: ConfigVal[Map[String, A]] =
-    _.mapValues(_.configValue).asJava
+    m => ConfigValueFactory.fromAnyRef(m.mapValues(_.cv).asJava)
 
   implicit val configConfigVal: ConfigVal[Config] =
     _.root()
@@ -59,7 +57,7 @@ object ConfigVal extends Value0 {
 
 trait Value0 {
 
-  private[this] final val _anyValue: ConfigVal[Any] = v => v
+  private[this] final val _anyValue: ConfigVal[Any] = ConfigValueFactory.fromAnyRef
 
   implicit def anyConfigVal[A]: ConfigVal[A] = _anyValue.asInstanceOf[ConfigVal[A]]
 

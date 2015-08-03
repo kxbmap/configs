@@ -43,7 +43,10 @@ object CollectionConfigsTest extends Scalaprops with ConfigProp {
 
     implicit val fooGen: Gen[Foo] = Apply[Gen].apply2(Gen[String], Gen[Int])(Foo(_, _))
 
-    implicit val fooConfigVal: ConfigVal[Foo] = ConfigVal.fromMap(f => Map("a" -> f.a, "b" -> f.b))
+    implicit val fooConfigVal: ConfigVal[Foo] = ConfigVal.fromMap(f => Map(
+      "a" -> f.a.cv,
+      "b" -> f.b.cv
+    ))
   }
 
 }
