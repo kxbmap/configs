@@ -402,4 +402,93 @@ object MaterializeConfigsTest extends Scalaprops with ConfigProp {
   implicit lazy val caseDefaultsGen: Gen[CaseDefaults] =
     Apply[Gen].apply4(Gen[Int], Gen[Int], Gen[Int], Gen[Int])(CaseDefaults(_, _)(_)(_))
 
+
+  ////
+  val implicitParam = {
+    val withImp = {
+      implicit val implicitValue: Int = 42
+      forAll { (a: Int, b: Int) =>
+        val config = ConfigFactory.parseString(s"a = $a, b = $b")
+        val expected = new ImplicitParam(a, b)(42)
+        Equal[ImplicitParam].equal(Configs[ImplicitParam].extract(config), expected)
+      }
+    }
+    val overrideImp = {
+      implicit val implicitValue: Int = 42
+      checkMat[ImplicitParam]
+    }
+    val definition = {
+      val C = {
+        implicit val implicitValue: Int = 42
+        Configs[ImplicitParam]
+      }
+      locally {
+        implicit val unusedImplicitValue: Int = 1
+        forAll { (a: Int, b: Int) =>
+          val config = ConfigFactory.parseString(s"a = $a, b = $b")
+          val expected = new ImplicitParam(a, b)(42)
+          Equal[ImplicitParam].equal(C.extract(config), expected)
+        }
+      }
+    }
+    Properties.list(
+      withImp.toProperties("w/ implicit value"),
+      overrideImp.toProperties("override implicit value"),
+      definition.toProperties("definition")
+    )
+  }
+
+  class ImplicitParam(val a: Int, val b: Int)(implicit val c: Int)
+
+  implicit lazy val implicitParamEqual: Equal[ImplicitParam] = Equal.equalBy(d => (d.a, d.b, d.c))
+
+  implicit lazy val implicitParamConfigVal: ConfigVal[ImplicitParam] =
+    ConfigVal.fromMap(i => Map(
+      "a" -> i.a.cv,
+      "b" -> i.b.cv,
+      "c" -> i.c.cv
+    ))
+
+  implicit lazy val implicitParamGen: Gen[ImplicitParam] =
+    Apply[Gen].apply3(Gen[Int], Gen[Int], Gen[Int])(new ImplicitParam(_, _)(_))
+  
+
+  ////
+  val implicitParamWithDefault = {
+    val withImplicit = {
+      implicit val implicitValue: Int = 42
+      forAll { (a: Int, b: Int) =>
+        val config = ConfigFactory.parseString(s"a = $a, b = $b")
+        val expected = new ImplicitWithDefault(a, b)(42)
+        Equal[ImplicitWithDefault].equal(Configs[ImplicitWithDefault].extract(config), expected)
+      }
+    }
+    val withoutImplicit = {
+      forAll { (a: Int, b: Int) =>
+        val config = ConfigFactory.parseString(s"a = $a, b = $b")
+        val expected = new ImplicitWithDefault(a, b)(1)
+        Equal[ImplicitWithDefault].equal(Configs[ImplicitWithDefault].extract(config), expected)
+      }
+    }
+    Properties.list(
+      withImplicit.toProperties("w/ implicit value"),
+      withoutImplicit.toProperties("w/o implicit value")
+    )
+  }
+
+  class ImplicitWithDefault(val a: Int, val b: Int)(implicit val c: Int = 1)
+
+  implicit lazy val implicitWithDefaultEqual: Equal[ImplicitWithDefault] = Equal.equalBy(d => (d.a, d.b, d.c))
+
+  implicit lazy val implicitWithDefaultConfigVal: ConfigVal[ImplicitWithDefault] =
+    ConfigVal.fromMap(i => Map(
+      "a" -> i.a.cv,
+      "b" -> i.b.cv,
+      "c" -> i.c.cv
+    ))
+
+  implicit lazy val implicitWithDefaultGen: Gen[ImplicitWithDefault] =
+    Apply[Gen].apply3(Gen[Int], Gen[Int], Gen[Int])(new ImplicitWithDefault(_, _)(_))
+  
+
 }

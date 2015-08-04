@@ -53,6 +53,8 @@ private[macros] abstract class Helper {
 
   def nameOf[A: WeakTypeTag]: String = nameOf(weakTypeOf[A])
 
+  def encodedNameOf(sym: Symbol): String = sym.name.encodedName.toString
+
   def fullNameOf(sym: Symbol): String = sym.fullName
 
   def fullNameOf(tpe: Type): String = fullNameOf(tpe.typeSymbol)
@@ -60,14 +62,17 @@ private[macros] abstract class Helper {
   def fullNameOf[A: WeakTypeTag]: String = fullNameOf(weakTypeOf[A])
 
   def methodRepr(m: MethodSymbol): String =
-    s"${fullNameOf(m)}${m.paramLists.map(_.map(paramRepr).mkString("(", ", ", ")")).mkString}"
+    s"${fullNameOf(m)}${m.paramLists.map(paramListRepr).mkString}"
+
+  def paramListRepr(ps: List[Symbol]): String = {
+    val imp = ps.exists(_.isImplicit)
+    ps.map(paramRepr).mkString(if (imp) "(implicit " else "(", ", ", ")")
+  }
 
   def paramRepr(s: Symbol): String = {
     val t = s.asTerm
-    val d = if (t.isParamWithDefault) Some("default") else None
-    val i = if (t.isImplicit) Some("implicit") else None
-    val a = (d ++ i).mkString("|")
-    s"${nameOf(s)}: ${nameOf(t.info)}${if (a.nonEmpty) s" = <$a>" else ""}"
+    val d = if (t.isParamWithDefault) " = <default>" else ""
+    s"${nameOf(s)}: ${nameOf(t.info)}$d"
   }
 
   def zipWithParamPos(paramLists: List[List[Symbol]]): List[List[(Symbol, Int)]] =

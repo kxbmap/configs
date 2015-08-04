@@ -129,15 +129,15 @@ class ConfigsMacro(val c: blackbox.Context) extends Helper {
 
     lazy val companion = tpe.typeSymbol.companion
 
-    lazy val defaultMethods: Map[Int, TermName] = companion match {
+    lazy val defaultMethods: Map[Int, MethodSymbol] = companion match {
       case NoSymbol => Map.empty
       case cmp =>
-        val mn = method.name.encodedName.toString
-        val prefix = s"$mn$$default$$"
-        cmp.info.decls.map(_.name.encodedName.toString).collect {
-          case n if n.startsWith(prefix) =>
-            val di = n.lastIndexOf('$') + 1
-            n.drop(di).toInt -> TermName(n)
+        val prefix = s"${method.name.encodedName}$$default$$"
+        cmp.info.decls.collect {
+          case m: MethodSymbol if encodedNameOf(m).startsWith(prefix) =>
+            val n = encodedNameOf(m)
+            val i = n.lastIndexOf('$') + 1
+            n.drop(i).toInt -> m
         }(collection.breakOut)
     }
 
@@ -178,23 +178,30 @@ class ConfigsMacro(val c: blackbox.Context) extends Helper {
               fn -> q"lazy val $fn = $configsCompanion.optionConfigs[$pType]($cn)"
             }
 
-            val sn = if (pt.isParamWithDefault) on else cn
+            val sn = if (pt.isImplicit || pt.isParamWithDefault) on else cn
             val fn = if (hNameEnabled) on else sn
 
             val first = q"$fn.get($config, $pName)"
             val second = if (hNameEnabled) Some(q"$sn.get($config, $hName)") else None
-            val default =
+            val implicits =
+              if (!pt.isImplicit) None
+              else c.inferImplicitValue(pType) match {
+                case EmptyTree if pt.isParamWithDefault => None
+                case EmptyTree                          => abort(s"could not find implicit value for parameter ${paramRepr(p)}")
+                case tree                               => Some(tree)
+              }
+            def default =
               if (pt.isParamWithDefault)
-                defaultMethods.get(pos).map(n => q"$companion.$n(...$argLists)")
+                defaultMethods.get(pos).map(m => q"$companion.$m(...$argLists)")
               else
                 None
 
             val arg = freshName("a")
-            val v = second ++ default match {
-              case Seq(s, d) => q"$first.orElse($s).getOrElse($d)"
-              case Seq(s)    => q"$first.getOrElse($s)"
-              case Seq()     => first
-              case _         => abort("library bug")
+            val v = (second, implicits.orElse(default)) match {
+              case (Some(s), Some(l)) => q"$first.orElse($s).getOrElse($l)"
+              case (Some(s), _)       => q"$first.getOrElse($s)"
+              case (_, Some(l))       => q"$first.getOrElse($l)"
+              case _                  => first
             }
             vals += q"lazy val $arg = $v"
             arg
