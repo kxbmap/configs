@@ -35,7 +35,8 @@ package object macros {
         else {
           def append(s: String) = (if (sb.isEmpty) sb else sb.append('-')).append(s)
           val (us, rs) = s.span(_.isUpper)
-          us.length match {
+          if (rs.isEmpty) format(rs, append(us))
+          else us.length match {
             case 0 =>
               val (ls, rest) = rs.span(!_.isUpper)
               format(rest, append(ls))
