@@ -16,24 +16,36 @@
 
 package com.github.kxbmap.configs.macros
 
-import scalaprops.Property.forAll
-import scalaprops.{Properties, Scalaprops}
+import java.util.Locale
+import scalaprops.Property.forAllG
+import scalaprops.{Gen, Properties, Scalaprops}
 import scalaz.NonEmptyList
 import scalaz.std.string._
+import scalaz.syntax.apply._
 
 object CaseFormatTest extends Scalaprops {
 
-  val lowerHyphenCase = {
+  private val lower: Gen[String] = (Gen.alphaLowerChar |@| Gen.alphaLowerString)(_ +: _)
+  private val UPPER: Gen[String] = (Gen.alphaUpperChar |@| Gen.alphaUpperString)(_ +: _)
+  private val Camel: Gen[String] = (Gen.alphaUpperChar |@| lower)(_ +: _)
+
+  private def tc(f: (String, String, String) => String)(a: String, b: String, c: String): (String, String) =
+    f(a, b, c) -> Seq(a, b, c).map(_.toLowerCase(Locale.ENGLISH)).mkString("-")
+
+  val `Format to lower-hyphen-case` = {
     val props = NonEmptyList(
-      "lower-hyphen-case" -> "lower-hyphen-case",
-      "lowerCamelCase" -> "lower-camel-case",
-      "UpperCamelCase" -> "upper-camel-case",
-      "lower_snake_case" -> "lower-snake-case",
-      "UPPER_SNAKE_CASE" -> "upper-snake-case",
-      "UPPERThenCamel" -> "upper-then-camel",
-      "camelThenUPPER" -> "camel-then-upper"
+      "from lower-hyphen-case" -> (lower |@| lower |@| lower)(tc(_ + "-" + _ + "-" + _)),
+      "from lowerCamelCase" -> (lower |@| Camel |@| Camel)(tc(_ + _ + _)),
+      "from UpperCamelCase" -> (Camel |@| Camel |@| Camel)(tc(_ + _ + _)),
+      "from lower_snake_case" -> (lower |@| lower |@| lower)(tc(_ + "_" + _ + "_" + _)),
+      "from UPPER_SNAKE_CASE" -> (UPPER |@| UPPER |@| UPPER)(tc(_ + "_" + _ + "_" + _)),
+      "from UPPERThenCamel" -> (UPPER |@| Camel |@| Camel)(tc(_ + _ + _)),
+      "from camelThenUPPER" -> (lower |@| Camel |@| UPPER)(tc(_ + _ + _))
     ).map {
-      case (s, f) => forAll(toLowerHyphenCase(s) == f).toProperties(s)
+      case (id, g) =>
+        forAllG(g) {
+          case (s, f) => toLowerHyphenCase(s) == f
+        }.toProperties(id)
     }
     Properties.list(props.head, props.tail: _*)
   }
