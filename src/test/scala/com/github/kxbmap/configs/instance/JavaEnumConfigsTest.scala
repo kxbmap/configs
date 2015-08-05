@@ -16,18 +16,23 @@
 
 package com.github.kxbmap.configs.instance
 
-trait AllConfigs
-  extends BasicTypeConfigs
-  with BoxedTypeConfigs
-  with JavaEnumConfigs
-  with SymbolConfigs
-  with DurationConfigs
-  with JavaFileConfigs
-  with JavaNetConfigs
-  with OptionConfigs
-  with EitherConfigs
-  with TryConfigs
-  with MapConfigs
-  with BasicTypeCollectionConfigs
-  with CollectionConfigs
-  with MaterializeConfigs
+import com.github.kxbmap.configs.util._
+import com.github.kxbmap.configs.{ConfigProp, Configs}
+import com.typesafe.config.{ConfigException, ConfigFactory}
+import scalaprops.Scalaprops
+
+object JavaEnumConfigsTest extends Scalaprops with ConfigProp {
+
+  val enum = check[JavaEnum]
+
+  val badValue = intercept {
+    val config = ConfigFactory.parseString("bad-value = FOOBAR")
+    Configs[JavaEnum].get(config, "bad-value")
+  } {
+    case e: ConfigException.BadValue =>
+      Seq("bad-value", "FOOBAR").forall(e.getMessage.contains)
+  }
+
+  implicit lazy val javaEnumConfigVal: ConfigVal[JavaEnum] = _.name().cv
+
+}

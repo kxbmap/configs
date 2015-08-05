@@ -16,18 +16,20 @@
 
 package com.github.kxbmap.configs.instance
 
-trait AllConfigs
-  extends BasicTypeConfigs
-  with BoxedTypeConfigs
-  with JavaEnumConfigs
-  with SymbolConfigs
-  with DurationConfigs
-  with JavaFileConfigs
-  with JavaNetConfigs
-  with OptionConfigs
-  with EitherConfigs
-  with TryConfigs
-  with MapConfigs
-  with BasicTypeCollectionConfigs
-  with CollectionConfigs
-  with MaterializeConfigs
+import com.github.kxbmap.configs.Configs
+import com.typesafe.config.ConfigException
+import scala.reflect.{ClassTag, classTag}
+
+trait JavaEnumConfigs {
+
+  implicit def javaEnumConfigs[A <: java.lang.Enum[A] : ClassTag]: Configs[A] = {
+    val arr = classTag[A].runtimeClass.getEnumConstants.asInstanceOf[Array[A]]
+    (c, p) => {
+      val v = c.getString(p)
+      arr.find(_.name() == v).getOrElse {
+        throw new ConfigException.BadValue(c.origin(), p, s"$v must be one of ${arr.mkString(", ")}")
+      }
+    }
+  }
+
+}

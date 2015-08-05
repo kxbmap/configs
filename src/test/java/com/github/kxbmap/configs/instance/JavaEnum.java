@@ -14,20 +14,11 @@
  * limitations under the License.
  */
 
-package com.github.kxbmap.configs.instance
+package com.github.kxbmap.configs.instance;
 
-trait AllConfigs
-  extends BasicTypeConfigs
-  with BoxedTypeConfigs
-  with JavaEnumConfigs
-  with SymbolConfigs
-  with DurationConfigs
-  with JavaFileConfigs
-  with JavaNetConfigs
-  with OptionConfigs
-  with EitherConfigs
-  with TryConfigs
-  with MapConfigs
-  with BasicTypeCollectionConfigs
-  with CollectionConfigs
-  with MaterializeConfigs
+@SuppressWarnings("unused")
+public enum JavaEnum {
+    FOO,
+    BAR,
+    BAZ
+}
