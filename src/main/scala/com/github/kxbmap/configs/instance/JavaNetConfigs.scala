@@ -21,16 +21,14 @@ import java.net.{InetAddress, InetSocketAddress}
 
 trait JavaNetConfigs {
 
-  implicit lazy val inetAddressConfigs: Configs[InetAddress] = Configs.wrapNonFatal { (c, p) =>
-    InetAddress.getByName(c.getString(p))
-  }
+  implicit lazy val inetAddressConfigs: Configs[InetAddress] =
+    Configs[String].map(InetAddress.getByName)
 
 
-  implicit lazy val inetSocketAddressConfigs: Configs[InetSocketAddress] = Configs.wrapNonFatal { (c, p) =>
-    val cc = c.getConfig(p)
-    val port = cc.getInt("port")
-    Configs[Option[String]].get(cc, "hostname").fold {
-      new InetSocketAddress(Configs[InetAddress].get(cc, "addr"), port)
+  implicit lazy val inetSocketAddressConfigs: Configs[InetSocketAddress] = Configs.onPath { c =>
+    val port = c.getInt("port")
+    Configs[Option[String]].get(c, "hostname").fold {
+      new InetSocketAddress(Configs[InetAddress].get(c, "addr"), port)
     } {
       hostname => new InetSocketAddress(hostname, port)
     }

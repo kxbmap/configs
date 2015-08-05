@@ -31,7 +31,7 @@ trait Configs[A] {
 
   def extract(value: ConfigValue): A = get(value.atPath(Configs.DummyPath), Configs.DummyPath)
 
-  def map[B](f: A => B): Configs[B] = (c, p) => f(get(c, p))
+  def map[B](f: A => B): Configs[B] = Configs.from((c, p) => f(get(c, p)))
 
   def orElse[B >: A](other: Configs[B]): Configs[B] = (c, p) =>
     try
@@ -63,11 +63,7 @@ object Configs extends AllConfigs {
   def bean[A](newInstance: => A): Configs[A] = macro macros.BeanConfigsMacro.materializeI[A]
 
 
-  def from[A](f: (Config, String) => A): Configs[A] = f(_, _)
-
-  def onPath[A](f: Config => A): Configs[A] = (c, p) => f(c.getConfig(p))
-
-  def wrapNonFatal[A](f: (Config, String) => A): Configs[A] = (c, p) =>
+  def from[A](f: (Config, String) => A): Configs[A] = (c, p) =>
     try
       f(c, p)
     catch {
@@ -75,16 +71,15 @@ object Configs extends AllConfigs {
       case NonFatal(e)        => throw new ConfigException.BadValue(c.origin(), p, e.getMessage, e)
     }
 
-  def wrapNonFatalOnPath[A](f: Config => A): Configs[A] =
-    wrapNonFatal { (c, p) =>
-      f(c.getConfig(p))
-    }
+  def onPath[A](f: Config => A): Configs[A] = from { (c, p) =>
+    f(c.getConfig(p))
+  }
 
 
   @deprecated("Use Configs.onPath instead", "0.3.0")
-  def configs[A](f: Config => A): Configs[A] = onPath(f)
+  def configs[A](f: Config => A): Configs[A] = (c, p) => f(c.getConfig(p))
 
   @deprecated("Use Configs.from instead", "0.3.0")
-  def atPath[A](f: (Config, String) => A): Configs[A] = from(f)
+  def atPath[A](f: (Config, String) => A): Configs[A] = f(_, _)
 
 }
