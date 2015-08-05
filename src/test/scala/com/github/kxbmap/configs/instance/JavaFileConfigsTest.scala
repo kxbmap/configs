@@ -29,7 +29,7 @@ object JavaFileConfigsTest extends Scalaprops with ConfigProp {
 
 
   implicit lazy val pathGen: Gen[Path] =
-    Gen.nonEmptyList[String](Gen.alphaString).map(ss => Paths.get(ss.head, ss.tail: _*))
+    Gen.nonEmptyList(Gen.alphaNumString).map(ss => Paths.get(ss.head, ss.tail: _*))
 
   implicit lazy val pathConfigVal: ConfigVal[Path] = ConfigVal[String].contramap(_.toString)
 

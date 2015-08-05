@@ -85,14 +85,14 @@ trait ConfigProp {
 
 
   implicit lazy val javaDurationGen: Gen[jt.Duration] =
-    Gen.chooseLong(0, Long.MaxValue).map(jt.Duration.ofNanos)
+    Gen.nonNegativeLong.map(jt.Duration.ofNanos)
 
   implicit lazy val javaDurationConfigVal: ConfigVal[jt.Duration] =
     ConfigVal[String].contramap(d => s"${d.toNanos}ns")
 
 
   implicit lazy val configMemorySizeGen: Gen[ConfigMemorySize] =
-    Gen.chooseLong(0, Long.MaxValue).map(ConfigMemorySize.ofBytes)
+    Gen.nonNegativeLong.map(ConfigMemorySize.ofBytes)
 
 
   private def genConfigValue[A: Gen]: Gen[ConfigValue] =

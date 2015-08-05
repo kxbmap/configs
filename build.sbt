@@ -17,7 +17,7 @@ scalacOptions ++= Seq(
 )
 
 scalapropsSettings
-scalapropsVersion := "0.1.11"
+scalapropsVersion := "0.1.12"
 
 libraryDependencies ++= Seq(
   "com.typesafe" % "config" % "1.3.0",

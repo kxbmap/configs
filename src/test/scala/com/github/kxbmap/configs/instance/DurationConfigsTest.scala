@@ -28,7 +28,7 @@ object DurationConfigsTest extends Scalaprops with ConfigProp {
 
 
   implicit lazy val finiteDurationGen: Gen[FiniteDuration] =
-    Gen.chooseLong(0, Long.MaxValue).map(Duration.fromNanos)
+    Gen.nonNegativeLong.map(Duration.fromNanos)
 
   implicit lazy val finiteDurationValue: ConfigVal[FiniteDuration] =
     ConfigVal[String].contramap(d => s"${d.toNanos}ns")

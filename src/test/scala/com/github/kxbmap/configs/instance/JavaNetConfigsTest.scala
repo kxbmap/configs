@@ -40,7 +40,7 @@ object JavaNetConfigsTest extends Scalaprops with ConfigProp {
   val inetSocketAddress = {
     val addr = {
       implicit val gen: Gen[InetSocketAddress] =
-        Apply[Gen].apply2(inetAddressGen, Gen.choose(0, Short.MaxValue))(new InetSocketAddress(_, _))
+        Apply[Gen].apply2(inetAddressGen, Gen.nonNegativeShort)(new InetSocketAddress(_, _))
 
       implicit val cv: ConfigVal[InetSocketAddress] = ConfigVal.fromMap(a => Map(
         "addr" -> a.getAddress.cv,
@@ -51,7 +51,7 @@ object JavaNetConfigsTest extends Scalaprops with ConfigProp {
     }
     val hostname = {
       implicit val gen: Gen[InetSocketAddress] =
-        Apply[Gen].apply2(Gen.value("localhost"), Gen.choose(0, Short.MaxValue))(new InetSocketAddress(_, _))
+        Apply[Gen].apply2(Gen.value("localhost"), Gen.nonNegativeShort)(new InetSocketAddress(_, _))
 
       implicit val cv: ConfigVal[InetSocketAddress] = ConfigVal.fromMap(a => Map(
         "hostname" -> a.getHostName.cv,
