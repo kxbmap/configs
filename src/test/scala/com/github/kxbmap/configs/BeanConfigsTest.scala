@@ -117,6 +117,18 @@ object BeanConfigsTest extends Scalaprops with ConfigProp {
   }
 
 
+  val wrapError = forAll {
+    val config = ConfigFactory.parseString("foo = 1")
+    try {
+      Configs[ThrowException].extract(config)
+      false
+    } catch {
+      case e: ConfigException.BadValue =>
+        e.getCause.getMessage == "should wrap"
+    }
+  }
+
+
   class SimpleBean {
     @BeanProperty var boolean: Boolean = _
     @BeanProperty var double: Double = _
@@ -148,7 +160,6 @@ object BeanConfigsTest extends Scalaprops with ConfigProp {
     implicit val configs: Configs[RecursiveBean] = Configs.bean[RecursiveBean]
   }
 
-
   class JavaTypes {
     @BeanProperty var boolean: jl.Boolean = _
     @BeanProperty var double: jl.Double = _
@@ -159,6 +170,16 @@ object BeanConfigsTest extends Scalaprops with ConfigProp {
 
   object JavaTypes {
     implicit val configs: Configs[JavaTypes] = Configs.bean[JavaTypes]
+  }
+
+  class ThrowException {
+    def setFoo(a: Int): Unit = {
+      throw new RuntimeException("should wrap")
+    }
+  }
+
+  object ThrowException {
+    implicit val configs: Configs[ThrowException] = Configs.bean[ThrowException]
   }
 
 }

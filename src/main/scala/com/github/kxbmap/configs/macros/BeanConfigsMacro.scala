@@ -68,7 +68,7 @@ class BeanConfigsMacro(val c: blackbox.Context) extends Helper {
     }.unzip
     q"""
     val $names: ${setType(typeOf[String])} = ${ns.flatten.toSet}
-    $configsCompanion.onPath { $config: $configType =>
+    $configsCompanion.wrapNonFatalOnPath { $config: $configType =>
       ${checkKeys(targetType, config, names)}
       val $obj: $targetType = $newInstance
       ..$sets
