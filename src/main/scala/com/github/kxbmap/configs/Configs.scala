@@ -16,7 +16,6 @@
 
 package com.github.kxbmap.configs
 
-import com.github.kxbmap.configs.instance.AllConfigs
 import com.typesafe.config.{Config, ConfigException, ConfigValue}
 import scala.annotation.implicitNotFound
 import scala.util.control.NonFatal
@@ -48,7 +47,7 @@ trait Configs[A] {
     }
 }
 
-object Configs extends AllConfigs {
+object Configs extends ConfigsInstances {
 
   private final val DummyPath = "configs-extract-path"
 
