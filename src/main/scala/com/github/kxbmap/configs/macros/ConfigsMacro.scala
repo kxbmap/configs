@@ -73,18 +73,19 @@ class ConfigsMacro(val c: blackbox.Context) extends Helper {
         .sortBy(!_.method.isSynthetic)
 
     def collect(tpe: Type, sym: ClassSymbol): Seq[Ctor] = {
-      if (sym.isSealed) {
+      if (sym.isSealed)
         sym.knownDirectSubclasses.toSeq.sortBy(nameOf(_)).flatMap { s =>
           val cs = s.asClass
           collect(cs.toType, cs)
         }
-      } else if (sym.isModuleClass) {
+      else if (sym.isModuleClass)
         Seq(ModuleCtor(top, sym.module.asModule))
-      } else if (sym.isCaseClass) {
+      else if (sym.isCaseClass)
         applies(tpe, sym.companion.asModule)
-      } else {
+      else if (!sym.isAbstract)
         constructors(tpe)
-      }
+      else
+        Seq.empty
     }
     collect(top, top.typeSymbol.asClass)
   }
