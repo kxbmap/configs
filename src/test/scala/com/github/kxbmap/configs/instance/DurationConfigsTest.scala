@@ -19,12 +19,31 @@ package com.github.kxbmap.configs.instance
 import com.github.kxbmap.configs.ConfigProp
 import com.github.kxbmap.configs.util._
 import scala.concurrent.duration._
-import scalaprops.{Gen, Scalaprops}
+import scalaprops.{Gen, Properties, Scalaprops}
+import scalaz.std.list._
+import scalaz.std.stream._
+import scalaz.std.string._
+import scalaz.std.vector._
 
 object DurationConfigsTest extends Scalaprops with ConfigProp {
 
   val finiteDuration = check[FiniteDuration]
+
+  val finiteDurationCollections = Properties.list(
+    check[List[FiniteDuration]].mapId("list " + _),
+    check[Vector[FiniteDuration]].mapId("vector " + _),
+    check[Stream[FiniteDuration]].mapId("stream " + _),
+    check[Array[FiniteDuration]].mapId("array " + _)
+  )
+
   val duration = check[Duration]
+
+  val durationCollections = Properties.list(
+    check[List[Duration]].mapId("list " + _),
+    check[Vector[Duration]].mapId("vector " + _),
+    check[Stream[Duration]].mapId("stream " + _),
+    check[Array[Duration]].mapId("array " + _)
+  )
 
 
   implicit lazy val finiteDurationGen: Gen[FiniteDuration] =
@@ -34,8 +53,10 @@ object DurationConfigsTest extends Scalaprops with ConfigProp {
     ConfigVal[String].contramap(d => s"${d.toNanos}ns")
 
 
-  implicit lazy val durationGen: Gen[Duration] = finiteDurationGen.asInstanceOf[Gen[Duration]]
+  implicit lazy val durationGen: Gen[Duration] =
+    finiteDurationGen.asInstanceOf[Gen[Duration]]
 
-  implicit lazy val durationValue: ConfigVal[Duration] = finiteDurationValue.asInstanceOf[ConfigVal[Duration]]
+  implicit lazy val durationValue: ConfigVal[Duration] =
+    finiteDurationValue.asInstanceOf[ConfigVal[Duration]]
 
 }

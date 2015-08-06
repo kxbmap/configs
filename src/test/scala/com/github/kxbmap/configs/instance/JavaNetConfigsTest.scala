@@ -19,12 +19,23 @@ package com.github.kxbmap.configs.instance
 import com.github.kxbmap.configs.ConfigProp
 import com.github.kxbmap.configs.util._
 import java.net.{InetAddress, InetSocketAddress}
-import scalaprops.{Gen, Scalaprops}
+import scalaprops.{Gen, Properties, Scalaprops}
 import scalaz.Apply
+import scalaz.std.list._
+import scalaz.std.stream._
+import scalaz.std.string._
+import scalaz.std.vector._
 
 object JavaNetConfigsTest extends Scalaprops with ConfigProp {
 
   val inetAddress = check[InetAddress]
+
+  val inetAddressCollections = Properties.list(
+    check[List[InetAddress]].mapId("list " + _),
+    check[Vector[InetAddress]].mapId("vector " + _),
+    check[Stream[InetAddress]].mapId("stream " + _),
+    check[Array[InetAddress]].mapId("array " + _)
+  )
 
   implicit lazy val inetAddressGen: Gen[InetAddress] =
     inetAddressStringGen.map(InetAddress.getByName)

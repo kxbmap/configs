@@ -131,6 +131,9 @@ private[configs] abstract class ConfigsInstances {
   implicit lazy val durationConfigs: Configs[Duration] =
     finiteDurationConfigs.asInstanceOf[Configs[Duration]]
 
+  implicit def finiteDurationCBFConfigs[F[_], A >: FiniteDuration <: Duration](implicit cbf: CanBuildFrom[Nothing, A, F[A]]): Configs[F[A]] =
+    _.getDurationList(_, TimeUnit.NANOSECONDS).map(Duration.fromNanos(_))(collection.breakOut)
+
 
   implicit lazy val configConfigs: Configs[Config] =
     _.getConfig(_)
@@ -178,14 +181,30 @@ private[configs] abstract class ConfigsInstances {
   implicit lazy val symbolConfigs: Configs[Symbol] =
     Configs[String].map(Symbol.apply)
 
+  implicit def symbolCBFConfigs[F[_]](implicit cbf: CanBuildFrom[Nothing, Symbol, F[Symbol]]): Configs[F[Symbol]] =
+    Configs[Seq[String]].map(_.map(Symbol.apply)(collection.breakOut))
+
+
   implicit lazy val pathConfigs: Configs[Path] =
     Configs[String].map(Paths.get(_))
+
+  implicit def pathCBFConfigs[F[_]](implicit cbf: CanBuildFrom[Nothing, Path, F[Path]]): Configs[F[Path]] =
+    Configs[Seq[String]].map(_.map(Paths.get(_))(collection.breakOut))
+
 
   implicit lazy val fileConfigs: Configs[File] =
     Configs[String].map(new File(_))
 
+  implicit def fileCBFConfigs[F[_]](implicit cbf: CanBuildFrom[Nothing, File, F[File]]): Configs[F[File]] =
+    Configs[Seq[String]].map(_.map(new File(_))(collection.breakOut))
+
+
   implicit lazy val inetAddressConfigs: Configs[InetAddress] =
     Configs[String].map(InetAddress.getByName)
+
+  implicit def inetAddressCBFConfigs[F[_]](implicit cbf: CanBuildFrom[Nothing, InetAddress, F[InetAddress]]): Configs[F[InetAddress]] =
+    Configs[Seq[String]].map(_.map(InetAddress.getByName)(collection.breakOut))
+
 
   implicit lazy val inetSocketAddressConfigs: Configs[InetSocketAddress] =
     Configs.onPath { c =>
