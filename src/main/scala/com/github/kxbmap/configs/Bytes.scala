@@ -40,9 +40,10 @@ case class Bytes(value: Long) extends Ordered[Bytes] {
 
 object Bytes {
 
-  implicit val bytesConfigs: Configs[Bytes] = (c, p) => Bytes(c.getBytes(p))
+  implicit val bytesConfigs: Configs[Bytes] =
+    _.getBytes(_) |> (Bytes(_))
 
-  implicit def bytesCollectionConfigs[F[_]](implicit cbf: CanBuildFrom[Nothing, Bytes, F[Bytes]]): Configs[F[Bytes]] =
+  implicit def bytesCBFConfigs[F[_]](implicit cbf: CanBuildFrom[Nothing, Bytes, F[Bytes]]): Configs[F[Bytes]] =
     _.getBytesList(_).map(Bytes(_))(collection.breakOut)
 
   implicit val bytesOrdering: Ordering[Bytes] = Ordering.by(_.value)

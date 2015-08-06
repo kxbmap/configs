@@ -34,7 +34,7 @@ private[configs] abstract class ConfigsInstances {
 
 
   implicit def cbfConfigs[F[_], A: Configs](implicit cbf: CanBuildFrom[Nothing, A, F[A]]): Configs[F[A]] =
-    (c, p) => c.getList(p).map(Configs[A].extract).to[F]
+    _.getList(_).map(Configs[A].extract).to[F]
 
 
   implicit def optionConfigs[A: Configs]: Configs[Option[A]] =
@@ -57,7 +57,7 @@ private[configs] abstract class ConfigsInstances {
     _.getInt(_)
 
   implicit lazy val javaIntegerConfigs: Configs[jl.Integer] =
-    (c, p) => Int.box(c.getInt(p))
+    _.getInt(_) |> Int.box
 
   implicit lazy val javaIntegerListConfigs: Configs[ju.List[jl.Integer]] =
     _.getIntList(_)
@@ -70,7 +70,7 @@ private[configs] abstract class ConfigsInstances {
     _.getLong(_)
 
   implicit lazy val javaLongConfigs: Configs[jl.Long] =
-    (c, p) => Long.box(c.getLong(p))
+    _.getLong(_) |> Long.box
 
   implicit lazy val javaLongListsConfigs: Configs[ju.List[jl.Long]] =
     _.getLongList(_)
@@ -83,7 +83,7 @@ private[configs] abstract class ConfigsInstances {
     _.getDouble(_)
 
   implicit lazy val javaDoubleConfigs: Configs[jl.Double] =
-    (c, p) => Double.box(c.getDouble(p))
+    _.getDouble(_) |> Double.box
 
   implicit lazy val javaDoubleListConfigs: Configs[ju.List[jl.Double]] =
     _.getDoubleList(_)
@@ -96,7 +96,7 @@ private[configs] abstract class ConfigsInstances {
     _.getBoolean(_)
 
   implicit lazy val javaBooleanConfigs: Configs[jl.Boolean] =
-    (c, p) => Boolean.box(c.getBoolean(p))
+    _.getBoolean(_) |> Boolean.box
 
   implicit lazy val javaBooleanListConfigs: Configs[ju.List[jl.Boolean]] =
     _.getBooleanList(_)
@@ -126,7 +126,7 @@ private[configs] abstract class ConfigsInstances {
 
 
   implicit lazy val finiteDurationConfigs: Configs[FiniteDuration] =
-    (c, p) => Duration.fromNanos(c.getDuration(p, TimeUnit.NANOSECONDS))
+    _.getDuration(_, TimeUnit.NANOSECONDS) |> Duration.fromNanos
 
   implicit lazy val durationConfigs: Configs[Duration] =
     finiteDurationConfigs.asInstanceOf[Configs[Duration]]

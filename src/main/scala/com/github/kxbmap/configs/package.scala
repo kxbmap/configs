@@ -21,4 +21,11 @@ package object configs {
   @deprecated("Use Configs[A] instead", "0.3.0")
   type AtPath[A] = Configs[A]
 
+
+  private[configs] implicit class PipeOps[A](private val self: A) extends AnyVal {
+
+    def |>[B](f: A => B): B = f(self)
+
+  }
+
 }

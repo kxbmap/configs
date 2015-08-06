@@ -30,7 +30,7 @@ trait Configs[A] {
 
   def extract(value: ConfigValue): A = get(value.atPath(Configs.DummyPath), Configs.DummyPath)
 
-  def map[B](f: A => B): Configs[B] = Configs.from((c, p) => f(get(c, p)))
+  def map[B](f: A => B): Configs[B] = Configs.from(get(_, _) |> f)
 
   def orElse[B >: A](other: Configs[B]): Configs[B] = (c, p) =>
     try
@@ -70,13 +70,11 @@ object Configs extends ConfigsInstances {
       case NonFatal(e)        => throw new ConfigException.BadValue(c.origin(), p, e.getMessage, e)
     }
 
-  def onPath[A](f: Config => A): Configs[A] = from { (c, p) =>
-    f(c.getConfig(p))
-  }
+  def onPath[A](f: Config => A): Configs[A] = from(_.getConfig(_) |> f)
 
 
   @deprecated("Use Configs.onPath instead", "0.3.0")
-  def configs[A](f: Config => A): Configs[A] = (c, p) => f(c.getConfig(p))
+  def configs[A](f: Config => A): Configs[A] = _.getConfig(_) |> f
 
   @deprecated("Use Configs.from instead", "0.3.0")
   def atPath[A](f: (Config, String) => A): Configs[A] = f(_, _)
