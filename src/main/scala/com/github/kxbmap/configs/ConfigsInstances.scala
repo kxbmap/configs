@@ -20,8 +20,8 @@ import com.typesafe.config.{Config, ConfigException, ConfigList, ConfigMemorySiz
 import java.io.File
 import java.net.{InetAddress, InetSocketAddress}
 import java.nio.file.{Path, Paths}
-import java.util.UUID
 import java.util.concurrent.TimeUnit
+import java.util.{Locale, UUID}
 import java.{lang => jl, time => jt, util => ju}
 import scala.collection.JavaConversions._
 import scala.collection.JavaConverters._
@@ -290,6 +290,19 @@ private[configs] abstract class ConfigsInstances {
 
   implicit def uuidCollectionConfigs[F[_]](implicit mapF: Configs.MapF[F, String, UUID]): Configs[F[UUID]] =
     mapF(UUID.fromString)
+
+
+  private[this] lazy val availableLocales: Map[String, Locale] =
+    Locale.getAvailableLocales.map(l => l.toString -> l)(collection.breakOut)
+
+  private[this] def getLocale(s: String, c: Config, p: String): Locale =
+    availableLocales.getOrElse(s, throw new ConfigException.BadValue(c.origin(), p, s"Locale '$s' is not available"))
+
+  implicit lazy val localeConfigs: Configs[Locale] =
+    (c, p) => getLocale(c.getString(p), c, p)
+
+  implicit def localeCollectionConfigs[F[_]](implicit cbf: CanBuildFrom[Nothing, Locale, F[Locale]]): Configs[F[Locale]] =
+    (c, p) => c.getStringList(p).map(getLocale(_, c, p))(collection.breakOut)
 
 
   implicit lazy val pathConfigs: Configs[Path] =

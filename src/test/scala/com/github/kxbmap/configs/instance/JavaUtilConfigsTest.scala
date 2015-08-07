@@ -18,8 +18,7 @@ package com.github.kxbmap.configs.instance
 
 import com.github.kxbmap.configs.ConfigProp
 import com.github.kxbmap.configs.util.ConfigVal
-import java.util.UUID
-import java.{util => ju}
+import java.util.{Locale, UUID}
 import scalaprops.{Gen, Properties, Scalaprops}
 import scalaz.std.list._
 import scalaz.std.stream._
@@ -29,7 +28,6 @@ import scalaz.std.vector._
 object JavaUtilConfigsTest extends Scalaprops with ConfigProp {
 
   val uuid = check[UUID]
-  val uuidJavaList = check[ju.List[UUID]]
   val uuidCollections = Properties.list(
     check[List[UUID]].mapId("list " + _),
     check[Vector[UUID]].mapId("vector " + _),
@@ -37,11 +35,27 @@ object JavaUtilConfigsTest extends Scalaprops with ConfigProp {
     check[Array[UUID]].mapId("array " + _)
   )
 
+  val locale = check[Locale]
+  val localeCollections = Properties.list(
+    check[List[Locale]].mapId("list " + _),
+    check[Vector[Locale]].mapId("vector " + _),
+    check[Stream[Locale]].mapId("stream " + _),
+    check[Array[Locale]].mapId("array " + _)
+  )
+
 
   implicit lazy val uuidGen: Gen[UUID] =
     Gen[Array[Byte]].map(UUID.nameUUIDFromBytes)
 
   implicit lazy val uuidConfigVal: ConfigVal[UUID] =
+    ConfigVal[String].contramap(_.toString)
+
+  implicit lazy val localeGen: Gen[Locale] = {
+    val ls = Locale.getAvailableLocales
+    Gen.elements(ls.head, ls.tail: _*)
+  }
+
+  implicit lazy val localeConfigVal: ConfigVal[Locale] =
     ConfigVal[String].contramap(_.toString)
 
 }
