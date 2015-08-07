@@ -18,7 +18,7 @@ package com.github.kxbmap.configs.instance
 
 import com.github.kxbmap.configs.ConfigProp
 import com.github.kxbmap.configs.util._
-import scalaprops.{Gen, Properties, Scalaprops}
+import scalaprops.{Properties, Scalaprops}
 import scalaz.std.list._
 import scalaz.std.stream._
 import scalaz.std.string._
@@ -34,8 +34,6 @@ object SymbolConfigsTest extends Scalaprops with ConfigProp {
     check[Stream[Symbol]].mapId("stream " + _),
     check[Array[Symbol]].mapId("array " + _)
   )
-
-  implicit lazy val symbolGen: Gen[Symbol] = Gen[String].map(Symbol.apply)
 
   implicit lazy val symbolConfigVal: ConfigVal[Symbol] = ConfigVal[String].contramap(_.name)
 

@@ -76,6 +76,9 @@ trait ConfigProp {
   implicit lazy val stringGen: Gen[String] =
     Gen.asciiString
 
+  implicit lazy val symbolGen: Gen[Symbol] =
+    Gen[String].map(Symbol.apply)
+
   implicit lazy val charGen: Gen[Char] =
     Gen.asciiChar
 

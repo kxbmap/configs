@@ -59,20 +59,24 @@ object WrongTypeValue {
 
   def apply[A](implicit A: WrongTypeValue[A]): WrongTypeValue[A] = A
 
-  private[this] final val string: WrongTypeValue[Any] = new WrongTypeValue[Any] {
+  def string[A]: WrongTypeValue[A] = _string.asInstanceOf[WrongTypeValue[A]]
+
+  private[this] final val _string: WrongTypeValue[Any] = new WrongTypeValue[Any] {
     val value: Any = "wrong type value"
   }
 
-  private[this] final val list: WrongTypeValue[Any] = new WrongTypeValue[Any] {
+  def list[A]: WrongTypeValue[A] = _list.asInstanceOf[WrongTypeValue[A]]
+
+  private[this] final val _list: WrongTypeValue[Any] = new WrongTypeValue[Any] {
     val value: Any = ju.Collections.emptyList()
   }
 
-  implicit def defaultWrongTypeValue[A]: WrongTypeValue[A] = list.asInstanceOf[WrongTypeValue[A]]
+  implicit def defaultWrongTypeValue[A]: WrongTypeValue[A] = list[A]
 
-  implicit def javaListWrongTypeValue[A]: WrongTypeValue[ju.List[A]] = string.asInstanceOf[WrongTypeValue[ju.List[A]]]
+  implicit def javaListWrongTypeValue[A]: WrongTypeValue[ju.List[A]] = string[ju.List[A]]
 
-  implicit def seqWrongTypeValue[F[_] <: Seq[_], A]: WrongTypeValue[F[A]] = string.asInstanceOf[WrongTypeValue[F[A]]]
+  implicit def traversableWrongTypeValue[F[_] <: Traversable[_], A]: WrongTypeValue[F[A]] = string[F[A]]
 
-  implicit def arrayWrongTypeValue[A]: WrongTypeValue[Array[A]] = string.asInstanceOf[WrongTypeValue[Array[A]]]
+  implicit def arrayWrongTypeValue[A]: WrongTypeValue[Array[A]] = string[Array[A]]
 
 }

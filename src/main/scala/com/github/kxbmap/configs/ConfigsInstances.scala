@@ -34,10 +34,6 @@ private[configs] abstract class ConfigsInstances {
   implicit def materializeConfigs[A]: Configs[A] = macro macros.ConfigsMacro.materialize[A]
 
 
-  implicit def collectionConfigs[F[_], A: Configs](implicit cbf: CanBuildFrom[Nothing, A, F[A]]): Configs[F[A]] =
-    _.getList(_).map(Configs[A].extract).to[F]
-
-
   implicit def optionConfigs[A: Configs]: Configs[Option[A]] =
     (c, p) => if (c.hasPath(p) && !c.getIsNull(p)) Some(Configs[A].get(c, p)) else None
 
@@ -208,6 +204,10 @@ private[configs] abstract class ConfigsInstances {
     _.getMemorySizeList(_).to[F]
 
 
+  implicit def collectionConfigs[F[_], A: Configs](implicit cbf: CanBuildFrom[Nothing, A, F[A]]): Configs[F[A]] =
+    _.getList(_).map(Configs[A].extract).to[F]
+
+
   implicit def stringMapConfigs[A: Configs]: Configs[Map[String, A]] =
     Configs.onPath { c =>
       val A = Configs[A]
@@ -220,8 +220,18 @@ private[configs] abstract class ConfigsInstances {
     })
 
 
+  implicit def javaListConfigs[A: Configs]: Configs[ju.List[A]] =
+    Configs[List[A]].map(_.asJava)
+
+  implicit def javaMapConfigs[A: Configs]: Configs[ju.Map[String, A]] =
+    Configs[Map[String, A]].map(_.asJava)
+
+  implicit def javaSetConfigs[A: Configs]: Configs[ju.Set[A]] =
+    Configs[Set[A]].map(_.asJava)
+
+
   implicit def javaEnumConfigs[A <: java.lang.Enum[A] : ClassTag]: Configs[A] = {
-    val arr = classTag[A].runtimeClass.getEnumConstants.asInstanceOf[Array[A]]
+    val arr = ju.Objects.requireNonNull(classTag[A].runtimeClass.getEnumConstants.asInstanceOf[Array[A]])
     (c, p) => {
       val v = c.getString(p)
       arr.find(_.name() == v).getOrElse {

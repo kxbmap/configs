@@ -18,6 +18,8 @@ package com.github.kxbmap.configs.instance
 
 import com.github.kxbmap.configs.util._
 import com.github.kxbmap.configs.{ConfigProp, Configs}
+import java.{util => ju}
+import scala.collection.JavaConverters._
 import scalaprops.{Gen, Properties, Scalaprops}
 import scalaz.Apply
 import scalaz.std.string._
@@ -28,8 +30,39 @@ object CollectionConfigsTest extends Scalaprops with ConfigProp {
     check[List[Foo]].mapId("list " + _),
     check[Vector[Foo]].mapId("vector " + _),
     check[Stream[Foo]].mapId("stream " + _),
-    check[Array[Foo]].mapId("array " + _)
+    check[Array[Foo]].mapId("array " + _),
+    check[Map[String, Foo]].mapId("string map " + _),
+    check[Map[Symbol, Foo]].mapId("symbol map " + _),
+    check[Set[Foo]].mapId("set " + _)
   )
+
+  val javaCollections = Properties.list(
+    check[ju.List[Foo]].mapId("list " + _),
+    check[ju.Map[String, Foo]].mapId("map " + _),
+    check[ju.Set[Foo]].mapId("set " + _)
+  )
+
+
+  implicit def symbolMapGen[A: Gen]: Gen[Map[Symbol, A]] =
+    Gen[Map[String, A]].map(_.map(t => Symbol(t._1) -> t._2))
+
+  implicit def symbolMapConfigVal[A: ConfigVal]: ConfigVal[Map[Symbol, A]] =
+    ConfigVal[Map[String, A]].contramap(_.map(t => t._1.name -> t._2))
+
+  implicit def javaMapGen[A: Gen]: Gen[ju.Map[String, A]] =
+    Gen[Map[String, A]].map(_.asJava)
+
+  implicit def javaMapConfigVal[A: ConfigVal]: ConfigVal[ju.Map[String, A]] =
+    ConfigVal.fromMap(_.asScala.mapValues(_.cv).toMap)
+
+  implicit def javaSetGen[A: Gen]: Gen[ju.Set[A]] =
+    Gen[Set[A]].map(_.asJava)
+
+  implicit def javaSetConfigVal[A: ConfigVal]: ConfigVal[ju.Set[A]] =
+    ConfigVal[List[A]].contramap(_.asScala.toList)
+
+  implicit def javaSetWrongTypeValue[A]: WrongTypeValue[ju.Set[A]] =
+    WrongTypeValue.string[ju.Set[A]]
 
 
   case class Foo(a: String, b: Int)
