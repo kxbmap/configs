@@ -20,6 +20,7 @@ import com.typesafe.config.{Config, ConfigException, ConfigList, ConfigMemorySiz
 import java.io.File
 import java.net.{InetAddress, InetSocketAddress}
 import java.nio.file.{Path, Paths}
+import java.util.UUID
 import java.util.concurrent.TimeUnit
 import java.{lang => jl, time => jt, util => ju}
 import scala.collection.JavaConversions._
@@ -282,6 +283,13 @@ private[configs] abstract class ConfigsInstances {
 
   implicit def symbolsConfigs[F[_]](implicit mapF: Configs.MapF[F, String, Symbol]): Configs[F[Symbol]] =
     mapF(Symbol.apply)
+
+
+  implicit lazy val uuidConfigs: Configs[UUID] =
+    Configs[String].map(UUID.fromString)
+
+  implicit def uuidCollectionConfigs[F[_]](implicit mapF: Configs.MapF[F, String, UUID]): Configs[F[UUID]] =
+    mapF(UUID.fromString)
 
 
   implicit lazy val pathConfigs: Configs[Path] =
