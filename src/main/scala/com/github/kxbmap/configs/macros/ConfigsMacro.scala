@@ -41,7 +41,7 @@ class ConfigsMacro(val c: blackbox.Context) extends Helper {
     val state = (terms, values)
     val cs = ctors[A]
     if (cs.isEmpty) {
-      abort(s"No Configs[${nameOf[A]}] generated")
+      abort(s"Couldn't materialize Configs[${fullNameOf[A]}]")
     }
     (values, build[A](state, cs))
   }
@@ -87,7 +87,10 @@ class ConfigsMacro(val c: blackbox.Context) extends Helper {
       else
         Seq.empty
     }
-    collect(top, top.typeSymbol.asClass)
+    top.typeSymbol match {
+      case ts if ts.isClass => collect(top, ts.asClass)
+      case _                => Seq.empty
+    }
   }
 
 

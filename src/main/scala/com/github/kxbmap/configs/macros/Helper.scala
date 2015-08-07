@@ -57,6 +57,8 @@ private[macros] abstract class Helper {
 
   def fullNameOf(tpe: Type): String = fullNameOf(tpe.typeSymbol)
 
+  def fullNameOf[A: WeakTypeTag]: String = fullNameOf(weakTypeOf[A])
+
   def methodRepr(m: MethodSymbol): String =
     s"${fullNameOf(m)}${m.paramLists.map(_.map(paramRepr).mkString("(", ", ", ")")).mkString}"
 
