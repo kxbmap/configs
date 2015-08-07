@@ -27,9 +27,9 @@ trait Configs[A] {
 
   def get(config: Config, path: String): A
 
-  def extract(config: Config): A = get(config.atKey(Configs.DummyPath), Configs.DummyPath)
+  def extract(config: Config): A = get(config.atKey(Configs.ExtractKey), Configs.ExtractKey)
 
-  def extract(value: ConfigValue): A = get(value.atKey(Configs.DummyPath), Configs.DummyPath)
+  def extract(value: ConfigValue): A = get(value.atKey(Configs.ExtractKey), Configs.ExtractKey)
 
   def map[B](f: A => B): Configs[B] = Configs.from(get(_, _) |> f)
 
@@ -53,7 +53,7 @@ trait Configs[A] {
 
 object Configs extends ConfigsInstances {
 
-  private final val DummyPath = "configs-extract-path"
+  private final val ExtractKey = "configs-extract"
 
   @inline
   def apply[A](implicit A: Configs[A]): Configs[A] = A
