@@ -76,9 +76,20 @@ trait ConfigProp {
   implicit lazy val stringGen: Gen[String] =
     Gen.asciiString
 
+  implicit lazy val charGen: Gen[Char] =
+    Gen.asciiChar
+
+  implicit lazy val javaCharacterGen: Gen[jl.Character] =
+    Gen.asciiChar.map(Char.box)
+
+  implicit lazy val floatGen: Gen[Float] =
+    Gen.genFiniteFloat
+
+  implicit lazy val javaFloatGen: Gen[jl.Float] =
+    floatGen.map(Float.box)
+
   implicit lazy val doubleGen: Gen[Double] =
     Gen.genFiniteDouble
-
 
   implicit lazy val javaDoubleGen: Gen[jl.Double] =
     doubleGen.map(Double.box)

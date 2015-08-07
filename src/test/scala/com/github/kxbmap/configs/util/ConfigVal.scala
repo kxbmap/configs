@@ -50,6 +50,12 @@ object ConfigVal extends Value0 {
   implicit def stringMapConfigVal[A: ConfigVal]: ConfigVal[Map[String, A]] =
     m => ConfigValueFactory.fromAnyRef(m.mapValues(_.cv).asJava)
 
+  implicit val charConfigVal: ConfigVal[Char] =
+    ConfigVal[Int].contramap(_.toInt)
+
+  implicit val javaCharacterConfigVal: ConfigVal[java.lang.Character] =
+    ConfigVal[Int].contramap(_.charValue())
+
   implicit val configConfigVal: ConfigVal[Config] =
     _.root()
 
