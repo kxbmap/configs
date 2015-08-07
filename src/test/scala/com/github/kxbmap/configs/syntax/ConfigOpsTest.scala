@@ -32,19 +32,19 @@ object ConfigOpsTest extends Scalaprops with ConfigProp {
 
   val get = forAll { n: Int =>
     val p = "path"
-    val config = n.cv.atPath(p)
+    val config = n.cv.atKey(p)
     config.get[Int](p) == n
   }
 
   val getOpt = forAll { n: Option[Int] =>
     val p = "path"
-    val config = n.cv.atPath(p)
+    val config = n.cv.atKey(p)
     config.getOpt[Int](p) == n
   }
 
   val getOrElse = forAll { (n: Option[Int], m: Int) =>
     val p = "path"
-    val config = n.cv.atPath(p)
+    val config = n.cv.atKey(p)
     config.getOrElse[Int](p, m) == n.getOrElse(m)
   }
 

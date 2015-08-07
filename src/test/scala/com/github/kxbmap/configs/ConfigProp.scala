@@ -57,7 +57,7 @@ trait ConfigProp {
 
   def checkWrongType[A: Configs : IsWrongType : WrongTypeValue] = forAll {
     val p = "dummy-path"
-    val c = ConfigValueFactory.fromAnyRef(WrongTypeValue[A].value).atPath(p)
+    val c = ConfigValueFactory.fromAnyRef(WrongTypeValue[A].value).atKey(p)
     IsWrongType[A].check(Need(Configs[A].get(c, p)))
   }
 

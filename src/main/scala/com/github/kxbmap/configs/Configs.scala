@@ -27,9 +27,9 @@ trait Configs[A] {
 
   def get(config: Config, path: String): A
 
-  def extract(config: Config): A = get(config.atPath(Configs.DummyPath), Configs.DummyPath)
+  def extract(config: Config): A = get(config.atKey(Configs.DummyPath), Configs.DummyPath)
 
-  def extract(value: ConfigValue): A = get(value.atPath(Configs.DummyPath), Configs.DummyPath)
+  def extract(value: ConfigValue): A = get(value.atKey(Configs.DummyPath), Configs.DummyPath)
 
   def map[B](f: A => B): Configs[B] = Configs.from(get(_, _) |> f)
 
