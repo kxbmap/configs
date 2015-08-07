@@ -18,7 +18,7 @@ package com.github.kxbmap.configs
 
 import com.github.kxbmap.configs.util._
 import com.typesafe.config.{ConfigException, ConfigFactory, ConfigUtil, ConfigValueFactory}
-import scala.collection.JavaConverters._
+import scala.collection.JavaConversions._
 import scalaprops.Property.forAll
 import scalaprops.{Gen, Properties, Scalaprops}
 import scalaz.std.string._
@@ -37,7 +37,7 @@ object ConfigsTest extends Scalaprops {
   val extractC = forAll { (p: String, v: Int) =>
     val q = ConfigUtil.quoteString(p)
     val config = ConfigFactory.parseString(s"$q = $v")
-    val configs: Configs[Map[String, Int]] = _.getConfig(_).root().asScala.mapValues(_.unwrapped().asInstanceOf[Int]).toMap
+    val configs: Configs[Map[String, Int]] = _.getConfig(_).root().mapValues(_.unwrapped().asInstanceOf[Int]).toMap
     configs.extract(config) == Map(p -> v)
   }
 
@@ -63,6 +63,29 @@ object ConfigsTest extends Scalaprops {
     Properties.list(
       identity.toProperties("identity"),
       composite.toProperties("composite")
+    )
+  }
+
+  val mapF = {
+    val list = {
+      val c: Configs[List[Int]] = _.getIntList(_).map(_.toInt).toList
+      val cc: Configs[List[String]] = c.mapF((_: Int).toString)
+      forAll { xs: List[Int] =>
+        val config = ConfigValueFactory.fromAnyRef(xs.cv)
+        cc.extract(config) == xs.map(_.toString)
+      }
+    }
+    val array = {
+      val c: Configs[Array[Int]] = _.getIntList(_).map(_.toInt).toArray
+      val cc: Configs[Array[String]] = c.mapF((_: Int).toString)
+      forAll { xs: Array[Int] =>
+        val config = ConfigValueFactory.fromAnyRef(xs.cv)
+        cc.extract(config).sameElements(xs.map(_.toString))
+      }
+    }
+    Properties.list(
+      list.toProperties("list"),
+      array.toProperties("array")
     )
   }
 

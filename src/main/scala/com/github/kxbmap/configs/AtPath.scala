@@ -27,7 +27,7 @@ object AtPath {
   @deprecated("Use Configs.map instead", "0.3.0")
   def by[A: Configs, B](f: A => B): Configs[B] = Configs[A].map(f)
 
-  @deprecated("Use Configs instead", "0.3.0")
+  @deprecated("Use Configs.mapF instead", "0.3.0")
   def listBy[F[_], A, B](f: A => B)(implicit ev: Configs[Seq[A]], cbf: CanBuildFrom[Nothing, B, F[B]]): Configs[F[B]] =
     ev.map(_.map(f)(collection.breakOut))
 

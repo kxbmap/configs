@@ -18,21 +18,18 @@ package com.github.kxbmap.configs.instance
 
 import com.github.kxbmap.configs.util._
 import com.github.kxbmap.configs.{ConfigProp, Configs}
-import scala.reflect.ClassTag
 import scalaprops.{Gen, Properties, Scalaprops}
+import scalaz.Apply
 import scalaz.std.string._
-import scalaz.{Apply, Equal}
 
 object CollectionConfigsTest extends Scalaprops with ConfigProp {
 
-  def checkC[A: Configs : Gen : Equal : ConfigVal : ClassTag] = Properties.list(
-    check[List[A]].mapId("list " + _),
-    check[Vector[A]].mapId("vector " + _),
-    check[Stream[A]].mapId("stream " + _),
-    check[Array[A]].mapId("array " + _)
+  val collections = Properties.list(
+    check[List[Foo]].mapId("list " + _),
+    check[Vector[Foo]].mapId("vector " + _),
+    check[Stream[Foo]].mapId("stream " + _),
+    check[Array[Foo]].mapId("array " + _)
   )
-
-  val collections = checkC[Foo]
 
 
   case class Foo(a: String, b: Int)

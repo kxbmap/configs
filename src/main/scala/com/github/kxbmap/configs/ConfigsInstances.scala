@@ -33,7 +33,7 @@ private[configs] abstract class ConfigsInstances {
   implicit def materializeConfigs[A]: Configs[A] = macro macros.ConfigsMacro.materialize[A]
 
 
-  implicit def cbfConfigs[F[_], A: Configs](implicit cbf: CanBuildFrom[Nothing, A, F[A]]): Configs[F[A]] =
+  implicit def collectionConfigs[F[_], A: Configs](implicit cbf: CanBuildFrom[Nothing, A, F[A]]): Configs[F[A]] =
     _.getList(_).map(Configs[A].extract).to[F]
 
 
@@ -62,7 +62,7 @@ private[configs] abstract class ConfigsInstances {
   implicit lazy val javaIntegerListConfigs: Configs[ju.List[jl.Integer]] =
     _.getIntList(_)
 
-  implicit def intCBFConfigs[F[_]](implicit cbf: CanBuildFrom[Nothing, Int, F[Int]]): Configs[F[Int]] =
+  implicit def intsConfigs[F[_]](implicit cbf: CanBuildFrom[Nothing, Int, F[Int]]): Configs[F[Int]] =
     _.getIntList(_).map(_.toInt)(collection.breakOut)
 
 
@@ -72,10 +72,10 @@ private[configs] abstract class ConfigsInstances {
   implicit lazy val javaLongConfigs: Configs[jl.Long] =
     _.getLong(_) |> Long.box
 
-  implicit lazy val javaLongListsConfigs: Configs[ju.List[jl.Long]] =
+  implicit lazy val javaLongListConfigs: Configs[ju.List[jl.Long]] =
     _.getLongList(_)
 
-  implicit def longCBFConfigs[F[_]](implicit cbf: CanBuildFrom[Nothing, Long, F[Long]]): Configs[F[Long]] =
+  implicit def longsConfigs[F[_]](implicit cbf: CanBuildFrom[Nothing, Long, F[Long]]): Configs[F[Long]] =
     _.getLongList(_).map(_.toLong)(collection.breakOut)
 
 
@@ -88,7 +88,7 @@ private[configs] abstract class ConfigsInstances {
   implicit lazy val javaDoubleListConfigs: Configs[ju.List[jl.Double]] =
     _.getDoubleList(_)
 
-  implicit def doubleCBFConfigs[F[_]](implicit cbf: CanBuildFrom[Nothing, Double, F[Double]]): Configs[F[Double]] =
+  implicit def doublesConfigs[F[_]](implicit cbf: CanBuildFrom[Nothing, Double, F[Double]]): Configs[F[Double]] =
     _.getDoubleList(_).map(_.toDouble)(collection.breakOut)
 
 
@@ -101,7 +101,7 @@ private[configs] abstract class ConfigsInstances {
   implicit lazy val javaBooleanListConfigs: Configs[ju.List[jl.Boolean]] =
     _.getBooleanList(_)
 
-  implicit def booleanCBFConfigs[F[_]](implicit cbf: CanBuildFrom[Nothing, Boolean, F[Boolean]]): Configs[F[Boolean]] =
+  implicit def booleansConfigs[F[_]](implicit cbf: CanBuildFrom[Nothing, Boolean, F[Boolean]]): Configs[F[Boolean]] =
     _.getBooleanList(_).map(_.booleanValue())(collection.breakOut)
 
 
@@ -111,7 +111,7 @@ private[configs] abstract class ConfigsInstances {
   implicit lazy val stringListConfigs: Configs[ju.List[String]] =
     _.getStringList(_)
 
-  implicit def stringCBFConfigs[F[_]](implicit cbf: CanBuildFrom[Nothing, String, F[String]]): Configs[F[String]] =
+  implicit def stringsConfigs[F[_]](implicit cbf: CanBuildFrom[Nothing, String, F[String]]): Configs[F[String]] =
     _.getStringList(_).to[F]
 
 
@@ -121,7 +121,7 @@ private[configs] abstract class ConfigsInstances {
   implicit lazy val javaDurationListConfigs: Configs[ju.List[jt.Duration]] =
     _.getDurationList(_)
 
-  implicit def javaDurationCBFConfigs[F[_]](implicit cbf: CanBuildFrom[Nothing, jt.Duration, F[jt.Duration]]): Configs[F[jt.Duration]] =
+  implicit def javaDurationsConfigs[F[_]](implicit cbf: CanBuildFrom[Nothing, jt.Duration, F[jt.Duration]]): Configs[F[jt.Duration]] =
     _.getDurationList(_).to[F]
 
 
@@ -131,7 +131,7 @@ private[configs] abstract class ConfigsInstances {
   implicit lazy val durationConfigs: Configs[Duration] =
     finiteDurationConfigs.asInstanceOf[Configs[Duration]]
 
-  implicit def finiteDurationCBFConfigs[F[_], A >: FiniteDuration <: Duration](implicit cbf: CanBuildFrom[Nothing, A, F[A]]): Configs[F[A]] =
+  implicit def durationsConfigs[F[_], A >: FiniteDuration <: Duration](implicit cbf: CanBuildFrom[Nothing, A, F[A]]): Configs[F[A]] =
     _.getDurationList(_, TimeUnit.NANOSECONDS).map(Duration.fromNanos(_))(collection.breakOut)
 
 
@@ -141,7 +141,7 @@ private[configs] abstract class ConfigsInstances {
   implicit lazy val configListConfigs: Configs[ju.List[Config]] =
     _.getConfigList(_).asInstanceOf[ju.List[Config]]
 
-  implicit def configCBFConfigs[F[_]](implicit cbf: CanBuildFrom[Nothing, Config, F[Config]]): Configs[F[Config]] =
+  implicit def configsConfigs[F[_]](implicit cbf: CanBuildFrom[Nothing, Config, F[Config]]): Configs[F[Config]] =
     _.getConfigList(_).map(c => c: Config)(collection.breakOut)
 
 
@@ -151,7 +151,7 @@ private[configs] abstract class ConfigsInstances {
   implicit lazy val configMemorySizeListConfigs: Configs[ju.List[ConfigMemorySize]] =
     _.getMemorySizeList(_)
 
-  implicit def configMemorySizeCBFConfigs[F[_]](implicit cbf: CanBuildFrom[Nothing, ConfigMemorySize, F[ConfigMemorySize]]): Configs[F[ConfigMemorySize]] =
+  implicit def configMemorySizesConfigs[F[_]](implicit cbf: CanBuildFrom[Nothing, ConfigMemorySize, F[ConfigMemorySize]]): Configs[F[ConfigMemorySize]] =
     _.getMemorySizeList(_).to[F]
 
 
@@ -181,29 +181,29 @@ private[configs] abstract class ConfigsInstances {
   implicit lazy val symbolConfigs: Configs[Symbol] =
     Configs[String].map(Symbol.apply)
 
-  implicit def symbolCBFConfigs[F[_]](implicit cbf: CanBuildFrom[Nothing, Symbol, F[Symbol]]): Configs[F[Symbol]] =
-    Configs[Seq[String]].map(_.map(Symbol.apply)(collection.breakOut))
+  implicit def symbolsConfigs[F[_]](implicit mapF: Configs.MapF[F, String, Symbol]): Configs[F[Symbol]] =
+    mapF(Symbol.apply)
 
 
   implicit lazy val pathConfigs: Configs[Path] =
     Configs[String].map(Paths.get(_))
 
-  implicit def pathCBFConfigs[F[_]](implicit cbf: CanBuildFrom[Nothing, Path, F[Path]]): Configs[F[Path]] =
-    Configs[Seq[String]].map(_.map(Paths.get(_))(collection.breakOut))
+  implicit def pathsConfigs[F[_]](implicit mapF: Configs.MapF[F, String, Path]): Configs[F[Path]] =
+    mapF(Paths.get(_))
 
 
   implicit lazy val fileConfigs: Configs[File] =
     Configs[String].map(new File(_))
 
-  implicit def fileCBFConfigs[F[_]](implicit cbf: CanBuildFrom[Nothing, File, F[File]]): Configs[F[File]] =
-    Configs[Seq[String]].map(_.map(new File(_))(collection.breakOut))
+  implicit def filesConfigs[F[_]](implicit mapF: Configs.MapF[F, String, File]): Configs[F[File]] =
+    mapF(new File(_))
 
 
   implicit lazy val inetAddressConfigs: Configs[InetAddress] =
     Configs[String].map(InetAddress.getByName)
 
-  implicit def inetAddressCBFConfigs[F[_]](implicit cbf: CanBuildFrom[Nothing, InetAddress, F[InetAddress]]): Configs[F[InetAddress]] =
-    Configs[Seq[String]].map(_.map(InetAddress.getByName)(collection.breakOut))
+  implicit def inetAddressesConfigs[F[_]](implicit mapF: Configs.MapF[F, String, InetAddress]): Configs[F[InetAddress]] =
+    mapF(InetAddress.getByName)
 
 
   implicit lazy val inetSocketAddressConfigs: Configs[InetSocketAddress] =

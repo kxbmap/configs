@@ -18,6 +18,7 @@ package com.github.kxbmap.configs
 
 import com.typesafe.config.{Config, ConfigException, ConfigValue}
 import scala.annotation.implicitNotFound
+import scala.collection.generic.CanBuildFrom
 import scala.util.control.NonFatal
 
 
@@ -31,6 +32,9 @@ trait Configs[A] {
   def extract(value: ConfigValue): A = get(value.atPath(Configs.DummyPath), Configs.DummyPath)
 
   def map[B](f: A => B): Configs[B] = Configs.from(get(_, _) |> f)
+
+  def mapF[F[_], B, C](f: B => C)(implicit ev1: A =:= F[B], ev2: F[B] => Traversable[B], cbf: CanBuildFrom[Nothing, C, F[C]]): Configs[F[C]] =
+    map(ev1(_).map(f)(collection.breakOut))
 
   def orElse[B >: A](other: Configs[B]): Configs[B] = (c, p) =>
     try
@@ -71,6 +75,16 @@ object Configs extends ConfigsInstances {
     }
 
   def onPath[A](f: Config => A): Configs[A] = from(_.getConfig(_) |> f)
+
+
+  final class MapF[F[_], A, B] private(c: Configs[F[A]])(implicit ev: F[A] => Traversable[A], cbf: CanBuildFrom[Nothing, B, F[B]]) {
+    def apply(f: A => B): Configs[F[B]] = c.mapF(f)
+  }
+
+  object MapF {
+    implicit def mapF[F[_], A, B](implicit c: Configs[F[A]], ev: F[A] => Traversable[A], cbf: CanBuildFrom[Nothing, B, F[B]]): MapF[F, A, B] =
+      new MapF(c)
+  }
 
 
   @deprecated("Use Configs.onPath instead", "0.3.0")
