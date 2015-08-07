@@ -17,6 +17,7 @@
 package com.github.kxbmap.configs.util
 
 import com.typesafe.config.{Config, ConfigValue, ConfigValueFactory}
+import java.{util => ju}
 import scala.collection.JavaConverters._
 
 trait ConfigVal[A] {
@@ -41,14 +42,23 @@ object ConfigVal extends Value0 {
   implicit def arrayConfigVal[A: ConfigVal]: ConfigVal[Array[A]] =
     ConfigVal[Seq[A]].contramap(_.toSeq)
 
-  implicit def javaListConfigVal[A: ConfigVal]: ConfigVal[java.util.List[A]] =
+  implicit def javaListConfigVal[A: ConfigVal]: ConfigVal[ju.List[A]] =
     ConfigVal[Seq[A]].contramap(_.asScala)
+
+  implicit def javaMapConfigVal[A: ConfigVal]: ConfigVal[ju.Map[String, A]] =
+    ConfigVal.fromMap(_.asScala.mapValues(_.cv).toMap)
+
+  implicit def javaSetConfigVal[A: ConfigVal]: ConfigVal[ju.Set[A]] =
+    ConfigVal[List[A]].contramap(_.asScala.toList)
 
   implicit def optionConfigVal[A: ConfigVal]: ConfigVal[Option[A]] =
     o => ConfigValueFactory.fromAnyRef(o.map(_.cv).orNull)
 
   implicit def stringMapConfigVal[A: ConfigVal]: ConfigVal[Map[String, A]] =
     m => ConfigValueFactory.fromAnyRef(m.mapValues(_.cv).asJava)
+
+  implicit def symbolMapConfigVal[A: ConfigVal]: ConfigVal[Map[Symbol, A]] =
+    ConfigVal[Map[String, A]].contramap(_.map(t => t._1.name -> t._2))
 
   implicit val charConfigVal: ConfigVal[Char] =
     ConfigVal[Int].contramap(_.toInt)

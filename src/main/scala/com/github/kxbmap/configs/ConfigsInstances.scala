@@ -16,7 +16,7 @@
 
 package com.github.kxbmap.configs
 
-import com.typesafe.config.{Config, ConfigException, ConfigMemorySize, ConfigUtil}
+import com.typesafe.config.{Config, ConfigException, ConfigList, ConfigMemorySize, ConfigObject, ConfigUtil, ConfigValue}
 import java.io.File
 import java.net.{InetAddress, InetSocketAddress}
 import java.nio.file.{Path, Paths}
@@ -157,7 +157,7 @@ private[configs] abstract class ConfigsInstances {
   implicit lazy val stringConfigs: Configs[String] =
     _.getString(_)
 
-  implicit lazy val stringListConfigs: Configs[ju.List[String]] =
+  implicit lazy val stringJavaListConfigs: Configs[ju.List[String]] =
     _.getStringList(_)
 
   implicit def stringsConfigs[F[_]](implicit cbf: CanBuildFrom[Nothing, String, F[String]]): Configs[F[String]] =
@@ -187,17 +187,53 @@ private[configs] abstract class ConfigsInstances {
   implicit lazy val configConfigs: Configs[Config] =
     _.getConfig(_)
 
-  implicit lazy val configListConfigs: Configs[ju.List[Config]] =
+  implicit lazy val configJavaListConfigs: Configs[ju.List[Config]] =
     _.getConfigList(_).asInstanceOf[ju.List[Config]]
 
   implicit def configsConfigs[F[_]](implicit cbf: CanBuildFrom[Nothing, Config, F[Config]]): Configs[F[Config]] =
-    _.getConfigList(_).map(c => c: Config)(collection.breakOut)
+    _.getConfigList(_).map(c => c)(collection.breakOut)
+
+
+  implicit lazy val configValueConfigs: Configs[ConfigValue] =
+    _.getValue(_)
+
+  implicit def configValuesConfigs[F[_]](implicit cbf: CanBuildFrom[Nothing, ConfigValue, F[ConfigValue]]): Configs[F[ConfigValue]] =
+    _.getList(_).to[F]
+
+  implicit lazy val configValueStringMapConfigs: Configs[Map[String, ConfigValue]] =
+    _.getObject(_).toMap
+
+  implicit lazy val configValueSymbolMapConfigs: Configs[Map[Symbol, ConfigValue]] =
+    _.getObject(_).map(t => (Symbol(t._1), t._2)).toMap
+
+  implicit lazy val configValueJavaListConfigs: Configs[ju.List[ConfigValue]] =
+    _.getList(_)
+
+  implicit lazy val configValueJavaMapConfigs: Configs[ju.Map[String, ConfigValue]] =
+    _.getObject(_)
+
+  implicit lazy val configValueJavaSetConfigs: Configs[ju.Set[ConfigValue]] =
+    _.getList(_).toSet.asJava
+
+
+  implicit lazy val configListConfigs: Configs[ConfigList] =
+    _.getList(_)
+
+
+  implicit lazy val configObjectConfigs: Configs[ConfigObject] =
+    _.getObject(_)
+
+  implicit lazy val configObjectJavaListConfigs: Configs[ju.List[ConfigObject]] =
+    _.getObjectList(_).asInstanceOf[ju.List[ConfigObject]]
+
+  implicit def configObjectsConfigs[F[_]](implicit cbf: CanBuildFrom[Nothing, ConfigObject, F[ConfigObject]]): Configs[F[ConfigObject]] =
+    _.getObjectList(_).map(co => co)(collection.breakOut)
 
 
   implicit lazy val configMemorySizeConfigs: Configs[ConfigMemorySize] =
     _.getMemorySize(_)
 
-  implicit lazy val configMemorySizeListConfigs: Configs[ju.List[ConfigMemorySize]] =
+  implicit lazy val configMemorySizeJavaListConfigs: Configs[ju.List[ConfigMemorySize]] =
     _.getMemorySizeList(_)
 
   implicit def configMemorySizesConfigs[F[_]](implicit cbf: CanBuildFrom[Nothing, ConfigMemorySize, F[ConfigMemorySize]]): Configs[F[ConfigMemorySize]] =

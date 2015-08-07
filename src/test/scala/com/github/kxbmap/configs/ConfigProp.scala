@@ -72,6 +72,12 @@ trait ConfigProp {
   implicit def javaListGen[A: Gen]: Gen[ju.List[A]] =
     Gen.list[A].map(_.asJava)
 
+  implicit def javaMapGen[A: Gen]: Gen[ju.Map[String, A]] =
+    Gen[Map[String, A]].map(_.asJava)
+
+  implicit def javaSetGen[A: Gen]: Gen[ju.Set[A]] =
+    Gen[Set[A]].map(_.asJava)
+
 
   implicit lazy val stringGen: Gen[String] =
     Gen.asciiString
@@ -129,21 +135,27 @@ trait ConfigProp {
       ConfigValueFactory.fromAnyRef(false)
     )
 
-  lazy val configListGen: Gen[ConfigList] =
+  implicit lazy val configListGen: Gen[ConfigList] =
     Gen.list(configValueGen).map(xs => ConfigValueFactory.fromIterable(xs.asJava))
 
-  lazy val configObjectGen: Gen[ConfigObject] =
+  implicit lazy val configValueJavaListGen: Gen[ju.List[ConfigValue]] =
+    Gen[ConfigList].map(cl => cl)
+
+  implicit lazy val configObjectGen: Gen[ConfigObject] =
     Gen.mapGen(Gen[String], configValueGen).map(m => ConfigValueFactory.fromMap(m.asJava))
 
-  lazy val configValueGen: Gen[ConfigValue] =
+  implicit lazy val configValueJavaMapGen: Gen[ju.Map[String, ConfigValue]] =
+    Gen[ConfigObject].map(co => co)
+
+  implicit lazy val configValueGen: Gen[ConfigValue] =
     Gen.oneOfLazy(
-      Need(Gen.value(ConfigValueFactory.fromAnyRef(null))),
+//      Need(Gen.value(ConfigValueFactory.fromAnyRef(null))),
       Need(configStringGen),
       Need(configNumberGen),
       Need(configBooleanGen),
       Need(configListGen.asInstanceOf[Gen[ConfigValue]]),
       Need(configObjectGen.asInstanceOf[Gen[ConfigValue]])
-    ).mapSize(_ / 7 + 1)
+    ).mapSize(_ / 7)
 
   implicit lazy val configGen: Gen[Config] =
     configObjectGen.map(_.toConfig)

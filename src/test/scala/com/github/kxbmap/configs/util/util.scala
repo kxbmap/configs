@@ -16,7 +16,7 @@
 
 package com.github.kxbmap.configs.util
 
-import com.typesafe.config.ConfigException
+import com.typesafe.config.{ConfigException, ConfigList, ConfigValue}
 import java.{util => ju}
 import scalaz.Need
 
@@ -44,10 +44,18 @@ object IsWrongType {
 
   def apply[A](implicit A: IsWrongType[A]): IsWrongType[A] = A
 
-  implicit def defaultIsWrong[A]: IsWrongType[A] = a =>
+  implicit def defaultIsWrongType[A]: IsWrongType[A] = default.asInstanceOf[IsWrongType[A]]
+
+  private[this] final val default: IsWrongType[Any] = a =>
     intercept0(a.value) {
       case _: ConfigException.WrongType => true
     }
+
+  implicit val configValueIsWrongType: IsWrongType[ConfigValue] = a => {
+    a.value
+    true
+  }
+
 }
 
 
@@ -73,7 +81,11 @@ object WrongTypeValue {
 
   implicit def defaultWrongTypeValue[A]: WrongTypeValue[A] = list[A]
 
+  implicit val configListWrongTypeValue: WrongTypeValue[ConfigList] = string[ConfigList]
+
   implicit def javaListWrongTypeValue[A]: WrongTypeValue[ju.List[A]] = string[ju.List[A]]
+
+  implicit def javaSetWrongTypeValue[A]: WrongTypeValue[ju.Set[A]] = string[ju.Set[A]]
 
   implicit def traversableWrongTypeValue[F[_] <: Traversable[_], A]: WrongTypeValue[F[A]] = string[F[A]]
 
