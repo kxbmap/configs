@@ -19,6 +19,7 @@ package com.github.kxbmap.configs
 import com.github.kxbmap.configs.util._
 import com.typesafe.config.{Config, ConfigFactory, ConfigList, ConfigMemorySize, ConfigObject, ConfigValue, ConfigValueFactory}
 import java.{lang => jl, time => jt, util => ju}
+import scala.annotation.tailrec
 import scala.collection.JavaConverters._
 import scala.reflect.{ClassTag, classTag}
 import scalaprops.Or.Empty
@@ -86,16 +87,35 @@ trait ConfigProp {
 
 
   implicit lazy val stringGen: Gen[String] =
-    Gen.asciiString
+    Gen.parameterised { (size, r) =>
+      import jl.{Character => C}
+      val cp = Gen.chooseR(C.MIN_CODE_POINT, C.MAX_CODE_POINT, r)
+      Gen.sequenceNArray(size, cp).map { cps =>
+        @tailrec
+        def copyChars(i: Int, j: Int, arr: Array[Char]): Array[Char] =
+          if (i < cps.length) {
+            val cs = C.toChars(cps(i))
+            System.arraycopy(cs, 0, arr, j, cs.length)
+            copyChars(i + 1, j + cs.length, arr)
+          } else {
+            require(j == arr.length)
+            arr
+          }
+        val cc = cps.foldLeft(0)(_ + C.charCount(_))
+        new String(copyChars(0, 0, new Array(cc)))
+      }
+    }
 
   implicit lazy val symbolGen: Gen[Symbol] =
-    Gen[String].map(Symbol.apply)
+    stringGen.map(Symbol.apply)
 
-  implicit lazy val charGen: Gen[Char] =
-    Gen.asciiChar
+  implicit lazy val charGen: Gen[Char] = {
+    import jl.{Character => C}
+    Gen.choose(C.MIN_VALUE, C.MAX_VALUE).map(C.toChars(_)(0))
+  }
 
   implicit lazy val javaCharacterGen: Gen[jl.Character] =
-    Gen.asciiChar.map(Char.box)
+    charGen.map(Char.box)
 
   implicit lazy val floatGen: Gen[Float] =
     Gen.genFiniteFloat

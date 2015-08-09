@@ -17,7 +17,7 @@
 package com.github.kxbmap.configs.util
 
 import com.typesafe.config.{ConfigException, ConfigList, ConfigValue}
-import java.{util => ju}
+import java.{lang => jl, util => ju}
 import scalaz.Need
 
 
@@ -90,5 +90,13 @@ object WrongTypeValue {
   implicit def traversableWrongTypeValue[F[_] <: Traversable[_], A]: WrongTypeValue[F[A]] = string[F[A]]
 
   implicit def arrayWrongTypeValue[A]: WrongTypeValue[Array[A]] = string[Array[A]]
+
+  implicit val charJListWrongTypeValue: WrongTypeValue[ju.List[Char]] = list[ju.List[Char]]
+
+  implicit val characterJListWrongTypeValue: WrongTypeValue[ju.List[jl.Character]] = list[ju.List[jl.Character]]
+
+  implicit def charTraversableWrongTypeValue[F[_] <: Traversable[_]]: WrongTypeValue[F[Char]] = list[F[Char]]
+
+  implicit val charArrayWrongTypeValue: WrongTypeValue[Array[Char]] = list[Array[Char]]
 
 }

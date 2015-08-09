@@ -166,16 +166,20 @@ private[configs] abstract class ConfigsInstances {
 
 
   implicit lazy val charConfigs: Configs[Char] =
-    _.getInt(_) |> (_.toChar)
+    (c, p) => {
+      val s = c.getString(p)
+      if (s.length == 1) s(0)
+      else throw new ConfigException.BadValue(c.origin(), p, s"single bmp char required rather than '$s'")
+    }
 
   implicit lazy val javaCharConfigs: Configs[jl.Character] =
-    _.getInt(_) |> (_.toChar |> Char.box)
+    charConfigs.map(Char.box)
 
   implicit lazy val javaCharListConfigs: Configs[ju.List[jl.Character]] =
-    _.getIntList(_).map(_.toChar |> Char.box).asJava
+    charsConfigs[List].map(_.map(Char.box).asJava)
 
   implicit def charsConfigs[F[_]](implicit cbf: CanBuildFrom[Nothing, Char, F[Char]]): Configs[F[Char]] =
-    _.getIntList(_).map(_.toChar)(collection.breakOut)
+    _.getString(_).toCharArray.to[F]
 
 
   implicit lazy val stringConfigs: Configs[String] =

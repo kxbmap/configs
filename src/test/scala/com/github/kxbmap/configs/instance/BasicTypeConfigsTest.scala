@@ -19,11 +19,7 @@ package com.github.kxbmap.configs.instance
 import com.github.kxbmap.configs.ConfigProp
 import java.{lang => jl, util => ju}
 import scalaprops.{Properties, Scalaprops}
-import scalaz.std.anyVal._
-import scalaz.std.list._
-import scalaz.std.stream._
 import scalaz.std.string._
-import scalaz.std.vector._
 
 object BasicTypeConfigsTest extends Scalaprops with ConfigProp {
 

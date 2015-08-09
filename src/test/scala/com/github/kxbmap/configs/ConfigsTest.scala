@@ -20,17 +20,15 @@ import com.github.kxbmap.configs.util._
 import com.typesafe.config.{ConfigException, ConfigFactory, ConfigUtil, ConfigValueFactory}
 import scala.collection.JavaConversions._
 import scalaprops.Property.forAll
-import scalaprops.{Gen, Properties, Scalaprops}
+import scalaprops.{Properties, Scalaprops}
 import scalaz.std.string._
 
-object ConfigsTest extends Scalaprops {
-
-  implicit val stringGen: Gen[String] = Gen.asciiString
+object ConfigsTest extends Scalaprops with ConfigProp {
 
   val get = forAll { (p: String, v: Int) =>
     val q = ConfigUtil.quoteString(p)
     val config = ConfigFactory.parseString(s"$q = $v")
-    val configs: Configs[Int] = (_, _) => v
+    val configs: Configs[Int] = _.getInt(_)
     configs.get(config, q) == v
   }
 

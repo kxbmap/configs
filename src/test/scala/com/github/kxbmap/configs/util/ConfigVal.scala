@@ -64,10 +64,22 @@ object ConfigVal extends Value0 {
     ConfigVal[Map[String, A]].contramap(_.map(t => t._1.name -> t._2))
 
   implicit val charConfigVal: ConfigVal[Char] =
-    ConfigVal[Int].contramap(_.toInt)
+    ConfigVal[String].contramap(_.toString)
 
   implicit val javaCharacterConfigVal: ConfigVal[java.lang.Character] =
-    ConfigVal[Int].contramap(_.charValue())
+    ConfigVal[String].contramap(_.toString)
+
+  implicit val charJListConfigVal: ConfigVal[ju.List[Char]] =
+    ConfigVal[String].contramap(xs => new String(xs.asScala.toArray))
+
+  implicit val javaCharacterJListConfigVal: ConfigVal[ju.List[java.lang.Character]] =
+    charJListConfigVal.contramap(_.asScala.map(Char.unbox).asJava)
+
+  implicit def charTraversableConfigVal[F[_]](implicit ev: F[Char] <:< Traversable[Char]): ConfigVal[F[Char]] =
+    fa => ConfigValueFactory.fromAnyRef(new String(fa.toArray))
+
+  implicit val charArrayConfigVal: ConfigVal[Array[Char]] =
+    ConfigVal[String].contramap(new String(_))
 
   implicit val configConfigVal: ConfigVal[Config] =
     _.root()
