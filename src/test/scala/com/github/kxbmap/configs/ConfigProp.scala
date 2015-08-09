@@ -32,7 +32,7 @@ import scalaz.{Equal, Need, Order}
 
 trait ConfigProp {
 
-  def hideConfigs[A: ClassTag]: Configs[A] = (_, _) => sys.error(s"hiding Configs[${classTag[A].toString()}] used")
+  def hideConfigs[A: ClassTag]: Configs[A] = (_, _) => sys.error(s"hiding Configs[${classTag[A]}] used")
 
 
   def check[A: Configs : Gen : Equal : ConfigVal : IsMissing : IsWrongType : WrongTypeValue]: Properties[Unit :-: String :-: Empty] =
