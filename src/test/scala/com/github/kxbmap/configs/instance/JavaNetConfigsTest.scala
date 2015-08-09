@@ -19,34 +19,18 @@ package com.github.kxbmap.configs.instance
 import com.github.kxbmap.configs.ConfigProp
 import com.github.kxbmap.configs.util._
 import java.net.{InetAddress, InetSocketAddress}
-import scalaprops.{Gen, Properties, Scalaprops}
+import java.{util => ju}
+import scalaprops.{Gen, Scalaprops}
 import scalaz.Apply
-import scalaz.std.list._
-import scalaz.std.stream._
-import scalaz.std.string._
-import scalaz.std.vector._
 
 object JavaNetConfigsTest extends Scalaprops with ConfigProp {
 
   val inetAddress = check[InetAddress]
 
-  val inetAddressCollections = Properties.list(
-    check[List[InetAddress]].mapId("list " + _),
-    check[Vector[InetAddress]].mapId("vector " + _),
-    check[Stream[InetAddress]].mapId("stream " + _),
-    check[Array[InetAddress]].mapId("array " + _)
-  )
-
-  implicit lazy val inetAddressGen: Gen[InetAddress] =
-    inetAddressStringGen.map(InetAddress.getByName)
-
-  implicit lazy val inetAddressStringGen: Gen[String] = {
-    val part = Gen.choose(0, 255)
-    Apply[Gen].apply4(part, part, part, part)((a, b, c, d) => s"$a.$b.$c.$d")
+  val inetAddressJList = {
+    implicit val h = hideConfigs[InetAddress]
+    check[ju.List[InetAddress]]
   }
-
-  implicit lazy val inetAddressConfigVal: ConfigVal[InetAddress] = ConfigVal[String].contramap(_.getHostAddress)
-
 
   val inetSocketAddress = {
     val addr = {
@@ -73,5 +57,17 @@ object JavaNetConfigsTest extends Scalaprops with ConfigProp {
     }
     addr.product(hostname)
   }
+
+
+  implicit lazy val inetAddressGen: Gen[InetAddress] =
+    inetAddressStringGen.map(InetAddress.getByName)
+
+  implicit lazy val inetAddressStringGen: Gen[String] = {
+    val part = Gen.choose(0, 255)
+    Apply[Gen].apply4(part, part, part, part)((a, b, c, d) => s"$a.$b.$c.$d")
+  }
+
+  implicit lazy val inetAddressConfigVal: ConfigVal[InetAddress] =
+    ConfigVal[String].contramap(_.getHostAddress)
 
 }

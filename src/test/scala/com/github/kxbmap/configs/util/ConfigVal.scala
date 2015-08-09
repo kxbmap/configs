@@ -45,8 +45,11 @@ object ConfigVal extends Value0 {
   implicit def javaListConfigVal[A: ConfigVal]: ConfigVal[ju.List[A]] =
     ConfigVal[Seq[A]].contramap(_.asScala)
 
-  implicit def javaMapConfigVal[A: ConfigVal]: ConfigVal[ju.Map[String, A]] =
+  implicit def javaStringMapConfigVal[A: ConfigVal]: ConfigVal[ju.Map[String, A]] =
     ConfigVal.fromMap(_.asScala.mapValues(_.cv).toMap)
+
+  implicit def javaSymbolMapConfigVal[A: ConfigVal]: ConfigVal[ju.Map[Symbol, A]] =
+    ConfigVal.fromMap(_.asScala.map(t => t._1.name -> t._2.cv).toMap)
 
   implicit def javaSetConfigVal[A: ConfigVal]: ConfigVal[ju.Set[A]] =
     ConfigVal[List[A]].contramap(_.asScala.toList)

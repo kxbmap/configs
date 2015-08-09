@@ -20,6 +20,7 @@ import com.github.kxbmap.configs.util._
 import com.typesafe.config.{Config, ConfigFactory, ConfigList, ConfigMemorySize, ConfigObject, ConfigValue, ConfigValueFactory}
 import java.{lang => jl, time => jt, util => ju}
 import scala.collection.JavaConverters._
+import scala.reflect.{ClassTag, classTag}
 import scalaprops.Or.Empty
 import scalaprops.Property.forAll
 import scalaprops.{:-:, Gen, Properties}
@@ -29,6 +30,9 @@ import scalaz.std.string._
 import scalaz.{Equal, Need, Order}
 
 trait ConfigProp {
+
+  def hideConfigs[A: ClassTag]: Configs[A] = (_, _) => sys.error(s"hiding Configs[${classTag[A].toString()}] used")
+
 
   def check[A: Configs : Gen : Equal : ConfigVal : IsMissing : IsWrongType : WrongTypeValue]: Properties[Unit :-: String :-: Empty] =
     checkId(())
@@ -44,18 +48,17 @@ trait ConfigProp {
       checkWrongType[B].toProperties("wrong type")
     )
 
-
-  def checkGet[A: Configs : Gen : Equal : ConfigVal] = forAll { value: A =>
+  private def checkGet[A: Configs : Gen : Equal : ConfigVal] = forAll { value: A =>
     Equal[A].equal(Configs[A].extract(value.cv), value)
   }
 
-  def checkMissing[A: Configs : IsMissing] = forAll {
+  private def checkMissing[A: Configs : IsMissing] = forAll {
     val p = "missing"
     val c = ConfigFactory.empty()
     IsMissing[A].check(Need(Configs[A].get(c, p)))
   }
 
-  def checkWrongType[A: Configs : IsWrongType : WrongTypeValue] = forAll {
+  private def checkWrongType[A: Configs : IsWrongType : WrongTypeValue] = forAll {
     val p = "dummy-path"
     val c = ConfigValueFactory.fromAnyRef(WrongTypeValue[A].value).atKey(p)
     IsWrongType[A].check(Need(Configs[A].get(c, p)))
@@ -72,8 +75,11 @@ trait ConfigProp {
   implicit def javaListGen[A: Gen]: Gen[ju.List[A]] =
     Gen.list[A].map(_.asJava)
 
-  implicit def javaMapGen[A: Gen]: Gen[ju.Map[String, A]] =
+  implicit def javaStringMapGen[A: Gen]: Gen[ju.Map[String, A]] =
     Gen[Map[String, A]].map(_.asJava)
+
+  implicit def javaSymbolMapGen[A: Gen]: Gen[ju.Map[Symbol, A]] =
+    Gen[Map[String, A]].map(_.map(t => Symbol(t._1) -> t._2).asJava)
 
   implicit def javaSetGen[A: Gen]: Gen[ju.Set[A]] =
     Gen[Set[A]].map(_.asJava)

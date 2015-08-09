@@ -18,22 +18,17 @@ package com.github.kxbmap.configs.instance
 
 import com.github.kxbmap.configs.ConfigProp
 import com.github.kxbmap.configs.util._
-import scalaprops.{Properties, Scalaprops}
-import scalaz.std.list._
-import scalaz.std.stream._
-import scalaz.std.string._
-import scalaz.std.vector._
+import java.{util => ju}
+import scalaprops.Scalaprops
 
 object SymbolConfigsTest extends Scalaprops with ConfigProp {
 
   val symbol = check[Symbol]
 
-  val symbolCollections = Properties.list(
-    check[List[Symbol]].mapId("list " + _),
-    check[Vector[Symbol]].mapId("vector " + _),
-    check[Stream[Symbol]].mapId("stream " + _),
-    check[Array[Symbol]].mapId("array " + _)
-  )
+  val symbolJList = {
+    implicit val h = hideConfigs[Symbol]
+    check[ju.List[Symbol]]
+  }
 
   implicit lazy val symbolConfigVal: ConfigVal[Symbol] = ConfigVal[String].contramap(_.name)
 

@@ -20,31 +20,24 @@ import com.github.kxbmap.configs.ConfigProp
 import com.github.kxbmap.configs.util._
 import java.io.File
 import java.nio.file.{Path, Paths}
-import scalaprops.{Gen, Properties, Scalaprops}
-import scalaz.std.list._
-import scalaz.std.stream._
-import scalaz.std.string._
-import scalaz.std.vector._
+import java.{util => ju}
+import scalaprops.{Gen, Scalaprops}
 
 object JavaFileConfigsTest extends Scalaprops with ConfigProp {
 
   val path = check[Path]
 
-  val pathCollections = Properties.list(
-    check[List[Path]].mapId("list " + _),
-    check[Vector[Path]].mapId("vector " + _),
-    check[Stream[Path]].mapId("stream " + _),
-    check[Array[Path]].mapId("array " + _)
-  )
+  val pathJList = {
+    implicit val h = hideConfigs[Path]
+    check[ju.List[Path]]
+  }
 
   val file = check[File]
 
-  val fileCollections = Properties.list(
-    check[List[File]].mapId("list " + _),
-    check[Vector[File]].mapId("vector " + _),
-    check[Stream[File]].mapId("stream " + _),
-    check[Array[File]].mapId("array " + _)
-  )
+  val fileJList = {
+    implicit val h = hideConfigs[File]
+    check[ju.List[File]]
+  }
 
 
   implicit lazy val pathGen: Gen[Path] =

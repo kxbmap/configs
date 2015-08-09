@@ -17,24 +17,21 @@
 package com.github.kxbmap.configs
 
 import com.github.kxbmap.configs.util._
+import java.{util => ju}
 import scalaprops.Property.forAll
 import scalaprops.{Gen, Properties, Scalaprops}
-import scalaz.std.list._
-import scalaz.std.stream._
 import scalaz.std.string._
-import scalaz.std.vector._
 
 
 object BytesTest extends Scalaprops with ConfigProp {
 
   val bytes = check[Bytes]
 
-  val collections = Properties.list(
-    check[List[Bytes]].mapId("list " + _),
-    check[Vector[Bytes]].mapId("vector " + _),
-    check[Stream[Bytes]].mapId("stream " + _),
-    check[Array[Bytes]].mapId("array " + _)
-  )
+  val bytesJList = {
+    implicit val h = hideConfigs[Bytes]
+    check[ju.List[Bytes]]
+  }
+
 
   val ordering = forAll { bs: List[Bytes] =>
     bs.sorted == bs.map(_.value).sorted.map(Bytes.apply)

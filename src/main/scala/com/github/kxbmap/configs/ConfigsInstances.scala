@@ -35,8 +35,31 @@ private[configs] abstract class ConfigsInstances {
   implicit def materializeConfigs[A]: Configs[A] = macro macros.ConfigsMacro.materialize[A]
 
 
+  implicit def javaListConfigs[A: Configs]: Configs[ju.List[A]] =
+    _.getList(_).map(Configs[A].extract).asJava
+
+  implicit def javaMapConfigs[A: Configs]: Configs[ju.Map[String, A]] =
+    Configs.onPath { c =>
+      c.root().keysIterator.map(k => k -> Configs[A].get(c, ConfigUtil.quoteString(k))).toMap.asJava
+    }
+
+  implicit def javaSetConfigs[A](implicit C: Configs[ju.List[A]]): Configs[ju.Set[A]] =
+    C.get(_, _).toSet.asJava
+
+  implicit def javaSymbolMapConfigs[A](implicit C: Configs[ju.Map[String, A]]): Configs[ju.Map[Symbol, A]] =
+    C.get(_, _).map(t => Symbol(t._1) -> t._2).asJava
+
+
+  implicit def fromJListConfigs[F[_], A](implicit C: Configs[ju.List[A]], cbf: CanBuildFrom[Nothing, A, F[A]]): Configs[F[A]] =
+    C.get(_, _).to[F]
+
+  implicit def fromJMapConfigs[A, B](implicit C: Configs[ju.Map[A, B]]): Configs[Map[A, B]] =
+    C.get(_, _).toMap
+
+
   implicit def optionConfigs[A: Configs]: Configs[Option[A]] =
     (c, p) => if (c.hasPath(p) && !c.getIsNull(p)) Some(Configs[A].get(c, p)) else None
+
 
   implicit def tryConfigs[A: Configs]: Configs[Try[A]] =
     (c, p) => Try(Configs[A].get(c, p))
@@ -158,11 +181,8 @@ private[configs] abstract class ConfigsInstances {
   implicit lazy val stringConfigs: Configs[String] =
     _.getString(_)
 
-  implicit lazy val stringJavaListConfigs: Configs[ju.List[String]] =
+  implicit lazy val stringJListConfigs: Configs[ju.List[String]] =
     _.getStringList(_)
-
-  implicit def stringsConfigs[F[_]](implicit cbf: CanBuildFrom[Nothing, String, F[String]]): Configs[F[String]] =
-    _.getStringList(_).to[F]
 
 
   implicit lazy val javaDurationConfigs: Configs[jt.Duration] =
@@ -171,50 +191,36 @@ private[configs] abstract class ConfigsInstances {
   implicit lazy val javaDurationListConfigs: Configs[ju.List[jt.Duration]] =
     _.getDurationList(_)
 
-  implicit def javaDurationsConfigs[F[_]](implicit cbf: CanBuildFrom[Nothing, jt.Duration, F[jt.Duration]]): Configs[F[jt.Duration]] =
-    _.getDurationList(_).to[F]
-
 
   implicit lazy val finiteDurationConfigs: Configs[FiniteDuration] =
     _.getDuration(_, TimeUnit.NANOSECONDS) |> Duration.fromNanos
 
+  implicit lazy val finiteDurationJListConfigs: Configs[ju.List[FiniteDuration]] =
+    _.getDurationList(_, TimeUnit.NANOSECONDS).map(Duration.fromNanos(_)).asJava
+
+
   implicit lazy val durationConfigs: Configs[Duration] =
     finiteDurationConfigs.asInstanceOf[Configs[Duration]]
 
-  implicit def durationsConfigs[F[_], A >: FiniteDuration <: Duration](implicit cbf: CanBuildFrom[Nothing, A, F[A]]): Configs[F[A]] =
-    _.getDurationList(_, TimeUnit.NANOSECONDS).map(Duration.fromNanos(_))(collection.breakOut)
+  implicit lazy val durationJListConfigs: Configs[ju.List[Duration]] =
+    finiteDurationJListConfigs.asInstanceOf[Configs[ju.List[Duration]]]
 
 
   implicit lazy val configConfigs: Configs[Config] =
     _.getConfig(_)
 
-  implicit lazy val configJavaListConfigs: Configs[ju.List[Config]] =
+  implicit lazy val configJListConfigs: Configs[ju.List[Config]] =
     _.getConfigList(_).asInstanceOf[ju.List[Config]]
-
-  implicit def configsConfigs[F[_]](implicit cbf: CanBuildFrom[Nothing, Config, F[Config]]): Configs[F[Config]] =
-    _.getConfigList(_).map(c => c)(collection.breakOut)
 
 
   implicit lazy val configValueConfigs: Configs[ConfigValue] =
     _.getValue(_)
 
-  implicit def configValuesConfigs[F[_]](implicit cbf: CanBuildFrom[Nothing, ConfigValue, F[ConfigValue]]): Configs[F[ConfigValue]] =
-    _.getList(_).to[F]
-
-  implicit lazy val configValueStringMapConfigs: Configs[Map[String, ConfigValue]] =
-    _.getObject(_).toMap
-
-  implicit lazy val configValueSymbolMapConfigs: Configs[Map[Symbol, ConfigValue]] =
-    _.getObject(_).map(t => (Symbol(t._1), t._2)).toMap
-
-  implicit lazy val configValueJavaListConfigs: Configs[ju.List[ConfigValue]] =
+  implicit lazy val configValueJListConfigs: Configs[ju.List[ConfigValue]] =
     _.getList(_)
 
-  implicit lazy val configValueJavaMapConfigs: Configs[ju.Map[String, ConfigValue]] =
+  implicit lazy val configValueJMapConfigs: Configs[ju.Map[String, ConfigValue]] =
     _.getObject(_)
-
-  implicit lazy val configValueJavaSetConfigs: Configs[ju.Set[ConfigValue]] =
-    _.getList(_).toSet.asJava
 
 
   implicit lazy val configListConfigs: Configs[ConfigList] =
@@ -224,72 +230,48 @@ private[configs] abstract class ConfigsInstances {
   implicit lazy val configObjectConfigs: Configs[ConfigObject] =
     _.getObject(_)
 
-  implicit lazy val configObjectJavaListConfigs: Configs[ju.List[ConfigObject]] =
+  implicit lazy val configObjectJListConfigs: Configs[ju.List[ConfigObject]] =
     _.getObjectList(_).asInstanceOf[ju.List[ConfigObject]]
-
-  implicit def configObjectsConfigs[F[_]](implicit cbf: CanBuildFrom[Nothing, ConfigObject, F[ConfigObject]]): Configs[F[ConfigObject]] =
-    _.getObjectList(_).map(co => co)(collection.breakOut)
 
 
   implicit lazy val configMemorySizeConfigs: Configs[ConfigMemorySize] =
     _.getMemorySize(_)
 
-  implicit lazy val configMemorySizeJavaListConfigs: Configs[ju.List[ConfigMemorySize]] =
+  implicit lazy val configMemorySizeJListConfigs: Configs[ju.List[ConfigMemorySize]] =
     _.getMemorySizeList(_)
 
-  implicit def configMemorySizesConfigs[F[_]](implicit cbf: CanBuildFrom[Nothing, ConfigMemorySize, F[ConfigMemorySize]]): Configs[F[ConfigMemorySize]] =
-    _.getMemorySizeList(_).to[F]
 
+  private def enumMap[A <: jl.Enum[A] : ClassTag]: Map[String, A] =
+    classTag[A].runtimeClass
+      .getEnumConstants.asInstanceOf[Array[A]]
+      .map(a => a.name() -> a)(collection.breakOut)
 
-  implicit def collectionConfigs[F[_], A: Configs](implicit cbf: CanBuildFrom[Nothing, A, F[A]]): Configs[F[A]] =
-    _.getList(_).map(Configs[A].extract).to[F]
+  private def getEnum[A <: jl.Enum[A]](m: Map[String, A], s: String, c: Config, p: String): A =
+    m.getOrElse(s, throw new ConfigException.BadValue(c.origin(), p, s"$s must be one of ${m.keys.mkString(", ")}"))
 
+  implicit def javaEnumConfigs[A <: jl.Enum[A] : ClassTag]: Configs[A] = {
+    val m = enumMap[A]
+    (c, p) => getEnum(m, c.getString(p), c, p)
+  }
 
-  implicit def stringMapConfigs[A: Configs]: Configs[Map[String, A]] =
-    Configs.onPath { c =>
-      val A = Configs[A]
-      c.root().keysIterator.map(k => k -> A.get(c, ConfigUtil.quoteString(k))).toMap
-    }
-
-  implicit def symbolMapConfigs[A: Configs]: Configs[Map[Symbol, A]] =
-    Configs[Map[String, A]].map(_.map {
-      case (k, v) => Symbol(k) -> v
-    })
-
-
-  implicit def javaListConfigs[A: Configs]: Configs[ju.List[A]] =
-    Configs[List[A]].map(_.asJava)
-
-  implicit def javaMapConfigs[A: Configs]: Configs[ju.Map[String, A]] =
-    Configs[Map[String, A]].map(_.asJava)
-
-  implicit def javaSetConfigs[A: Configs]: Configs[ju.Set[A]] =
-    Configs[Set[A]].map(_.asJava)
-
-
-  implicit def javaEnumConfigs[A <: java.lang.Enum[A] : ClassTag]: Configs[A] = {
-    val arr = ju.Objects.requireNonNull(classTag[A].runtimeClass.getEnumConstants.asInstanceOf[Array[A]])
-    (c, p) => {
-      val v = c.getString(p)
-      arr.find(_.name() == v).getOrElse {
-        throw new ConfigException.BadValue(c.origin(), p, s"$v must be one of ${arr.mkString(", ")}")
-      }
-    }
+  implicit def javaEnumJListConfigs[A <: jl.Enum[A] : ClassTag]: Configs[ju.List[A]] = {
+    val m = enumMap[A]
+    (c, p) => c.getStringList(p).map(getEnum(m, _, c, p))
   }
 
 
   implicit lazy val symbolConfigs: Configs[Symbol] =
-    Configs[String].map(Symbol.apply)
+    stringConfigs.map(Symbol.apply)
 
-  implicit def symbolsConfigs[F[_]](implicit mapF: Configs.MapF[F, String, Symbol]): Configs[F[Symbol]] =
-    mapF(Symbol.apply)
+  implicit lazy val symbolJListConfigs: Configs[ju.List[Symbol]] =
+    stringJListConfigs.map(_.map(Symbol.apply))
 
 
   implicit lazy val uuidConfigs: Configs[UUID] =
-    Configs[String].map(UUID.fromString)
+    stringConfigs.map(UUID.fromString)
 
-  implicit def uuidCollectionConfigs[F[_]](implicit mapF: Configs.MapF[F, String, UUID]): Configs[F[UUID]] =
-    mapF(UUID.fromString)
+  implicit lazy val uuidJListConfigs: Configs[ju.List[UUID]] =
+    stringJListConfigs.map(_.map(UUID.fromString))
 
 
   private[this] lazy val availableLocales: Map[String, Locale] =
@@ -301,29 +283,29 @@ private[configs] abstract class ConfigsInstances {
   implicit lazy val localeConfigs: Configs[Locale] =
     (c, p) => getLocale(c.getString(p), c, p)
 
-  implicit def localeCollectionConfigs[F[_]](implicit cbf: CanBuildFrom[Nothing, Locale, F[Locale]]): Configs[F[Locale]] =
-    (c, p) => c.getStringList(p).map(getLocale(_, c, p))(collection.breakOut)
+  implicit lazy val localeJListConfigs: Configs[ju.List[Locale]] =
+    (c, p) => c.getStringList(p).map(getLocale(_, c, p))
 
 
   implicit lazy val pathConfigs: Configs[Path] =
-    Configs[String].map(Paths.get(_))
+    stringConfigs.map(Paths.get(_))
 
-  implicit def pathsConfigs[F[_]](implicit mapF: Configs.MapF[F, String, Path]): Configs[F[Path]] =
-    mapF(Paths.get(_))
+  implicit lazy val pathJListConfigs: Configs[ju.List[Path]] =
+    stringJListConfigs.map(_.map(Paths.get(_)))
 
 
   implicit lazy val fileConfigs: Configs[File] =
-    Configs[String].map(new File(_))
+    stringConfigs.map(new File(_))
 
-  implicit def filesConfigs[F[_]](implicit mapF: Configs.MapF[F, String, File]): Configs[F[File]] =
-    mapF(new File(_))
+  implicit lazy val fileJListConfigs: Configs[ju.List[File]] =
+    stringJListConfigs.map(_.map(new File(_)))
 
 
   implicit lazy val inetAddressConfigs: Configs[InetAddress] =
-    Configs[String].map(InetAddress.getByName)
+    stringConfigs.map(InetAddress.getByName)
 
-  implicit def inetAddressesConfigs[F[_]](implicit mapF: Configs.MapF[F, String, InetAddress]): Configs[F[InetAddress]] =
-    mapF(InetAddress.getByName)
+  implicit lazy val inetAddressJListConfigs: Configs[ju.List[InetAddress]] =
+    stringJListConfigs.map(_.map(InetAddress.getByName))
 
 
   implicit lazy val inetSocketAddressConfigs: Configs[InetSocketAddress] =

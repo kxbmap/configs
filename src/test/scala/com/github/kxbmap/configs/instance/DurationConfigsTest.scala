@@ -18,32 +18,25 @@ package com.github.kxbmap.configs.instance
 
 import com.github.kxbmap.configs.ConfigProp
 import com.github.kxbmap.configs.util._
+import java.{util => ju}
 import scala.concurrent.duration._
-import scalaprops.{Gen, Properties, Scalaprops}
-import scalaz.std.list._
-import scalaz.std.stream._
-import scalaz.std.string._
-import scalaz.std.vector._
+import scalaprops.{Gen, Scalaprops}
 
 object DurationConfigsTest extends Scalaprops with ConfigProp {
 
   val finiteDuration = check[FiniteDuration]
 
-  val finiteDurationCollections = Properties.list(
-    check[List[FiniteDuration]].mapId("list " + _),
-    check[Vector[FiniteDuration]].mapId("vector " + _),
-    check[Stream[FiniteDuration]].mapId("stream " + _),
-    check[Array[FiniteDuration]].mapId("array " + _)
-  )
+  val finiteDurationJList = {
+    implicit val h = hideConfigs[FiniteDuration]
+    check[ju.List[FiniteDuration]]
+  }
 
   val duration = check[Duration]
 
-  val durationCollections = Properties.list(
-    check[List[Duration]].mapId("list " + _),
-    check[Vector[Duration]].mapId("vector " + _),
-    check[Stream[Duration]].mapId("stream " + _),
-    check[Array[Duration]].mapId("array " + _)
-  )
+  val durationJList = {
+    implicit val h = hideConfigs[Duration]
+    check[ju.List[Duration]]
+  }
 
 
   implicit lazy val finiteDurationGen: Gen[FiniteDuration] =

@@ -20,40 +20,64 @@ import com.github.kxbmap.configs.util._
 import com.github.kxbmap.configs.{ConfigProp, Configs}
 import java.{util => ju}
 import scalaprops.{Gen, Properties, Scalaprops}
-import scalaz.Apply
 import scalaz.std.string._
 
 object CollectionConfigsTest extends Scalaprops with ConfigProp {
 
-  val collections = Properties.list(
-    check[List[Foo]].mapId("list " + _),
-    check[Vector[Foo]].mapId("vector " + _),
-    check[Stream[Foo]].mapId("stream " + _),
-    check[Array[Foo]].mapId("array " + _),
-    check[Map[String, Foo]].mapId("string map " + _),
-    check[Map[Symbol, Foo]].mapId("symbol map " + _),
-    check[Set[Foo]].mapId("set " + _)
-  )
+  val javaList = {
+    implicit val c = configs.fooConfigs
+    check[ju.List[Foo]]
+  }
 
-  val javaCollections = Properties.list(
-    check[ju.List[Foo]].mapId("list " + _),
-    check[ju.Map[String, Foo]].mapId("map " + _),
-    check[ju.Set[Foo]].mapId("set " + _)
-  )
+  val javaMap = {
+    implicit val c = configs.fooConfigs
+    check[ju.Map[String, Foo]]
+  }
+
+  val javaSet = {
+    implicit val c = configs.fooJListConfigs
+    check[ju.Set[Foo]]
+  }
+
+  val javaSymbolMap = {
+    implicit val c = configs.fooJMapConfigs
+    check[ju.Map[Symbol, Foo]]
+  }
+
+  val fromJList = {
+    implicit val c = configs.fooJListConfigs
+    Properties.list(
+      check[List[Foo]].mapId("list " + _),
+      check[Vector[Foo]].mapId("vector " + _),
+      check[Stream[Foo]].mapId("stream " + _),
+      check[Array[Foo]].mapId("array " + _),
+      check[Set[Foo]].mapId("set " + _)
+    )
+  }
+
+  val fromJMap = {
+    implicit val c = configs.fooJMapConfigs
+    Properties.list(
+      check[Map[String, Foo]].mapId("string map " + _),
+      check[Map[Symbol, Foo]].mapId("symbol map " + _)
+    )
+  }
 
 
-  case class Foo(a: String, b: Int)
+  case class Foo(value: Int)
 
-  object Foo {
+  implicit lazy val fooGen: Gen[Foo] = Gen[Int].map(Foo.apply)
 
-    implicit val fooConfigs: Configs[Foo] = Configs.onPath(c => Foo(c.getString("a"), c.getInt("b")))
+  implicit lazy val fooConfigVal: ConfigVal[Foo] = _.value.cv.atKey("v").root()
 
-    implicit val fooGen: Gen[Foo] = Apply[Gen].apply2(Gen[String], Gen[Int])(Foo(_, _))
+  object configs {
 
-    implicit val fooConfigVal: ConfigVal[Foo] = ConfigVal.fromMap(f => Map(
-      "a" -> f.a.cv,
-      "b" -> f.b.cv
-    ))
+    val fooConfigs: Configs[Foo] = Configs.onPath(c => Foo(c.getInt("v")))
+
+    val fooJListConfigs: Configs[ju.List[Foo]] = Configs.javaListConfigs(fooConfigs)
+
+    val fooJMapConfigs: Configs[ju.Map[String, Foo]] = Configs.javaMapConfigs(fooConfigs)
+
   }
 
 }

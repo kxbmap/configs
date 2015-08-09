@@ -19,11 +19,17 @@ package com.github.kxbmap.configs.instance
 import com.github.kxbmap.configs.util._
 import com.github.kxbmap.configs.{ConfigProp, Configs}
 import com.typesafe.config.{ConfigException, ConfigFactory}
+import java.{util => ju}
 import scalaprops.Scalaprops
 
 object JavaEnumConfigsTest extends Scalaprops with ConfigProp {
 
   val enum = check[JavaEnum]
+
+  val enumJList = {
+    implicit val h = hideConfigs[JavaEnum]
+    check[ju.List[JavaEnum]]
+  }
 
   val badValue = intercept {
     val config = ConfigFactory.parseString("bad-value = FOOBAR")
