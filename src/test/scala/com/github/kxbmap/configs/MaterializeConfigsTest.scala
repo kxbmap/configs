@@ -21,12 +21,13 @@ import com.typesafe.config.{ConfigException, ConfigFactory}
 import scalaprops.Property.forAll
 import scalaprops.{Gen, Properties, Scalaprops}
 import scalaz.std.string._
+import scalaz.syntax.equal._
 import scalaz.{Apply, Equal}
 
 object MaterializeConfigsTest extends Scalaprops with ConfigProp {
 
   def checkMat[A: Gen : Configs : ConfigVal : Equal] = forAll { a: A =>
-    Equal[A].equal(Configs[A].extract(a.cv), a)
+    Configs[A].extract(a.cv) === a
   }
 
 
@@ -118,19 +119,16 @@ object MaterializeConfigsTest extends Scalaprops with ConfigProp {
   )
 
   private lazy val subCtor1 = forAll { (first: String, last: String, age: Int) =>
-    val expected = new SubCtorsSetting(first, last, age)
     val config = ConfigFactory.parseString(s"firstName = ${q(first)}, lastName = ${q(last)}, age = $age")
-    Equal[SubCtorsSetting].equal(Configs[SubCtorsSetting].extract(config), expected)
+    Configs[SubCtorsSetting].extract(config) === new SubCtorsSetting(first, last, age)
   }
 
   private lazy val subCtor2 = forAll { (first: String, last: String) =>
-    val expected = new SubCtorsSetting(first, last)
     val config = ConfigFactory.parseString(s"firstName = ${q(first)}, lastName = ${q(last)}")
-    Equal[SubCtorsSetting].equal(Configs[SubCtorsSetting].extract(config), expected)
+    Configs[SubCtorsSetting].extract(config) === new SubCtorsSetting(first, last)
   }
 
   private lazy val primaryCtorFirst = forAll { (first: String, last: String, name: String, age: Int, country: String) =>
-    val expected = new SubCtorsSetting(name, age, country)
     val config = ConfigFactory.parseString(
       s"""firstName = ${q(first)}
          |lastName = ${q(last)}
@@ -138,7 +136,7 @@ object MaterializeConfigsTest extends Scalaprops with ConfigProp {
          |age = $age
          |country = ${q(country)}
          |""".stripMargin)
-    Equal[SubCtorsSetting].equal(Configs[SubCtorsSetting].extract(config), expected)
+    Configs[SubCtorsSetting].extract(config) === new SubCtorsSetting(name, age, country)
   }
 
   private lazy val ignorePrivateCtor = intercept { (name: String, age: Int) =>
@@ -180,19 +178,16 @@ object MaterializeConfigsTest extends Scalaprops with ConfigProp {
   )
 
   private lazy val subApply1 = forAll { (a0: Int, b0: Int) =>
-    val expected = MultiApply(a0, b0)
     val config = ConfigFactory.parseString(s"a0 = $a0, b0 = $b0")
-    Equal[MultiApply].equal(Configs[MultiApply].extract(config), expected)
+    Configs[MultiApply].extract(config) === MultiApply(a0, b0)
   }
 
   private lazy val subApply2 = forAll { a0: Int =>
-    val expected = MultiApply(a0)
     val config = ConfigFactory.parseString(s"a0 = $a0")
-    Equal[MultiApply].equal(Configs[MultiApply].extract(config), expected)
+    Configs[MultiApply].extract(config) === MultiApply(a0)
   }
 
   private lazy val syntheticApplyFirst = forAll { (a: Int, b: Int, c: Int, a0: Int, b0: Int) =>
-    val expected = new MultiApply(a, b, c)
     val config = ConfigFactory.parseString(
       s"""a = $a
          |b = $b
@@ -200,7 +195,7 @@ object MaterializeConfigsTest extends Scalaprops with ConfigProp {
          |a0 = $a0
          |b0 = $b0
          |""".stripMargin)
-    Equal[MultiApply].equal(Configs[MultiApply].extract(config), expected)
+    Configs[MultiApply].extract(config) === new MultiApply(a, b, c)
   }
 
   case class MultiApply(a: Int, b: Int, c: Int)
@@ -246,7 +241,7 @@ object MaterializeConfigsTest extends Scalaprops with ConfigProp {
          |upper-then-camel = ${f.UPPERThenCamel}
          |""".stripMargin
     )
-    Equal[FormatCaseSetting].equal(Configs[FormatCaseSetting].extract(config), o)
+    Configs[FormatCaseSetting].extract(config) === o
   }
 
   private lazy val duplicate1 = intercept { (n: Int) =>
@@ -342,14 +337,12 @@ object MaterializeConfigsTest extends Scalaprops with ConfigProp {
 
   private lazy val withAllDefaults = forAll { a: Int =>
     val config = ConfigFactory.parseString(s"a = $a")
-    val expected = new Defaults(a)()()
-    Equal[Defaults].equal(Configs[Defaults].extract(config), expected)
+    Configs[Defaults].extract(config) === new Defaults(a)()()
   }
 
   private lazy val withSomeDefaults = forAll { (a: Int, c: Int) =>
     val config = ConfigFactory.parseString(s"a = $a, c = $c")
-    val expected = new Defaults(a)(c)()
-    Equal[Defaults].equal(Configs[Defaults].extract(config), expected)
+    Configs[Defaults].extract(config) === new Defaults(a)(c)()
   }
 
   class Defaults(val a: Int, val b: Int = 2)(val c: Int = a + b + 3)(val d: Int = b * c * 4)
@@ -377,14 +370,12 @@ object MaterializeConfigsTest extends Scalaprops with ConfigProp {
 
   private lazy val caseWithAllDefaults = forAll { a: Int =>
     val config = ConfigFactory.parseString(s"a = $a")
-    val expected = CaseDefaults(a)()()
-    Equal[CaseDefaults].equal(Configs[CaseDefaults].extract(config), expected)
+    Configs[CaseDefaults].extract(config) === CaseDefaults(a)()()
   }
 
   private lazy val caseWithSomeDefaults = forAll { (a: Int, c: Int) =>
     val config = ConfigFactory.parseString(s"a = $a, c = $c")
-    val expected = CaseDefaults(a)(c)()
-    Equal[CaseDefaults].equal(Configs[CaseDefaults].extract(config), expected)
+    Configs[CaseDefaults].extract(config) === CaseDefaults(a)(c)()
   }
 
   case class CaseDefaults(a: Int, b: Int = 2)(val c: Int = a + b + 3)(val d: Int = b * c * 4)
@@ -409,8 +400,7 @@ object MaterializeConfigsTest extends Scalaprops with ConfigProp {
       implicit val implicitValue: Int = 42
       forAll { (a: Int, b: Int) =>
         val config = ConfigFactory.parseString(s"a = $a, b = $b")
-        val expected = new ImplicitParam(a, b)(42)
-        Equal[ImplicitParam].equal(Configs[ImplicitParam].extract(config), expected)
+        Configs[ImplicitParam].extract(config) === new ImplicitParam(a, b)(42)
       }
     }
     val overrideImp = {
@@ -426,8 +416,7 @@ object MaterializeConfigsTest extends Scalaprops with ConfigProp {
         implicit val unusedImplicitValue: Int = 1
         forAll { (a: Int, b: Int) =>
           val config = ConfigFactory.parseString(s"a = $a, b = $b")
-          val expected = new ImplicitParam(a, b)(42)
-          Equal[ImplicitParam].equal(C.extract(config), expected)
+          C.extract(config) === new ImplicitParam(a, b)(42)
         }
       }
     }
@@ -459,15 +448,13 @@ object MaterializeConfigsTest extends Scalaprops with ConfigProp {
       implicit val implicitValue: Int = 42
       forAll { (a: Int, b: Int) =>
         val config = ConfigFactory.parseString(s"a = $a, b = $b")
-        val expected = new ImplicitWithDefault(a, b)(42)
-        Equal[ImplicitWithDefault].equal(Configs[ImplicitWithDefault].extract(config), expected)
+        Configs[ImplicitWithDefault].extract(config) === new ImplicitWithDefault(a, b)(42)
       }
     }
     val withoutImplicit = {
       forAll { (a: Int, b: Int) =>
         val config = ConfigFactory.parseString(s"a = $a, b = $b")
-        val expected = new ImplicitWithDefault(a, b)(1)
-        Equal[ImplicitWithDefault].equal(Configs[ImplicitWithDefault].extract(config), expected)
+        Configs[ImplicitWithDefault].extract(config) === new ImplicitWithDefault(a, b)(1)
       }
     }
     Properties.list(
