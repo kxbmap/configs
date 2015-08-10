@@ -33,11 +33,6 @@ object DurationConfigsTest extends Scalaprops with ConfigProp {
 
   val duration = check[Duration]
 
-  val durationJList = {
-    implicit val h = hideConfigs[Duration]
-    check[ju.List[Duration]]
-  }
-
 
   implicit lazy val finiteDurationGen: Gen[FiniteDuration] =
     Gen.nonNegativeLong.map(Duration.fromNanos)
@@ -47,9 +42,19 @@ object DurationConfigsTest extends Scalaprops with ConfigProp {
 
 
   implicit lazy val durationGen: Gen[Duration] =
-    finiteDurationGen.asInstanceOf[Gen[Duration]]
+    Gen.frequency(
+      1 -> Gen.value(Duration.Inf),
+      1 -> Gen.value(Duration.MinusInf),
+      1 -> Gen.value(Duration.Undefined),
+      47 -> finiteDurationGen.asInstanceOf[Gen[Duration]]
+    )
 
   implicit lazy val durationValue: ConfigVal[Duration] =
-    finiteDurationValue.asInstanceOf[ConfigVal[Duration]]
+    ConfigVal[String].contramap {
+      case Duration.Inf                 => "infinity"
+      case Duration.MinusInf            => "-infinity"
+      case d if d eq Duration.Undefined => "undefined"
+      case d                            => s"${d.toNanos}ns"
+    }
 
 }

@@ -204,10 +204,14 @@ private[configs] abstract class ConfigsInstances {
 
 
   implicit lazy val durationConfigs: Configs[Duration] =
-    finiteDurationConfigs.asInstanceOf[Configs[Duration]]
-
-  implicit lazy val durationJListConfigs: Configs[ju.List[Duration]] =
-    finiteDurationJListConfigs.asInstanceOf[Configs[ju.List[Duration]]]
+    finiteDurationConfigs.orElse { (c, p) =>
+      c.getString(p) match {
+        case "infinity" | "+infinity" => Duration.Inf
+        case "-infinity"              => Duration.MinusInf
+        case "undefined"              => Duration.Undefined
+        case s                        => throw new ConfigException.BadValue(c.origin(), p, s"Could not parse duration '$s'")
+      }
+    }
 
 
   implicit lazy val configConfigs: Configs[Config] =
