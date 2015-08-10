@@ -19,8 +19,8 @@ package com.github.kxbmap.configs
 import com.github.kxbmap.configs.util._
 import com.typesafe.config.{ConfigException, ConfigFactory, ConfigUtil, ConfigValueFactory}
 import scala.collection.JavaConversions._
-import scalaprops.Property.forAll
-import scalaprops.{Properties, Scalaprops}
+import scalaprops.Property.{forAll, forAllG}
+import scalaprops.{Gen, Properties, Scalaprops}
 import scalaz.std.string._
 
 object ConfigsTest extends Scalaprops with ConfigProp {
@@ -85,6 +85,34 @@ object ConfigsTest extends Scalaprops with ConfigProp {
       list.toProperties("list"),
       array.toProperties("array")
     )
+  }
+
+  val flatMap = {
+    val c0: Configs[String] = _.getConfig(_).getString("type")
+    val c: Configs[Any] = c0.flatMap {
+      case "int"    => _.getConfig(_).getInt("value")
+      case "string" => _.getConfig(_).getString("value")
+      case "bool"   => _.getConfig(_).getBoolean("value")
+      case s        => throw new RuntimeException(s)
+    }
+    val g = Gen.oneOf[(String, Any)](
+      Gen[Int].map("int" -> _),
+      Gen[String].map("string" -> _),
+      Gen[Boolean].map("bool" -> _)
+    )
+    forAllG(g) {
+      case (t, v) =>
+        val q = v match {
+          case s: String => ConfigUtil.quoteString(s)
+          case _         => v
+        }
+        val config = ConfigFactory.parseString(
+          s"""type = $t
+             |value = $q
+             |""".stripMargin)
+
+        c.extract(config) == v
+    }
   }
 
   val orElse = {

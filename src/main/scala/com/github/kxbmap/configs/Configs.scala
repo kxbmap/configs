@@ -36,6 +36,8 @@ trait Configs[A] {
   def mapF[F[_], B, C](f: B => C)(implicit ev1: A =:= F[B], ev2: F[B] => Traversable[B], cbf: CanBuildFrom[Nothing, C, F[C]]): Configs[F[C]] =
     map(ev1(_).map(f)(collection.breakOut))
 
+  def flatMap[B](f: A => Configs[B]): Configs[B] = Configs.from((c, p) => f(get(c, p)).get(c, p))
+
   def orElse[B >: A](other: Configs[B]): Configs[B] = (c, p) =>
     try
       get(c, p)
