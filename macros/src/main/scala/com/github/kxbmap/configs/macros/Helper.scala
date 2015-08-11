@@ -16,7 +16,6 @@
 
 package com.github.kxbmap.configs.macros
 
-import com.github.kxbmap.configs.Configs
 import com.typesafe.config.{Config, ConfigException}
 import scala.reflect.macros.blackbox
 
@@ -28,15 +27,13 @@ private[macros] abstract class Helper {
 
   lazy val configType = typeOf[Config]
 
-  def configsType[T: WeakTypeTag]: Type = configsType(weakTypeOf[T])
+  lazy val configsCompanion = q"_root_.com.github.kxbmap.configs.Configs"
 
-  def configsType(arg: Type): Type = appliedType(typeOf[Configs[_]].typeConstructor, arg)
+  def configsType(arg: Type): Tree = tq"_root_.com.github.kxbmap.configs.Configs[$arg]"
 
   def optionType(arg: Type): Type = appliedType(typeOf[Option[_]].typeConstructor, arg)
 
   def setType(arg: Type): Type = appliedType(typeOf[Set[_]].typeConstructor, arg)
-
-  lazy val configsCompanion = symbolOf[Configs[_]].companion
 
   lazy val badPathType = typeOf[ConfigException.BadPath]
 

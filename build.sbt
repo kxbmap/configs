@@ -1,6 +1,7 @@
 name := "configs"
 
 commonSettings
+disablePublishSettings
 
 lazy val configVersion = settingKey[String]("Typesafe config version")
 
@@ -28,10 +29,23 @@ lazy val core = project.settings(
   commonSettings,
   scalapropsSettings,
   libraryDependencies ++= Seq(
+    "com.typesafe" % "config" % configVersion.value
+  )
+).dependsOn(
+  macros % "provided",
+  macros % "provided->provided",
+  testkit % "test"
+)
+
+lazy val macros = project.settings(
+  name := "configs-macro",
+  commonSettings,
+  scalapropsSettings,
+  libraryDependencies ++= Seq(
     "com.typesafe" % "config" % configVersion.value,
     "org.scala-lang" % "scala-reflect" % scalaVersion.value % "provided"
   )
-).dependsOn(testkit % "test")
+)
 
 lazy val testkit = project.settings(
   name := "configs-testkit",
@@ -39,5 +53,6 @@ lazy val testkit = project.settings(
   libraryDependencies ++= Seq(
     "com.typesafe" % "config" % configVersion.value,
     "com.github.scalaprops" %% "scalaprops" % scalapropsVersion.value
-  )
+  ),
+  disablePublishSettings
 )
