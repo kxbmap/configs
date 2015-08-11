@@ -302,6 +302,13 @@ object MaterializeConfigsTest extends Scalaprops with ConfigProp {
 
   case class SealedNestChild(nn: Int) extends SealedNest
 
+  case class SealedChild5(value: Int) extends SealedTrait
+
+  case class SealedChild6(value: Int) extends SealedTrait
+
+  case object SealedChild7 extends SealedTrait
+
+  // workaround for bug of knownDirectSubclasses
   implicit lazy val sealedTraitConfigs: Configs[SealedTrait] = Configs.of[SealedTrait]
 
   implicit lazy val sealedTraitEqual: Equal[SealedTrait] = (a, b) =>
@@ -316,6 +323,20 @@ object MaterializeConfigsTest extends Scalaprops with ConfigProp {
     case s: SealedChild3     => Map("m" -> s.m).cv
     case SealedChild4        => "SealedChild4".cv
     case SealedNestChild(nn) => Map("nn" -> nn).cv
+    case SealedChild5(value) =>
+      Map[String, Any](
+        "'type" -> "SealedChild5",
+        "value" -> value
+      ).cv
+    case SealedChild6(value) =>
+      Map[String, Any](
+        "'type" -> "SealedChild6",
+        "value" -> value
+      ).cv
+    case SealedChild7 =>
+      Map[String, Any](
+        "'type" -> "SealedChild7"
+      ).cv
   }
 
   implicit lazy val sealedTraitGen: Gen[SealedTrait] =
@@ -324,7 +345,10 @@ object MaterializeConfigsTest extends Scalaprops with ConfigProp {
       Gen.value(SealedChild2),
       Gen[Int].map(new SealedChild3(_)),
       Gen.value(SealedChild4),
-      Gen[Int].map(SealedNestChild)
+      Gen[Int].map(SealedNestChild),
+      Gen[Int].map(SealedChild5),
+      Gen[Int].map(SealedChild6),
+      Gen.value(SealedChild7)
     )
 
 

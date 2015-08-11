@@ -23,82 +23,146 @@ class ConfigsMacro(val c: blackbox.Context) extends Helper {
 
   import c.universe._
 
-  def materialize[A: WeakTypeTag]: Tree = {
-    val self = TermName("self")
-    val (values, cs) = build[A]
-    q"""
-    ..$values
-    implicit lazy val $self: ${configsType[A]} = $cs
-    $self
-    """
-  }
+  def materialize[A: WeakTypeTag]: Tree = mat(weakTypeOf[A]).materialize()
 
-  type State = (mutable.ArrayBuffer[(Type, TermName)], mutable.ArrayBuffer[Tree])
+  private def mat(tpe: Type): Mat = tpe.typeSymbol match {
+    case ts if ts.isClass =>
+      def nonEmpty[A](ctors: Seq[A]): Seq[A] =
+        if (ctors.isEmpty) abort(s"$tpe has no instance creation methods")
+        else ctors
 
-  def build[A: WeakTypeTag]: (Seq[Tree], Tree) = {
-    val terms = new mutable.ArrayBuffer[(Type, TermName)]()
-    val values = new mutable.ArrayBuffer[Tree]()
-    val state = (terms, values)
-    val cs = ctors[A]
-    if (cs.isEmpty) {
-      abort(s"Couldn't materialize Configs[${fullNameOf[A]}]")
-    }
-    (values, build[A](state, cs))
-  }
-
-  def build[A: WeakTypeTag](state: State, ctors: Seq[Ctor]): Tree = {
-    val modules = ctors.collect {
-      case ModuleCtor(_, module) => module
-    }
-    val mc = if (modules.nonEmpty) Some(modulesConfigs[A](modules)) else None
-    val others = ctors.filterNot(_.isModuleCtor).map(_.toConfigs(state))
-    (mc.toSeq ++: others).reduceLeft((l, r) => q"$l.orElse($r)")
-  }
-
-  def ctors[A: WeakTypeTag]: Seq[Ctor] = {
-    val top = weakTypeOf[A]
-
-    def constructors(tpe: Type): Seq[CtorCtor] =
-      tpe.decls.sorted.collect {
-        case m: MethodSymbol if m.isConstructor && m.isPublic =>
-          CtorCtor(top, tpe, m)
-      }
-
-    def applies(tpe: Type, cmp: ModuleSymbol): Seq[MethodCtor] =
-      cmp.info.decls.sorted
-        .collect {
-          case m: MethodSymbol if m.isPublic && m.returnType <:< top && nameOf(m) == "apply" =>
-            MethodCtor(top, tpe, cmp, m)
-        }
-        .sortBy(!_.method.isSynthetic)
-
-    def collect(tpe: Type, sym: ClassSymbol): Seq[Ctor] = {
+      val sym = ts.asClass
       if (sym.isSealed)
-        sym.knownDirectSubclasses.toSeq.sortBy(nameOf(_)).flatMap { s =>
-          val cs = s.asClass
-          collect(cs.toType, cs)
-        }
-      else if (sym.isModuleClass)
-        Seq(ModuleCtor(top, sym.module.asModule))
+        SealedTypeMat(tpe, nonEmpty(collect(tpe, sym)))
       else if (sym.isCaseClass)
-        applies(tpe, sym.companion.asModule)
+        ClassMat(tpe, nonEmpty(applies(tpe, sym.companion.asModule)))
       else if (!sym.isAbstract)
-        constructors(tpe)
+        ClassMat(tpe, nonEmpty(constructors(tpe)))
       else
-        Seq.empty
+        abort(s"$tpe should be concrete class or sealed trait")
+
+    case _ =>
+      abort(s"$tpe should be concrete class or sealed trait")
+  }
+
+  private def constructors(tpe: Type): Seq[CtorCtor] =
+    tpe.decls.sorted.collect {
+      case m: MethodSymbol if m.isConstructor && m.isPublic =>
+        CtorCtor(tpe, m)
     }
-    top.typeSymbol match {
-      case ts if ts.isClass => collect(top, ts.asClass)
-      case _                => Seq.empty
-    }
+
+  private def applies(tpe: Type, cmp: ModuleSymbol): Seq[MethodCtor] =
+    cmp.info.decls.sorted
+      .collect {
+        case m: MethodSymbol if m.isPublic && m.returnType =:= tpe && nameOf(m) == "apply" =>
+          MethodCtor(tpe, cmp, m)
+      }
+      .sortBy(!_.method.isSynthetic)
+
+  private def collect(tpe: Type, sym: ClassSymbol): Seq[Ctor] = {
+    if (sym.isSealed)
+      sym.knownDirectSubclasses.toSeq.sortBy(_.fullName).flatMap { s =>
+        val cs = s.asClass
+        collect(cs.toType, cs)
+      }
+    else if (sym.isModuleClass)
+      Seq(ModuleCtor(tpe, sym.module.asModule))
+    else if (sym.isCaseClass)
+      applies(tpe, sym.companion.asModule)
+    else if (!sym.isAbstract)
+      constructors(tpe)
+    else
+      Seq.empty
   }
 
 
-  sealed trait Ctor {
+  private sealed trait Mat {
 
-    def retType: Type
+    def tpe: Type
 
     def toConfigs(state: State): Tree
+
+    def materialize(): Tree = {
+      val self = TermName("self")
+      val s = new State()
+      val c = toConfigs(s)
+      q"""
+      ..${s.values}
+      implicit lazy val $self: ${configsType(tpe)} = $c
+      $self
+      """
+    }
+  }
+
+  private case class ClassMat(tpe: Type, ctors: Seq[Ctor]) extends Mat {
+    def toConfigs(state: State): Tree =
+      ctors.map(_.toConfigs(state, tpe)).reduceLeft((l, r) => q"$l.orElse($r)")
+  }
+
+  private case class SealedTypeMat(tpe: Type, ctors: Seq[Ctor]) extends Mat {
+
+    def toConfigs(state: State): Tree = {
+      val mc = modulesConfigs
+      val cs = ctors.map { ct =>
+        ct.tpeName -> q"${state.addVal(ct.toConfigs(state, tpe))}"
+      }
+      val tc = byTypeConfigs(cs)
+      val m = cs.toMap
+      val ns = ctors.filterNot(_.isModuleCtor).flatMap(ct => m.get(ct.tpeName))
+
+      (mc.toSeq ++: tc.toSeq ++: ns).reduceLeft((l, r) => q"$l.orElse($r)")
+    }
+
+    private def modulesConfigs: Option[Tree] = {
+      val ms = ctors.collect {
+        case ModuleCtor(_, module) =>
+          val n = nameOf(module)
+          (n, cq"$n => $module")
+      }
+      if (ms.isEmpty) None
+      else {
+        val (names, cases) = ms.unzip
+        val tree =
+          q"""
+          new ${configsType(tpe)} {
+            private[this] final val names = ${names.mkString(",")}
+            def get(c: $configType, p: ${typeOf[String]}): $tpe =
+              c.getString(p) match {
+                case ..$cases
+                case s => throw new $badValueType(c.origin(), p, s"unknown: $$s, expected is one of: $$names")
+              }
+          }
+          """
+        Some(tree)
+      }
+    }
+
+    private def byTypeConfigs(cs: Seq[(String, Tree)]): Option[Tree] = {
+      if (cs.isEmpty) None
+      else {
+        val cases = cs.map {
+          case (n, t) => cq"$n => $t"
+        }
+        val tree =
+          q"""
+          $configsCompanion.onPath[${typeOf[String]}](_.getString("'type")).flatMap {
+            case ..$cases
+            case s => throw new ${typeOf[RuntimeException]}(s"unknown type: $$s")
+          }
+          """
+        Some(tree)
+      }
+    }
+  }
+
+
+  private sealed trait Ctor {
+
+    def tpe: Type
+
+    def toConfigs(state: State, retType: Type): Tree
+
+    def tpeName: String = nameOf(tpe)
 
     def isModuleCtor: Boolean = this match {
       case _: ModuleCtor => true
@@ -106,26 +170,24 @@ class ConfigsMacro(val c: blackbox.Context) extends Helper {
     }
   }
 
-  case class CtorCtor(retType: Type, tpe: Type, method: MethodSymbol) extends Ctor with MethodBase {
+  private case class CtorCtor(tpe: Type, method: MethodSymbol) extends Ctor with MethodBase {
     def newInstance(argLists: List[List[TermName]]): Tree = q"new $tpe(...$argLists)"
   }
 
-  case class MethodCtor(retType: Type, tpe: Type, module: ModuleSymbol, method: MethodSymbol) extends Ctor with MethodBase {
+  private case class MethodCtor(tpe: Type, module: ModuleSymbol, method: MethodSymbol) extends Ctor with MethodBase {
     def newInstance(argLists: List[List[TermName]]): Tree = q"$module.$method(...$argLists)"
   }
 
-  case class ModuleCtor(retType: Type, module: ModuleSymbol) extends Ctor {
-    def toConfigs(state: State): Tree = EmptyTree
+  private case class ModuleCtor(tpe: Type, module: ModuleSymbol) extends Ctor {
+    def toConfigs(state: State, retType: Type): Tree = q"$configsCompanion.onPath[$retType](_ => $module)"
   }
 
-  sealed trait MethodBase {
+  private sealed trait MethodBase {
     this: Ctor =>
 
     def newInstance(argLists: List[List[TermName]]): Tree
 
     def method: MethodSymbol
-
-    def tpe: Type
 
     lazy val companion = tpe.typeSymbol.companion
 
@@ -141,16 +203,7 @@ class ConfigsMacro(val c: blackbox.Context) extends Helper {
         }(collection.breakOut)
     }
 
-    def toConfigs(state: State): Tree = {
-
-      def stateGetOrAppend(key: Type)(op: => (TermName, Tree)): TermName =
-        state._1.find(_._1 =:= key).fold {
-          val (n, v) = op
-          state._1 += key -> n
-          state._2 += v
-          n
-        }(_._2)
-
+    def toConfigs(state: State, retType: Type): Tree = {
       val config = TermName("config")
       val hyphens: Map[String, String] = method.paramLists.flatMap(_.map { p =>
         val n = nameOf(p)
@@ -169,13 +222,11 @@ class ConfigsMacro(val c: blackbox.Context) extends Helper {
             val hName = hyphens(pName)
             val hNameEnabled = !hyphens.contains(hName) && hyphens.valuesIterator.count(_ == hName) <= 1
 
-            val cn = stateGetOrAppend(pType) {
-              val fn = freshName("c")
-              fn -> q"lazy val $fn = $configsCompanion[$pType]"
+            val cn = state.getOrAppend(pType) {
+              q"$configsCompanion[$pType]"
             }
-            def on = stateGetOrAppend(optPType) {
-              val fn = freshName("o")
-              fn -> q"lazy val $fn = $configsCompanion.optionConfigs[$pType]($cn)"
+            lazy val on = state.getOrAppend(optPType) {
+              q"$configsCompanion.optionConfigs[$pType]($cn)"
             }
 
             val sn = if (pt.isImplicit || pt.isParamWithDefault) on else cn
@@ -218,24 +269,25 @@ class ConfigsMacro(val c: blackbox.Context) extends Helper {
     }
   }
 
-  def modulesConfigs[A: WeakTypeTag](modules: Seq[ModuleSymbol]): Tree = {
-    val tpe = weakTypeOf[A]
-    val (names, cqs) = modules.map {
-      case m =>
-        val n = nameOf(m)
-        (n, cq"$n => $m")
-    }.unzip
-    q"""
-    new ${configsType(tpe)} {
-      private[this] final val names = ${names.mkString(",")}
-      def get(c: $configType, p: ${typeOf[String]}): $tpe = {
-        c.getString(p) match {
-          case ..$cqs
-          case s => throw new $badValueType(c.origin(), p, s"unknown: $$s, expected is one of: $$names")
-        }
-      }
+
+  private class State private(names: mutable.Buffer[(Type, TermName)], vals: mutable.Buffer[Tree]) {
+
+    def this() = this(new mutable.ArrayBuffer[(Type, TermName)](), new mutable.ArrayBuffer[Tree]())
+
+    def values: Seq[Tree] = vals
+
+    def getOrAppend(key: Type)(op: => Tree): TermName =
+      names.find(_._1 =:= key).fold {
+        val n = addVal(op)
+        names += key -> n
+        n
+      }(_._2)
+
+    def addVal(tree: Tree): TermName = {
+      val n = freshName("v")
+      vals += q"lazy val $n = $tree"
+      n
     }
-    """
   }
 
 }
