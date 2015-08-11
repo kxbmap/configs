@@ -16,7 +16,7 @@
 
 package com.github.kxbmap.configs
 
-import com.github.kxbmap.configs.util._
+import com.github.kxbmap.configs.testkit._
 import com.typesafe.config.{ConfigException, ConfigFactory}
 import java.{lang => jl, util => ju}
 import scala.beans.BeanProperty

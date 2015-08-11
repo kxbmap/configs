@@ -16,7 +16,7 @@
 
 package com.github.kxbmap.configs
 
-import com.github.kxbmap.configs.util._
+import com.github.kxbmap.configs.testkit._
 import java.{util => ju}
 import scalaprops.Property.forAll
 import scalaprops.{Gen, Properties, Scalaprops}

@@ -17,7 +17,7 @@
 package com.github.kxbmap.configs.syntax
 
 import com.github.kxbmap.configs.ConfigProp
-import com.github.kxbmap.configs.util._
+import com.github.kxbmap.configs.testkit._
 import com.typesafe.config.ConfigValueFactory
 import scala.collection.JavaConverters._
 import scalaprops.Property.forAll

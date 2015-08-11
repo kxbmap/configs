@@ -16,7 +16,7 @@
 
 package com.github.kxbmap.configs
 
-import com.github.kxbmap.configs.util._
+import com.github.kxbmap.configs.testkit._
 import com.typesafe.config.{Config, ConfigFactory, ConfigList, ConfigMemorySize, ConfigObject, ConfigValue, ConfigValueFactory}
 import java.{lang => jl, time => jt, util => ju}
 import scala.annotation.tailrec

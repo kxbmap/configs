@@ -16,8 +16,8 @@
 
 package com.github.kxbmap.configs
 
-import com.github.kxbmap.configs.util._
-import com.typesafe.config.{ConfigException, ConfigFactory, ConfigUtil, ConfigValueFactory}
+import com.github.kxbmap.configs.testkit._
+import com.typesafe.config.{ConfigException, ConfigFactory, ConfigValueFactory}
 import scala.collection.JavaConversions._
 import scalaprops.Property.{forAll, forAllG}
 import scalaprops.{Gen, Properties, Scalaprops}
@@ -26,15 +26,13 @@ import scalaz.std.string._
 object ConfigsTest extends Scalaprops with ConfigProp {
 
   val get = forAll { (p: String, v: Int) =>
-    val q = ConfigUtil.quoteString(p)
-    val config = ConfigFactory.parseString(s"$q = $v")
+    val config = ConfigFactory.parseString(s"${q(p)} = $v")
     val configs: Configs[Int] = _.getInt(_)
-    configs.get(config, q) == v
+    configs.get(config, q(p)) == v
   }
 
   val extractC = forAll { (p: String, v: Int) =>
-    val q = ConfigUtil.quoteString(p)
-    val config = ConfigFactory.parseString(s"$q = $v")
+    val config = ConfigFactory.parseString(s"${q(p)} = $v")
     val configs: Configs[Map[String, Int]] = _.getConfig(_).root().mapValues(_.unwrapped().asInstanceOf[Int]).toMap
     configs.extract(config) == Map(p -> v)
   }
@@ -47,16 +45,14 @@ object ConfigsTest extends Scalaprops with ConfigProp {
 
   val map = {
     val identity = forAll { (p: String, v: Int) =>
-      val q = ConfigUtil.quoteString(p)
-      val config = ConfigFactory.parseString(s"$q = $v")
+      val config = ConfigFactory.parseString(s"${q(p)} = $v")
       val configs: Configs[Int] = _.getInt(_)
-      configs.map(a => a).get(config, q) == configs.get(config, q)
+      configs.map(a => a).get(config, q(p)) == configs.get(config, q(p))
     }
     val composite = forAll { (p: String, v: Int, f: Int => String, g: String => Long) =>
-      val q = ConfigUtil.quoteString(p)
-      val config = ConfigFactory.parseString(s"$q = $v")
+      val config = ConfigFactory.parseString(s"${q(p)} = $v")
       val configs: Configs[Int] = _.getInt(_)
-      configs.map(f).map(g).get(config, q) == (g compose f)(configs.get(config, q))
+      configs.map(f).map(g).get(config, q(p)) == (g compose f)(configs.get(config, q(p)))
     }
     Properties.list(
       identity.toProperties("identity"),
@@ -102,13 +98,13 @@ object ConfigsTest extends Scalaprops with ConfigProp {
     )
     forAllG(g) {
       case (t, v) =>
-        val q = v match {
-          case s: String => ConfigUtil.quoteString(s)
+        val qv = v match {
+          case s: String => q(s)
           case _         => v
         }
         val config = ConfigFactory.parseString(
           s"""type = $t
-             |value = $q
+             |value = $qv
              |""".stripMargin)
 
         c.extract(config) == v

@@ -14,50 +14,10 @@
  * limitations under the License.
  */
 
-package com.github.kxbmap.configs.util
+package com.github.kxbmap.configs.testkit
 
-import com.typesafe.config.{ConfigException, ConfigList, ConfigValue}
+import com.typesafe.config.ConfigList
 import java.{lang => jl, util => ju}
-import scalaz.Need
-
-
-trait IsMissing[A] {
-  def check(a: Need[A]): Boolean
-}
-
-object IsMissing {
-
-  def apply[A](implicit A: IsMissing[A]): IsMissing[A] = A
-
-  implicit def defaultIsMissing[A]: IsMissing[A] = a =>
-    intercept0(a.value) {
-      case _: ConfigException.Missing => true
-    }
-}
-
-
-trait IsWrongType[A] {
-  def check(a: Need[A]): Boolean
-}
-
-object IsWrongType {
-
-  def apply[A](implicit A: IsWrongType[A]): IsWrongType[A] = A
-
-  implicit def defaultIsWrongType[A]: IsWrongType[A] = default.asInstanceOf[IsWrongType[A]]
-
-  private[this] final val default: IsWrongType[Any] = a =>
-    intercept0(a.value) {
-      case _: ConfigException.WrongType => true
-    }
-
-  implicit val configValueIsWrongType: IsWrongType[ConfigValue] = a => {
-    a.value
-    true
-  }
-
-}
-
 
 trait WrongTypeValue[A] {
   def value: Any

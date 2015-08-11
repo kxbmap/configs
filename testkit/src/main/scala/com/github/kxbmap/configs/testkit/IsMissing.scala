@@ -14,22 +14,21 @@
  * limitations under the License.
  */
 
-package com.github.kxbmap.configs.instance
+package com.github.kxbmap.configs.testkit
 
-import com.github.kxbmap.configs.ConfigProp
-import com.github.kxbmap.configs.testkit._
-import java.{util => ju}
-import scalaprops.Scalaprops
+import com.typesafe.config.ConfigException
+import scalaz.Need
 
-object SymbolConfigsTest extends Scalaprops with ConfigProp {
+trait IsMissing[A] {
+  def check(a: Need[A]): Boolean
+}
 
-  val symbol = check[Symbol]
+object IsMissing {
 
-  val symbolJList = {
-    implicit val h = hideConfigs[Symbol]
-    check[ju.List[Symbol]]
-  }
+  def apply[A](implicit A: IsMissing[A]): IsMissing[A] = A
 
-  implicit lazy val symbolConfigVal: ConfigVal[Symbol] = ConfigVal[String].contramap(_.name)
-
+  implicit def defaultIsMissing[A]: IsMissing[A] = a =>
+    intercept0(a.value) {
+      case _: ConfigException.Missing => true
+    }
 }

@@ -10,6 +10,7 @@ lazy val commonSettings: Seq[Setting[_]] = Seq(
   scalaVersion := "2.11.7",
   crossScalaVersions += "2.12.0-M2",
   configVersion := "1.3.0",
+  scalapropsVersion := "0.1.12",
   scalacOptions ++= Seq(
     "-deprecation",
     "-unchecked",
@@ -26,9 +27,17 @@ lazy val core = project.settings(
   name := "configs",
   commonSettings,
   scalapropsSettings,
-  scalapropsVersion := "0.1.12",
   libraryDependencies ++= Seq(
     "com.typesafe" % "config" % configVersion.value,
     "org.scala-lang" % "scala-reflect" % scalaVersion.value % "provided"
+  )
+).dependsOn(testkit % "test")
+
+lazy val testkit = project.settings(
+  name := "configs-testkit",
+  commonSettings,
+  libraryDependencies ++= Seq(
+    "com.typesafe" % "config" % configVersion.value,
+    "com.github.scalaprops" %% "scalaprops" % scalapropsVersion.value
   )
 )

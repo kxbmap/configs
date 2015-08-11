@@ -20,7 +20,7 @@ import com.typesafe.config.{ConfigUtil, ConfigValue}
 import scalaprops.Property.forAll
 import scalaprops.{Gen, Property}
 
-package object util {
+package object testkit {
 
   val q = ConfigUtil.quoteString _
 
@@ -33,7 +33,7 @@ package object util {
   }
 
 
-  private[util] def intercept0(block: => Unit)(cond: PartialFunction[Throwable, Boolean]): Boolean =
+  private[testkit] def intercept0(block: => Unit)(cond: PartialFunction[Throwable, Boolean]): Boolean =
     try {
       block
       false

@@ -14,22 +14,29 @@
  * limitations under the License.
  */
 
-package com.github.kxbmap.configs.instance
+package com.github.kxbmap.configs.testkit
 
-import com.github.kxbmap.configs.ConfigProp
-import com.github.kxbmap.configs.testkit._
-import java.{util => ju}
-import scalaprops.Scalaprops
+import com.typesafe.config.{ConfigException, ConfigValue}
+import scalaz.Need
 
-object SymbolConfigsTest extends Scalaprops with ConfigProp {
+trait IsWrongType[A] {
+  def check(a: Need[A]): Boolean
+}
 
-  val symbol = check[Symbol]
+object IsWrongType {
 
-  val symbolJList = {
-    implicit val h = hideConfigs[Symbol]
-    check[ju.List[Symbol]]
+  def apply[A](implicit A: IsWrongType[A]): IsWrongType[A] = A
+
+  implicit def defaultIsWrongType[A]: IsWrongType[A] = default.asInstanceOf[IsWrongType[A]]
+
+  private[this] final val default: IsWrongType[Any] = a =>
+    intercept0(a.value) {
+      case _: ConfigException.WrongType => true
+    }
+
+  implicit val configValueIsWrongType: IsWrongType[ConfigValue] = a => {
+    a.value
+    true
   }
-
-  implicit lazy val symbolConfigVal: ConfigVal[Symbol] = ConfigVal[String].contramap(_.name)
 
 }

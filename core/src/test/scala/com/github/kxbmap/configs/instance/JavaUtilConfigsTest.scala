@@ -17,7 +17,7 @@
 package com.github.kxbmap.configs.instance
 
 import com.github.kxbmap.configs.ConfigProp
-import com.github.kxbmap.configs.util._
+import com.github.kxbmap.configs.testkit._
 import java.util.{Locale, UUID}
 import java.{util => ju}
 import scalaprops.{Gen, Scalaprops}

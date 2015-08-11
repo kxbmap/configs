@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.github.kxbmap.configs.util
+package com.github.kxbmap.configs.testkit
 
 import com.typesafe.config.{Config, ConfigValue, ConfigValueFactory}
 import java.{util => ju}
@@ -28,7 +28,7 @@ trait ConfigVal[A] {
 
 }
 
-object ConfigVal extends Value0 {
+object ConfigVal extends ConfigVal0 {
 
   def apply[A](implicit v: ConfigVal[A]): ConfigVal[A] = v
 
@@ -86,7 +86,7 @@ object ConfigVal extends Value0 {
 
 }
 
-trait Value0 {
+trait ConfigVal0 {
 
   private[this] final val _anyValue: ConfigVal[Any] = ConfigValueFactory.fromAnyRef
 
