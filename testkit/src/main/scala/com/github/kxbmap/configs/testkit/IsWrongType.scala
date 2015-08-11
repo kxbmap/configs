@@ -17,6 +17,7 @@
 package com.github.kxbmap.configs.testkit
 
 import com.typesafe.config.{ConfigException, ConfigValue}
+import scala.util.{Failure, Try}
 import scalaz.Need
 
 trait IsWrongType[A] {
@@ -27,12 +28,30 @@ object IsWrongType {
 
   def apply[A](implicit A: IsWrongType[A]): IsWrongType[A] = A
 
+
   implicit def defaultIsWrongType[A]: IsWrongType[A] = default.asInstanceOf[IsWrongType[A]]
 
   private[this] final val default: IsWrongType[Any] = a =>
     intercept0(a.value) {
       case _: ConfigException.WrongType => true
     }
+
+
+  implicit def eitherIsWrongType[A]: IsWrongType[Either[Throwable, A]] =
+    either.asInstanceOf[IsWrongType[Either[Throwable, A]]]
+
+  private[this] final val either: IsWrongType[Either[Throwable, Any]] =
+    _.value.left.exists(_.isInstanceOf[ConfigException.WrongType])
+
+
+  implicit def tryIsWrongType[A]: IsWrongType[Try[A]] =
+    tryW.asInstanceOf[IsWrongType[Try[A]]]
+
+  private[this] final val tryW: IsWrongType[Try[Any]] = _.value match {
+    case Failure(_: ConfigException.WrongType) => true
+    case _                                     => false
+  }
+
 
   implicit val configValueIsWrongType: IsWrongType[ConfigValue] = a => {
     a.value

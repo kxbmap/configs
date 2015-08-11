@@ -18,7 +18,6 @@ package com.github.kxbmap.configs.instance
 
 import com.github.kxbmap.configs.ConfigProp
 import com.github.kxbmap.configs.testkit._
-import com.typesafe.config.ConfigException
 import scala.util.{Failure, Success, Try}
 import scalaprops.{Gen, Scalaprops}
 import scalaz.Equal
@@ -26,17 +25,6 @@ import scalaz.Equal
 object TryConfigsTest extends Scalaprops with ConfigProp {
 
   val `try` = check[Try[java.time.Duration]]
-
-
-  implicit def isMissing[A]: IsMissing[A] = _.value match {
-    case Failure(_: ConfigException.Missing) => true
-    case _                                   => false
-  }
-
-  implicit def isWrongType[A]: IsWrongType[A] = _.value match {
-    case Failure(_: ConfigException.WrongType) => true
-    case _                                     => false
-  }
 
 
   implicit def tryGen[A: Gen]: Gen[Try[A]] =

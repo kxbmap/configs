@@ -17,6 +17,7 @@
 package com.github.kxbmap.configs.testkit
 
 import com.typesafe.config.ConfigException
+import scala.util.{Failure, Try}
 import scalaz.Need
 
 trait IsMissing[A] {
@@ -27,8 +28,36 @@ object IsMissing {
 
   def apply[A](implicit A: IsMissing[A]): IsMissing[A] = A
 
-  implicit def defaultIsMissing[A]: IsMissing[A] = a =>
+
+  implicit def defaultIsMissing[A]: IsMissing[A] =
+    default.asInstanceOf[IsMissing[A]]
+
+  private[this] final val default: IsMissing[Any] = a =>
     intercept0(a.value) {
       case _: ConfigException.Missing => true
     }
+
+
+  implicit def optionIsMissing[A]: IsMissing[Option[A]] =
+    option.asInstanceOf[IsMissing[Option[A]]]
+
+  private[this] final val option: IsMissing[Option[Any]] =
+    _.value.isEmpty
+
+
+  implicit def eitherIsMissing[A]: IsMissing[Either[Throwable, A]] =
+    either.asInstanceOf[IsMissing[Either[Throwable, A]]]
+
+  private[this] final val either: IsMissing[Either[Throwable, Any]] =
+    _.value.left.exists(_.isInstanceOf[ConfigException.Missing])
+
+
+  implicit def tryIsMissing[A]: IsMissing[Try[A]] =
+    tryM.asInstanceOf[IsMissing[Try[A]]]
+
+  private[this] final val tryM: IsMissing[Try[Any]] = _.value match {
+    case Failure(_: ConfigException.Missing) => true
+    case _                                   => false
+  }
+
 }

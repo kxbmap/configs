@@ -18,20 +18,12 @@ package com.github.kxbmap.configs.instance
 
 import com.github.kxbmap.configs.ConfigProp
 import com.github.kxbmap.configs.testkit._
-import com.typesafe.config.ConfigException
 import scalaprops.{Gen, Scalaprops}
 import scalaz.Equal
 
 object EitherConfigsTest extends Scalaprops with ConfigProp {
 
   val either = check[Either[Throwable, java.time.Duration]]
-
-
-  implicit def isMissing[A]: IsMissing[Either[Throwable, A]] =
-    _.value.left.exists(_.isInstanceOf[ConfigException.Missing])
-
-  implicit def isWrongType[A]: IsWrongType[Either[Throwable, A]] =
-    _.value.left.exists(_.isInstanceOf[ConfigException.WrongType])
 
 
   implicit def eitherGen[A: Gen]: Gen[Either[Throwable, A]] =
