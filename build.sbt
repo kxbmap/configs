@@ -34,7 +34,6 @@ lazy val core = project.settings(
   )
 ).dependsOn(
   macros % "provided",
-  macros % "provided->provided",
   testkit % "test"
 )
 
@@ -44,7 +43,7 @@ lazy val macros = project.settings(
   scalapropsSettings,
   libraryDependencies ++= Seq(
     "com.typesafe" % "config" % configVersion.value,
-    "org.scala-lang" % "scala-reflect" % scalaVersion.value % "provided"
+    "org.scala-lang" % "scala-reflect" % scalaVersion.value
   )
 )
 
