@@ -35,7 +35,13 @@ class BeanConfigsMacro(val c: blackbox.Context) extends Helper {
   }
 
   def materializeI[A: WeakTypeTag](newInstance: Tree): Tree = {
-    materializeImpl[A](c.untypecheck(newInstance))
+    val nonNull =
+      q"""
+      val obj: ${weakTypeOf[A]} = ${c.untypecheck(newInstance)}
+      require(obj != null, "newInstance requires non null value")
+      obj
+      """
+    materializeImpl[A](nonNull)
   }
 
   private def materializeImpl[A: WeakTypeTag](newInstance: Tree): Tree = {
