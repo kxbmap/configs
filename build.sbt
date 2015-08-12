@@ -21,7 +21,8 @@ lazy val commonSettings: Seq[Setting[_]] = Seq(
     "-language:higherKinds",
     "-language:implicitConversions",
     "-language:experimental.macros"
-  )
+  ),
+  updateOptions := updateOptions.value.withCachedResolution(true)
 )
 
 lazy val core = project.settings(
