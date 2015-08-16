@@ -81,10 +81,10 @@ private[configs] abstract class ConfigsInstances {
     _.getIntList(_).map(_.byteValue()).asJava
 
   implicit lazy val javaByteConfigs: Configs[jl.Byte] =
-    _.getInt(_) |> (_.toByte |> Byte.box)
+    byteConfigs.asInstanceOf[Configs[jl.Byte]]
 
   implicit lazy val javaByteListConfigs: Configs[ju.List[jl.Byte]] =
-    _.getIntList(_).map(_.byteValue() |> Byte.box).asJava
+    byteJListConfigs.asInstanceOf[Configs[ju.List[jl.Byte]]]
 
 
   implicit lazy val shortConfigs: Configs[Short] =
@@ -94,20 +94,20 @@ private[configs] abstract class ConfigsInstances {
     _.getIntList(_).map(_.shortValue()).asJava
 
   implicit lazy val javaShortConfigs: Configs[jl.Short] =
-    _.getInt(_) |> (_.toShort |> Short.box)
+    shortConfigs.asInstanceOf[Configs[jl.Short]]
 
   implicit lazy val javaShortListConfigs: Configs[ju.List[jl.Short]] =
-    _.getIntList(_).map(_.shortValue() |> Short.box).asJava
+    shortJListConfigs.asInstanceOf[Configs[ju.List[jl.Short]]]
 
 
   implicit lazy val intConfigs: Configs[Int] =
     _.getInt(_)
 
   implicit lazy val intJListConfigs: Configs[ju.List[Int]] =
-    _.getIntList(_).map(_.intValue()).asJava
+    javaIntegerListConfigs.asInstanceOf[Configs[ju.List[Int]]]
 
   implicit lazy val javaIntegerConfigs: Configs[jl.Integer] =
-    _.getInt(_) |> Int.box
+    intConfigs.asInstanceOf[Configs[jl.Integer]]
 
   implicit lazy val javaIntegerListConfigs: Configs[ju.List[jl.Integer]] =
     _.getIntList(_)
@@ -117,10 +117,10 @@ private[configs] abstract class ConfigsInstances {
     _.getLong(_)
 
   implicit lazy val longJListConfigs: Configs[ju.List[Long]] =
-    _.getLongList(_).map(_.longValue()).asJava
+    javaLongListConfigs.asInstanceOf[Configs[ju.List[Long]]]
 
   implicit lazy val javaLongConfigs: Configs[jl.Long] =
-    _.getLong(_) |> Long.box
+    longConfigs.asInstanceOf[Configs[jl.Long]]
 
   implicit lazy val javaLongListConfigs: Configs[ju.List[jl.Long]] =
     _.getLongList(_)
@@ -133,20 +133,20 @@ private[configs] abstract class ConfigsInstances {
     _.getDoubleList(_).map(_.floatValue()).asJava
 
   implicit lazy val javaFloatConfigs: Configs[jl.Float] =
-    _.getDouble(_) |> (_.toFloat |> Float.box)
+    floatConfigs.asInstanceOf[Configs[jl.Float]]
 
   implicit lazy val javaFloatListConfigs: Configs[ju.List[jl.Float]] =
-    _.getDoubleList(_).map(_.floatValue() |> Float.box).asJava
+    floatJListConfigs.asInstanceOf[Configs[ju.List[jl.Float]]]
 
 
   implicit lazy val doubleConfigs: Configs[Double] =
     _.getDouble(_)
 
   implicit lazy val doubleJListConfigs: Configs[ju.List[Double]] =
-    _.getDoubleList(_).map(_.doubleValue()).asJava
+    javaDoubleListConfigs.asInstanceOf[Configs[ju.List[Double]]]
 
   implicit lazy val javaDoubleConfigs: Configs[jl.Double] =
-    _.getDouble(_) |> Double.box
+    doubleConfigs.asInstanceOf[Configs[jl.Double]]
 
   implicit lazy val javaDoubleListConfigs: Configs[ju.List[jl.Double]] =
     _.getDoubleList(_)
@@ -156,10 +156,10 @@ private[configs] abstract class ConfigsInstances {
     _.getBoolean(_)
 
   implicit lazy val booleanJListConfigs: Configs[ju.List[Boolean]] =
-    _.getBooleanList(_).map(_.booleanValue()).asJava
+    javaBooleanListConfigs.asInstanceOf[Configs[ju.List[Boolean]]]
 
   implicit lazy val javaBooleanConfigs: Configs[jl.Boolean] =
-    _.getBoolean(_) |> Boolean.box
+    booleanConfigs.asInstanceOf[Configs[jl.Boolean]]
 
   implicit lazy val javaBooleanListConfigs: Configs[ju.List[jl.Boolean]] =
     _.getBooleanList(_)
@@ -176,10 +176,10 @@ private[configs] abstract class ConfigsInstances {
     (c, p) => ju.Arrays.asList(c.getString(p).toCharArray: _*)
 
   implicit lazy val javaCharConfigs: Configs[jl.Character] =
-    charConfigs.map(Char.box)
+    charConfigs.asInstanceOf[Configs[jl.Character]]
 
   implicit lazy val javaCharListConfigs: Configs[ju.List[jl.Character]] =
-    charJListConfigs.map(_.map(Char.box).asJava)
+    charJListConfigs.asInstanceOf[Configs[ju.List[jl.Character]]]
 
 
   implicit lazy val stringConfigs: Configs[String] =
