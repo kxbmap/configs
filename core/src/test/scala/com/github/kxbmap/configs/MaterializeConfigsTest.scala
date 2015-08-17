@@ -16,6 +16,7 @@
 
 package com.github.kxbmap.configs
 
+import com.github.kxbmap.configs.auto._
 import com.github.kxbmap.configs.testkit._
 import com.typesafe.config.{ConfigException, ConfigFactory}
 import scalaprops.Property.forAll

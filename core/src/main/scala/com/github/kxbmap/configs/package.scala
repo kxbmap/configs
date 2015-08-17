@@ -28,4 +28,9 @@ package object configs {
 
   }
 
+
+  object simple extends SimpleConfigs
+
+  object auto extends AutoConfigs
+
 }

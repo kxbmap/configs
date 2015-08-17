@@ -16,6 +16,7 @@
 
 package com.github.kxbmap.configs.instance
 
+import com.github.kxbmap.configs.simple._
 import com.github.kxbmap.configs.testkit._
 import com.github.kxbmap.configs.{ConfigProp, Configs}
 import com.typesafe.config.{ConfigException, ConfigFactory}

@@ -17,6 +17,7 @@
 package com.github.kxbmap.configs.instance
 
 import com.github.kxbmap.configs.ConfigProp
+import com.github.kxbmap.configs.simple._
 import com.typesafe.config.{Config, ConfigList, ConfigMemorySize, ConfigObject, ConfigValue}
 import java.{util => ju}
 import scalaprops.Scalaprops

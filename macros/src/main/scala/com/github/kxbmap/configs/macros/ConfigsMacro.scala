@@ -236,7 +236,7 @@ class ConfigsMacro(val c: blackbox.Context) extends Helper {
               q"$configsCompanion[$pType]"
             }
             lazy val on = state.getOrAppend(optPType) {
-              q"$configsCompanion.optionConfigs[$pType]($cn)"
+              q"$configsCompanion[$optPType]"
             }
 
             val sn = if (pt.isImplicit || pt.isParamWithDefault) on else cn

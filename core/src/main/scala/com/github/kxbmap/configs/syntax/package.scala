@@ -16,6 +16,7 @@
 
 package com.github.kxbmap.configs
 
+import com.github.kxbmap.configs.simple._
 import com.typesafe.config.Config
 
 package object syntax {
@@ -32,6 +33,7 @@ package object syntax {
     def opt[A: Configs](path: String): Option[A] = get[Option[A]](path)
 
     def getOrElse[A: Configs](path: String, default: => A): A = getOpt[A](path).getOrElse(default)
+
   }
 
 }

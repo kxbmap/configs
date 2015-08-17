@@ -16,6 +16,7 @@
 
 package com.github.kxbmap.configs.instance
 
+import com.github.kxbmap.configs.simple._
 import com.github.kxbmap.configs.testkit._
 import com.github.kxbmap.configs.{ConfigProp, Configs}
 import java.{util => ju}
@@ -74,9 +75,9 @@ object CollectionConfigsTest extends Scalaprops with ConfigProp {
 
     val fooConfigs: Configs[Foo] = Configs.onPath(c => Foo(c.getInt("v")))
 
-    val fooJListConfigs: Configs[ju.List[Foo]] = Configs.javaListConfigs(fooConfigs)
+    val fooJListConfigs: Configs[ju.List[Foo]] = javaListConfigs(fooConfigs)
 
-    val fooJMapConfigs: Configs[ju.Map[String, Foo]] = Configs.javaMapConfigs(fooConfigs)
+    val fooJMapConfigs: Configs[ju.Map[String, Foo]] = javaMapConfigs(fooConfigs)
 
   }
 

@@ -53,7 +53,7 @@ trait Configs[A] {
     }
 }
 
-object Configs extends ConfigsInstances {
+object Configs {
 
   private final val ExtractKey = "configs-extract"
 

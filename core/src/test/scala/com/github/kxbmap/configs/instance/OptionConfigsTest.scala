@@ -17,6 +17,7 @@
 package com.github.kxbmap.configs.instance
 
 import com.github.kxbmap.configs.ConfigProp
+import com.github.kxbmap.configs.simple._
 import scalaprops.Scalaprops
 import scalaz.std.option._
 
