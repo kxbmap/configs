@@ -31,13 +31,21 @@ class ConfigsMacro(val c: blackbox.Context) extends Helper {
         if (ctors.isEmpty) abort(s"$tpe has no instance creation methods")
         else ctors
 
+      def classMat(ctors: Seq[MethodBase]): ClassMat = {
+        val cs = nonEmpty(ctors)
+        if (cs.exists(_.noArg)) {
+          warning(s"$tpe has no-arg constructor")
+        }
+        ClassMat(tpe, cs)
+      }
+
       val sym = ts.asClass
       if (sym.isSealed)
         SealedTypeMat(tpe, nonEmpty(collect(tpe, sym)))
       else if (sym.isCaseClass)
-        ClassMat(tpe, nonEmpty(applies(tpe, sym.companion.asModule)))
+        classMat(applies(tpe, sym.companion.asModule))
       else if (!sym.isAbstract)
-        ClassMat(tpe, nonEmpty(constructors(tpe)))
+        classMat(constructors(tpe))
       else
         abort(s"$tpe should be concrete class or sealed trait")
 
@@ -94,7 +102,7 @@ class ConfigsMacro(val c: blackbox.Context) extends Helper {
     }
   }
 
-  private case class ClassMat(tpe: Type, ctors: Seq[Ctor]) extends Mat {
+  private case class ClassMat(tpe: Type, ctors: Seq[MethodBase]) extends Mat {
     def toConfigs(state: State): Tree =
       ctors.map(_.toConfigs(state, tpe)).reduceLeft((l, r) => q"$l.orElse($r)")
   }
@@ -188,6 +196,8 @@ class ConfigsMacro(val c: blackbox.Context) extends Helper {
     def newInstance(argLists: List[List[TermName]]): Tree
 
     def method: MethodSymbol
+
+    def noArg: Boolean = method.paramLists.forall(_.isEmpty)
 
     lazy val companion = tpe.typeSymbol.companion
 
