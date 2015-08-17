@@ -11,7 +11,7 @@ lazy val commonSettings: Seq[Setting[_]] = Seq(
   scalaVersion := "2.11.7",
   crossScalaVersions += "2.12.0-M2",
   configVersion := "1.3.0",
-  scalapropsVersion := "0.1.12",
+  scalapropsVersion := "0.1.13",
   scalacOptions ++= Seq(
     "-deprecation",
     "-unchecked",

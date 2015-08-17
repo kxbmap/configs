@@ -174,14 +174,14 @@ trait ConfigProp {
     Gen[ConfigObject].map(co => co)
 
   implicit lazy val configValueGen: Gen[ConfigValue] =
-    Gen.oneOfLazy(
-//      Need(Gen.value(ConfigValueFactory.fromAnyRef(null))),
-      Need(configStringGen),
-      Need(configNumberGen),
-      Need(configBooleanGen),
-      Need(configListGen.asInstanceOf[Gen[ConfigValue]]),
-      Need(configObjectGen.asInstanceOf[Gen[ConfigValue]])
-    ).mapSize(_ / 7)
+    Gen.lazyFrequency(
+//      1 -> Need(Gen.value(ConfigValueFactory.fromAnyRef(null))),
+      40 -> Need(configStringGen),
+      40 -> Need(configNumberGen),
+      10 -> Need(configBooleanGen),
+      5 -> Need(configListGen.asInstanceOf[Gen[ConfigValue]]),
+      5 -> Need(configObjectGen.asInstanceOf[Gen[ConfigValue]])
+    ).mapSize(_ / 2)
 
   implicit lazy val configGen: Gen[Config] =
     configObjectGen.map(_.toConfig)

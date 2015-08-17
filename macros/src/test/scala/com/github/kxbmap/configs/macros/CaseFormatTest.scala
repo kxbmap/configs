@@ -25,8 +25,8 @@ import scalaz.syntax.apply._
 
 object CaseFormatTest extends Scalaprops {
 
-  private val lower: Gen[String] = (Gen.alphaLowerChar |@| Gen.alphaLowerString)(_ +: _)
-  private val UPPER: Gen[String] = (Gen.alphaUpperChar |@| Gen.alphaUpperString)(_ +: _)
+  private val lower: Gen[String] = Gen.nonEmptyString(Gen.alphaLowerChar)
+  private val UPPER: Gen[String] = Gen.nonEmptyString(Gen.alphaUpperChar)
   private val Camel: Gen[String] = (Gen.alphaUpperChar |@| lower)(_ +: _)
 
   private def tc(f: (String, String, String) => String)(a: String, b: String, c: String): (String, String) =
