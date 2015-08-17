@@ -16,6 +16,7 @@
 
 package com.github.kxbmap.configs
 
+import com.github.kxbmap.configs.syntax._
 import com.typesafe.config.{Config, ConfigException, ConfigValue}
 import scala.annotation.implicitNotFound
 import scala.collection.generic.CanBuildFrom
