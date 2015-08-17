@@ -19,7 +19,7 @@ package com.github.kxbmap.configs.instance
 import com.github.kxbmap.configs.ConfigProp
 import com.github.kxbmap.configs.simple._
 import com.github.kxbmap.configs.testkit._
-import java.net.{InetAddress, InetSocketAddress}
+import java.net.InetAddress
 import java.{util => ju}
 import scalaprops.{Gen, Scalaprops}
 import scalaz.Apply
@@ -31,32 +31,6 @@ object JavaNetConfigsTest extends Scalaprops with ConfigProp {
   val inetAddressJList = {
     implicit val h = hideConfigs[InetAddress]
     check[ju.List[InetAddress]]
-  }
-
-  val inetSocketAddress = {
-    val addr = {
-      implicit val gen: Gen[InetSocketAddress] =
-        Apply[Gen].apply2(inetAddressGen, Gen.nonNegativeShort)(new InetSocketAddress(_, _))
-
-      implicit val cv: ConfigVal[InetSocketAddress] = ConfigVal.fromMap(a => Map(
-        "addr" -> a.getAddress.cv,
-        "port" -> a.getPort.cv
-      ))
-
-      check[InetSocketAddress]("addr")
-    }
-    val hostname = {
-      implicit val gen: Gen[InetSocketAddress] =
-        Apply[Gen].apply2(Gen.value("localhost"), Gen.nonNegativeShort)(new InetSocketAddress(_, _))
-
-      implicit val cv: ConfigVal[InetSocketAddress] = ConfigVal.fromMap(a => Map(
-        "hostname" -> a.getHostName.cv,
-        "port" -> a.getPort.cv
-      ))
-
-      check[InetSocketAddress]("hostname")
-    }
-    addr.product(hostname)
   }
 
 

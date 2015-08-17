@@ -19,7 +19,7 @@ package com.github.kxbmap.configs
 import com.github.kxbmap.configs.syntax._
 import com.typesafe.config.{Config, ConfigException, ConfigList, ConfigMemorySize, ConfigObject, ConfigUtil, ConfigValue}
 import java.io.File
-import java.net.{InetAddress, InetSocketAddress}
+import java.net.InetAddress
 import java.nio.file.{Path, Paths}
 import java.util.concurrent.TimeUnit
 import java.util.{Locale, UUID}
@@ -320,16 +320,5 @@ private[configs] abstract class SimpleConfigs {
 
   implicit lazy val inetAddressJListConfigs: Configs[ju.List[InetAddress]] =
     stringJListConfigs.map(_.map(InetAddress.getByName))
-
-
-  implicit lazy val inetSocketAddressConfigs: Configs[InetSocketAddress] =
-    Configs.onPath { c =>
-      val port = c.getInt("port")
-      Configs[Option[String]].get(c, "hostname").fold {
-        new InetSocketAddress(Configs[InetAddress].get(c, "addr"), port)
-      } {
-        hostname => new InetSocketAddress(hostname, port)
-      }
-    }
 
 }
