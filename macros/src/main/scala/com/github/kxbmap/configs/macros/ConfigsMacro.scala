@@ -23,6 +23,8 @@ class ConfigsMacro(val c: blackbox.Context) extends Helper {
 
   import c.universe._
 
+  def materializeRI[A: WeakTypeTag](dummy: Tree): Tree = materialize[A]
+
   def materialize[A: WeakTypeTag]: Tree = mat(weakTypeOf[A]).materialize()
 
   private def mat(tpe: Type): Mat = tpe.typeSymbol match {

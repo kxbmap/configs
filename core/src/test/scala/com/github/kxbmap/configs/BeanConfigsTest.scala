@@ -132,7 +132,7 @@ object BeanConfigsTest extends Scalaprops with ConfigProp {
 
   val requireNonNull = intercept {
     val config = ConfigFactory.parseString(s"string = foo")
-    Configs.bean[SimpleBean](null).extract(config)
+    Configs.bean(null: SimpleBean).extract(config)
   } {
     case e: ConfigException => e.getMessage.contains("newInstance")
   }

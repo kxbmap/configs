@@ -22,7 +22,7 @@ class BeanConfigsMacro(val c: blackbox.Context) extends Helper {
 
   import c.universe._
 
-  def materializeA[A: WeakTypeTag]: Tree = {
+  def materializeA[A: WeakTypeTag](dummy: Tree): Tree = {
     val tpe = abortIfAbstract(weakTypeOf[A])
     val hasNoArgCtor = tpe.decls.exists {
       case m: MethodSymbol => m.isConstructor && m.isPublic && m.paramLists.length <= 1 && m.paramLists.forall(_.isEmpty)
@@ -34,7 +34,7 @@ class BeanConfigsMacro(val c: blackbox.Context) extends Helper {
     materializeImpl[A](q"new $tpe()")
   }
 
-  def materializeI[A: WeakTypeTag](newInstance: Tree): Tree = {
+  def materializeI[A: WeakTypeTag](newInstance: Tree)(dummy: Tree): Tree = {
     val nonNull =
       q"""
       val obj: ${weakTypeOf[A]} = ${c.untypecheck(newInstance)}

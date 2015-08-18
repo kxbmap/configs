@@ -62,11 +62,14 @@ object Configs {
   def apply[A](implicit A: Configs[A]): Configs[A] = A
 
 
-  def of[A]: Configs[A] = macro macros.ConfigsMacro.materialize[A]
+  def of[A](implicit dummy: RequireImport): Configs[A] =
+    macro macros.ConfigsMacro.materializeRI[A]
 
-  def bean[A]: Configs[A] = macro macros.BeanConfigsMacro.materializeA[A]
+  def bean[A](implicit dummy: RequireImport): Configs[A] =
+    macro macros.BeanConfigsMacro.materializeA[A]
 
-  def bean[A](newInstance: => A): Configs[A] = macro macros.BeanConfigsMacro.materializeI[A]
+  def bean[A](newInstance: => A)(implicit dummy: RequireImport): Configs[A] =
+    macro macros.BeanConfigsMacro.materializeI[A]
 
 
   def from[A](f: (Config, String) => A): Configs[A] = (c, p) =>
