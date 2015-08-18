@@ -65,11 +65,12 @@ object `package` {
 
     }
 
-    private[configs] implicit class PipeOps[A](private val self: A) extends AnyVal {
+  }
 
-      def |>[B](f: A => B): B = f(self)
 
-    }
+  private[configs] implicit class PipeOps[A](private val self: A) extends AnyVal {
+
+    def |>[B](f: A => B): B = f(self)
 
   }
 

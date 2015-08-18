@@ -16,7 +16,6 @@
 
 package com.github.kxbmap.configs
 
-import com.github.kxbmap.configs.syntax._
 import java.{util => ju}
 import scala.collection.JavaConversions._
 import scala.collection.JavaConverters._

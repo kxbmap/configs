@@ -16,7 +16,6 @@
 
 package com.github.kxbmap.configs
 
-import com.github.kxbmap.configs.syntax._
 import com.typesafe.config.{Config, ConfigException, ConfigList, ConfigMemorySize, ConfigObject, ConfigUtil, ConfigValue}
 import java.io.File
 import java.net.InetAddress
