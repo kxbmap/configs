@@ -165,7 +165,7 @@ object SimpleConfigsTest extends Scalaprops {
 }
 
 
-object MaterializeConfigsTest extends ConfigProp {
+object MaterializeConfigsTest {
 
   def checkMat[A: Gen : Configs : ConfigVal : Equal] = forAll { a: A =>
     Configs[A].extract(a.cv) === a

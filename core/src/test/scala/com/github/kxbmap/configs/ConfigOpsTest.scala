@@ -23,7 +23,7 @@ import scala.collection.JavaConverters._
 import scalaprops.Property.forAll
 import scalaprops.Scalaprops
 
-object ConfigOpsTest extends Scalaprops with ConfigProp {
+object ConfigOpsTest extends Scalaprops {
 
   import com.github.kxbmap.configs.syntax._
 

@@ -23,7 +23,7 @@ import scalaprops.Property.{forAll, forAllG}
 import scalaprops.{Gen, Properties, Scalaprops}
 import scalaz.std.string._
 
-object ConfigsTest extends Scalaprops with ConfigProp {
+object ConfigsTest extends Scalaprops {
 
   val get = forAll { (p: String, v: Int) =>
     val config = ConfigFactory.parseString(s"${q(p)} = $v")

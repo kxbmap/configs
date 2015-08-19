@@ -18,6 +18,7 @@ package com.github.kxbmap.configs.instance
 
 import com.github.kxbmap.configs.ConfigProp
 import com.github.kxbmap.configs.simple._
+import com.github.kxbmap.configs.testkit._
 import java.{lang => jl, util => ju}
 import scalaprops.Scalaprops
 import scalaz.std.string._

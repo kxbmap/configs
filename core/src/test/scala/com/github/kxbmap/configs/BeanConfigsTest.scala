@@ -26,7 +26,7 @@ import scalaprops.Property.forAll
 import scalaprops.{Properties, Scalaprops}
 import scalaz.std.string._
 
-object BeanConfigsTest extends Scalaprops with ConfigProp {
+object BeanConfigsTest extends Scalaprops {
 
   val simple = forAll { (s: String) =>
     val config = ConfigFactory.parseString(s"string = ${q(s)}")
