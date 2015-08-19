@@ -133,7 +133,7 @@ package object testkit {
     Gen.nonNegativeLong.map(ConfigMemorySize.ofBytes)
 
 
-  private def genConfigValue[A: Gen]: Gen[ConfigValue] =
+  def genConfigValue[A: Gen]: Gen[ConfigValue] =
     Gen[A].map(ConfigValueFactory.fromAnyRef)
 
   lazy val configStringGen: Gen[ConfigValue] =
@@ -153,10 +153,13 @@ package object testkit {
       ConfigValueFactory.fromAnyRef(false)
     )
 
-  implicit lazy val configListGen: Gen[ConfigList] =
-    Gen.list(configValueGen).map(xs => ConfigValueFactory.fromIterable(xs.asJava))
+  def genConfigList(g: Gen[ConfigValue]): Gen[ConfigList] =
+    Gen.list(g).map(xs => ConfigValueFactory.fromIterable(xs.asJava))
 
-  implicit lazy val configValueJavaListGen: Gen[ju.List[ConfigValue]] =
+  implicit lazy val configListGen: Gen[ConfigList] =
+    genConfigList(configValueGen)
+
+  implicit lazy val configValueJListGen: Gen[ju.List[ConfigValue]] =
     Gen[ConfigList].map(cl => cl)
 
   implicit lazy val configObjectGen: Gen[ConfigObject] =

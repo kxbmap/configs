@@ -16,10 +16,9 @@
 
 package com.github.kxbmap.configs
 
-import com.typesafe.config.ConfigFactory
 import scala.collection.JavaConversions._
 import scala.collection.generic.CanBuildFrom
-import scalaprops.Property.forAll
+import scalaprops.Property.forAllG
 import scalaprops.{Properties, Scalaprops}
 import scalaz.std.string._
 
@@ -32,12 +31,12 @@ object MapFTest extends Scalaprops {
     mapF(BigInt(_))
 
   val mapF = {
-    val config = ConfigFactory.parseString("data = [1, 1, 2, 3]")
-    val list = forAll {
-      bigInts[List].get(config, "data") == List(BigInt(1), BigInt(1), BigInt(2), BigInt(3))
+    val g = testkit.genConfigList(testkit.genConfigValue[Int])
+    val list = forAllG(g) { cl =>
+      bigInts[List].extract(cl) == cl.map(_.unwrapped().asInstanceOf[Int] |> BigInt.apply).toList
     }
-    val set = forAll {
-      bigInts[Set].get(config, "data") == Set(BigInt(1), BigInt(2), BigInt(3))
+    val set = forAllG(g) { cl =>
+      bigInts[Set].extract(cl) == cl.map(_.unwrapped().asInstanceOf[Int] |> BigInt.apply).toSet
     }
     Properties.list(
       list.toProperties("List"),
