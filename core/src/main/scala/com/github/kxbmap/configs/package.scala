@@ -36,9 +36,14 @@ object `package` {
   type AtPath[A] = Configs[A]
 
 
-  object simple extends SimpleConfigs with RequireImport.Instance
+  object simple
+    extends DefaultConfigsInstances
+    with RequireImport.Instance
 
-  object auto extends AutoConfigs with RequireImport.Instance
+  object auto
+    extends DefaultConfigsInstances
+    with MacroConfigsInstances
+    with RequireImport.Instance
 
 
   object syntax {
