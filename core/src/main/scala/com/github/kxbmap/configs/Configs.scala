@@ -87,7 +87,7 @@ object Configs {
   }
 
   object MapF {
-    implicit def mapF[F[_], A, B](implicit c: Configs[F[A]], ev: F[A] => Traversable[A], cbf: CanBuildFrom[Nothing, B, F[B]]): MapF[F, A, B] =
+    implicit def mkMapF[F[_], A, B](implicit c: Configs[F[A]], ev: F[A] => Traversable[A], cbf: CanBuildFrom[Nothing, B, F[B]]): MapF[F, A, B] =
       new MapF(c)
   }
 
