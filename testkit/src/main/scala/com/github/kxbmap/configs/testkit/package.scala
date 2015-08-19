@@ -74,11 +74,14 @@ package object testkit {
     Gen[Set[A]].map(_.asJava)
 
 
-  implicit lazy val stringGen: Gen[String] =
-    Gen.parameterised { (size, r) =>
-      import jl.{Character => C}
-      val cp = Gen.chooseR(C.MIN_CODE_POINT, C.MAX_CODE_POINT, r)
-      Gen.sequenceNArray(size, cp).map { cps =>
+  implicit lazy val stringGen: Gen[String] = {
+    import jl.{Character => C}
+    val g = {
+      val cp = (C.MIN_CODE_POINT to C.MAX_CODE_POINT).filter(C.isDefined)
+      Gen.elements(cp.head, cp.tail: _*)
+    }
+    Gen.sized { size =>
+      Gen.sequenceNArray(size, g).map { cps =>
         @tailrec
         def toChars(i: Int, j: Int, arr: Array[Char]): Array[Char] =
           if (i < cps.length) {
@@ -93,6 +96,7 @@ package object testkit {
         new String(toChars(0, 0, new Array(cc)))
       }
     }
+  }
 
   implicit lazy val symbolGen: Gen[Symbol] =
     stringGen.map(Symbol.apply)
