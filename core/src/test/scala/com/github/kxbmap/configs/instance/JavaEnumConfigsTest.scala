@@ -22,6 +22,7 @@ import com.github.kxbmap.configs.{ConfigProp, Configs}
 import com.typesafe.config.{ConfigException, ConfigFactory}
 import java.{util => ju}
 import scalaprops.Scalaprops
+import scalaz.std.java.enum._
 
 object JavaEnumConfigsTest extends Scalaprops with ConfigProp {
 

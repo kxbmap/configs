@@ -22,7 +22,7 @@ import com.github.kxbmap.configs.testkit._
 import java.net.InetAddress
 import java.{util => ju}
 import scalaprops.{Gen, Scalaprops}
-import scalaz.Apply
+import scalaz.{Equal, Apply}
 
 object JavaNetConfigsTest extends Scalaprops with ConfigProp {
 
@@ -36,6 +36,9 @@ object JavaNetConfigsTest extends Scalaprops with ConfigProp {
 
   implicit lazy val inetAddressGen: Gen[InetAddress] =
     inetAddressStringGen.map(InetAddress.getByName)
+
+  implicit lazy val inetAddressEqual: Equal[InetAddress] =
+    Equal.equalA[InetAddress]
 
   implicit lazy val inetAddressStringGen: Gen[String] = {
     val part = Gen.choose(0, 255)

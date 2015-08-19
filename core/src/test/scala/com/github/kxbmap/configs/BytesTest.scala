@@ -20,6 +20,7 @@ import com.github.kxbmap.configs.testkit._
 import java.{util => ju}
 import scalaprops.Property.forAll
 import scalaprops.{Gen, Properties, Scalaprops}
+import scalaz.Equal
 import scalaz.std.string._
 
 
@@ -87,6 +88,8 @@ object BytesTest extends Scalaprops with ConfigProp {
 
 
   implicit lazy val bytesGen: Gen[Bytes] = Gen[Long].map(Bytes.apply)
+
+  implicit lazy val bytesEqual: Equal[Bytes] = Equal.equalA[Bytes]
 
   implicit lazy val bytesConfigVal: ConfigVal[Bytes] = ConfigVal[Long].contramap(_.value)
 

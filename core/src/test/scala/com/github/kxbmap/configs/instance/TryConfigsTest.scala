@@ -22,6 +22,7 @@ import com.github.kxbmap.configs.testkit._
 import scala.util.{Failure, Success, Try}
 import scalaprops.{Gen, Scalaprops}
 import scalaz.Equal
+import scalaz.std.option._
 
 object TryConfigsTest extends Scalaprops with ConfigProp {
 

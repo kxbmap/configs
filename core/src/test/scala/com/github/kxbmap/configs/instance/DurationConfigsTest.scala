@@ -22,6 +22,7 @@ import com.github.kxbmap.configs.testkit._
 import java.{util => ju}
 import scala.concurrent.duration._
 import scalaprops.{Gen, Scalaprops}
+import scalaz.Equal
 
 object DurationConfigsTest extends Scalaprops with ConfigProp {
 
@@ -38,6 +39,9 @@ object DurationConfigsTest extends Scalaprops with ConfigProp {
   implicit lazy val finiteDurationGen: Gen[FiniteDuration] =
     Gen.nonNegativeLong.map(Duration.fromNanos)
 
+  implicit lazy val finiteDurationEqual: Equal[FiniteDuration] =
+    Equal.equalA[FiniteDuration]
+
   implicit lazy val finiteDurationValue: ConfigVal[FiniteDuration] =
     ConfigVal[String].contramap(d => s"${d.toNanos}ns")
 
@@ -49,6 +53,9 @@ object DurationConfigsTest extends Scalaprops with ConfigProp {
       1 -> Gen.value(Duration.Undefined),
       47 -> finiteDurationGen.asInstanceOf[Gen[Duration]]
     )
+
+  implicit lazy val durationEqual: Equal[Duration] =
+    Equal.equalA[Duration]
 
   implicit lazy val durationValue: ConfigVal[Duration] =
     ConfigVal[String].contramap {

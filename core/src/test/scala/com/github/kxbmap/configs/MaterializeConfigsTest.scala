@@ -20,7 +20,9 @@ import com.github.kxbmap.configs.testkit._
 import com.typesafe.config.{ConfigException, ConfigFactory}
 import scalaprops.Property.forAll
 import scalaprops.{Gen, Properties, Scalaprops}
+import scalaz.std.anyVal._
 import scalaz.std.string._
+import scalaz.std.tuple._
 import scalaz.syntax.equal._
 import scalaz.{Apply, Equal}
 
@@ -184,6 +186,9 @@ object MaterializeConfigsTest {
   implicit lazy val simpleSettingGen: Gen[SimpleSetting] =
     Apply[Gen].apply2(Gen[String], Gen[String])(SimpleSetting.apply)
 
+  implicit lazy val simpleSettingEqual: Equal[SimpleSetting] =
+    Equal.equalA[SimpleSetting]
+
   def checkSimple(implicit C: Configs[SimpleSetting]) = checkMat[SimpleSetting]
 
 
@@ -210,6 +215,9 @@ object MaterializeConfigsTest {
       Gen[Option[SimpleSetting]]
     )(NestedSetting.apply)
 
+  implicit lazy val nestedSettingEqual: Equal[NestedSetting] =
+    Equal.equalA[NestedSetting]
+
   def checkNested(implicit C: Configs[NestedSetting]) = checkMat[NestedSetting]
 
 
@@ -227,6 +235,9 @@ object MaterializeConfigsTest {
       Gen[Int],
       Gen[Option[RecursiveSetting]]
     )(RecursiveSetting.apply)
+
+  implicit lazy val recursiveSettingEqual: Equal[RecursiveSetting] =
+    Equal.equalA[RecursiveSetting]
 
   def checkRecursive(implicit C: Configs[RecursiveSetting]) = checkMat[RecursiveSetting]
 
@@ -332,6 +343,9 @@ object MaterializeConfigsTest {
   implicit lazy val multiApplyGen: Gen[MultiApply] =
     Apply[Gen].apply3(Gen[Int], Gen[Int], Gen[Int])(MultiApply(_, _, _))
 
+  implicit lazy val multiApplyEqual: Equal[MultiApply] =
+    Equal.equalA[MultiApply]
+
   def checkMultiApply(implicit C: Configs[MultiApply]) = {
     val subApply1 = forAll { (a0: Int, b0: Int) =>
       val config = ConfigFactory.parseString(s"a0 = $a0, b0 = $b0")
@@ -384,6 +398,9 @@ object MaterializeConfigsTest {
 
   implicit lazy val formatCaseSettingGen: Gen[FormatCaseSetting] =
     Apply[Gen].apply6(Gen[Int], Gen[Int], Gen[Int], Gen[Int], Gen[Int], Gen[Int])(FormatCaseSetting.apply)
+
+  implicit lazy val formatCaseSettingEqual: Equal[FormatCaseSetting] =
+    Equal.equalA[FormatCaseSetting]
 
   case class Duplicate1(duplicateName: Int, DuplicateName: Int)
 

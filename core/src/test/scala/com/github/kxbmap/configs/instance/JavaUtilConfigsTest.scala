@@ -22,6 +22,7 @@ import com.github.kxbmap.configs.testkit._
 import java.util.{Locale, UUID}
 import java.{util => ju}
 import scalaprops.{Gen, Scalaprops}
+import scalaz.Equal
 
 object JavaUtilConfigsTest extends Scalaprops with ConfigProp {
 
@@ -43,13 +44,20 @@ object JavaUtilConfigsTest extends Scalaprops with ConfigProp {
   implicit lazy val uuidGen: Gen[UUID] =
     Gen[Array[Byte]].map(UUID.nameUUIDFromBytes)
 
+  implicit lazy val uuidEqual: Equal[UUID] =
+    Equal.equalA[UUID]
+
   implicit lazy val uuidConfigVal: ConfigVal[UUID] =
     ConfigVal[String].contramap(_.toString)
+
 
   implicit lazy val localeGen: Gen[Locale] = {
     val ls = Locale.getAvailableLocales
     Gen.elements(ls.head, ls.tail: _*)
   }
+
+  implicit lazy val localeEqual: Equal[Locale] =
+    Equal.equalA[Locale]
 
   implicit lazy val localeConfigVal: ConfigVal[Locale] =
     ConfigVal[String].contramap(_.toString)

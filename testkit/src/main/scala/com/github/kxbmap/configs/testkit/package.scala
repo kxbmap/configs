@@ -22,6 +22,7 @@ import scala.annotation.tailrec
 import scala.collection.JavaConverters._
 import scalaprops.Property.forAll
 import scalaprops.{Gen, Property}
+import scalaz.std.anyVal._
 import scalaz.std.list._
 import scalaz.{Equal, Need}
 
@@ -58,13 +59,6 @@ package object testkit {
     forAll { (a1: A1, a2: A2) =>
       intercept0(block(a1, a2))(cond)
     }
-
-
-  implicit def generalEqual[A]: Equal[A] =
-    Equal.equalA[A]
-
-  implicit def arrayEqual[A: Equal]: Equal[Array[A]] =
-    Equal.equalBy(_.toList)
 
 
   implicit def javaListGen[A: Gen]: Gen[ju.List[A]] =
@@ -179,5 +173,69 @@ package object testkit {
 
   implicit lazy val configGen: Gen[Config] =
     configObjectGen.map(_.toConfig)
+
+
+  implicit def arrayEqual[A: Equal]: Equal[Array[A]] =
+    Equal.equalBy(_.toList)
+
+  implicit def mapEqual[A: Equal, B: Equal]: Equal[Map[A, B]] =
+    Equal.equalA[Map[A, B]]
+
+  implicit def setEqual[A: Equal]: Equal[Set[A]] =
+    Equal.equalA[Set[A]]
+
+  implicit def javaListEqual[A: Equal]: Equal[ju.List[A]] =
+    Equal.equalBy(_.asScala.toList)
+
+  implicit def javaMapEqual[A: Equal, B: Equal]: Equal[ju.Map[A, B]] =
+    Equal.equalBy(_.asScala.toMap)
+
+  implicit def javaSetEqual[A: Equal]: Equal[ju.Set[A]] =
+    Equal.equalBy(_.asScala.toSet)
+
+  implicit lazy val javaByteEqual: Equal[jl.Byte] =
+    Equal.equalBy(_.byteValue())
+
+  implicit lazy val javaShortEqual: Equal[jl.Short] =
+    Equal.equalBy(_.shortValue())
+
+  implicit lazy val javaIntegerEqual: Equal[jl.Integer] =
+    Equal.equalBy(_.intValue())
+
+  implicit lazy val javaLongEqual: Equal[jl.Long] =
+    Equal.equalBy(_.longValue())
+
+  implicit lazy val javaFloatEqual: Equal[jl.Float] =
+    Equal.equalBy(_.floatValue())
+
+  implicit lazy val javaDoubleEqual: Equal[jl.Double] =
+    Equal.equalBy(_.doubleValue())
+
+  implicit lazy val javaCharacterEqual: Equal[jl.Character] =
+    Equal.equalBy(_.charValue())
+
+  implicit lazy val javaBooleanEqual: Equal[jl.Boolean] =
+    Equal.equalBy(_.booleanValue())
+
+  implicit lazy val javaDurationEqual: Equal[jt.Duration] =
+    Equal.equalA[jt.Duration]
+
+  implicit lazy val symbolEqual: Equal[Symbol] =
+    Equal.equalA[Symbol]
+
+  implicit lazy val configEqual: Equal[Config] =
+    Equal.equalA[Config]
+
+  implicit lazy val configValueEqual: Equal[ConfigValue] =
+    Equal.equalA[ConfigValue]
+
+  implicit lazy val configObjectEqual: Equal[ConfigObject] =
+    Equal.equalA[ConfigObject]
+
+  implicit lazy val configListEqual: Equal[ConfigList] =
+    Equal.equalA[ConfigList]
+
+  implicit lazy val configMemorySizeEqual: Equal[ConfigMemorySize] =
+    Equal.equalA[ConfigMemorySize]
 
 }

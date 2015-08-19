@@ -23,6 +23,7 @@ import java.io.File
 import java.nio.file.{Path, Paths}
 import java.{util => ju}
 import scalaprops.{Gen, Scalaprops}
+import scalaz.Equal
 
 object JavaFileConfigsTest extends Scalaprops with ConfigProp {
 
@@ -44,11 +45,20 @@ object JavaFileConfigsTest extends Scalaprops with ConfigProp {
   implicit lazy val pathGen: Gen[Path] =
     Gen.nonEmptyList(Gen.alphaNumString).map(ss => Paths.get(ss.head, ss.tail: _*))
 
-  implicit lazy val pathConfigVal: ConfigVal[Path] = ConfigVal[String].contramap(_.toString)
+  implicit lazy val pathEqual: Equal[Path] =
+    Equal.equalA[Path]
+
+  implicit lazy val pathConfigVal: ConfigVal[Path] =
+    ConfigVal[String].contramap(_.toString)
 
 
-  implicit lazy val fileGen: Gen[File] = pathGen.map(_.toFile)
+  implicit lazy val fileGen: Gen[File] =
+    pathGen.map(_.toFile)
 
-  implicit lazy val fileConfigVal: ConfigVal[File] = ConfigVal[String].contramap(_.toString)
+  implicit lazy val fileEqual: Equal[File] =
+    Equal.equalA[File]
+
+  implicit lazy val fileConfigVal: ConfigVal[File] =
+    ConfigVal[String].contramap(_.toString)
 
 }

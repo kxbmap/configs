@@ -22,6 +22,7 @@ import com.github.kxbmap.configs.testkit._
 import com.typesafe.config.{Config, ConfigList, ConfigMemorySize, ConfigObject, ConfigValue}
 import java.{util => ju}
 import scalaprops.Scalaprops
+import scalaz.std.string._
 
 object ConfigTypeConfigsTest extends Scalaprops with ConfigProp {
 

@@ -21,6 +21,7 @@ import com.github.kxbmap.configs.simple._
 import com.github.kxbmap.configs.testkit._
 import scalaprops.{Gen, Scalaprops}
 import scalaz.Equal
+import scalaz.std.option._
 
 object EitherConfigsTest extends Scalaprops with ConfigProp {
 

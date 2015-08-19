@@ -21,7 +21,11 @@ import com.github.kxbmap.configs.testkit._
 import com.github.kxbmap.configs.{ConfigProp, Configs}
 import java.{util => ju}
 import scalaprops.{Gen, Properties, Scalaprops}
+import scalaz.Equal
+import scalaz.std.list._
+import scalaz.std.stream._
 import scalaz.std.string._
+import scalaz.std.vector._
 
 object CollectionConfigsTest extends Scalaprops with ConfigProp {
 
@@ -68,6 +72,8 @@ object CollectionConfigsTest extends Scalaprops with ConfigProp {
   case class Foo(value: Int)
 
   implicit lazy val fooGen: Gen[Foo] = Gen[Int].map(Foo.apply)
+
+  implicit lazy val fooEqual: Equal[Foo] = Equal.equalA[Foo]
 
   implicit lazy val fooConfigVal: ConfigVal[Foo] = _.value.cv.atKey("v").root()
 

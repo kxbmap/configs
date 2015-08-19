@@ -21,6 +21,7 @@ import com.github.kxbmap.configs.simple._
 import com.github.kxbmap.configs.testkit._
 import java.{lang => jl, util => ju}
 import scalaprops.Scalaprops
+import scalaz.std.anyVal._
 import scalaz.std.string._
 
 object BasicTypeConfigsTest extends Scalaprops with ConfigProp {
@@ -102,8 +103,8 @@ object BasicTypeConfigsTest extends Scalaprops with ConfigProp {
     check[ju.List[jl.Boolean]]
   }
 
-  val char = check[Char]
-  val charJList = {
+  val character = check[Char]
+  val characterJList = {
     implicit val h = hideConfigs[Char]
     check[ju.List[Char]]
   }
