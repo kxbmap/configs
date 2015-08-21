@@ -16,7 +16,7 @@
 
 package com.github.kxbmap.configs
 
-import com.github.kxbmap.configs.testkit._
+import com.github.kxbmap.configs.util._
 import com.typesafe.config.{ConfigFactory, ConfigValueFactory}
 import scala.reflect.{ClassTag, classTag}
 import scalaprops.Or.Empty

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.github.kxbmap.configs.testkit
+package com.github.kxbmap.configs.util
 
 import com.typesafe.config.ConfigException
 import scala.util.{Failure, Try}

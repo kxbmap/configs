@@ -31,7 +31,7 @@ object MapFTest extends Scalaprops {
     mapF(BigInt(_))
 
   val mapF = {
-    val g = testkit.genConfigList(testkit.genConfigValue[Int])
+    val g = util.genConfigList(util.genConfigValue[Int])
     val list = forAllG(g) { cl =>
       bigInts[List].extract(cl) == cl.map(_.unwrapped().asInstanceOf[Int] |> BigInt.apply).toList
     }

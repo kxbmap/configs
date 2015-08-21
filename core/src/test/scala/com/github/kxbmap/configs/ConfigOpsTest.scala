@@ -17,7 +17,7 @@
 package com.github.kxbmap.configs
 
 import com.github.kxbmap.configs.simple._
-import com.github.kxbmap.configs.testkit._
+import com.github.kxbmap.configs.util._
 import com.typesafe.config.ConfigValueFactory
 import scala.collection.JavaConverters._
 import scalaprops.Property.forAll

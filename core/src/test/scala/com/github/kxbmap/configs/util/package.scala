@@ -26,7 +26,7 @@ import scalaz.std.anyVal._
 import scalaz.std.list._
 import scalaz.{Equal, Need}
 
-package object testkit {
+package object util {
 
   val q = ConfigUtil.quoteString _
 
@@ -39,7 +39,7 @@ package object testkit {
   }
 
 
-  private[testkit] def intercept0(block: => Unit)(cond: PartialFunction[Throwable, Boolean]): Boolean =
+  private[util] def intercept0(block: => Unit)(cond: PartialFunction[Throwable, Boolean]): Boolean =
     try {
       block
       false

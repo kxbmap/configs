@@ -40,8 +40,7 @@ lazy val core = project.settings(
       |import com.github.kxbmap.configs.syntax._
       |""".stripMargin
 ).dependsOn(
-  macros % "provided",
-  testkit % "test"
+  macros % "provided"
 )
 
 lazy val macros = project.settings(
@@ -52,14 +51,4 @@ lazy val macros = project.settings(
     "com.typesafe" % "config" % configVersion.value,
     "org.scala-lang" % "scala-reflect" % scalaVersion.value
   )
-)
-
-lazy val testkit = project.settings(
-  name := "configs-testkit",
-  commonSettings,
-  libraryDependencies ++= Seq(
-    "com.typesafe" % "config" % configVersion.value,
-    "com.github.scalaprops" %% "scalaprops" % scalapropsVersion.value
-  ),
-  disablePublishSettings
 )
