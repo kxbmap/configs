@@ -17,7 +17,7 @@
 package com.github.kxbmap.configs.testkit
 
 import com.typesafe.config.{Config, ConfigValue, ConfigValueFactory}
-import java.{util => ju}
+import java.{util => ju, math => jm}
 import scala.collection.JavaConverters._
 
 trait ConfigVal[A] {
@@ -62,6 +62,18 @@ object ConfigVal extends ConfigVal0 {
 
   implicit def symbolMapConfigVal[A: ConfigVal]: ConfigVal[Map[Symbol, A]] =
     ConfigVal[Map[String, A]].contramap(_.map(t => t._1.name -> t._2))
+
+  implicit val bigIntConfigVal: ConfigVal[BigInt] =
+    ConfigVal[String].contramap(_.toString())
+
+  implicit val bigIntegerConfigVal: ConfigVal[jm.BigInteger] =
+    ConfigVal[String].contramap(_.toString)
+
+  implicit val bigDecimalConfigVal: ConfigVal[BigDecimal] =
+    ConfigVal[String].contramap(_.toString())
+
+  implicit val javaBigDecimalConfigVal: ConfigVal[jm.BigDecimal] =
+    ConfigVal[String].contramap(_.toString)
 
   implicit val charConfigVal: ConfigVal[Char] =
     ConfigVal[String].contramap(_.toString)

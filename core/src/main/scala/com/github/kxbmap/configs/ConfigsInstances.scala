@@ -22,7 +22,7 @@ import java.net.InetAddress
 import java.nio.file.{Path, Paths}
 import java.util.concurrent.TimeUnit
 import java.util.{Locale, UUID}
-import java.{lang => jl, time => jt, util => ju}
+import java.{lang => jl, math => jm, time => jt, util => ju}
 import scala.collection.JavaConversions._
 import scala.collection.JavaConverters._
 import scala.collection.generic.CanBuildFrom
@@ -153,6 +153,32 @@ private[configs] abstract class DefaultConfigsInstances {
 
   implicit lazy val javaDoubleListConfigs: Configs[ju.List[jl.Double]] =
     _.getDoubleList(_)
+
+
+  implicit lazy val bigIntConfigs: Configs[BigInt] =
+    bigDecimalConfigs.map(_.toBigInt())
+
+  implicit lazy val bigIntJListConfigs: Configs[ju.List[BigInt]] =
+    bigDecimalJListConfigs.map(_.map(_.toBigInt()))
+
+  implicit lazy val bigIntegerConfigs: Configs[jm.BigInteger] =
+    javaBigDecimalConfigs.map(_.toBigInteger)
+
+  implicit lazy val bigIntegerJListConfigs: Configs[ju.List[jm.BigInteger]] =
+    javaBigDecimalListConfigs.map(_.map(_.toBigInteger))
+
+
+  implicit lazy val bigDecimalConfigs: Configs[BigDecimal] =
+    stringConfigs.map(BigDecimal.apply)
+
+  implicit lazy val bigDecimalJListConfigs: Configs[ju.List[BigDecimal]] =
+    stringJListConfigs.map(_.map(BigDecimal.apply))
+
+  implicit lazy val javaBigDecimalConfigs: Configs[jm.BigDecimal] =
+    stringConfigs.map(new jm.BigDecimal(_))
+
+  implicit lazy val javaBigDecimalListConfigs: Configs[ju.List[jm.BigDecimal]] =
+    stringJListConfigs.map(_.map(new jm.BigDecimal(_)))
 
 
   implicit lazy val booleanConfigs: Configs[Boolean] =
