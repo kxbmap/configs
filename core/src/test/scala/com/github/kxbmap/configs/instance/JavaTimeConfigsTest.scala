@@ -16,13 +16,12 @@
 
 package com.github.kxbmap.configs.instance
 
-import com.github.kxbmap.configs.ConfigProp
 import com.github.kxbmap.configs.simple._
 import com.github.kxbmap.configs.util._
 import java.{time => jt, util => ju}
 import scalaprops.Scalaprops
 
-object JavaTimeConfigsTest extends Scalaprops with ConfigProp {
+object JavaTimeConfigsTest extends Scalaprops {
 
   val javaDuration = check[jt.Duration]
 

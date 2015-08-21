@@ -16,7 +16,6 @@
 
 package com.github.kxbmap.configs.instance
 
-import com.github.kxbmap.configs.ConfigProp
 import com.github.kxbmap.configs.simple._
 import com.github.kxbmap.configs.util._
 import com.typesafe.config.{Config, ConfigList, ConfigMemorySize, ConfigObject, ConfigValue}
@@ -24,7 +23,7 @@ import java.{util => ju}
 import scalaprops.Scalaprops
 import scalaz.std.string._
 
-object ConfigTypeConfigsTest extends Scalaprops with ConfigProp {
+object ConfigTypeConfigsTest extends Scalaprops {
 
   val config = check[Config]
 

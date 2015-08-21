@@ -16,15 +16,15 @@
 
 package com.github.kxbmap.configs.instance
 
+import com.github.kxbmap.configs.Configs
 import com.github.kxbmap.configs.simple._
 import com.github.kxbmap.configs.util._
-import com.github.kxbmap.configs.{ConfigProp, Configs}
 import com.typesafe.config.{ConfigException, ConfigFactory}
 import java.{util => ju}
 import scalaprops.Scalaprops
 import scalaz.std.java.enum._
 
-object JavaEnumConfigsTest extends Scalaprops with ConfigProp {
+object JavaEnumConfigsTest extends Scalaprops {
 
   val enum = check[JavaEnum]
 

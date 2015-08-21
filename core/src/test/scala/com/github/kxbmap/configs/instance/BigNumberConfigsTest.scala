@@ -16,9 +16,9 @@
 
 package com.github.kxbmap.configs.instance
 
+import com.github.kxbmap.configs.Configs
 import com.github.kxbmap.configs.simple._
 import com.github.kxbmap.configs.util._
-import com.github.kxbmap.configs.{ConfigProp, Configs}
 import java.{math => jm, util => ju}
 import scala.collection.JavaConverters._
 import scalaprops.Property.forAll
@@ -29,7 +29,7 @@ import scalaz.std.math.bigDecimal._
 import scalaz.std.math.bigInt._
 import scalaz.syntax.equal._
 
-object BigNumberConfigsTest extends Scalaprops with ConfigProp {
+object BigNumberConfigsTest extends Scalaprops {
 
   val bigInt = {
     val decimal = forAll { d: BigDecimal =>

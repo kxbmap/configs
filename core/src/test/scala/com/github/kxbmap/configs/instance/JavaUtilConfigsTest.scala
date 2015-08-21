@@ -16,7 +16,6 @@
 
 package com.github.kxbmap.configs.instance
 
-import com.github.kxbmap.configs.ConfigProp
 import com.github.kxbmap.configs.simple._
 import com.github.kxbmap.configs.util._
 import java.util.{Locale, UUID}
@@ -24,7 +23,7 @@ import java.{util => ju}
 import scalaprops.{Gen, Scalaprops}
 import scalaz.Equal
 
-object JavaUtilConfigsTest extends Scalaprops with ConfigProp {
+object JavaUtilConfigsTest extends Scalaprops {
 
   val uuid = check[UUID]
 

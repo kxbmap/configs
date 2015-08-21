@@ -24,7 +24,7 @@ import scalaz.Equal
 import scalaz.std.string._
 
 
-object BytesTest extends Scalaprops with ConfigProp {
+object BytesTest extends Scalaprops {
 
   val bytes = check[Bytes]
 

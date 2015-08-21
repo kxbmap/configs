@@ -16,15 +16,14 @@
 
 package com.github.kxbmap.configs.instance
 
-import com.github.kxbmap.configs.ConfigProp
 import com.github.kxbmap.configs.simple._
 import com.github.kxbmap.configs.util._
 import java.net.InetAddress
 import java.{util => ju}
 import scalaprops.{Gen, Scalaprops}
-import scalaz.{Equal, Apply}
+import scalaz.{Apply, Equal}
 
-object JavaNetConfigsTest extends Scalaprops with ConfigProp {
+object JavaNetConfigsTest extends Scalaprops {
 
   val inetAddress = check[InetAddress]
 

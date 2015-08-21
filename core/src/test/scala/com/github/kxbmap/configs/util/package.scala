@@ -16,19 +16,56 @@
 
 package com.github.kxbmap.configs
 
-import com.typesafe.config.{Config, ConfigList, ConfigMemorySize, ConfigObject, ConfigUtil, ConfigValue, ConfigValueFactory}
+import com.typesafe.config.{Config, ConfigFactory, ConfigList, ConfigMemorySize, ConfigObject, ConfigUtil, ConfigValue, ConfigValueFactory}
 import java.{lang => jl, time => jt, util => ju}
 import scala.annotation.tailrec
 import scala.collection.JavaConverters._
+import scala.reflect.{ClassTag, classTag}
+import scalaprops.Or.Empty
 import scalaprops.Property.forAll
-import scalaprops.{Gen, Property}
+import scalaprops.{:-:, Gen, Properties, Property}
 import scalaz.std.anyVal._
 import scalaz.std.list._
-import scalaz.{Equal, Need}
+import scalaz.std.string._
+import scalaz.{Equal, Need, Order}
+
 
 package object util {
 
   val q = ConfigUtil.quoteString _
+
+
+  def hideConfigs[A: ClassTag]: Configs[A] = (_, _) => sys.error(s"hiding Configs[${classTag[A]}] used")
+
+  def check[A: Configs : Gen : Equal : ConfigVal : IsMissing : IsWrongType : WrongTypeValue]: Properties[Unit :-: String :-: Empty] =
+    checkId(())
+
+  def check[A: Configs : Gen : Equal : ConfigVal : IsMissing : IsWrongType : WrongTypeValue](id: String): Properties[String :-: String :-: Empty] =
+    checkId(id)
+
+  private def checkId[A: Order, B: Configs : Gen : Equal : ConfigVal : IsMissing : IsWrongType : WrongTypeValue](id: A) =
+    Properties.either(
+      id,
+      checkGet[B].toProperties("get"),
+      checkMissing[B].toProperties("missing"),
+      checkWrongType[B].toProperties("wrong type")
+    )
+
+  private def checkGet[A: Configs : Gen : Equal : ConfigVal] = forAll { value: A =>
+    Equal[A].equal(Configs[A].extract(value.cv), value)
+  }
+
+  private def checkMissing[A: Configs : IsMissing] = forAll {
+    val p = "missing"
+    val c = ConfigFactory.empty()
+    IsMissing[A].check(Need(Configs[A].get(c, p)))
+  }
+
+  private def checkWrongType[A: Configs : IsWrongType : WrongTypeValue] = forAll {
+    val p = "dummy-path"
+    val c = ConfigValueFactory.fromAnyRef(WrongTypeValue[A].value).atKey(p)
+    IsWrongType[A].check(Need(Configs[A].get(c, p)))
+  }
 
 
   implicit class UtilOps[A](private val self: A) {

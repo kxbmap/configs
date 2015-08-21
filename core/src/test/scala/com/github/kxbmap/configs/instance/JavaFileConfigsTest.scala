@@ -16,7 +16,6 @@
 
 package com.github.kxbmap.configs.instance
 
-import com.github.kxbmap.configs.ConfigProp
 import com.github.kxbmap.configs.simple._
 import com.github.kxbmap.configs.util._
 import java.io.File
@@ -25,7 +24,7 @@ import java.{util => ju}
 import scalaprops.{Gen, Scalaprops}
 import scalaz.Equal
 
-object JavaFileConfigsTest extends Scalaprops with ConfigProp {
+object JavaFileConfigsTest extends Scalaprops {
 
   val path = check[Path]
 

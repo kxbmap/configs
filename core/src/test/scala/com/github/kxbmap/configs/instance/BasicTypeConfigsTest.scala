@@ -16,7 +16,6 @@
 
 package com.github.kxbmap.configs.instance
 
-import com.github.kxbmap.configs.ConfigProp
 import com.github.kxbmap.configs.simple._
 import com.github.kxbmap.configs.util._
 import java.{lang => jl, util => ju}
@@ -24,7 +23,7 @@ import scalaprops.Scalaprops
 import scalaz.std.anyVal._
 import scalaz.std.string._
 
-object BasicTypeConfigsTest extends Scalaprops with ConfigProp {
+object BasicTypeConfigsTest extends Scalaprops {
 
   val byte = check[Byte]
   val byteJList = {

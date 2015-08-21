@@ -16,13 +16,12 @@
 
 package com.github.kxbmap.configs.instance
 
-import com.github.kxbmap.configs.ConfigProp
 import com.github.kxbmap.configs.simple._
 import com.github.kxbmap.configs.util._
 import scalaprops.Scalaprops
 import scalaz.std.option._
 
-object OptionConfigsTest extends Scalaprops with ConfigProp {
+object OptionConfigsTest extends Scalaprops {
 
   val option = check[Option[java.time.Duration]]
 

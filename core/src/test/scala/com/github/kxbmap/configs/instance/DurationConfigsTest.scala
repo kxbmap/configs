@@ -16,7 +16,6 @@
 
 package com.github.kxbmap.configs.instance
 
-import com.github.kxbmap.configs.ConfigProp
 import com.github.kxbmap.configs.simple._
 import com.github.kxbmap.configs.util._
 import java.{util => ju}
@@ -24,7 +23,7 @@ import scala.concurrent.duration._
 import scalaprops.{Gen, Scalaprops}
 import scalaz.Equal
 
-object DurationConfigsTest extends Scalaprops with ConfigProp {
+object DurationConfigsTest extends Scalaprops {
 
   val finiteDuration = check[FiniteDuration]
 

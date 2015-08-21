@@ -16,9 +16,9 @@
 
 package com.github.kxbmap.configs.instance
 
+import com.github.kxbmap.configs.Configs
 import com.github.kxbmap.configs.simple._
 import com.github.kxbmap.configs.util._
-import com.github.kxbmap.configs.{ConfigProp, Configs}
 import java.{util => ju}
 import scalaprops.{Gen, Properties, Scalaprops}
 import scalaz.Equal
@@ -27,7 +27,7 @@ import scalaz.std.stream._
 import scalaz.std.string._
 import scalaz.std.vector._
 
-object CollectionConfigsTest extends Scalaprops with ConfigProp {
+object CollectionConfigsTest extends Scalaprops {
 
   val javaList = {
     implicit val c = configs.fooConfigs
