@@ -91,6 +91,6 @@ object BytesTest extends Scalaprops {
 
   implicit lazy val bytesEqual: Equal[Bytes] = Equal.equalA[Bytes]
 
-  implicit lazy val bytesConfigVal: ConfigVal[Bytes] = ConfigVal[Long].contramap(_.value)
+  implicit lazy val bytesToConfigValue: ToConfigValue[Bytes] = ToConfigValue[Long].contramap(_.value)
 
 }

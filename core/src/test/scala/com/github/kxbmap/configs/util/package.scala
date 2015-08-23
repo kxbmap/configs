@@ -48,13 +48,13 @@ package object util {
 
   def hideConfigs[A: ClassTag]: Configs[A] = (_, _) => sys.error(s"hiding Configs[${classTag[A]}] used")
 
-  def check[A: Configs : Gen : Equal : ConfigVal : IsMissing : IsWrongType : WrongTypeValue]: Properties[Unit :-: String :-: Empty] =
+  def check[A: Configs : Gen : Equal : ToConfigValue : IsMissing : IsWrongType : WrongTypeValue]: Properties[Unit :-: String :-: Empty] =
     checkId(())
 
-  def check[A: Configs : Gen : Equal : ConfigVal : IsMissing : IsWrongType : WrongTypeValue](id: String): Properties[String :-: String :-: Empty] =
+  def check[A: Configs : Gen : Equal : ToConfigValue : IsMissing : IsWrongType : WrongTypeValue](id: String): Properties[String :-: String :-: Empty] =
     checkId(id)
 
-  private def checkId[A: Order, B: Configs : Gen : Equal : ConfigVal : IsMissing : IsWrongType : WrongTypeValue](id: A) =
+  private def checkId[A: Order, B: Configs : Gen : Equal : ToConfigValue : IsMissing : IsWrongType : WrongTypeValue](id: A) =
     Properties.either(
       id,
       checkGet[B].toProperties("get"),
@@ -62,8 +62,8 @@ package object util {
       checkWrongType[B].toProperties("wrong type")
     )
 
-  private def checkGet[A: Configs : Gen : Equal : ConfigVal] = forAll { value: A =>
-    Equal[A].equal(Configs[A].extract(value.cv), value)
+  private def checkGet[A: Configs : Gen : Equal : ToConfigValue] = forAll { value: A =>
+    Equal[A].equal(Configs[A].extract(value.toConfigValue), value)
   }
 
   private def checkMissing[A: Configs : IsMissing] = forAll {
@@ -79,11 +79,8 @@ package object util {
   }
 
 
-  implicit class UtilOps[A](private val self: A) {
-
-    def configValue(implicit A: ConfigVal[A]): ConfigValue = A.configValue(self)
-
-    def cv(implicit A: ConfigVal[A]): ConfigValue = configValue
+  implicit class ToConfigValOps[A](private val self: A) {
+    def toConfigValue(implicit A: ToConfigValue[A]): ConfigValue = A.toConfigValue(self)
   }
 
 
@@ -173,16 +170,16 @@ package object util {
   implicit lazy val javaDurationGen: Gen[jt.Duration] =
     Gen.nonNegativeLong.map(jt.Duration.ofNanos)
 
-  implicit lazy val javaDurationConfigVal: ConfigVal[jt.Duration] =
-    ConfigVal[String].contramap(d => s"${d.toNanos}ns")
+  implicit lazy val javaDurationToConfigValue: ToConfigValue[jt.Duration] =
+    ToConfigValue[String].contramap(d => s"${d.toNanos}ns")
 
 
   implicit lazy val configMemorySizeGen: Gen[ConfigMemorySize] =
     Gen.nonNegativeLong.map(ConfigMemorySize.ofBytes)
 
 
-  implicit def genConfigValue[A: Gen : ConfigVal]: Gen[ConfigValue :@ A] =
-    Gen[A].map(_.configValue).tag[A]
+  implicit def genConfigValue[A: Gen : ToConfigValue]: Gen[ConfigValue :@ A] =
+    Gen[A].map(_.toConfigValue).tag[A]
 
   implicit lazy val configNumberGen: Gen[ConfigValue :@ Number] =
     Gen.oneOf(

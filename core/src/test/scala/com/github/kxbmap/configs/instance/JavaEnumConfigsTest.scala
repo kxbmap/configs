@@ -41,6 +41,6 @@ object JavaEnumConfigsTest extends Scalaprops {
       Seq("bad-value", "FOOBAR").forall(e.getMessage.contains)
   }
 
-  implicit lazy val javaEnumConfigVal: ConfigVal[JavaEnum] = _.name().cv
+  implicit lazy val javaEnumToConfigValue: ToConfigValue[JavaEnum] = _.name().toConfigValue
 
 }

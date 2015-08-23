@@ -33,7 +33,7 @@ object EitherConfigsTest extends Scalaprops {
   implicit def eitherEqual[A: Equal]: Equal[Either[Throwable, A]] =
     Equal[Option[A]].contramap(_.right.toOption)
 
-  implicit def eitherConfigVal[A: ConfigVal]: ConfigVal[Either[Throwable, A]] =
-    ConfigVal[Option[A]].contramap(_.right.toOption)
+  implicit def eitherToConfigValue[A: ToConfigValue]: ToConfigValue[Either[Throwable, A]] =
+    ToConfigValue[Option[A]].contramap(_.right.toOption)
 
 }

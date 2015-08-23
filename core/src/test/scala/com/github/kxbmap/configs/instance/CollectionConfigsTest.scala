@@ -75,7 +75,7 @@ object CollectionConfigsTest extends Scalaprops {
 
   implicit lazy val fooEqual: Equal[Foo] = Equal.equalA[Foo]
 
-  implicit lazy val fooConfigVal: ConfigVal[Foo] = _.value.cv.atKey("v").root()
+  implicit lazy val fooToConfigValue: ToConfigValue[Foo] = _.value.toConfigValue.atKey("v").root()
 
   object configs {
 

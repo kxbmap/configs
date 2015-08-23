@@ -41,8 +41,8 @@ object DurationConfigsTest extends Scalaprops {
   implicit lazy val finiteDurationEqual: Equal[FiniteDuration] =
     Equal.equalA[FiniteDuration]
 
-  implicit lazy val finiteDurationValue: ConfigVal[FiniteDuration] =
-    ConfigVal[String].contramap(d => s"${d.toNanos}ns")
+  implicit lazy val finiteDurationValue: ToConfigValue[FiniteDuration] =
+    ToConfigValue[String].contramap(d => s"${d.toNanos}ns")
 
 
   implicit lazy val durationGen: Gen[Duration] =
@@ -56,8 +56,8 @@ object DurationConfigsTest extends Scalaprops {
   implicit lazy val durationEqual: Equal[Duration] =
     Equal.equalA[Duration]
 
-  implicit lazy val durationValue: ConfigVal[Duration] =
-    ConfigVal[String].contramap {
+  implicit lazy val durationValue: ToConfigValue[Duration] =
+    ToConfigValue[String].contramap {
       case Duration.Inf                 => "infinity"
       case Duration.MinusInf            => "-infinity"
       case d if d eq Duration.Undefined => "undefined"

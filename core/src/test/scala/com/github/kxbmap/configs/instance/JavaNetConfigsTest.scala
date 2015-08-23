@@ -44,7 +44,7 @@ object JavaNetConfigsTest extends Scalaprops {
     Apply[Gen].apply4(part, part, part, part)((a, b, c, d) => s"$a.$b.$c.$d")
   }
 
-  implicit lazy val inetAddressConfigVal: ConfigVal[InetAddress] =
-    ConfigVal[String].contramap(_.getHostAddress)
+  implicit lazy val inetAddressToConfigValue: ToConfigValue[InetAddress] =
+    ToConfigValue[String].contramap(_.getHostAddress)
 
 }

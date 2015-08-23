@@ -130,26 +130,26 @@ object SimpleConfigsTest extends Scalaprops {
       case _                                      => a == b
     }
 
-  implicit lazy val sealedTraitConfigVal: ConfigVal[SealedTrait] = {
-    case SealedChild1(n)     => Map("n" -> n).cv
-    case SealedChild2        => "SealedChild2".cv
-    case s: SealedChild3     => Map("m" -> s.m).cv
-    case SealedChild4        => "SealedChild4".cv
-    case SealedNestChild(nn) => Map("nn" -> nn).cv
+  implicit lazy val sealedTraitToConfigValue: ToConfigValue[SealedTrait] = {
+    case SealedChild1(n)     => Map("n" -> n).toConfigValue
+    case SealedChild2        => "SealedChild2".toConfigValue
+    case s: SealedChild3     => Map("m" -> s.m).toConfigValue
+    case SealedChild4        => "SealedChild4".toConfigValue
+    case SealedNestChild(nn) => Map("nn" -> nn).toConfigValue
     case SealedChild5(value) =>
       Map[String, Any](
         "'type" -> "SealedChild5",
         "value" -> value
-      ).cv
+      ).toConfigValue
     case SealedChild6(value) =>
       Map[String, Any](
         "'type" -> "SealedChild6",
         "value" -> value
-      ).cv
+      ).toConfigValue
     case SealedChild7 =>
       Map[String, Any](
         "'type" -> "SealedChild7"
-      ).cv
+      ).toConfigValue
   }
 
   implicit lazy val sealedTraitGen: Gen[SealedTrait] =
@@ -169,18 +169,18 @@ object SimpleConfigsTest extends Scalaprops {
 
 object MaterializeConfigsTest {
 
-  def checkMat[A: Gen : Configs : ConfigVal : Equal] = forAll { a: A =>
-    Configs[A].extract(a.cv) === a
+  def checkMat[A: Gen : Configs : ToConfigValue : Equal] = forAll { a: A =>
+    Configs[A].extract(a.toConfigValue) === a
   }
 
 
   ////
   case class SimpleSetting(user: String, password: String)
 
-  implicit lazy val simpleSettingConfigVal: ConfigVal[SimpleSetting] =
-    ConfigVal.fromMap(s => Map(
-      "user" -> s.user.cv,
-      "password" -> s.password.cv
+  implicit lazy val simpleSettingToConfigValue: ToConfigValue[SimpleSetting] =
+    ToConfigValue.fromMap(s => Map(
+      "user" -> s.user.toConfigValue,
+      "password" -> s.password.toConfigValue
     ))
 
   implicit lazy val simpleSettingGen: Gen[SimpleSetting] =
@@ -199,12 +199,12 @@ object MaterializeConfigsTest {
     simpleMap: Map[String, SimpleSetting],
     optional: Option[SimpleSetting])
 
-  implicit lazy val nestedSettingConfigVal: ConfigVal[NestedSetting] =
-    ConfigVal.fromMap(s => Map(
-      "simple" -> s.simple.cv,
-      "simples" -> s.simples.cv,
-      "simpleMap" -> s.simpleMap.cv,
-      "optional" -> s.optional.cv
+  implicit lazy val nestedSettingToConfigValue: ToConfigValue[NestedSetting] =
+    ToConfigValue.fromMap(s => Map(
+      "simple" -> s.simple.toConfigValue,
+      "simples" -> s.simples.toConfigValue,
+      "simpleMap" -> s.simpleMap.toConfigValue,
+      "optional" -> s.optional.toConfigValue
     ))
 
   implicit lazy val nestedSettingGen: Gen[NestedSetting] =
@@ -224,10 +224,10 @@ object MaterializeConfigsTest {
   ////
   case class RecursiveSetting(value: Int, next: Option[RecursiveSetting])
 
-  implicit lazy val recursiveSettingConfigVal: ConfigVal[RecursiveSetting] =
-    ConfigVal.fromMap(s => Map(
-      "value" -> s.value.cv,
-      "next" -> s.next.cv
+  implicit lazy val recursiveSettingToConfigValue: ToConfigValue[RecursiveSetting] =
+    ToConfigValue.fromMap(s => Map(
+      "value" -> s.value.toConfigValue,
+      "next" -> s.next.toConfigValue
     ))
 
   implicit lazy val recursiveSettingGen: Gen[RecursiveSetting] =
@@ -245,11 +245,11 @@ object MaterializeConfigsTest {
   ////
   class ParamListsSetting(val firstName: String, val lastName: String)(val age: Int)
 
-  implicit lazy val paramListsSettingConfigVal: ConfigVal[ParamListsSetting] =
-    ConfigVal.fromMap(s => Map(
-      "firstName" -> s.firstName.cv,
-      "lastName" -> s.lastName.cv,
-      "age" -> s.age.cv
+  implicit lazy val paramListsSettingToConfigValue: ToConfigValue[ParamListsSetting] =
+    ToConfigValue.fromMap(s => Map(
+      "firstName" -> s.firstName.toConfigValue,
+      "lastName" -> s.lastName.toConfigValue,
+      "age" -> s.age.toConfigValue
     ))
 
   implicit lazy val paramListsSettingGen: Gen[ParamListsSetting] =
@@ -271,11 +271,11 @@ object MaterializeConfigsTest {
     def this(firstName: String, lastName: String) = this(firstName, lastName, 0)
   }
 
-  implicit lazy val subCtorsSettingConfigVal: ConfigVal[SubCtorsSetting] =
-    ConfigVal.fromMap(s => Map(
-      "name" -> s.name.cv,
-      "age" -> s.age.cv,
-      "country" -> s.country.cv
+  implicit lazy val subCtorsSettingToConfigValue: ToConfigValue[SubCtorsSetting] =
+    ToConfigValue.fromMap(s => Map(
+      "name" -> s.name.toConfigValue,
+      "age" -> s.age.toConfigValue,
+      "country" -> s.country.toConfigValue
     ))
 
   implicit lazy val subCtorsSettingGen: Gen[SubCtorsSetting] =
@@ -333,11 +333,11 @@ object MaterializeConfigsTest {
     def apply(a0: Int): MultiApply = MultiApply(a0, 0, 0)
   }
 
-  implicit lazy val multiApplyConfigVal: ConfigVal[MultiApply] =
-    ConfigVal.fromMap(s => Map(
-      "a" -> s.a.cv,
-      "b" -> s.b.cv,
-      "c" -> s.c.cv
+  implicit lazy val multiApplyToConfigValue: ToConfigValue[MultiApply] =
+    ToConfigValue.fromMap(s => Map(
+      "a" -> s.a.toConfigValue,
+      "b" -> s.b.toConfigValue,
+      "c" -> s.c.toConfigValue
     ))
 
   implicit lazy val multiApplyGen: Gen[MultiApply] =
@@ -386,14 +386,14 @@ object MaterializeConfigsTest {
     `lower-hyphen`: Int,
     UPPERThenCamel: Int)
 
-  implicit lazy val formatCaseSettingConfigVal: ConfigVal[FormatCaseSetting] =
-    ConfigVal.fromMap(s => Map(
-      "lower-camel" -> s.lowerCamel.cv,
-      "upper-camel" -> s.UpperCamel.cv,
-      "lower-snake" -> s.lower_snake.cv,
-      "upper-snake" -> s.UPPER_SNAKE.cv,
-      "lower-hyphen" -> s.`lower-hyphen`.cv,
-      "upper-then-camel" -> s.UPPERThenCamel.cv
+  implicit lazy val formatCaseSettingToConfigValue: ToConfigValue[FormatCaseSetting] =
+    ToConfigValue.fromMap(s => Map(
+      "lower-camel" -> s.lowerCamel.toConfigValue,
+      "upper-camel" -> s.UpperCamel.toConfigValue,
+      "lower-snake" -> s.lower_snake.toConfigValue,
+      "upper-snake" -> s.UPPER_SNAKE.toConfigValue,
+      "lower-hyphen" -> s.`lower-hyphen`.toConfigValue,
+      "upper-then-camel" -> s.UPPERThenCamel.toConfigValue
     ))
 
   implicit lazy val formatCaseSettingGen: Gen[FormatCaseSetting] =
@@ -451,12 +451,12 @@ object MaterializeConfigsTest {
 
   implicit lazy val defaultsEqual: Equal[Defaults] = Equal.equalBy(d => (d.a, d.b, d.c, d.d))
 
-  implicit lazy val defaultsConfigVal: ConfigVal[Defaults] =
-    ConfigVal.fromMap(d => Map(
-      "a" -> d.a.cv,
-      "b" -> d.b.cv,
-      "c" -> d.c.cv,
-      "d" -> d.d.cv
+  implicit lazy val defaultsToConfigValue: ToConfigValue[Defaults] =
+    ToConfigValue.fromMap(d => Map(
+      "a" -> d.a.toConfigValue,
+      "b" -> d.b.toConfigValue,
+      "c" -> d.c.toConfigValue,
+      "d" -> d.d.toConfigValue
     ))
 
   implicit lazy val defaultsGen: Gen[Defaults] =
@@ -486,12 +486,12 @@ object MaterializeConfigsTest {
 
   implicit lazy val caseDefaultsEqual: Equal[CaseDefaults] = Equal.equalBy(d => (d.a, d.b, d.c, d.d))
 
-  implicit lazy val caseDefaultsConfigVal: ConfigVal[CaseDefaults] =
-    ConfigVal.fromMap(d => Map(
-      "a" -> d.a.cv,
-      "b" -> d.b.cv,
-      "c" -> d.c.cv,
-      "d" -> d.d.cv
+  implicit lazy val caseDefaultsToConfigValue: ToConfigValue[CaseDefaults] =
+    ToConfigValue.fromMap(d => Map(
+      "a" -> d.a.toConfigValue,
+      "b" -> d.b.toConfigValue,
+      "c" -> d.c.toConfigValue,
+      "d" -> d.d.toConfigValue
     ))
 
   implicit lazy val caseDefaultsGen: Gen[CaseDefaults] =
@@ -521,11 +521,11 @@ object MaterializeConfigsTest {
 
   implicit lazy val implicitParamEqual: Equal[ImplicitParam] = Equal.equalBy(d => (d.a, d.b, d.c))
 
-  implicit lazy val implicitParamConfigVal: ConfigVal[ImplicitParam] =
-    ConfigVal.fromMap(i => Map(
-      "a" -> i.a.cv,
-      "b" -> i.b.cv,
-      "c" -> i.c.cv
+  implicit lazy val implicitParamToConfigValue: ToConfigValue[ImplicitParam] =
+    ToConfigValue.fromMap(i => Map(
+      "a" -> i.a.toConfigValue,
+      "b" -> i.b.toConfigValue,
+      "c" -> i.c.toConfigValue
     ))
 
   implicit lazy val implicitParamGen: Gen[ImplicitParam] =
@@ -556,11 +556,11 @@ object MaterializeConfigsTest {
 
   implicit lazy val implicitWithDefaultEqual: Equal[ImplicitWithDefault] = Equal.equalBy(d => (d.a, d.b, d.c))
 
-  implicit lazy val implicitWithDefaultConfigVal: ConfigVal[ImplicitWithDefault] =
-    ConfigVal.fromMap(i => Map(
-      "a" -> i.a.cv,
-      "b" -> i.b.cv,
-      "c" -> i.c.cv
+  implicit lazy val implicitWithDefaultToConfigValue: ToConfigValue[ImplicitWithDefault] =
+    ToConfigValue.fromMap(i => Map(
+      "a" -> i.a.toConfigValue,
+      "b" -> i.b.toConfigValue,
+      "c" -> i.c.toConfigValue
     ))
 
   implicit lazy val implicitWithDefaultGen: Gen[ImplicitWithDefault] =

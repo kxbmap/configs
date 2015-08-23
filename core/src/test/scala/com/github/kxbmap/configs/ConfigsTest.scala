@@ -65,16 +65,14 @@ object ConfigsTest extends Scalaprops {
       val c: Configs[List[Int]] = _.getIntList(_).map(_.toInt).toList
       val cc: Configs[List[String]] = c.mapF((_: Int).toString)
       forAll { xs: List[Int] =>
-        val config = ConfigValueFactory.fromAnyRef(xs.cv)
-        cc.extract(config) == xs.map(_.toString)
+        cc.extract(xs.toConfigValue) == xs.map(_.toString)
       }
     }
     val array = {
       val c: Configs[Array[Int]] = _.getIntList(_).map(_.toInt).toArray
       val cc: Configs[Array[String]] = c.mapF((_: Int).toString)
       forAll { xs: Array[Int] =>
-        val config = ConfigValueFactory.fromAnyRef(xs.cv)
-        cc.extract(config).sameElements(xs.map(_.toString))
+        cc.extract(xs.toConfigValue).sameElements(xs.map(_.toString))
       }
     }
     Properties.list(

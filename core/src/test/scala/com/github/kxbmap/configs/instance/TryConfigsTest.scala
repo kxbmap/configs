@@ -37,7 +37,7 @@ object TryConfigsTest extends Scalaprops {
   implicit def tryEqual[A: Equal]: Equal[Try[A]] =
     Equal[Option[A]].contramap(_.toOption)
 
-  implicit def tryConfigVal[A: ConfigVal]: ConfigVal[Try[A]] =
-    ConfigVal[Option[A]].contramap(_.toOption)
+  implicit def tryToConfigValue[A: ToConfigValue]: ToConfigValue[Try[A]] =
+    ToConfigValue[Option[A]].contramap(_.toOption)
 
 }

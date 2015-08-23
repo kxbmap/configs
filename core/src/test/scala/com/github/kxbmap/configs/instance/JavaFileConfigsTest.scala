@@ -47,8 +47,8 @@ object JavaFileConfigsTest extends Scalaprops {
   implicit lazy val pathEqual: Equal[Path] =
     Equal.equalA[Path]
 
-  implicit lazy val pathConfigVal: ConfigVal[Path] =
-    ConfigVal[String].contramap(_.toString)
+  implicit lazy val pathToConfigValue: ToConfigValue[Path] =
+    ToConfigValue[String].contramap(_.toString)
 
 
   implicit lazy val fileGen: Gen[File] =
@@ -57,7 +57,7 @@ object JavaFileConfigsTest extends Scalaprops {
   implicit lazy val fileEqual: Equal[File] =
     Equal.equalA[File]
 
-  implicit lazy val fileConfigVal: ConfigVal[File] =
-    ConfigVal[String].contramap(_.toString)
+  implicit lazy val fileToConfigValue: ToConfigValue[File] =
+    ToConfigValue[String].contramap(_.toString)
 
 }
