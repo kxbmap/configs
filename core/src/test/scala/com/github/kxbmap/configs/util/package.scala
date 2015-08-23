@@ -32,6 +32,17 @@ import scalaz.{Equal, Need, Order}
 
 package object util {
 
+  type :@[A, T] = A { type Tag = T }
+
+  implicit class TagOps[F[_], A](private val g: F[A]) extends AnyVal {
+    def tag[T]: F[A :@ T] = g.asInstanceOf[F[A :@ T]]
+  }
+
+  implicit class UntagOps[F[_], A, T](private val g: F[A :@ T]) extends AnyVal {
+    def untag: F[A] = g.asInstanceOf[F[A]]
+  }
+
+
   val q = ConfigUtil.quoteString _
 
 
@@ -170,31 +181,22 @@ package object util {
     Gen.nonNegativeLong.map(ConfigMemorySize.ofBytes)
 
 
-  def genConfigValue[A: Gen]: Gen[ConfigValue] =
-    Gen[A].map(ConfigValueFactory.fromAnyRef)
+  implicit def genConfigValue[A: Gen : ConfigVal]: Gen[ConfigValue :@ A] =
+    Gen[A].map(_.configValue).tag[A]
 
-  lazy val configStringGen: Gen[ConfigValue] =
-    genConfigValue[String]
-
-  lazy val configNumberGen: Gen[ConfigValue] =
+  implicit lazy val configNumberGen: Gen[ConfigValue :@ Number] =
     Gen.oneOf(
-      genConfigValue[Byte],
-      genConfigValue[Int],
-      genConfigValue[Long],
-      genConfigValue[Double]
-    )
+      Gen[ConfigValue :@ Byte].untag,
+      Gen[ConfigValue :@ Int].untag,
+      Gen[ConfigValue :@ Long].untag,
+      Gen[ConfigValue :@ Double].untag
+    ).tag[Number]
 
-  lazy val configBooleanGen: Gen[ConfigValue] =
-    Gen.elements(
-      ConfigValueFactory.fromAnyRef(true),
-      ConfigValueFactory.fromAnyRef(false)
-    )
-
-  def genConfigList(g: Gen[ConfigValue]): Gen[ConfigList] =
-    Gen.list(g).map(xs => ConfigValueFactory.fromIterable(xs.asJava))
+  implicit def genConfigList[A](implicit g: Gen[ConfigValue :@ A]): Gen[ConfigList :@ A] =
+    Gen.list(g).map(xs => ConfigValueFactory.fromIterable(xs.asJava)).tag[A]
 
   implicit lazy val configListGen: Gen[ConfigList] =
-    genConfigList(configValueGen)
+    genConfigList(configValueGen.tag[ConfigList]).untag
 
   implicit lazy val configValueJListGen: Gen[ju.List[ConfigValue]] =
     Gen[ConfigList].map(cl => cl)
@@ -207,10 +209,9 @@ package object util {
 
   implicit lazy val configValueGen: Gen[ConfigValue] =
     Gen.lazyFrequency(
-      //      1 -> Need(Gen.value(ConfigValueFactory.fromAnyRef(null))),
-      40 -> Need(configStringGen),
-      40 -> Need(configNumberGen),
-      10 -> Need(configBooleanGen),
+      40 -> Need(Gen[ConfigValue :@ String].untag),
+      40 -> Need(Gen[ConfigValue :@ Number].untag),
+      10 -> Need(Gen[ConfigValue :@ Boolean].untag),
       5 -> Need(configListGen.asInstanceOf[Gen[ConfigValue]]),
       5 -> Need(configObjectGen.asInstanceOf[Gen[ConfigValue]])
     ).mapSize(_ / 2)

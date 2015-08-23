@@ -16,9 +16,11 @@
 
 package com.github.kxbmap.configs
 
+import com.github.kxbmap.configs.util._
+import com.typesafe.config.ConfigList
 import scala.collection.JavaConversions._
 import scala.collection.generic.CanBuildFrom
-import scalaprops.Property.forAllG
+import scalaprops.Property.forAll
 import scalaprops.{Properties, Scalaprops}
 import scalaz.std.string._
 
@@ -27,16 +29,17 @@ object MapFTest extends Scalaprops {
   implicit def ints[F[_]](implicit cbf: CanBuildFrom[Nothing, Int, F[Int]]): Configs[F[Int]] =
     _.getIntList(_).map(_.intValue())(collection.breakOut)
 
-  def bigInts[F[_]](implicit mapF: Configs.MapF[F, Int, BigInt]): Configs[F[BigInt]] =
-    mapF(BigInt(_))
+  case class Wrap(n: Int)
+
+  def wrapInt[F[_]](implicit mapF: Configs.MapF[F, Int, Wrap]): Configs[F[Wrap]] =
+    mapF(Wrap)
 
   val mapF = {
-    val g = util.genConfigList(util.genConfigValue[Int])
-    val list = forAllG(g) { cl =>
-      bigInts[List].extract(cl) == cl.map(_.unwrapped().asInstanceOf[Int] |> BigInt.apply).toList
+    val list = forAll { (cl: ConfigList :@ Int) =>
+      wrapInt[List].extract(cl) == cl.map(_.unwrapped().asInstanceOf[Int] |> Wrap).toList
     }
-    val set = forAllG(g) { cl =>
-      bigInts[Set].extract(cl) == cl.map(_.unwrapped().asInstanceOf[Int] |> BigInt.apply).toSet
+    val set = forAll { (cl: ConfigList :@ Int) =>
+      wrapInt[Set].extract(cl) == cl.map(_.unwrapped().asInstanceOf[Int] |> Wrap).toSet
     }
     Properties.list(
       list.toProperties("List"),
