@@ -16,15 +16,17 @@
 
 package com.github.kxbmap.configs.util
 
-import com.typesafe.config.{Config, ConfigValue, ConfigValueFactory}
-import java.{util => ju, math => jm}
+import com.github.kxbmap.configs._
+import com.typesafe.config.ConfigValueFactory.fromAnyRef
+import com.typesafe.config.{Config, ConfigValue}
+import java.{lang => jl, math => jm, util => ju}
 import scala.collection.JavaConverters._
 
 trait ToConfigValue[A] {
 
   def toConfigValue(value: A): ConfigValue
 
-  def contramap[B](f: B => A): ToConfigValue[B] = b => toConfigValue(f(b))
+  def contramap[B](f: B => A): ToConfigValue[B] = f(_) |> toConfigValue
 
 }
 
@@ -36,62 +38,50 @@ object ToConfigValue extends ToConfigValue0 {
     ToConfigValue[Map[String, ConfigValue]].contramap(f)
 
 
-  implicit def traversableToConfigValue[F[_], A: ToConfigValue](implicit ev: F[A] <:< Traversable[A]): ToConfigValue[F[A]] =
-    fa => ConfigValueFactory.fromAnyRef(fa.map(_.toConfigValue).toSeq.asJava)
+  implicit def javaCollectionToConfigValue[F[_], A: ToConfigValue](implicit ev: F[A] <:< ju.Collection[A]): ToConfigValue[F[A]] =
+    ev(_).asScala.map(_.toConfigValue).toList.asJava |> fromAnyRef
 
-  implicit def arrayToConfigValue[A: ToConfigValue]: ToConfigValue[Array[A]] =
-    ToConfigValue[Seq[A]].contramap(_.toSeq)
-
-  implicit def javaListToConfigValue[A: ToConfigValue]: ToConfigValue[ju.List[A]] =
-    ToConfigValue[Seq[A]].contramap(_.asScala)
+  implicit def traversableToConfigValue[F[_], A: ToConfigValue](implicit ev: F[A] => Traversable[A]): ToConfigValue[F[A]] =
+    ToConfigValue[ju.Collection[A]].contramap(_.toSeq.asJavaCollection)
 
   implicit def javaStringMapToConfigValue[A: ToConfigValue]: ToConfigValue[ju.Map[String, A]] =
-    ToConfigValue.fromMap(_.asScala.mapValues(_.toConfigValue).toMap)
+    _.asScala.mapValues(_.toConfigValue).asJava |> fromAnyRef
 
   implicit def javaSymbolMapToConfigValue[A: ToConfigValue]: ToConfigValue[ju.Map[Symbol, A]] =
-    ToConfigValue.fromMap(_.asScala.map(t => t._1.name -> t._2.toConfigValue).toMap)
+    _.asScala.map(t => t._1.name -> t._2.toConfigValue).asJava |> fromAnyRef
 
-  implicit def javaSetToConfigValue[A: ToConfigValue]: ToConfigValue[ju.Set[A]] =
-    ToConfigValue[List[A]].contramap(_.asScala.toList)
+  implicit def mapToConfigValue[A, B](implicit T: ToConfigValue[ju.Map[A, B]]): ToConfigValue[Map[A, B]] =
+    T.contramap(_.asJava)
 
   implicit def optionToConfigValue[A: ToConfigValue]: ToConfigValue[Option[A]] =
-    o => ConfigValueFactory.fromAnyRef(o.map(_.toConfigValue).orNull)
-
-  implicit def stringMapToConfigValue[A: ToConfigValue]: ToConfigValue[Map[String, A]] =
-    m => ConfigValueFactory.fromAnyRef(m.mapValues(_.toConfigValue).asJava)
-
-  implicit def symbolMapToConfigValue[A: ToConfigValue]: ToConfigValue[Map[Symbol, A]] =
-    ToConfigValue[Map[String, A]].contramap(_.map(t => t._1.name -> t._2))
+    _.map(_.toConfigValue).orNull |> fromAnyRef
 
   implicit val bigIntToConfigValue: ToConfigValue[BigInt] =
-    ToConfigValue[String].contramap(_.toString())
+    _.toString |> fromAnyRef
 
   implicit val bigIntegerToConfigValue: ToConfigValue[jm.BigInteger] =
-    ToConfigValue[String].contramap(_.toString)
+    _.toString |> fromAnyRef
 
   implicit val bigDecimalToConfigValue: ToConfigValue[BigDecimal] =
-    ToConfigValue[String].contramap(_.toString())
+    _.toString |> fromAnyRef
 
   implicit val javaBigDecimalToConfigValue: ToConfigValue[jm.BigDecimal] =
-    ToConfigValue[String].contramap(_.toString)
+    _.toString |> fromAnyRef
 
   implicit val charToConfigValue: ToConfigValue[Char] =
-    ToConfigValue[String].contramap(_.toString)
-
-  implicit val javaCharacterToConfigValue: ToConfigValue[java.lang.Character] =
-    ToConfigValue[String].contramap(_.toString)
+    _.toString |> fromAnyRef
 
   implicit val charJListToConfigValue: ToConfigValue[ju.List[Char]] =
-    ToConfigValue[String].contramap(xs => new String(xs.asScala.toArray))
+    xs => fromAnyRef(new String(xs.asScala.toArray))
 
-  implicit val javaCharacterJListToConfigValue: ToConfigValue[ju.List[java.lang.Character]] =
+  implicit def charTraversableToConfigValue[F[_]](implicit ev: F[Char] => Traversable[Char]): ToConfigValue[F[Char]] =
+    fa => fromAnyRef(new String(fa.toArray))
+
+  implicit val javaCharacterToConfigValue: ToConfigValue[jl.Character] =
+    charToConfigValue.contramap(_.charValue())
+
+  implicit val javaCharacterJListToConfigValue: ToConfigValue[ju.List[jl.Character]] =
     charJListToConfigValue.contramap(_.asScala.map(Char.unbox).asJava)
-
-  implicit def charTraversableToConfigValue[F[_]](implicit ev: F[Char] <:< Traversable[Char]): ToConfigValue[F[Char]] =
-    fa => ConfigValueFactory.fromAnyRef(new String(fa.toArray))
-
-  implicit val charArrayToConfigValue: ToConfigValue[Array[Char]] =
-    ToConfigValue[String].contramap(new String(_))
 
   implicit val configToConfigValue: ToConfigValue[Config] =
     _.root()
@@ -101,7 +91,7 @@ object ToConfigValue extends ToConfigValue0 {
 trait ToConfigValue0 {
 
   private[this] final val _anyValue: ToConfigValue[Any] =
-    ConfigValueFactory.fromAnyRef(_)
+    fromAnyRef(_)
 
   implicit def anyToConfigValue[A]: ToConfigValue[A] =
     _anyValue.asInstanceOf[ToConfigValue[A]]
