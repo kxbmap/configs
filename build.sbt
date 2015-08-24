@@ -9,7 +9,7 @@ organization in ThisBuild := "com.github.kxbmap"
 
 scalaVersion in ThisBuild := "2.10.5"
 
-crossScalaVersions in ThisBuild := Seq(scalaVersion.value, "2.11.6")
+crossScalaVersions in ThisBuild += "2.11.7"
 
 scalacOptions in ThisBuild ++= Seq(
   "-feature",
