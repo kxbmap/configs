@@ -22,12 +22,12 @@ import scala.annotation.tailrec
 import scala.collection.JavaConverters._
 import scala.reflect.{ClassTag, classTag}
 import scalaprops.Or.Empty
-import scalaprops.Property.forAll
+import scalaprops.Property.{forAll, forAllG}
 import scalaprops.{:-:, Gen, Properties, Property}
 import scalaz.std.anyVal._
 import scalaz.std.list._
 import scalaz.std.string._
-import scalaz.{Equal, Need, Order}
+import scalaz.{Apply, Equal, Need, Order}
 
 
 package object util {
@@ -48,18 +48,20 @@ package object util {
 
   def hideConfigs[A: ClassTag]: Configs[A] = (_, _) => sys.error(s"hiding Configs[${classTag[A]}] used")
 
-  def check[A: Configs : Gen : Equal : ToConfigValue : IsMissing : IsWrongType : WrongTypeValue]: Properties[Unit :-: String :-: Empty] =
+
+  def check[A: Configs : Gen : Equal : ToConfigValue : IsMissing : WrongTypeValue : IsWrongType : BadValue : IsBadValue]: Properties[Unit :-: String :-: Empty] =
     checkId(())
 
-  def check[A: Configs : Gen : Equal : ToConfigValue : IsMissing : IsWrongType : WrongTypeValue](id: String): Properties[String :-: String :-: Empty] =
+  def check[A: Configs : Gen : Equal : ToConfigValue : IsMissing : WrongTypeValue : IsWrongType : BadValue : IsBadValue](id: String): Properties[String :-: String :-: Empty] =
     checkId(id)
 
-  private def checkId[A: Order, B: Configs : Gen : Equal : ToConfigValue : IsMissing : IsWrongType : WrongTypeValue](id: A) =
+  private def checkId[A: Order, B: Configs : Gen : Equal : ToConfigValue : IsMissing : WrongTypeValue : IsWrongType : BadValue : IsBadValue](id: A) =
     Properties.either(
       id,
       checkGet[B].toProperties("get"),
-      checkMissing[B].toProperties("missing"),
-      checkWrongType[B].toProperties("wrong type")
+      Seq(checkMissing[B].toProperties("missing")) ++
+        checkWrongType[B].map(_.toProperties("wrong type")) ++
+        checkBadValue[B].map(_.toProperties("bad value")): _*
     )
 
   private def checkGet[A: Configs : Gen : Equal : ToConfigValue] = forAll { value: A =>
@@ -72,10 +74,16 @@ package object util {
     IsMissing[A].check(Need(Configs[A].get(c, p)))
   }
 
-  private def checkWrongType[A: Configs : IsWrongType : WrongTypeValue] = forAll {
-    val p = "dummy-path"
-    val c = ConfigValueFactory.fromAnyRef(WrongTypeValue[A].value).atKey(p)
-    IsWrongType[A].check(Need(Configs[A].get(c, p)))
+  private def checkWrongType[A: Configs : IsWrongType : WrongTypeValue] = WrongTypeValue[A].gen.map {
+    forAllG(_) { cv =>
+      IsWrongType[A].check(Need(Configs[A].extract(cv)))
+    }
+  }
+
+  private def checkBadValue[A: Configs : BadValue : IsBadValue] = BadValue[A].gen.map {
+    forAllG(_) { cv =>
+      IsBadValue[A].check(Need(Configs[A].extract(cv)))
+    }
   }
 
 
@@ -104,6 +112,11 @@ package object util {
     forAll { (a1: A1, a2: A2) =>
       intercept0(block(a1, a2))(cond)
     }
+
+
+  implicit class GenOps[A](private val g: Gen[A]) extends AnyVal {
+    def as[B >: A]: Gen[B] = g.asInstanceOf[Gen[B]]
+  }
 
 
   implicit def javaListGen[A: Gen]: Gen[ju.List[A]] =
@@ -189,17 +202,23 @@ package object util {
       Gen[ConfigValue :@ Double].untag
     ).tag[Number]
 
-  implicit def genConfigList[A](implicit g: Gen[ConfigValue :@ A]): Gen[ConfigList :@ A] =
-    Gen.list(g).map(xs => ConfigValueFactory.fromIterable(xs.asJava)).tag[A]
+  implicit def genConfigList0[A](implicit g: Gen[ConfigValue :@ A]): Gen[ConfigList :@ A] =
+    Gen.list(g).map(_.asJava |> ConfigValueFactory.fromIterable).tag[A]
+
+  def genConfigList[A](g: Gen[ConfigValue]): Gen[ConfigList] =
+    genConfigList0(g.tag[A]).untag
+
+  def genNonEmptyConfigList[A](g: Gen[ConfigValue]): Gen[ConfigList] =
+    Apply[Gen].apply2(g, Gen.list(g))(_ :: _).map(_.asJava |> ConfigValueFactory.fromIterable)
 
   implicit lazy val configListGen: Gen[ConfigList] =
-    genConfigList(configValueGen.tag[ConfigList]).untag
+    genConfigList(configValueGen)
 
   implicit lazy val configValueJListGen: Gen[ju.List[ConfigValue]] =
     Gen[ConfigList].map(cl => cl)
 
   implicit lazy val configObjectGen: Gen[ConfigObject] =
-    Gen.mapGen(Gen[String], configValueGen).map(m => ConfigValueFactory.fromMap(m.asJava))
+    Gen.mapGen(Gen[String], configValueGen).map(_.asJava |> ConfigValueFactory.fromMap)
 
   implicit lazy val configValueJavaMapGen: Gen[ju.Map[String, ConfigValue]] =
     Gen[ConfigObject].map(co => co)
@@ -209,8 +228,8 @@ package object util {
       40 -> Need(Gen[ConfigValue :@ String].untag),
       40 -> Need(Gen[ConfigValue :@ Number].untag),
       10 -> Need(Gen[ConfigValue :@ Boolean].untag),
-      5 -> Need(configListGen.asInstanceOf[Gen[ConfigValue]]),
-      5 -> Need(configObjectGen.asInstanceOf[Gen[ConfigValue]])
+      5 -> Need(configListGen.as[ConfigValue]),
+      5 -> Need(configObjectGen.as[ConfigValue])
     ).mapSize(_ / 2)
 
   implicit lazy val configGen: Gen[Config] =

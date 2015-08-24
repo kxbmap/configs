@@ -52,10 +52,4 @@ object IsWrongType {
     case _                                     => false
   }
 
-
-  implicit val configValueIsWrongType: IsWrongType[ConfigValue] = a => {
-    a.value
-    true
-  }
-
 }

@@ -16,47 +16,68 @@
 
 package com.github.kxbmap.configs.util
 
-import com.typesafe.config.ConfigList
+import com.typesafe.config.{ConfigList, ConfigValue}
 import java.{lang => jl, util => ju}
+import scalaprops.Gen
 
 trait WrongTypeValue[A] {
-  def value: Any
+  def gen: Option[Gen[ConfigValue]]
 }
 
 object WrongTypeValue {
 
   def apply[A](implicit A: WrongTypeValue[A]): WrongTypeValue[A] = A
 
-  def string[A]: WrongTypeValue[A] = _string.asInstanceOf[WrongTypeValue[A]]
-
-  private[this] final val _string: WrongTypeValue[Any] = new WrongTypeValue[Any] {
-    val value: Any = "wrong type value"
+  def of[A](g: Gen[ConfigValue]): WrongTypeValue[A] = new WrongTypeValue[A] {
+    val gen: Option[Gen[ConfigValue]] = Some(g)
   }
 
-  def list[A]: WrongTypeValue[A] = _list.asInstanceOf[WrongTypeValue[A]]
 
-  private[this] final val _list: WrongTypeValue[Any] = new WrongTypeValue[Any] {
-    val value: Any = ju.Collections.emptyList()
+  private[this] final val stringConfigValueGen: Gen[ConfigValue] =
+    Gen[ConfigValue :@ String].as[ConfigValue]
+
+  private[this] final val emptyListConfigValueGen: Gen[ConfigValue] =
+    Gen.value(ju.Collections.emptyList[ConfigValue]().toConfigValue)
+
+
+  private[this] final val default: WrongTypeValue[Any] =
+    WrongTypeValue.of(emptyListConfigValueGen)
+
+  implicit def defaultWrongTypeValue[A]: WrongTypeValue[A] =
+    default.asInstanceOf[WrongTypeValue[A]]
+
+  implicit val configValueWrongTypeValue: WrongTypeValue[ConfigValue] = new WrongTypeValue[ConfigValue] {
+    val gen: Option[Gen[ConfigValue]] = None
   }
 
-  implicit def defaultWrongTypeValue[A]: WrongTypeValue[A] = list[A]
+  implicit val configListWrongTypeValue: WrongTypeValue[ConfigList] =
+    WrongTypeValue.of(stringConfigValueGen)
 
-  implicit val configListWrongTypeValue: WrongTypeValue[ConfigList] = string[ConfigList]
+  private[this] def collectionWrongTypeValue[F[_], A: WrongTypeValue]: WrongTypeValue[F[A]] =
+    WrongTypeValue.of {
+      Gen.oneOf(
+        stringConfigValueGen,
+        WrongTypeValue[A].gen.map(genNonEmptyConfigList).map(_.as[ConfigValue]).toSeq: _*
+      )
+    }
 
-  implicit def javaListWrongTypeValue[A]: WrongTypeValue[ju.List[A]] = string[ju.List[A]]
+  implicit def javaCollectionWrongTypeValue[F[_], A: WrongTypeValue](implicit ev: F[A] <:< ju.Collection[A]): WrongTypeValue[F[A]] =
+    collectionWrongTypeValue[F, A]
 
-  implicit def javaSetWrongTypeValue[A]: WrongTypeValue[ju.Set[A]] = string[ju.Set[A]]
+  implicit def traversableWrongTypeValue[F[_], A: WrongTypeValue](implicit ev: F[A] => Traversable[A]): WrongTypeValue[F[A]] =
+    collectionWrongTypeValue[F, A]
 
-  implicit def traversableWrongTypeValue[F[_] <: Traversable[_], A]: WrongTypeValue[F[A]] = string[F[A]]
+  implicit val charJListWrongTypeValue: WrongTypeValue[ju.List[Char]] =
+    defaultWrongTypeValue[ju.List[Char]]
 
-  implicit def arrayWrongTypeValue[A]: WrongTypeValue[Array[A]] = string[Array[A]]
+  implicit val characterJListWrongTypeValue: WrongTypeValue[ju.List[jl.Character]] =
+    defaultWrongTypeValue[ju.List[jl.Character]]
 
-  implicit val charJListWrongTypeValue: WrongTypeValue[ju.List[Char]] = list[ju.List[Char]]
+  implicit def charTraversableWrongTypeValue[F[_]](implicit ev: F[Char] => Traversable[Char]): WrongTypeValue[F[Char]] =
+    defaultWrongTypeValue[F[Char]]
 
-  implicit val characterJListWrongTypeValue: WrongTypeValue[ju.List[jl.Character]] = list[ju.List[jl.Character]]
-
-  implicit def charTraversableWrongTypeValue[F[_] <: Traversable[_]]: WrongTypeValue[F[Char]] = list[F[Char]]
-
-  implicit val charArrayWrongTypeValue: WrongTypeValue[Array[Char]] = list[Array[Char]]
+  implicit def optionWrongTypeValue[A: WrongTypeValue]: WrongTypeValue[Option[A]] = new WrongTypeValue[Option[A]] {
+    val gen: Option[Gen[ConfigValue]] = WrongTypeValue[A].gen
+  }
 
 }
