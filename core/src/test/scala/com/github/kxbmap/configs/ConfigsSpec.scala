@@ -147,6 +147,14 @@ class ConfigsSpec extends FunSpec with Matchers with TypeCheckedTripleEquals {
         it ("should be extract value") {
           c.extract[Map[String, Int]] should === (Map("a" -> 1, "b" -> 2))
         }
+
+        it ("should be extract value with quoted key") {
+          val c = parseString(
+            """"a.b.c" = ["\\.at$"]
+              |""".stripMargin)
+
+          c.extract[Map[String, List[String]]] should === (Map("a.b.c" -> List("\\.at$")))
+        }
       }
 
       describe("for Map[Symbol, T]") {

@@ -16,7 +16,7 @@
 
 package com.github.kxbmap.configs
 
-import com.typesafe.config.Config
+import com.typesafe.config.{Config, ConfigUtil}
 import java.util.concurrent.TimeUnit
 import scala.annotation.implicitNotFound
 import scala.collection.JavaConversions._
@@ -61,7 +61,7 @@ trait ConfigsInstances {
   implicit val configsIdentity: Configs[Config] = configs { identity }
 
   def mapConfigs[K, T: AtPath](f: String => K): Configs[Map[K, T]] = configs { c =>
-    c.root().keysIterator.map { k => f(k) -> c.get[T](k) }.toMap
+    c.root().keysIterator.map { k => f(k) -> c.get[T](ConfigUtil.quoteString(k)) }.toMap
   }
 
   implicit def stringMapConfigs[T: AtPath]: Configs[Map[String, T]] = mapConfigs[String, T] { identity }
