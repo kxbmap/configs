@@ -80,4 +80,23 @@ object WrongTypeValue {
     val gen: Option[Gen[ConfigValue]] = WrongTypeValue[A].gen
   }
 
+
+  implicit val intWrongTypeValue: WrongTypeValue[Int] =
+    WrongTypeValue.of {
+      Gen.oneOf(
+        emptyListConfigValueGen,
+        Seq(
+          Gen.value(Int.MaxValue + 1L),
+          Gen.value(Long.MaxValue),
+          Gen.value(Int.MinValue - 1L),
+          Gen.value(Long.MinValue),
+          Gen.chooseLong(Int.MaxValue + 1L, Long.MaxValue),
+          Gen.chooseLong(Long.MinValue, Int.MinValue - 1L)
+        ).map(_.map(_.toConfigValue)): _*
+      )
+    }
+
+  implicit val javaIntegerWongTypeValue: WrongTypeValue[jl.Integer] =
+    intWrongTypeValue.asInstanceOf[WrongTypeValue[jl.Integer]]
+
 }
