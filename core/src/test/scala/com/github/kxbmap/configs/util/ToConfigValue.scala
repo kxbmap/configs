@@ -48,7 +48,10 @@ object ToConfigValue {
   implicit def javaCollectionToConfigValue[F[_], A: ToConfigValue](implicit ev: F[A] <:< ju.Collection[A]): ToConfigValue[F[A]] =
     ev(_).asScala.map(_.toConfigValue).toList.asJava |> fromAnyRef
 
-  implicit def traversableToConfigValue[F[_], A: ToConfigValue](implicit ev: F[A] => Traversable[A]): ToConfigValue[F[A]] =
+  implicit def traversableToConfigValue[F[_], A: ToConfigValue](implicit ev: F[A] <:< Traversable[A]): ToConfigValue[F[A]] =
+    ToConfigValue[ju.Collection[A]].contramap(_.toSeq.asJavaCollection)
+
+  implicit def arrayToConfigValue[A: ToConfigValue]: ToConfigValue[Array[A]] =
     ToConfigValue[ju.Collection[A]].contramap(_.toSeq.asJavaCollection)
 
   implicit def javaStringMapToConfigValue[A: ToConfigValue]: ToConfigValue[ju.Map[String, A]] =

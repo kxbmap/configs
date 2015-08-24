@@ -64,8 +64,11 @@ object WrongTypeValue {
   implicit def javaCollectionWrongTypeValue[F[_], A: WrongTypeValue](implicit ev: F[A] <:< ju.Collection[A]): WrongTypeValue[F[A]] =
     collectionWrongTypeValue[F, A]
 
-  implicit def traversableWrongTypeValue[F[_], A: WrongTypeValue](implicit ev: F[A] => Traversable[A]): WrongTypeValue[F[A]] =
+  implicit def traversableWrongTypeValue[F[_], A: WrongTypeValue](implicit ev: F[A] <:< Traversable[A]): WrongTypeValue[F[A]] =
     collectionWrongTypeValue[F, A]
+
+  implicit def arrayWrongType[A: WrongTypeValue]: WrongTypeValue[Array[A]] =
+    collectionWrongTypeValue[Array, A]
 
   implicit def optionWrongTypeValue[A: WrongTypeValue]: WrongTypeValue[Option[A]] = new WrongTypeValue[Option[A]] {
     val gen: Option[Gen[ConfigValue]] = WrongTypeValue[A].gen
