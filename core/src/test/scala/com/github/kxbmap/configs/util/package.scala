@@ -191,8 +191,11 @@ package object util {
     Gen.nonNegativeLong.map(ConfigMemorySize.ofBytes)
 
 
-  implicit def genConfigValue[A: Gen : ToConfigValue]: Gen[ConfigValue :@ A] =
+  implicit def genConfigValue0[A: Gen : ToConfigValue]: Gen[ConfigValue :@ A] =
     Gen[A].map(_.toConfigValue).tag[A]
+
+  def genConfigValue[A: ToConfigValue](g: Gen[A]): Gen[ConfigValue] =
+    genConfigValue0[A](g, ToConfigValue[A]).as[ConfigValue]
 
   implicit lazy val configNumberGen: Gen[ConfigValue :@ Number] =
     Gen.oneOf(
@@ -202,14 +205,16 @@ package object util {
       Gen[ConfigValue :@ Double].untag
     ).tag[Number]
 
-  implicit def genConfigList0[A](implicit g: Gen[ConfigValue :@ A]): Gen[ConfigList :@ A] =
-    Gen.list(g).map(_.asJava |> ConfigValueFactory.fromIterable).tag[A]
+  implicit def genConfigList0[A: Gen : ToConfigValue]: Gen[ConfigList :@ A] =
+    Gen.list(genConfigValue0[A]).map(_.asJava |> ConfigValueFactory.fromIterable).tag[A]
 
-  def genConfigList[A](g: Gen[ConfigValue]): Gen[ConfigList] =
-    genConfigList0(g.tag[A]).untag
+  def genConfigList[A: ToConfigValue](g: Gen[A]): Gen[ConfigList] =
+    genConfigList0(g, ToConfigValue[A]).untag
 
-  def genNonEmptyConfigList[A](g: Gen[ConfigValue]): Gen[ConfigList] =
-    Apply[Gen].apply2(g, Gen.list(g))(_ :: _).map(_.asJava |> ConfigValueFactory.fromIterable)
+  def genNonEmptyConfigList[A: ToConfigValue](g: Gen[A]): Gen[ConfigList] = {
+    val cg = genConfigValue(g)
+    Apply[Gen].apply2(cg, Gen.list(cg))(_ :: _).map(_.asJava |> ConfigValueFactory.fromIterable)
+  }
 
   implicit lazy val configListGen: Gen[ConfigList] =
     genConfigList(configValueGen)

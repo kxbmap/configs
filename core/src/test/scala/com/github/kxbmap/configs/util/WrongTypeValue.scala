@@ -57,7 +57,7 @@ object WrongTypeValue {
     WrongTypeValue.of {
       Gen.oneOf(
         stringConfigValueGen,
-        WrongTypeValue[A].gen.map(genNonEmptyConfigList).map(_.as[ConfigValue]).toSeq: _*
+        WrongTypeValue[A].gen.map(genNonEmptyConfigList(_)).map(_.as[ConfigValue]).toSeq: _*
       )
     }
 
@@ -75,10 +75,42 @@ object WrongTypeValue {
   }
 
 
+  implicit val byteWrongTypeValue: WrongTypeValue[Byte] =
+    WrongTypeValue.of {
+      Gen.oneOf(
+        genConfigValue(Gen.alphaString),
+        Seq(
+          Gen.value(Byte.MaxValue + 1),
+          Gen.value(Byte.MinValue - 1),
+          Gen.choose(Byte.MaxValue + 1, Int.MaxValue),
+          Gen.choose(Int.MinValue, Byte.MinValue - 1)
+        ).map(_.map(_.toConfigValue)): _*
+      )
+    }
+
+  implicit val javaByteWrongTypeValue: WrongTypeValue[jl.Byte] =
+    byteWrongTypeValue.asInstanceOf[WrongTypeValue[jl.Byte]]
+
+  implicit val shortWrongTypeValue: WrongTypeValue[Short] =
+    WrongTypeValue.of {
+      Gen.oneOf(
+        genConfigValue(Gen.alphaString),
+        Seq(
+          Gen.value(Short.MaxValue + 1),
+          Gen.value(Short.MinValue - 1),
+          Gen.choose(Short.MaxValue + 1, Int.MaxValue),
+          Gen.choose(Int.MinValue, Short.MinValue - 1)
+        ).map(_.map(_.toConfigValue)): _*
+      )
+    }
+
+  implicit val javaShortWrongTypeValue: WrongTypeValue[jl.Short] =
+    shortWrongTypeValue.asInstanceOf[WrongTypeValue[jl.Short]]
+
   implicit val intWrongTypeValue: WrongTypeValue[Int] =
     WrongTypeValue.of {
       Gen.oneOf(
-        emptyListConfigValueGen,
+        genConfigValue(Gen.alphaString),
         Seq(
           Gen.value(Int.MaxValue + 1L),
           Gen.value(Long.MaxValue),
@@ -90,11 +122,28 @@ object WrongTypeValue {
       )
     }
 
-  implicit val javaIntegerWongTypeValue: WrongTypeValue[jl.Integer] =
+  implicit val javaIntegerWrongTypeValue: WrongTypeValue[jl.Integer] =
     intWrongTypeValue.asInstanceOf[WrongTypeValue[jl.Integer]]
 
 
-  implicit val charWongTypeValue: WrongTypeValue[Char] =
+  implicit val longWrongTypeValue: WrongTypeValue[Long] =
+    WrongTypeValue.of {
+      Gen.oneOf(
+        genConfigValue(Gen.alphaString),
+        Seq(
+          Gen.value(BigInt(Long.MaxValue) + 1),
+          Gen.value(BigInt(Long.MinValue) - 1),
+          Gen[BigInt].map(_.abs + Long.MaxValue + 1),
+          Gen[BigInt].map(-_.abs + Long.MinValue - 1)
+        ).map(_.map(_.toConfigValue)): _*
+      )
+    }
+
+  implicit val javaLongWrongTypeValue: WrongTypeValue[jl.Long] =
+    longWrongTypeValue.asInstanceOf[WrongTypeValue[jl.Long]]
+
+
+  implicit val charWrongTypeValue: WrongTypeValue[Char] =
     WrongTypeValue.of {
       import jl.{Character => C}
       def tos(cp: Int): String = new String(C.toChars(cp))
@@ -109,8 +158,8 @@ object WrongTypeValue {
       )
     }
 
-  implicit val javaCharacterWongTypeValue: WrongTypeValue[jl.Character] =
-    charWongTypeValue.asInstanceOf[WrongTypeValue[jl.Character]]
+  implicit val javaCharacterWrongTypeValue: WrongTypeValue[jl.Character] =
+    charWrongTypeValue.asInstanceOf[WrongTypeValue[jl.Character]]
 
   implicit val charJListWrongTypeValue: WrongTypeValue[ju.List[Char]] =
     defaultWrongTypeValue[ju.List[Char]]

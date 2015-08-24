@@ -16,7 +16,7 @@
 
 package com.github.kxbmap.configs
 
-import com.typesafe.config.{Config, ConfigException, ConfigList, ConfigMemorySize, ConfigObject, ConfigUtil, ConfigValue, ConfigValueType}
+import com.typesafe.config.{Config, ConfigException, ConfigList, ConfigMemorySize, ConfigObject, ConfigUtil, ConfigValue}
 import java.io.File
 import java.net.InetAddress
 import java.nio.file.{Path, Paths}
@@ -77,11 +77,17 @@ private[configs] abstract class DefaultConfigsInstances {
       }
 
 
+  private[this] def toByte(n: Number, c: Config, p: String): Byte = {
+    val l = n.longValue()
+    if (l.isValidByte) l.toByte
+    else throw new ConfigException.WrongType(c.origin(), p, "byte (8-bit integer)", s"out-of-range value $l")
+  }
+
   implicit lazy val byteConfigs: Configs[Byte] =
-    _.getInt(_) |> (_.toByte)
+    (c, p) => toByte(c.getNumber(p), c, p)
 
   implicit lazy val byteJListConfigs: Configs[ju.List[Byte]] =
-    _.getIntList(_).map(_.byteValue()).asJava
+    (c, p) => c.getNumberList(p).map(toByte(_, c, p))
 
   implicit lazy val javaByteConfigs: Configs[jl.Byte] =
     byteConfigs.asInstanceOf[Configs[jl.Byte]]
@@ -90,11 +96,17 @@ private[configs] abstract class DefaultConfigsInstances {
     byteJListConfigs.asInstanceOf[Configs[ju.List[jl.Byte]]]
 
 
+  private[this] def toShort(n: Number, c: Config, p: String): Short = {
+    val l = n.longValue()
+    if (l.isValidShort) l.toShort
+    else throw new ConfigException.WrongType(c.origin(), p, "short (16-bit integer)", s"out-of-range value $l")
+  }
+
   implicit lazy val shortConfigs: Configs[Short] =
-    _.getInt(_) |> (_.toShort)
+    (c, p) => toShort(c.getNumber(p), c, p)
 
   implicit lazy val shortJListConfigs: Configs[ju.List[Short]] =
-    _.getIntList(_).map(_.shortValue()).asJava
+    (c, p) => c.getNumberList(p).map(toShort(_, c, p))
 
   implicit lazy val javaShortConfigs: Configs[jl.Short] =
     shortConfigs.asInstanceOf[Configs[jl.Short]]
@@ -116,17 +128,27 @@ private[configs] abstract class DefaultConfigsInstances {
     _.getIntList(_)
 
 
+  private[this] def parseLong(s: String, c: Config, p: String): Long = {
+    val n =
+      try BigDecimal(s).toBigInt() catch {
+        case e: NumberFormatException =>
+          throw new ConfigException.WrongType(c.origin(), p, "long (64-bit integer)", s"STRING value $s", e)
+      }
+    if (n.isValidLong) n.longValue()
+    else throw new ConfigException.WrongType(c.origin(), p, "long (64-bit integer)", s"out-of-range value $n")
+  }
+
   implicit lazy val longConfigs: Configs[Long] =
-    _.getLong(_)
+    (c, p) => parseLong(c.getString(p), c, p)
 
   implicit lazy val longJListConfigs: Configs[ju.List[Long]] =
-    javaLongListConfigs.asInstanceOf[Configs[ju.List[Long]]]
+    (c, p) => c.getStringList(p).map(parseLong(_, c, p))
 
   implicit lazy val javaLongConfigs: Configs[jl.Long] =
     longConfigs.asInstanceOf[Configs[jl.Long]]
 
   implicit lazy val javaLongListConfigs: Configs[ju.List[jl.Long]] =
-    _.getLongList(_)
+    longJListConfigs.asInstanceOf[Configs[ju.List[jl.Long]]]
 
 
   implicit lazy val floatConfigs: Configs[Float] =
@@ -198,7 +220,7 @@ private[configs] abstract class DefaultConfigsInstances {
     (c, p) => {
       val s = c.getString(p)
       if (s.length == 1) s(0)
-      else throw new ConfigException.WrongType(c.origin(), p, "single BMP char", ConfigValueType.STRING.name())
+      else throw new ConfigException.WrongType(c.origin(), p, "single BMP char", s"STRING value '$s'")
     }
 
   implicit lazy val charJListConfigs: Configs[ju.List[Char]] =
