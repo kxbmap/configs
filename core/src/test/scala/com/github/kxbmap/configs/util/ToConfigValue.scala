@@ -30,12 +30,19 @@ trait ToConfigValue[A] {
 
 }
 
-object ToConfigValue extends ToConfigValue0 {
+object ToConfigValue {
 
   def apply[A](implicit v: ToConfigValue[A]): ToConfigValue[A] = v
 
   def fromMap[A](f: A => Map[String, ConfigValue]): ToConfigValue[A] =
     ToConfigValue[Map[String, ConfigValue]].contramap(f)
+
+
+  private[this] final val _anyValue: ToConfigValue[Any] =
+    fromAnyRef(_)
+
+  implicit def anyToConfigValue[A]: ToConfigValue[A] =
+    _anyValue.asInstanceOf[ToConfigValue[A]]
 
 
   implicit def javaCollectionToConfigValue[F[_], A: ToConfigValue](implicit ev: F[A] <:< ju.Collection[A]): ToConfigValue[F[A]] =
@@ -74,7 +81,7 @@ object ToConfigValue extends ToConfigValue0 {
   implicit val charJListToConfigValue: ToConfigValue[ju.List[Char]] =
     xs => fromAnyRef(new String(xs.asScala.toArray))
 
-  implicit def charTraversableToConfigValue[F[_]](implicit ev: F[Char] => Traversable[Char]): ToConfigValue[F[Char]] =
+  implicit def charTraversableToConfigValue[F[_]](implicit ev: F[Char] <:< Traversable[Char]): ToConfigValue[F[Char]] =
     fa => fromAnyRef(new String(fa.toArray))
 
   implicit val javaCharacterToConfigValue: ToConfigValue[jl.Character] =
@@ -85,15 +92,5 @@ object ToConfigValue extends ToConfigValue0 {
 
   implicit val configToConfigValue: ToConfigValue[Config] =
     _.root()
-
-}
-
-trait ToConfigValue0 {
-
-  private[this] final val _anyValue: ToConfigValue[Any] =
-    fromAnyRef(_)
-
-  implicit def anyToConfigValue[A]: ToConfigValue[A] =
-    _anyValue.asInstanceOf[ToConfigValue[A]]
 
 }

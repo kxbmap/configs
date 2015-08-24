@@ -16,7 +16,7 @@
 
 package com.github.kxbmap.configs
 
-import com.typesafe.config.{Config, ConfigException, ConfigList, ConfigMemorySize, ConfigObject, ConfigUtil, ConfigValue}
+import com.typesafe.config.{Config, ConfigException, ConfigList, ConfigMemorySize, ConfigObject, ConfigUtil, ConfigValue, ConfigValueType}
 import java.io.File
 import java.net.InetAddress
 import java.nio.file.{Path, Paths}
@@ -198,7 +198,7 @@ private[configs] abstract class DefaultConfigsInstances {
     (c, p) => {
       val s = c.getString(p)
       if (s.length == 1) s(0)
-      else throw new ConfigException.BadValue(c.origin(), p, s"single bmp char required rather than '$s'")
+      else throw new ConfigException.WrongType(c.origin(), p, "single BMP char", ConfigValueType.STRING.name())
     }
 
   implicit lazy val charJListConfigs: Configs[ju.List[Char]] =
