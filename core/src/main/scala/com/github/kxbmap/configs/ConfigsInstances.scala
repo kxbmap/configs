@@ -41,13 +41,16 @@ private[configs] abstract class DefaultConfigsInstances {
   implicit def javaListConfigs[A: Configs]: Configs[ju.List[A]] =
     _.getList(_).map(Configs[A].extract).asJava
 
+  implicit def javaSetConfigs[A](implicit C: Configs[ju.List[A]]): Configs[ju.Set[A]] =
+    C.get(_, _).toSet.asJava
+
+  implicit def javaCollectionConfigs[A](implicit C: Configs[ju.List[A]]): Configs[ju.Collection[A]] =
+    C.asInstanceOf[Configs[ju.Collection[A]]]
+
   implicit def javaMapConfigs[A: Configs]: Configs[ju.Map[String, A]] =
     Configs.onPath { c =>
       c.root().keysIterator.map(k => k -> Configs[A].get(c, ConfigUtil.quoteString(k))).toMap.asJava
     }
-
-  implicit def javaSetConfigs[A](implicit C: Configs[ju.List[A]]): Configs[ju.Set[A]] =
-    C.get(_, _).toSet.asJava
 
   implicit def javaSymbolMapConfigs[A](implicit C: Configs[ju.Map[String, A]]): Configs[ju.Map[Symbol, A]] =
     C.get(_, _).map(t => Symbol(t._1) -> t._2).asJava

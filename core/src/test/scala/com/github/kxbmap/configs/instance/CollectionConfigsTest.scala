@@ -34,14 +34,19 @@ object CollectionConfigsTest extends Scalaprops {
     check[ju.List[Foo]]
   }
 
-  val javaMap = {
-    implicit val c = configs.fooConfigs
-    check[ju.Map[String, Foo]]
-  }
-
   val javaSet = {
     implicit val c = configs.fooJListConfigs
     check[ju.Set[Foo]]
+  }
+
+  val javaCollection = {
+    implicit val c = configs.fooJListConfigs
+    check[ju.Collection[Foo]]
+  }
+
+  val javaMap = {
+    implicit val c = configs.fooConfigs
+    check[ju.Map[String, Foo]]
   }
 
   val javaSymbolMap = {
