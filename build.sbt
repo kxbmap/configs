@@ -13,6 +13,7 @@ lazy val commonSettings: Seq[Setting[_]] = Seq(
   configVersion := "1.3.0",
   scalapropsVersion := "0.1.13",
   scalacOptions ++= Seq(
+    "-target:jvm-1.8",
     "-deprecation",
     "-unchecked",
     "-feature",
