@@ -59,8 +59,8 @@ private[configs] abstract class DefaultConfigsInstances {
   implicit def fromJListConfigs[F[_], A](implicit C: Configs[ju.List[A]], cbf: CanBuildFrom[Nothing, A, F[A]]): Configs[F[A]] =
     C.get(_, _).to[F]
 
-  implicit def fromJMapConfigs[A, B](implicit C: Configs[ju.Map[A, B]]): Configs[Map[A, B]] =
-    C.get(_, _).toMap
+  implicit def fromJMapConfigs[M[_, _], A, B](implicit C: Configs[ju.Map[A, B]], cbf: CanBuildFrom[Nothing, (A, B), M[A, B]]): Configs[M[A, B]] =
+    C.get(_, _).to[({type F[_] = M[A, B]})#F]
 
 
   implicit def optionConfigs[A: Configs]: Configs[Option[A]] =

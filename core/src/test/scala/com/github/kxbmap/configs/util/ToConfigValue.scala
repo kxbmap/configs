@@ -60,8 +60,8 @@ object ToConfigValue {
   implicit def javaSymbolMapToConfigValue[A: ToConfigValue]: ToConfigValue[ju.Map[Symbol, A]] =
     _.asScala.map(t => t._1.name -> t._2.toConfigValue).asJava |> fromAnyRef
 
-  implicit def mapToConfigValue[A, B](implicit T: ToConfigValue[ju.Map[A, B]]): ToConfigValue[Map[A, B]] =
-    T.contramap(_.asJava)
+  implicit def mapToConfigValue[M[_, _], A, B](implicit T: ToConfigValue[ju.Map[A, B]], ev: M[A, B] <:< collection.Map[A, B]): ToConfigValue[M[A, B]] =
+    T.contramap(_.toMap.asJava)
 
   implicit def optionToConfigValue[A: ToConfigValue]: ToConfigValue[Option[A]] =
     _.map(_.toConfigValue).orNull |> fromAnyRef

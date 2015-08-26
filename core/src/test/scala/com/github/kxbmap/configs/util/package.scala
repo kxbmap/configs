@@ -20,12 +20,14 @@ import com.typesafe.config.{Config, ConfigFactory, ConfigList, ConfigMemorySize,
 import java.{lang => jl, time => jt, util => ju}
 import scala.annotation.tailrec
 import scala.collection.JavaConverters._
+import scala.collection.generic.CanBuildFrom
 import scala.reflect.{ClassTag, classTag}
 import scalaprops.Or.Empty
 import scalaprops.Property.{forAll, forAllG}
 import scalaprops.{:-:, Gen, Properties, Property}
 import scalaz.std.anyVal._
 import scalaz.std.list._
+import scalaz.std.map._
 import scalaz.std.string._
 import scalaz.{Apply, Equal, Need, Order}
 
@@ -87,7 +89,7 @@ package object util {
   }
 
 
-  implicit class ToConfigValOps[A](private val self: A) {
+  implicit class ToConfigValueOps[A](private val self: A) {
     def toConfigValue(implicit A: ToConfigValue[A]): ConfigValue = A.toConfigValue(self)
   }
 
@@ -133,6 +135,10 @@ package object util {
 
   implicit def javaCollectionGen[A: Gen]: Gen[ju.Collection[A]] =
     Gen[ju.List[A]].as[ju.Collection[A]]
+
+
+  implicit def cbfMapGen[M[_, _], A: Gen, B: Gen](implicit g: Gen[Map[A, B]], cbf: CanBuildFrom[Nothing, (A, B), M[A, B]]): Gen[M[A, B]] =
+    g.map(_.to[({type F[_] = M[A, B]})#F])
 
 
   implicit lazy val stringGen: Gen[String] = {
@@ -247,8 +253,8 @@ package object util {
   implicit def arrayEqual[A: Equal]: Equal[Array[A]] =
     Equal.equalBy(_.toList)
 
-  implicit def mapEqual[A: Equal, B: Equal]: Equal[Map[A, B]] =
-    Equal.equalA[Map[A, B]]
+  implicit def mapSubEqual[M[_, _], A: Order, B: Equal](implicit ev: M[A, B] <:< collection.Map[A, B]): Equal[M[A, B]] =
+    Equal.equalBy(_.toMap)
 
   implicit def setEqual[A: Equal]: Equal[Set[A]] =
     Equal.equalA[Set[A]]
@@ -256,7 +262,7 @@ package object util {
   implicit def javaListEqual[A: Equal]: Equal[ju.List[A]] =
     Equal.equalBy(_.asScala.toList)
 
-  implicit def javaMapEqual[A: Equal, B: Equal]: Equal[ju.Map[A, B]] =
+  implicit def javaMapEqual[A: Order, B: Equal]: Equal[ju.Map[A, B]] =
     Equal.equalBy(_.asScala.toMap)
 
   implicit def javaSetEqual[A: Equal]: Equal[ju.Set[A]] =
@@ -292,8 +298,8 @@ package object util {
   implicit lazy val javaDurationEqual: Equal[jt.Duration] =
     Equal.equalA[jt.Duration]
 
-  implicit lazy val symbolEqual: Equal[Symbol] =
-    Equal.equalA[Symbol]
+  implicit lazy val symbolOrder: Order[Symbol] =
+    Order[String].contramap(_.name)
 
   implicit lazy val configEqual: Equal[Config] =
     Equal.equalA[Config]

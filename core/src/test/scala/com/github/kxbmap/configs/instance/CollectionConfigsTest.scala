@@ -20,12 +20,14 @@ import com.github.kxbmap.configs.Configs
 import com.github.kxbmap.configs.simple._
 import com.github.kxbmap.configs.util._
 import java.{util => ju}
+import scala.collection.immutable.TreeMap
+import scala.collection.mutable
 import scalaprops.{Gen, Properties, Scalaprops}
-import scalaz.Equal
 import scalaz.std.list._
 import scalaz.std.stream._
 import scalaz.std.string._
 import scalaz.std.vector._
+import scalaz.{Equal, Order}
 
 object CollectionConfigsTest extends Scalaprops {
 
@@ -67,9 +69,14 @@ object CollectionConfigsTest extends Scalaprops {
 
   val fromJMap = {
     implicit val c = configs.fooJMapConfigs
+    implicit val o = Order[Symbol].toScalaOrdering
     Properties.list(
       check[Map[String, Foo]].mapId("string map " + _),
-      check[Map[Symbol, Foo]].mapId("symbol map " + _)
+      check[Map[Symbol, Foo]].mapId("symbol map " + _),
+      check[TreeMap[String, Foo]].mapId("string tree map " + _),
+      check[TreeMap[Symbol, Foo]].mapId("symbol tree map " + _),
+      check[mutable.Map[String, Foo]].mapId("string mutable map " + _),
+      check[mutable.Map[Symbol, Foo]].mapId("symbol mutable map " + _)
     )
   }
 
