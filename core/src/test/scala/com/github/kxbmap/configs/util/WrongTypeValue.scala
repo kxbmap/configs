@@ -28,7 +28,7 @@ object WrongTypeValue {
 
   def apply[A](implicit A: WrongTypeValue[A]): WrongTypeValue[A] = A
 
-  def of[A](g: Gen[ConfigValue]): WrongTypeValue[A] = new WrongTypeValue[A] {
+  def from[A](g: Gen[ConfigValue]): WrongTypeValue[A] = new WrongTypeValue[A] {
     val gen: Option[Gen[ConfigValue]] = Some(g)
   }
 
@@ -41,7 +41,7 @@ object WrongTypeValue {
 
 
   private[this] final val default: WrongTypeValue[Any] =
-    WrongTypeValue.of(emptyListConfigValueGen)
+    WrongTypeValue.from(emptyListConfigValueGen)
 
   implicit def defaultWrongTypeValue[A]: WrongTypeValue[A] =
     default.asInstanceOf[WrongTypeValue[A]]
@@ -51,10 +51,10 @@ object WrongTypeValue {
   }
 
   implicit val configListWrongTypeValue: WrongTypeValue[ConfigList] =
-    WrongTypeValue.of(stringConfigValueGen)
+    WrongTypeValue.from(stringConfigValueGen)
 
   private[this] def collectionWrongTypeValue[F[_], A: WrongTypeValue]: WrongTypeValue[F[A]] =
-    WrongTypeValue.of {
+    WrongTypeValue.from {
       Gen.oneOf(
         stringConfigValueGen,
         WrongTypeValue[A].gen.map(genNonEmptyConfigList(_)).map(_.as[ConfigValue]).toSeq: _*
@@ -76,7 +76,7 @@ object WrongTypeValue {
 
 
   implicit val byteWrongTypeValue: WrongTypeValue[Byte] =
-    WrongTypeValue.of {
+    WrongTypeValue.from {
       Gen.oneOf(
         genConfigValue(Gen.alphaString),
         Seq(
@@ -92,7 +92,7 @@ object WrongTypeValue {
     byteWrongTypeValue.asInstanceOf[WrongTypeValue[jl.Byte]]
 
   implicit val shortWrongTypeValue: WrongTypeValue[Short] =
-    WrongTypeValue.of {
+    WrongTypeValue.from {
       Gen.oneOf(
         genConfigValue(Gen.alphaString),
         Seq(
@@ -108,7 +108,7 @@ object WrongTypeValue {
     shortWrongTypeValue.asInstanceOf[WrongTypeValue[jl.Short]]
 
   implicit val intWrongTypeValue: WrongTypeValue[Int] =
-    WrongTypeValue.of {
+    WrongTypeValue.from {
       Gen.oneOf(
         genConfigValue(Gen.alphaString),
         Seq(
@@ -127,7 +127,7 @@ object WrongTypeValue {
 
 
   implicit val longWrongTypeValue: WrongTypeValue[Long] =
-    WrongTypeValue.of {
+    WrongTypeValue.from {
       Gen.oneOf(
         genConfigValue(Gen.alphaString),
         Seq(
@@ -144,7 +144,7 @@ object WrongTypeValue {
 
 
   implicit val charWrongTypeValue: WrongTypeValue[Char] =
-    WrongTypeValue.of {
+    WrongTypeValue.from {
       import jl.{Character => C}
       def tos(cp: Int): String = new String(C.toChars(cp))
       Gen.oneOf(

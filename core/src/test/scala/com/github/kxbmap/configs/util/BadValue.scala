@@ -16,8 +16,8 @@
 
 package com.github.kxbmap.configs.util
 
-import com.typesafe.config.ConfigValue
-import java.{util => ju}
+import com.typesafe.config.{ConfigMemorySize, ConfigValue}
+import java.{util => ju, time => jt}
 import scala.util.Try
 import scalaprops.Gen
 
@@ -29,6 +29,9 @@ object BadValue {
 
   def apply[A](implicit A: BadValue[A]): BadValue[A] = A
 
+  def from[A](g: Gen[ConfigValue]): BadValue[A] = new BadValue[A] {
+    val gen: Option[Gen[ConfigValue]] = Some(g)
+  }
 
   implicit def defaultBadValue[A]: BadValue[A] = default.asInstanceOf[BadValue[A]]
 
@@ -51,8 +54,17 @@ object BadValue {
 
   implicit def javaCollectionBadValue[F[_], A: BadValue](implicit ev: F[A] <:< ju.Collection[A]): BadValue[F[A]] = new BadValue[F[A]] {
     val gen: Option[Gen[ConfigValue]] = BadValue[A].gen.map {
-      genConfigList(_).as[ConfigValue]
+      genNonEmptyConfigList(_).as[ConfigValue]
     }
+  }
+
+
+  implicit val configMemorySizeBadValue: BadValue[ConfigMemorySize] = BadValue.from {
+    genConfigValue(Gen.alphaString)
+  }
+
+  implicit val javaDurationBadValue: BadValue[jt.Duration] = BadValue.from {
+    genConfigValue(Gen.alphaString)
   }
 
 }

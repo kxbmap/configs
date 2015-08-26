@@ -38,13 +38,6 @@ object IsBadValue {
     }
 
 
-  implicit def optionIsBadValue[A]: IsBadValue[Option[A]] =
-    option.asInstanceOf[IsBadValue[Option[A]]]
-
-  private[this] final val option: IsBadValue[Option[Any]] =
-    _.value.isEmpty
-
-
   implicit def eitherIsBadValue[A]: IsBadValue[Either[Throwable, A]] =
     either.asInstanceOf[IsBadValue[Either[Throwable, A]]]
 

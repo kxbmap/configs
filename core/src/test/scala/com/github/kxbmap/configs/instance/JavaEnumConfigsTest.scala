@@ -16,12 +16,10 @@
 
 package com.github.kxbmap.configs.instance
 
-import com.github.kxbmap.configs.Configs
 import com.github.kxbmap.configs.simple._
 import com.github.kxbmap.configs.util._
-import com.typesafe.config.{ConfigException, ConfigFactory}
 import java.{util => ju}
-import scalaprops.Scalaprops
+import scalaprops.{Gen, Scalaprops}
 import scalaz.std.java.enum._
 
 object JavaEnumConfigsTest extends Scalaprops {
@@ -33,14 +31,10 @@ object JavaEnumConfigsTest extends Scalaprops {
     check[ju.List[JavaEnum]]
   }
 
-  val badValue = intercept {
-    val config = ConfigFactory.parseString("bad-value = FOOBAR")
-    Configs[JavaEnum].get(config, "bad-value")
-  } {
-    case e: ConfigException.BadValue =>
-      Seq("bad-value", "FOOBAR").forall(e.getMessage.contains)
-  }
-
   implicit lazy val javaEnumToConfigValue: ToConfigValue[JavaEnum] = _.name().toConfigValue
+
+  implicit lazy val javaEnumBadValue: BadValue[JavaEnum] = BadValue.from {
+    genConfigValue(Gen.alphaLowerString)
+  }
 
 }
