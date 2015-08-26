@@ -42,7 +42,9 @@ object ConfigTypeConfigsTest extends Scalaprops {
 
   val configValueJMap = {
     implicit val h = hideConfigs[ConfigValue]
-    check[ju.Map[String, ConfigValue]]
+    val string = check[ju.Map[String, ConfigValue]]("string map")
+    val symbol = check[ju.Map[Symbol, ConfigValue]]("symbol map")
+    string.product(symbol)
   }
 
 

@@ -16,9 +16,9 @@
 
 package com.github.kxbmap.configs.instance
 
-import com.github.kxbmap.configs.Configs
 import com.github.kxbmap.configs.simple._
 import com.github.kxbmap.configs.util._
+import com.github.kxbmap.configs.{ConfigKey, Configs}
 import java.{util => ju}
 import scala.collection.immutable.TreeMap
 import scala.collection.mutable
@@ -48,12 +48,7 @@ object CollectionConfigsTest extends Scalaprops {
 
   val javaMap = {
     implicit val c = configs.fooConfigs
-    check[ju.Map[String, Foo]]
-  }
-
-  val javaSymbolMap = {
-    implicit val c = configs.fooJMapConfigs
-    check[ju.Map[Symbol, Foo]]
+    check[ju.Map[String, Foo]]("string map").product(check[ju.Map[Symbol, Foo]]("symbol map"))
   }
 
   val fromJList = {
@@ -68,16 +63,26 @@ object CollectionConfigsTest extends Scalaprops {
   }
 
   val fromJMap = {
-    implicit val c = configs.fooJMapConfigs
-    implicit val o = Order[Symbol].toScalaOrdering
-    Properties.list(
-      check[Map[String, Foo]].mapId("string map " + _),
-      check[Map[Symbol, Foo]].mapId("symbol map " + _),
-      check[TreeMap[String, Foo]].mapId("string tree map " + _),
-      check[TreeMap[Symbol, Foo]].mapId("symbol tree map " + _),
-      check[mutable.Map[String, Foo]].mapId("string mutable map " + _),
-      check[mutable.Map[Symbol, Foo]].mapId("symbol mutable map " + _)
-    )
+    val string = {
+      implicit val c = configs.fooJMapConfigs[String]
+      Properties.either(
+        "string map",
+        check[Map[String, Foo]].mapId("map " + _),
+        check[TreeMap[String, Foo]].mapId("tree map " + _),
+        check[mutable.Map[String, Foo]].mapId("mutable map " + _)
+      )
+    }
+    val symbol = {
+      implicit val c = configs.fooJMapConfigs[Symbol]
+      implicit val o = Order[Symbol].toScalaOrdering
+      Properties.either(
+        "symbol map",
+        check[Map[Symbol, Foo]].mapId("map " + _),
+        check[TreeMap[Symbol, Foo]].mapId("tree map " + _),
+        check[mutable.Map[Symbol, Foo]].mapId("mutable map " + _)
+      )
+    }
+    string.product(symbol)
   }
 
 
@@ -95,7 +100,7 @@ object CollectionConfigsTest extends Scalaprops {
 
     val fooJListConfigs: Configs[ju.List[Foo]] = javaListConfigs(fooConfigs)
 
-    val fooJMapConfigs: Configs[ju.Map[String, Foo]] = javaMapConfigs(fooConfigs)
+    def fooJMapConfigs[A: ConfigKey]: Configs[ju.Map[A, Foo]] = javaMapConfigs(ConfigKey[A], fooConfigs)
 
   }
 

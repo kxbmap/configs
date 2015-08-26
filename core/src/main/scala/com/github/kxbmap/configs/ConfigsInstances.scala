@@ -47,13 +47,10 @@ private[configs] abstract class DefaultConfigsInstances {
   implicit def javaCollectionConfigs[A](implicit C: Configs[ju.List[A]]): Configs[ju.Collection[A]] =
     C.asInstanceOf[Configs[ju.Collection[A]]]
 
-  implicit def javaMapConfigs[A: Configs]: Configs[ju.Map[String, A]] =
+  implicit def javaMapConfigs[A: ConfigKey, B: Configs]: Configs[ju.Map[A, B]] =
     Configs.onPath { c =>
-      c.root().keysIterator.map(k => k -> Configs[A].get(c, ConfigUtil.quoteString(k))).toMap.asJava
+      c.root().keysIterator.map(k => ConfigKey[A].from(k) -> Configs[B].get(c, ConfigUtil.quoteString(k))).toMap.asJava
     }
-
-  implicit def javaSymbolMapConfigs[A](implicit C: Configs[ju.Map[String, A]]): Configs[ju.Map[Symbol, A]] =
-    C.get(_, _).map(t => Symbol(t._1) -> t._2).asJava
 
 
   implicit def fromJListConfigs[F[_], A](implicit C: Configs[ju.List[A]], cbf: CanBuildFrom[Nothing, A, F[A]]): Configs[F[A]] =
@@ -283,6 +280,9 @@ private[configs] abstract class DefaultConfigsInstances {
 
   implicit lazy val configValueJMapConfigs: Configs[ju.Map[String, ConfigValue]] =
     _.getObject(_)
+
+  implicit def configValueJMapKeyConfigs[A: ConfigKey]: Configs[ju.Map[A, ConfigValue]] =
+    _.getObject(_).map(t => ConfigKey[A].from(t._1) -> t._2).asJava
 
 
   implicit lazy val configListConfigs: Configs[ConfigList] =
