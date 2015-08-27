@@ -133,6 +133,9 @@ package object util {
   implicit def javaSetGen[A: Gen]: Gen[ju.Set[A]] =
     Gen[Set[A]].map(_.asJava)
 
+  implicit def javaIterableGen[A: Gen]: Gen[jl.Iterable[A]] =
+    Gen[ju.List[A]].as[jl.Iterable[A]]
+
   implicit def javaCollectionGen[A: Gen]: Gen[ju.Collection[A]] =
     Gen[ju.List[A]].as[ju.Collection[A]]
 
@@ -262,6 +265,9 @@ package object util {
 
   implicit def javaSetEqual[A: Equal]: Equal[ju.Set[A]] =
     Equal.equalBy(_.asScala.toSet)
+
+  implicit def javaIterableEqual[A: Equal]: Equal[jl.Iterable[A]] =
+    Equal.equalBy(_.asScala.toList)
 
   implicit def javaCollectionEqual[A: Equal]: Equal[ju.Collection[A]] =
     Equal.equalBy(_.asScala.toList)

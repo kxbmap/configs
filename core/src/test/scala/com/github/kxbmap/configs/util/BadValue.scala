@@ -17,7 +17,7 @@
 package com.github.kxbmap.configs.util
 
 import com.typesafe.config.{ConfigMemorySize, ConfigValue}
-import java.{util => ju, time => jt}
+import java.{lang => jl, time => jt}
 import scala.util.Try
 import scalaprops.Gen
 
@@ -52,7 +52,7 @@ object BadValue {
     val gen: Option[Gen[ConfigValue]] = BadValue[A].gen
   }
 
-  implicit def javaCollectionBadValue[F[_], A: BadValue](implicit ev: F[A] <:< ju.Collection[A]): BadValue[F[A]] = new BadValue[F[A]] {
+  implicit def javaIterableBadValue[F[_], A: BadValue](implicit ev: F[A] <:< jl.Iterable[A]): BadValue[F[A]] = new BadValue[F[A]] {
     val gen: Option[Gen[ConfigValue]] = BadValue[A].gen.map {
       genNonEmptyConfigList(_).as[ConfigValue]
     }

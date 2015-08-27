@@ -19,7 +19,7 @@ package com.github.kxbmap.configs.instance
 import com.github.kxbmap.configs.simple._
 import com.github.kxbmap.configs.util._
 import com.github.kxbmap.configs.{ConfigKey, Configs}
-import java.{util => ju}
+import java.{lang => jl, util => ju}
 import scala.collection.immutable.TreeMap
 import scala.collection.mutable
 import scalaprops.{Gen, Properties, Scalaprops}
@@ -36,14 +36,19 @@ object CollectionConfigsTest extends Scalaprops {
     check[ju.List[Foo]]
   }
 
-  val javaSet = {
+  val javaIterable = {
     implicit val c = configs.fooJListConfigs
-    check[ju.Set[Foo]]
+    check[jl.Iterable[Foo]]
   }
 
   val javaCollection = {
     implicit val c = configs.fooJListConfigs
     check[ju.Collection[Foo]]
+  }
+
+  val javaSet = {
+    implicit val c = configs.fooJListConfigs
+    check[ju.Set[Foo]]
   }
 
   val javaMap = {

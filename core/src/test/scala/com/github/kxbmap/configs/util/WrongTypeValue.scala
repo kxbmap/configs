@@ -61,7 +61,7 @@ object WrongTypeValue {
       )
     }
 
-  implicit def javaCollectionWrongTypeValue[F[_], A: WrongTypeValue](implicit ev: F[A] <:< ju.Collection[A]): WrongTypeValue[F[A]] =
+  implicit def javaIterableWrongTypeValue[F[_], A: WrongTypeValue](implicit ev: F[A] <:< jl.Iterable[A]): WrongTypeValue[F[A]] =
     collectionWrongTypeValue[F, A]
 
   implicit def traversableWrongTypeValue[F[_], A: WrongTypeValue](implicit ev: F[A] <:< Traversable[A]): WrongTypeValue[F[A]] =
