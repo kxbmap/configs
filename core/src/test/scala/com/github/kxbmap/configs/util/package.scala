@@ -257,20 +257,14 @@ package object util {
   implicit def setEqual[A: Equal]: Equal[Set[A]] =
     Equal.equalA[Set[A]]
 
-  implicit def javaListEqual[A: Equal]: Equal[ju.List[A]] =
-    Equal.equalBy(_.asScala.toList)
+  implicit def javaIterableEqual[F[_], A: Equal](implicit ev: F[A] <:< jl.Iterable[A]): Equal[F[A]] =
+    Equal.equalBy(ev(_).asScala.toList)
 
   implicit def javaMapEqual[A: Order, B: Equal]: Equal[ju.Map[A, B]] =
     Equal.equalBy(_.asScala.toMap)
 
   implicit def javaSetEqual[A: Equal]: Equal[ju.Set[A]] =
     Equal.equalBy(_.asScala.toSet)
-
-  implicit def javaIterableEqual[A: Equal]: Equal[jl.Iterable[A]] =
-    Equal.equalBy(_.asScala.toList)
-
-  implicit def javaCollectionEqual[A: Equal]: Equal[ju.Collection[A]] =
-    Equal.equalBy(_.asScala.toList)
 
   implicit lazy val javaByteEqual: Equal[jl.Byte] =
     Equal.equalBy(_.byteValue())
