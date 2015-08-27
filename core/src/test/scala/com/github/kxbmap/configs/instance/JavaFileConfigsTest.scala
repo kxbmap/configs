@@ -47,10 +47,6 @@ object JavaFileConfigsTest extends Scalaprops {
   implicit lazy val pathEqual: Equal[Path] =
     Equal.equalA[Path]
 
-  implicit lazy val pathBadValue: BadValue[Path] = BadValue.from {
-    genConfigValue(Gen.genString(Gen.value('/'), min = 2))
-  }
-
 
   implicit lazy val fileGen: Gen[File] =
     pathGen.map(_.toFile)
