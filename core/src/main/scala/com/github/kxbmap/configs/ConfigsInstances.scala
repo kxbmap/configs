@@ -18,7 +18,7 @@ package com.github.kxbmap.configs
 
 import com.typesafe.config.{Config, ConfigException, ConfigList, ConfigMemorySize, ConfigObject, ConfigUtil, ConfigValue}
 import java.io.File
-import java.net.InetAddress
+import java.net.{URI, InetAddress}
 import java.nio.file.{Path, Paths}
 import java.util.concurrent.TimeUnit
 import java.util.{Locale, UUID}
@@ -368,5 +368,12 @@ private[configs] abstract class DefaultConfigsInstances {
 
   implicit lazy val inetAddressJListConfigs: Configs[ju.List[InetAddress]] =
     stringJListConfigs.map(_.map(InetAddress.getByName))
+
+
+  implicit lazy val uriConfigs: Configs[URI] =
+    stringConfigs.map(new URI(_))
+
+  implicit lazy val uriJListConfigs: Configs[ju.List[URI]] =
+    stringJListConfigs.map(_.map(new URI(_)))
 
 }
