@@ -46,9 +46,6 @@ object JavaUtilConfigsTest extends Scalaprops {
   implicit lazy val uuidEqual: Equal[UUID] =
     Equal.equalA[UUID]
 
-  implicit lazy val uuidToConfigValue: ToConfigValue[UUID] =
-    ToConfigValue[String].contramap(_.toString)
-
   implicit lazy val uuidBadValue: BadValue[UUID] = BadValue.from {
     genConfigValue(Gen.alphaNumString)
   }
@@ -61,9 +58,6 @@ object JavaUtilConfigsTest extends Scalaprops {
 
   implicit lazy val localeEqual: Equal[Locale] =
     Equal.equalA[Locale]
-
-  implicit lazy val localeToConfigValue: ToConfigValue[Locale] =
-    ToConfigValue[String].contramap(_.toString)
 
   implicit lazy val localeBadValue: BadValue[Locale] = BadValue.from {
     genConfigValue(Gen.nonEmptyString(Gen.numChar))

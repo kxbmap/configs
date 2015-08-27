@@ -64,9 +64,6 @@ object JavaNetConfigsTest extends Scalaprops {
   implicit lazy val uriEqual: Equal[URI] =
     Equal.equalA[URI]
 
-  implicit lazy val uriToConfigValue: ToConfigValue[URI] =
-    ToConfigValue[String].contramap(_.toString)
-
   implicit lazy val uriBadValue: BadValue[URI] = BadValue.from {
     import java.lang.{Character => C}
     def chars(p: Char => Boolean) = {

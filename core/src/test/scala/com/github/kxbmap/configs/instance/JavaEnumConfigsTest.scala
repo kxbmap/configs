@@ -31,7 +31,8 @@ object JavaEnumConfigsTest extends Scalaprops {
     check[ju.List[JavaEnum]]
   }
 
-  implicit lazy val javaEnumToConfigValue: ToConfigValue[JavaEnum] = _.name().toConfigValue
+  implicit lazy val javaEnumToConfigValue: ToConfigValue[JavaEnum] =
+    ToConfigValue[String].contramap(_.name())
 
   implicit lazy val javaEnumBadValue: BadValue[JavaEnum] = BadValue.from {
     genConfigValue(Gen.alphaLowerString)

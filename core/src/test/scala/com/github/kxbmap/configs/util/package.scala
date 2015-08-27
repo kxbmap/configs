@@ -188,13 +188,8 @@ package object util {
   implicit lazy val javaDoubleGen: Gen[jl.Double] =
     doubleGen.map(Double.box)
 
-
   implicit lazy val javaDurationGen: Gen[jt.Duration] =
     Gen.nonNegativeLong.map(jt.Duration.ofNanos)
-
-  implicit lazy val javaDurationToConfigValue: ToConfigValue[jt.Duration] =
-    ToConfigValue[String].contramap(d => s"${d.toNanos}ns")
-
 
   implicit lazy val configMemorySizeGen: Gen[ConfigMemorySize] =
     Gen.nonNegativeLong.map(ConfigMemorySize.ofBytes)

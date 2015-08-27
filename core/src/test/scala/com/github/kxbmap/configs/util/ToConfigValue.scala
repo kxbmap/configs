@@ -18,8 +18,8 @@ package com.github.kxbmap.configs.util
 
 import com.github.kxbmap.configs._
 import com.typesafe.config.ConfigValueFactory.fromAnyRef
-import com.typesafe.config.{Config, ConfigValue}
-import java.{lang => jl, math => jm, util => ju}
+import com.typesafe.config.{Config, ConfigMemorySize, ConfigValue}
+import java.{lang => jl, time => jt, util => ju}
 import scala.collection.JavaConverters._
 
 trait ToConfigValue[A] {
@@ -38,21 +38,69 @@ object ToConfigValue {
     ToConfigValue[Map[String, ConfigValue]].contramap(f)
 
 
-  private[this] final val _anyValue: ToConfigValue[Any] =
-    fromAnyRef(_)
+  private[this] final val any: ToConfigValue[Any] =
+    _.toString |> fromAnyRef
 
   implicit def anyToConfigValue[A]: ToConfigValue[A] =
-    _anyValue.asInstanceOf[ToConfigValue[A]]
+    any.asInstanceOf[ToConfigValue[A]]
 
 
-  implicit def javaCollectionToConfigValue[F[_], A: ToConfigValue](implicit ev: F[A] <:< ju.Collection[A]): ToConfigValue[F[A]] =
-    ev(_).asScala.map(_.toConfigValue).toList.asJava |> fromAnyRef
+  implicit def configValueToConfigValue[A <: ConfigValue]: ToConfigValue[A] =
+    identity(_)
+
+  
+  implicit val javaIntegerToConfigValue: ToConfigValue[jl.Integer] =
+    fromAnyRef(_)
+  
+  implicit val javaLongToConfigValue: ToConfigValue[jl.Long] =
+    fromAnyRef(_)
+
+  implicit val javaDoubleToConfigValue: ToConfigValue[jl.Double] =
+    fromAnyRef(_)
+
+  implicit val javaByteToConfigValue: ToConfigValue[jl.Byte] =
+    javaIntegerToConfigValue.contramap(_.intValue())
+
+  implicit val javaShortToConfigValue: ToConfigValue[jl.Short] =
+    javaIntegerToConfigValue.contramap(_.intValue())
+
+  implicit val javaFloatToConfigValue: ToConfigValue[jl.Float] =
+    javaDoubleToConfigValue.contramap(_.doubleValue())
+
+  implicit val byteToConfigValue: ToConfigValue[Byte] =
+    javaIntegerToConfigValue.contramap(Int.box(_))
+
+  implicit val shortToConfigValue: ToConfigValue[Short] =
+    javaIntegerToConfigValue.contramap(Int.box(_))
+
+  implicit val intToConfigValue: ToConfigValue[Int] =
+    javaIntegerToConfigValue.asInstanceOf[ToConfigValue[Int]]
+
+  implicit val longToConfigValue: ToConfigValue[Long] =
+    javaLongToConfigValue.asInstanceOf[ToConfigValue[Long]]
+  
+  implicit val floatToConfigValue: ToConfigValue[Float] =
+    javaDoubleToConfigValue.contramap(Double.box(_))
+
+  implicit val doubleToConfigValue: ToConfigValue[Double] =
+    javaDoubleToConfigValue.asInstanceOf[ToConfigValue[Double]]
+
+  
+  implicit val configMemorySizeToConfigValue: ToConfigValue[ConfigMemorySize] =
+    fromAnyRef(_)
+
+  implicit val javaDurationToConfigValue: ToConfigValue[jt.Duration] =
+    ToConfigValue[String].contramap(d => s"${d.toNanos}ns")
+
+  
+  implicit def javaIterableToConfigValue[F[_], A: ToConfigValue](implicit ev: F[A] <:< jl.Iterable[A]): ToConfigValue[F[A]] =
+    ev(_).asScala.map(_.toConfigValue).asJava |> fromAnyRef
 
   implicit def traversableToConfigValue[F[_], A: ToConfigValue](implicit ev: F[A] <:< Traversable[A]): ToConfigValue[F[A]] =
-    ToConfigValue[ju.Collection[A]].contramap(_.toSeq.asJavaCollection)
+    ToConfigValue[jl.Iterable[A]].contramap(_.toIterable.asJava)
 
   implicit def arrayToConfigValue[A: ToConfigValue]: ToConfigValue[Array[A]] =
-    ToConfigValue[ju.Collection[A]].contramap(_.toSeq.asJavaCollection)
+    ToConfigValue[jl.Iterable[A]].contramap(_.toIterable.asJava)
 
   implicit def javaStringMapToConfigValue[A: ToConfigValue]: ToConfigValue[ju.Map[String, A]] =
     _.asScala.mapValues(_.toConfigValue).asJava |> fromAnyRef
@@ -66,21 +114,6 @@ object ToConfigValue {
   implicit def optionToConfigValue[A: ToConfigValue]: ToConfigValue[Option[A]] =
     _.map(_.toConfigValue).orNull |> fromAnyRef
 
-  implicit val bigIntToConfigValue: ToConfigValue[BigInt] =
-    _.toString |> fromAnyRef
-
-  implicit val bigIntegerToConfigValue: ToConfigValue[jm.BigInteger] =
-    _.toString |> fromAnyRef
-
-  implicit val bigDecimalToConfigValue: ToConfigValue[BigDecimal] =
-    _.toString |> fromAnyRef
-
-  implicit val javaBigDecimalToConfigValue: ToConfigValue[jm.BigDecimal] =
-    _.toString |> fromAnyRef
-
-  implicit val charToConfigValue: ToConfigValue[Char] =
-    _.toString |> fromAnyRef
-
   implicit val charJListToConfigValue: ToConfigValue[ju.List[Char]] =
     xs => fromAnyRef(new String(xs.asScala.toArray))
 
@@ -88,7 +121,7 @@ object ToConfigValue {
     fa => fromAnyRef(new String(fa.toArray))
 
   implicit val javaCharacterToConfigValue: ToConfigValue[jl.Character] =
-    charToConfigValue.contramap(_.charValue())
+    ToConfigValue[Char].contramap(_.charValue())
 
   implicit val javaCharacterJListToConfigValue: ToConfigValue[ju.List[jl.Character]] =
     charJListToConfigValue.contramap(_.asScala.map(Char.unbox).asJava)

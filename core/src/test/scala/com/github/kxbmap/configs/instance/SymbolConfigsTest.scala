@@ -30,6 +30,7 @@ object SymbolConfigsTest extends Scalaprops {
     check[ju.List[Symbol]]
   }
 
-  implicit lazy val symbolToConfigValue: ToConfigValue[Symbol] = ToConfigValue[String].contramap(_.name)
+  implicit lazy val symbolToConfigValue: ToConfigValue[Symbol] =
+    ToConfigValue[String].contramap(_.name)
 
 }
