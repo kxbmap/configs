@@ -59,38 +59,23 @@ class BeanConfigsMacro(val c: blackbox.Context) extends Helper {
     }
     val config = TermName("config")
     val obj = TermName("obj")
-    val names = TermName("names")
-    val (ns, sets) = setters.map {
+    val sets = setters.map {
       case (name, method, paramType) =>
         val cn = TermName("c")
         val nn = Seq(name, toLowerHyphenCase(name)).distinct
         val opt = nn.map(n => q"$cn.get($config, $n)").reduceLeft((l, r) => q"$l.orElse($r)")
-        val set =
-          q"""
-          val $cn = $configsCompanion[${optionType(paramType)}]
-          $opt.foreach($obj.$method)
-          """
-        (nn, set)
-    }.unzip
+        q"""
+        val $cn = $configsCompanion[${optionType(paramType)}]
+        $opt.foreach($obj.$method)
+        """
+    }
     q"""
-    val $names: ${setType(typeOf[String])} = ${ns.flatten.toSet}
     $configsCompanion.onPath { $config: $configType =>
-      ${checkKeys(targetType, config, names)}
       val $obj: $targetType = $newInstance
       ..$sets
       $obj
     }
     """
   }
-
-  private def checkKeys(bean: Type, config: TermName, names: TermName): Tree =
-    q"""
-    import scala.collection.JavaConverters._
-    val ks = $config.root().keySet().asScala
-    if (!ks.forall($names.contains)) {
-      val ps = ks.diff($names).mkString(",")
-      throw new $badPathType($config.origin(), s"Bean $${${fullNameOf(bean)}} does not have properties: $$ps")
-    }
-    """
 
 }

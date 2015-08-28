@@ -97,13 +97,6 @@ object BeanConfigsTest extends Scalaprops {
     case e: ConfigException.WrongType => e.getMessage.contains("int")
   }
 
-  val badPath = intercept {
-    val config = ConfigFactory.parseString(s"bad-path = prop")
-    Configs[SimpleBean].extract(config)
-  } {
-    case e: ConfigException.BadPath => e.getMessage.contains("bad-path")
-  }
-
 
   val javaTypes = forAll { (b: Boolean, d: Double, n: Int, l: Long, ss: ju.List[String]) =>
     val config = ConfigFactory.parseString(
