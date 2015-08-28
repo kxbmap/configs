@@ -5,8 +5,6 @@ object Common extends AutoPlugin {
 
   override def trigger = allRequirements
 
-  override def requires = Versions
-
   override lazy val projectSettings: Seq[Setting[_]] = Seq(
     description := "Scala wrapper for Typesafe config",
     organization := "com.github.kxbmap",
