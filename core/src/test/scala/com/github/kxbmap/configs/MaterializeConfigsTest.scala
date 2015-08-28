@@ -189,7 +189,7 @@ object MaterializeConfigsTest {
   implicit lazy val simpleSettingEqual: Equal[SimpleSetting] =
     Equal.equalA[SimpleSetting]
 
-  def checkSimple(implicit C: Configs[SimpleSetting]) = checkMat[SimpleSetting]
+  def checkSimple(implicit C: Configs[SimpleSetting]) = check[SimpleSetting]
 
 
   ////
@@ -218,7 +218,7 @@ object MaterializeConfigsTest {
   implicit lazy val nestedSettingEqual: Equal[NestedSetting] =
     Equal.equalA[NestedSetting]
 
-  def checkNested(implicit C: Configs[NestedSetting]) = checkMat[NestedSetting]
+  def checkNested(implicit C: Configs[NestedSetting]) = check[NestedSetting]
 
 
   ////
@@ -239,7 +239,7 @@ object MaterializeConfigsTest {
   implicit lazy val recursiveSettingEqual: Equal[RecursiveSetting] =
     Equal.equalA[RecursiveSetting]
 
-  def checkRecursive(implicit C: Configs[RecursiveSetting]) = checkMat[RecursiveSetting]
+  def checkRecursive(implicit C: Configs[RecursiveSetting]) = check[RecursiveSetting]
 
 
   ////
@@ -258,7 +258,7 @@ object MaterializeConfigsTest {
   implicit lazy val paramListsSettingEqual: Equal[ParamListsSetting] =
     (s1, s2) => s1.firstName == s2.firstName && s1.lastName == s2.lastName && s1.age == s2.age
 
-  def checkParamLists(implicit C: Configs[ParamListsSetting]) = checkMat[ParamListsSetting]
+  def checkParamLists(implicit C: Configs[ParamListsSetting]) = check[ParamListsSetting]
 
 
   ////

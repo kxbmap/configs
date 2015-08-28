@@ -21,44 +21,21 @@ import com.github.kxbmap.configs.util._
 import com.typesafe.config.{ConfigException, ConfigFactory}
 import java.{lang => jl, util => ju}
 import scala.beans.BeanProperty
-import scala.collection.JavaConversions._
 import scalaprops.Property.forAll
-import scalaprops.{Properties, Scalaprops}
+import scalaprops.{Gen, Properties, Scalaprops}
+import scalaz.std.anyVal._
+import scalaz.std.list._
+import scalaz.std.option._
 import scalaz.std.string._
+import scalaz.std.tuple._
+import scalaz.{Apply, Equal, Need}
 
 object BeanConfigsTest extends Scalaprops {
 
-  val simple = forAll { (s: String) =>
-    val config = ConfigFactory.parseString(s"string = ${q(s)}")
-    val o = Configs[SimpleBean].extract(config)
-    o.string == s && o.list == null
-  }
-
-  val nested = forAll { (n: Int, b: Boolean, l: Long) =>
-    val config = ConfigFactory.parseString(
-      s"""value = $n
-         |simple = {
-         |  boolean = $b
-         |  long = $l
-         |}
-         |""".stripMargin)
-    val o = Configs[NestedBean].extract(config)
-    o.value == n && o.simple.boolean == b && o.simple.long == l
-  }
-
-  val recursive = forAll { (n: Int, m: Int, l: Int) =>
-    val config = ConfigFactory.parseString(
-      s"""value = $n
-         |next = {
-         |  value = $m
-         |  next = {
-         |    value = $l
-         |  }
-         |}
-         |""".stripMargin)
-    val o = Configs[RecursiveBean].extract(config)
-    o.value == n && o.next.value == m && o.next.next.value == l && o.next.next.next == null
-  }
+  val simple = check[SimpleBean]
+  val nested = check[NestedBean]
+  val recursive = check[RecursiveBean]
+  val javaTypes = check[JavaTypes]
 
   val differentInstance = forAll {
     val config = ConfigFactory.empty()
@@ -90,38 +67,12 @@ object BeanConfigsTest extends Scalaprops {
     )
   }
 
-  val wrongType = intercept {
-    val config = ConfigFactory.parseString(s"int = one")
-    Configs[SimpleBean].extract(config)
-  } {
-    case e: ConfigException.WrongType => e.getMessage.contains("int")
-  }
-
-
-  val javaTypes = forAll { (b: Boolean, d: Double, n: Int, l: Long, ss: ju.List[String]) =>
-    val config = ConfigFactory.parseString(
-      s"""boolean = $b
-         |double = $d
-         |int = $n
-         |long = $l
-         |list = ${ss.map(q).mkString("[", ",", "]")}
-         |""".stripMargin)
-    val o = Configs[JavaTypes].extract(config)
-    o.boolean == b && o.double == d && o.int == n && o.long == l && o.list == ss
-  }
-
-
-  val wrapError = forAll {
+  val wrapError = intercept {
     val config = ConfigFactory.parseString("foo = 1")
-    try {
-      Configs[ThrowException].extract(config)
-      false
-    } catch {
-      case e: ConfigException.BadValue =>
-        e.getCause.getMessage == "should wrap"
-    }
+    Configs[ThrowException].extract(config)
+  } {
+    case e: ConfigException.BadValue => e.getCause.getMessage == "should wrap"
   }
-
 
   val requireNonNull = intercept {
     val config = ConfigFactory.parseString(s"string = foo")
@@ -141,8 +92,43 @@ object BeanConfigsTest extends Scalaprops {
   }
 
   object SimpleBean {
+
     implicit val configs: Configs[SimpleBean] = Configs.bean[SimpleBean]
+
+    implicit val toConfigValue: ToConfigValue[SimpleBean] =
+      ToConfigValue.fromMap(o => Map(
+        "boolean" -> o.boolean.toConfigValue,
+        "double" -> o.double.toConfigValue,
+        "int" -> o.int.toConfigValue,
+        "list" -> Option(o.list).toConfigValue,
+        "long" -> o.long.toConfigValue,
+        "string" -> Option(o.string).toConfigValue
+      ))
+
+    implicit val gen: Gen[SimpleBean] =
+      Apply[Gen].apply6(
+        Gen[Option[Boolean]],
+        Gen[Option[Double]],
+        Gen[Option[Int]],
+        Gen[Option[List[String]]],
+        Gen[Option[Long]],
+        Gen[Option[String]]
+      ) { (b, d, i, ls, l, s) =>
+        val o = new SimpleBean()
+        b.foreach(o.setBoolean)
+        d.foreach(o.setDouble)
+        i.foreach(o.setInt)
+        ls.foreach(o.setList)
+        l.foreach(o.setLong)
+        s.foreach(o.setString)
+        o
+      }
+
+    implicit val equal: Equal[SimpleBean] =
+      Equal.equalBy(o => (o.boolean, o.double, o.int, Option(o.list), o.long, Option(o.string)))
+
   }
+
 
   class NestedBean {
     @BeanProperty var value: Int = _
@@ -150,8 +136,28 @@ object BeanConfigsTest extends Scalaprops {
   }
 
   object NestedBean {
+
     implicit val configs: Configs[NestedBean] = Configs.bean[NestedBean]
+
+    implicit val toConfigValue: ToConfigValue[NestedBean] =
+      ToConfigValue.fromMap(o => Map(
+        "value" -> o.value.toConfigValue,
+        "simple" -> Option(o.simple).toConfigValue
+      ))
+
+    implicit val gen: Gen[NestedBean] =
+      Apply[Gen].apply2(Gen[Option[Int]], Gen[Option[SimpleBean]]) { (v, s) =>
+        val o = new NestedBean()
+        v.foreach(o.setValue)
+        s.foreach(o.setSimple)
+        o
+      }
+
+    implicit val equal: Equal[NestedBean] =
+      Equal.equalBy(o => (o.value, Option(o.simple)))
+
   }
+
 
   class RecursiveBean {
     @BeanProperty var value: Int = _
@@ -159,8 +165,33 @@ object BeanConfigsTest extends Scalaprops {
   }
 
   object RecursiveBean {
+
     implicit val configs: Configs[RecursiveBean] = Configs.bean[RecursiveBean]
+
+    implicit val toConfigValue: ToConfigValue[RecursiveBean] =
+      ToConfigValue.fromMap(o => Map(
+        "value" -> o.value.toConfigValue,
+        "next" -> Option(o.next).toConfigValue
+      ))
+
+    implicit val gen: Gen[RecursiveBean] =
+      Apply[Gen].apply2(
+        Gen[Option[Int]],
+        Gen.oneOfLazy(Need(Gen[Option[RecursiveBean]]))
+      ) { (v, n) =>
+        val o = new RecursiveBean()
+        v.foreach(o.setValue)
+        n.foreach(o.setNext)
+        o
+      }
+
+    implicit val equal: Equal[RecursiveBean] =
+      Equal.equal { (a, b) =>
+        a.value == b.value && Equal[Option[RecursiveBean]].equal(Option(a.next), Option(b.next))
+      }
+
   }
+
 
   class JavaTypes {
     @BeanProperty var boolean: jl.Boolean = _
@@ -171,7 +202,38 @@ object BeanConfigsTest extends Scalaprops {
   }
 
   object JavaTypes {
+
     implicit val configs: Configs[JavaTypes] = Configs.bean[JavaTypes]
+
+    implicit val toConfigValue: ToConfigValue[JavaTypes] =
+      ToConfigValue.fromMap(o => Map(
+        "boolean" -> Option(o.boolean).toConfigValue,
+        "double" -> Option(o.double).toConfigValue,
+        "int" -> Option(o.int).toConfigValue,
+        "long" -> Option(o.long).toConfigValue,
+        "list" -> Option(o.list).toConfigValue
+      ))
+
+    implicit val gen: Gen[JavaTypes] =
+      Apply[Gen].apply5(
+        Gen[Option[jl.Boolean]],
+        Gen[Option[jl.Double]],
+        Gen[Option[jl.Integer]],
+        Gen[Option[jl.Long]],
+        Gen[Option[ju.List[String]]]
+      ) { (b, d, i, l, ss) =>
+        val o = new JavaTypes()
+        b.foreach(o.setBoolean)
+        d.foreach(o.setDouble)
+        i.foreach(o.setInt)
+        l.foreach(o.setLong)
+        ss.foreach(o.setList)
+        o
+      }
+
+    implicit val equal: Equal[JavaTypes] =
+      Equal.equalBy(o => (Option(o.boolean), Option(o.double), Option(o.int), Option(o.long), Option(o.list)))
+
   }
 
   class ThrowException {
