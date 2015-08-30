@@ -4,8 +4,8 @@ disablePublishSettings
 
 lazy val core = project.settings(
   name := "configs",
+  dependencies.core,
   scalapropsSettings,
-  libraryDependencies += "com.typesafe" % "config" % configVersion.value,
   initialCommands :=
     """import com.typesafe.config._
       |import ConfigFactory._
@@ -19,9 +19,6 @@ lazy val core = project.settings(
 
 lazy val macros = project.settings(
   name := "configs-macro",
-  scalapropsSettings,
-  libraryDependencies ++= Seq(
-    "com.typesafe" % "config" % configVersion.value,
-    "org.scala-lang" % "scala-reflect" % scalaVersion.value
-  )
+  dependencies.macros,
+  scalapropsSettings
 )
