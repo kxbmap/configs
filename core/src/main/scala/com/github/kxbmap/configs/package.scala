@@ -32,10 +32,6 @@ object RequireImport {
 
 object `package` {
 
-  @deprecated("Use Configs[A] instead", "0.3.0")
-  type AtPath[A] = Configs[A]
-
-
   object simple
     extends DefaultConfigsInstances
     with RequireImport.Instance
@@ -76,6 +72,35 @@ object `package` {
   private[configs] implicit class PipeOps[A](private val self: A) extends AnyVal {
 
     def |>[B](f: A => B): B = f(self)
+
+  }
+
+
+
+  @deprecated("Use Configs[A] instead", "0.3.0")
+  type AtPath[A] = Configs[A]
+
+
+  @deprecated("Use ConfigOps instead", "0.3.0")
+  implicit class EnrichTypesafeConfig(val c: Config) extends AnyVal {
+
+    import simple._
+
+    @deprecated("import com.github.kxbmap.configs.syntax._ instead", "0.3.0")
+    def extract[A: Configs]: A =
+      Configs[A].extract(c)
+
+    @deprecated("import com.github.kxbmap.configs.syntax._ instead", "0.3.0")
+    def get[A: Configs](path: String): A =
+      Configs[A].get(c, path)
+
+    @deprecated("import com.github.kxbmap.configs.syntax._ instead", "0.3.0")
+    def opt[A: Configs](path: String): Option[A] =
+      get[Option[A]](path)
+
+    @deprecated("import com.github.kxbmap.configs.syntax._ instead", "0.3.0")
+    def getOrElse[A: Configs](path: String, default: => A): A =
+      opt[A](path).getOrElse(default)
 
   }
 

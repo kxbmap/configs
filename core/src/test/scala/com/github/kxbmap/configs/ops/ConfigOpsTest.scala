@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.github.kxbmap.configs
+package com.github.kxbmap.configs.ops
 
 import com.github.kxbmap.configs.simple._
 import com.github.kxbmap.configs.util._
