@@ -17,12 +17,10 @@
 package com.github.kxbmap.configs
 
 import com.typesafe.config.{Config, ConfigException, ConfigValue}
-import scala.annotation.implicitNotFound
 import scala.collection.generic.CanBuildFrom
 import scala.util.control.NonFatal
 
 
-@implicitNotFound("No implicit Configs defined for ${A}.")
 trait Configs[A] {
 
   def get(config: Config, path: String): A
