@@ -30,7 +30,7 @@ object CaseFormatTest extends Scalaprops {
   private val Camel: Gen[String] = (Gen.alphaUpperChar |@| lower)(_ +: _)
 
   private def tc(f: (String, String, String) => String)(a: String, b: String, c: String): (String, String) =
-    f(a, b, c) -> Seq(a, b, c).map(_.toLowerCase(Locale.ENGLISH)).mkString("-")
+    f(a, b, c) -> Seq(a, b, c).map(_.toLowerCase(Locale.ROOT)).mkString("-")
 
   val `Format to lower-hyphen-case` = {
     val props = NonEmptyList(

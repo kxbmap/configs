@@ -26,12 +26,12 @@ package object macros {
 
   private[macros] def toLowerHyphenCase(s: String): String = sep.split(s) match {
     case ps if ps.length > 1 =>
-      ps.mkString("-").toLowerCase(Locale.ENGLISH)
+      ps.mkString("-").toLowerCase(Locale.ROOT)
 
     case _ =>
       @tailrec
       def format(s: String, sb: StringBuilder = new StringBuilder()): String =
-        if (s.length == 0) sb.result().toLowerCase(Locale.ENGLISH)
+        if (s.length == 0) sb.result().toLowerCase(Locale.ROOT)
         else {
           def append(s: String) = (if (sb.isEmpty) sb else sb.append('-')).append(s)
           val (us, rs) = s.span(_.isUpper)
