@@ -18,7 +18,7 @@ package com.github.kxbmap.configs
 
 import com.typesafe.config.{Config, ConfigException, ConfigList, ConfigMemorySize, ConfigObject, ConfigUtil, ConfigValue}
 import java.io.File
-import java.net.{URI, InetAddress}
+import java.net.{InetAddress, URI}
 import java.nio.file.{Path, Paths}
 import java.util.concurrent.TimeUnit
 import java.util.{Locale, UUID}
@@ -268,15 +268,23 @@ private[configs] abstract class DefaultConfigsInstances {
     }
 
 
-  implicit lazy val configConfigs: Configs[Config] =
-    _.getConfig(_)
+  implicit lazy val configConfigs: Configs[Config] = new Configs[Config] {
+    def get(config: Config, path: String): Config = config.getConfig(path)
+
+    override def extract(config: Config): Config = config
+  }
 
   implicit lazy val configJListConfigs: Configs[ju.List[Config]] =
     _.getConfigList(_).asInstanceOf[ju.List[Config]]
 
 
-  implicit lazy val configValueConfigs: Configs[ConfigValue] =
-    _.getValue(_)
+  implicit lazy val configValueConfigs: Configs[ConfigValue] = new Configs[ConfigValue] {
+    def get(config: Config, path: String): ConfigValue = config.getValue(path)
+
+    override def extract(config: Config): ConfigValue = config.root()
+
+    override def extract(value: ConfigValue): ConfigValue = value
+  }
 
   implicit lazy val configValueJListConfigs: Configs[ju.List[ConfigValue]] =
     _.getList(_)
