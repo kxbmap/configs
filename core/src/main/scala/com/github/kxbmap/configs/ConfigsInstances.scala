@@ -30,13 +30,13 @@ import scala.concurrent.duration.{Duration, FiniteDuration}
 import scala.reflect.{ClassTag, classTag}
 import scala.util.Try
 
-private[configs] trait MacroConfigsInstances {
+private[configs] sealed abstract class MacroConfigsInstances {
 
   implicit def materializeConfigs[A]: Configs[A] = macro macros.ConfigsMacro.materialize[A]
 
 }
 
-private[configs] abstract class DefaultConfigsInstances {
+private[configs] abstract class ConfigsInstances extends MacroConfigsInstances {
 
   implicit def javaListConfigs[A: Configs]: Configs[ju.List[A]] =
     _.getList(_).map(Configs[A].extract).asJava

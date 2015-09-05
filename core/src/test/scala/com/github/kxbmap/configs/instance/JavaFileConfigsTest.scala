@@ -16,7 +16,6 @@
 
 package com.github.kxbmap.configs.instance
 
-import com.github.kxbmap.configs.simple._
 import com.github.kxbmap.configs.util._
 import java.io.File
 import java.nio.file.{Path, Paths}

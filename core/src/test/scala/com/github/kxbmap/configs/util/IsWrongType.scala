@@ -16,7 +16,7 @@
 
 package com.github.kxbmap.configs.util
 
-import com.typesafe.config.{ConfigException, ConfigValue}
+import com.typesafe.config.ConfigException
 import scala.util.{Failure, Try}
 import scalaz.Need
 

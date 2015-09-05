@@ -14,39 +14,15 @@
  * limitations under the License.
  */
 
-package com.github.kxbmap.configs
+package com.github.kxbmap
 
 import com.typesafe.config.Config
-import scala.annotation.implicitNotFound
 
-
-@implicitNotFound("import com.github.kxbmap.configs.simple._ or com.github.kxbmap.configs.auto._ required")
-final class RequireImport private()
-
-object RequireImport {
-  sealed trait Instance {
-    implicit val requireImport: RequireImport = new RequireImport
-  }
-}
-
-
-object `package` {
-
-  object simple
-    extends DefaultConfigsInstances
-    with RequireImport.Instance
-
-  object auto
-    extends DefaultConfigsInstances
-    with MacroConfigsInstances
-    with RequireImport.Instance
-
+package object configs {
 
   object syntax {
 
     implicit class ConfigOps(private val self: Config) extends AnyVal {
-
-      import simple._
 
       def extract[A: Configs]: A =
         Configs[A].extract(self)
@@ -76,15 +52,12 @@ object `package` {
   }
 
 
-
   @deprecated("Use Configs[A] instead", "0.3.0")
   type AtPath[A] = Configs[A]
 
 
   @deprecated("Use ConfigOps instead", "0.3.0")
   implicit class EnrichTypesafeConfig(val c: Config) extends AnyVal {
-
-    import simple._
 
     @deprecated("import com.github.kxbmap.configs.syntax._ instead", "0.3.0")
     def extract[A: Configs]: A =

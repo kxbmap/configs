@@ -27,10 +27,7 @@ import scalaz.syntax.equal._
 import scalaz.{Apply, Equal}
 
 
-object AutoConfigsTest extends Scalaprops {
-
-  import MaterializeConfigsTest._
-  import com.github.kxbmap.configs.auto._
+object MaterializeConfigsTest extends Scalaprops {
 
   val simple = checkSimple
   val nested = checkNested
@@ -49,54 +46,6 @@ object AutoConfigsTest extends Scalaprops {
   val implicitParamWithDefault = checkImplicitWithDefault { implicit n =>
     Configs[ImplicitWithDefault]
   }
-
-}
-
-
-object SimpleConfigsTest extends Scalaprops {
-
-  import MaterializeConfigsTest._
-  import com.github.kxbmap.configs.simple._
-
-
-  implicit lazy val simpleConfigs: Configs[SimpleSetting] = Configs.of[SimpleSetting]
-  val simple = checkSimple
-
-  implicit lazy val nestedConfigs: Configs[NestedSetting] = Configs.of[NestedSetting]
-  val nested = checkNested
-
-//  implicit lazy val recursiveConfigs: Configs[RecursiveSetting] = Configs.of[RecursiveSetting]
-//  val recursive = checkRecursive
-
-  implicit lazy val paramListsConfigs: Configs[ParamListsSetting] = Configs.of[ParamListsSetting]
-  val paramLists = checkParamLists
-
-  implicit lazy val subCtorsConfigs: Configs[SubCtorsSetting] = Configs.of[SubCtorsSetting]
-  val subCtors = checkSubCtors
-
-  implicit lazy val multiApplyConfigs: Configs[MultiApply] = Configs.of[MultiApply]
-  val multiApply = checkMultiApply
-
-  implicit lazy val formatCaseConfigs: Configs[FormatCaseSetting] = Configs.of[FormatCaseSetting]
-  implicit lazy val duplicate1Configs: Configs[Duplicate1] = Configs.of[Duplicate1]
-  implicit lazy val duplicate2Configs: Configs[Duplicate2] = Configs.of[Duplicate2]
-  val formatCase = checkFormatCase
-
-  implicit lazy val defaultsConfigs: Configs[Defaults] = Configs.of[Defaults]
-  val defaults = checkDefaults
-
-  implicit lazy val caseDefaultsConfigs: Configs[CaseDefaults] = Configs.of[CaseDefaults]
-  val caseDefaults = checkCaseDefaults
-
-  val implicitParam = checkImplicitParam { implicit n =>
-    Configs.of[ImplicitParam]
-  }
-
-  implicit lazy val implicitWithDefaultConfigs: Configs[ImplicitWithDefault] = Configs.of[ImplicitWithDefault]
-  val implicitWithDefault = checkImplicitWithDefault { implicit n =>
-    Configs.of[ImplicitWithDefault]
-  }
-
 
   ////
   val sealedTrait = checkMat[SealedTrait]
@@ -164,10 +113,6 @@ object SimpleConfigsTest extends Scalaprops {
       Gen.value(SealedChild7)
     )
 
-}
-
-
-object MaterializeConfigsTest {
 
   def checkMat[A: Gen : Configs : ToConfigValue : Equal] = forAll { a: A =>
     Configs[A].extract(a.toConfigValue) === a

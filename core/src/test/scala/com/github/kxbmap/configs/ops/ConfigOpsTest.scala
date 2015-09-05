@@ -16,7 +16,6 @@
 
 package com.github.kxbmap.configs.ops
 
-import com.github.kxbmap.configs.simple._
 import com.github.kxbmap.configs.util._
 import com.typesafe.config.ConfigValueFactory
 import scala.collection.JavaConverters._
