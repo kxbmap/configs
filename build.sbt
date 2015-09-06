@@ -13,12 +13,4 @@ lazy val core = project.settings(
       |import com.github.kxbmap.configs.simple._
       |import com.github.kxbmap.configs.syntax._
       |""".stripMargin
-).dependsOn(
-  macros % "provided"
-)
-
-lazy val macros = project.settings(
-  name := "configs-macro",
-  dependencies.macros,
-  scalapropsSettings
 )

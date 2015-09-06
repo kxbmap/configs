@@ -13,12 +13,8 @@ object Dependencies extends AutoPlugin {
     object dependencies {
 
       val core = libraryDependencies ++= Seq(
-        "com.typesafe" % "config" % configVersion.value
-      )
-
-      val macros = libraryDependencies ++= Seq(
         "com.typesafe" % "config" % configVersion.value,
-        "org.scala-lang" % "scala-reflect" % scalaVersion.value
+        "org.scala-lang" % "scala-reflect" % scalaVersion.value % "provided"
       )
     }
 
