@@ -36,10 +36,14 @@ private[configs] sealed abstract class MacroConfigsInstances {
 
 }
 
-private[configs] abstract class ConfigsInstances extends MacroConfigsInstances {
+private[configs] sealed abstract class ConfigsInstances0 extends MacroConfigsInstances {
 
   implicit def javaListConfigs[A: Configs]: Configs[ju.List[A]] =
     _.getList(_).map(Configs[A].extract).asJava
+
+}
+
+private[configs] abstract class ConfigsInstances extends ConfigsInstances0 {
 
   implicit def javaIterableConfigs[A](implicit C: Configs[ju.List[A]]): Configs[jl.Iterable[A]] =
     C.asInstanceOf[Configs[jl.Iterable[A]]]
@@ -69,6 +73,7 @@ private[configs] abstract class ConfigsInstances extends MacroConfigsInstances {
 
   implicit def tryConfigs[A: Configs]: Configs[Try[A]] =
     (c, p) => Try(Configs[A].get(c, p))
+
 
   implicit def eitherConfigs[E <: Throwable : ClassTag, A: Configs]: Configs[Either[E, A]] =
     (c, p) =>
@@ -333,11 +338,17 @@ private[configs] abstract class ConfigsInstances extends MacroConfigsInstances {
   }
 
 
-  implicit lazy val symbolConfigs: Configs[Symbol] =
-    stringConfigs.map(Symbol.apply)
+  def fromConverter[A: Configs, B](implicit C: Converter[A, B]): Configs[B] =
+    Configs.from(Configs[A].get(_, _) |> C.convert)
 
-  implicit lazy val symbolJListConfigs: Configs[ju.List[Symbol]] =
-    stringJListConfigs.map(_.map(Symbol.apply))
+  def fromConverterJList[A, B](implicit A: Configs[ju.List[A]], C: Converter[A, B]): Configs[ju.List[B]] =
+    Configs.from(A.get(_, _).map(C.convert))
+
+  implicit def fromStringConfigs[A: Converter.FromString]: Configs[A] =
+    fromConverter[String, A]
+
+  implicit def fromStringJListConfigs[A: Converter.FromString]: Configs[ju.List[A]] =
+    fromConverterJList[String, A]
 
 
   implicit lazy val uuidConfigs: Configs[UUID] =
