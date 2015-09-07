@@ -16,16 +16,18 @@
 
 package com.github.kxbmap.configs
 
-trait ConfigKey[A] {
-  def from(s: String): A
-}
+import com.github.kxbmap.configs.util._
+import scalaprops.Property.forAll
+import scalaprops.Scalaprops
 
-object ConfigKey {
+object ConverterTest extends Scalaprops {
 
-  def apply[A](implicit A: ConfigKey[A]): ConfigKey[A] = A
+  val stringToString = forAll { (s: String) =>
+    Converter[String, String].convert(s) == s
+  }
 
-  implicit val stringConfigKey: ConfigKey[String] = identity
-
-  implicit val symbolConfigKey: ConfigKey[Symbol] = Symbol.apply
+  val stringToSymbol = forAll { (s: String) =>
+    Converter[String, Symbol].convert(s) == Symbol(s)
+  }
 
 }

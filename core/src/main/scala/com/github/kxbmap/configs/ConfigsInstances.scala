@@ -50,9 +50,9 @@ private[configs] abstract class ConfigsInstances extends MacroConfigsInstances {
   implicit def javaSetConfigs[A](implicit C: Configs[ju.List[A]]): Configs[ju.Set[A]] =
     C.get(_, _).toSet.asJava
 
-  implicit def javaMapConfigs[A: ConfigKey, B: Configs]: Configs[ju.Map[A, B]] =
+  implicit def javaMapConfigs[A, B](implicit A: Converter[String, A], B: Configs[B]): Configs[ju.Map[A, B]] =
     Configs.onPath { c =>
-      c.root().keysIterator.map(k => ConfigKey[A].from(k) -> Configs[B].get(c, ConfigUtil.quoteString(k))).toMap.asJava
+      c.root().keysIterator.map(k => A.convert(k) -> B.get(c, ConfigUtil.quoteString(k))).toMap.asJava
     }
 
 
@@ -292,8 +292,8 @@ private[configs] abstract class ConfigsInstances extends MacroConfigsInstances {
   implicit lazy val configValueJMapConfigs: Configs[ju.Map[String, ConfigValue]] =
     _.getObject(_)
 
-  implicit def configValueJMapKeyConfigs[A: ConfigKey]: Configs[ju.Map[A, ConfigValue]] =
-    _.getObject(_).map(t => ConfigKey[A].from(t._1) -> t._2).asJava
+  implicit def configValueJMapKeyConfigs[A](implicit A: Converter[String, A]): Configs[ju.Map[A, ConfigValue]] =
+    _.getObject(_).map(t => A.convert(t._1) -> t._2).asJava
 
 
   implicit lazy val configListConfigs: Configs[ConfigList] =

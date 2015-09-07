@@ -16,18 +16,34 @@
 
 package com.github.kxbmap.configs
 
-import com.github.kxbmap.configs.util._
-import scalaprops.Property.forAll
-import scalaprops.Scalaprops
+trait Converter[A, B] {
 
-object ConfigKeyTest extends Scalaprops {
+  def convert(a: A): B
 
-  val string = forAll { (s: String) =>
-    ConfigKey[String].from(s) == s
+  def map[C](f: B => C): Converter[A, C] =
+    convert(_) |> f
+
+}
+
+object Converter {
+
+  def apply[A, B](implicit C: Converter[A, B]): Converter[A, B] = C
+
+
+  type FromString[A] = Converter[String, A]
+
+  object FromString {
+    def apply[A](implicit A: FromString[A]): FromString[A] = A
   }
 
-  val symbol = forAll { (s: String) =>
-    ConfigKey[Symbol].from(s) == Symbol(s)
-  }
+
+  private[this] val _identity: Converter[Any, Any] = identity
+
+  implicit def identityConverter[A]: Converter[A, A] =
+    _identity.asInstanceOf[Converter[A, A]]
+
+
+  implicit val symbolFromString: FromString[Symbol] =
+    Symbol.apply
 
 }

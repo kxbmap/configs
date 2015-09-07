@@ -17,7 +17,7 @@
 package com.github.kxbmap.configs.instance
 
 import com.github.kxbmap.configs.util._
-import com.github.kxbmap.configs.{ConfigKey, Configs}
+import com.github.kxbmap.configs.{Configs, Converter}
 import java.{lang => jl, util => ju}
 import scala.collection.immutable.TreeMap
 import scala.collection.mutable
@@ -100,11 +100,14 @@ object CollectionConfigsTest extends Scalaprops {
 
   object configs {
 
-    val fooConfigs: Configs[Foo] = Configs.onPath(c => Foo(c.getInt("v")))
+    val fooConfigs: Configs[Foo] =
+      Configs.onPath(c => Foo(c.getInt("v")))
 
-    val fooJListConfigs: Configs[ju.List[Foo]] = Configs.javaListConfigs(fooConfigs)
+    val fooJListConfigs: Configs[ju.List[Foo]] =
+      Configs.javaListConfigs(fooConfigs)
 
-    def fooJMapConfigs[A: ConfigKey]: Configs[ju.Map[A, Foo]] = Configs.javaMapConfigs(ConfigKey[A], fooConfigs)
+    def fooJMapConfigs[A](implicit A: Converter[String, A]): Configs[ju.Map[A, Foo]] =
+      Configs.javaMapConfigs(A, fooConfigs)
 
   }
 
