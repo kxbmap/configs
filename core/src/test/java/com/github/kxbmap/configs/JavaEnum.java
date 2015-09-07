@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.github.kxbmap.configs.instance;
+package com.github.kxbmap.configs;
 
 @SuppressWarnings("unused")
 public enum JavaEnum {

@@ -17,11 +17,7 @@
 package com.github.kxbmap.configs
 
 import com.typesafe.config.{Config, ConfigException, ConfigList, ConfigMemorySize, ConfigObject, ConfigUtil, ConfigValue}
-import java.io.File
-import java.net.{InetAddress, URI}
-import java.nio.file.{Path, Paths}
 import java.util.concurrent.TimeUnit
-import java.util.{Locale, UUID}
 import java.{lang => jl, math => jm, time => jt, util => ju}
 import scala.collection.JavaConversions._
 import scala.collection.JavaConverters._
@@ -83,6 +79,19 @@ private[configs] abstract class ConfigsInstances extends ConfigsInstances0 {
         case e if classTag[E].runtimeClass.isAssignableFrom(e.getClass) =>
           Left(e.asInstanceOf[E])
       }
+
+
+  def fromConverter[A, B](implicit A: Configs[A], C: Converter[A, B]): Configs[B] =
+    Configs.from(A.get(_, _) |> C.convert)
+
+  def fromConverterJList[A, B](implicit A: Configs[ju.List[A]], C: Converter[A, B]): Configs[ju.List[B]] =
+    Configs.from(A.get(_, _).map(C.convert))
+
+  implicit def fromStringConfigs[A: Converter.FromString]: Configs[A] =
+    fromConverter[String, A]
+
+  implicit def fromStringJListConfigs[A: Converter.FromString]: Configs[ju.List[A]] =
+    fromConverterJList[String, A]
 
 
   private[this] def toByte(n: Number, c: Config, p: String): Byte = {
@@ -298,7 +307,7 @@ private[configs] abstract class ConfigsInstances extends ConfigsInstances0 {
     _.getObject(_)
 
   implicit def configValueJMapKeyConfigs[A](implicit A: Converter[String, A]): Configs[ju.Map[A, ConfigValue]] =
-    _.getObject(_).map(t => A.convert(t._1) -> t._2).asJava
+    Configs.from(_.getObject(_).map(t => A.convert(t._1) -> t._2))
 
 
   implicit lazy val configListConfigs: Configs[ConfigList] =
@@ -317,85 +326,5 @@ private[configs] abstract class ConfigsInstances extends ConfigsInstances0 {
 
   implicit lazy val configMemorySizeJListConfigs: Configs[ju.List[ConfigMemorySize]] =
     _.getMemorySizeList(_)
-
-
-  private def enumMap[A <: jl.Enum[A] : ClassTag]: Map[String, A] =
-    classTag[A].runtimeClass
-      .getEnumConstants.asInstanceOf[Array[A]]
-      .map(a => a.name() -> a)(collection.breakOut)
-
-  private def getEnum[A <: jl.Enum[A]](m: Map[String, A], s: String, c: Config, p: String): A =
-    m.getOrElse(s, throw new ConfigException.BadValue(c.origin(), p, s"$s must be one of ${m.keys.mkString(", ")}"))
-
-  implicit def javaEnumConfigs[A <: jl.Enum[A] : ClassTag]: Configs[A] = {
-    val m = enumMap[A]
-    (c, p) => getEnum(m, c.getString(p), c, p)
-  }
-
-  implicit def javaEnumJListConfigs[A <: jl.Enum[A] : ClassTag]: Configs[ju.List[A]] = {
-    val m = enumMap[A]
-    (c, p) => c.getStringList(p).map(getEnum(m, _, c, p))
-  }
-
-
-  def fromConverter[A: Configs, B](implicit C: Converter[A, B]): Configs[B] =
-    Configs.from(Configs[A].get(_, _) |> C.convert)
-
-  def fromConverterJList[A, B](implicit A: Configs[ju.List[A]], C: Converter[A, B]): Configs[ju.List[B]] =
-    Configs.from(A.get(_, _).map(C.convert))
-
-  implicit def fromStringConfigs[A: Converter.FromString]: Configs[A] =
-    fromConverter[String, A]
-
-  implicit def fromStringJListConfigs[A: Converter.FromString]: Configs[ju.List[A]] =
-    fromConverterJList[String, A]
-
-
-  implicit lazy val uuidConfigs: Configs[UUID] =
-    stringConfigs.map(UUID.fromString)
-
-  implicit lazy val uuidJListConfigs: Configs[ju.List[UUID]] =
-    stringJListConfigs.map(_.map(UUID.fromString))
-
-
-  private[this] lazy val availableLocales: Map[String, Locale] =
-    Locale.getAvailableLocales.map(l => l.toString -> l)(collection.breakOut)
-
-  private[this] def getLocale(s: String, c: Config, p: String): Locale =
-    availableLocales.getOrElse(s, throw new ConfigException.BadValue(c.origin(), p, s"Locale '$s' is not available"))
-
-  implicit lazy val localeConfigs: Configs[Locale] =
-    (c, p) => getLocale(c.getString(p), c, p)
-
-  implicit lazy val localeJListConfigs: Configs[ju.List[Locale]] =
-    (c, p) => c.getStringList(p).map(getLocale(_, c, p))
-
-
-  implicit lazy val pathConfigs: Configs[Path] =
-    stringConfigs.map(Paths.get(_))
-
-  implicit lazy val pathJListConfigs: Configs[ju.List[Path]] =
-    stringJListConfigs.map(_.map(Paths.get(_)))
-
-
-  implicit lazy val fileConfigs: Configs[File] =
-    stringConfigs.map(new File(_))
-
-  implicit lazy val fileJListConfigs: Configs[ju.List[File]] =
-    stringJListConfigs.map(_.map(new File(_)))
-
-
-  implicit lazy val inetAddressConfigs: Configs[InetAddress] =
-    stringConfigs.map(InetAddress.getByName)
-
-  implicit lazy val inetAddressJListConfigs: Configs[ju.List[InetAddress]] =
-    stringJListConfigs.map(_.map(InetAddress.getByName))
-
-
-  implicit lazy val uriConfigs: Configs[URI] =
-    stringConfigs.map(new URI(_))
-
-  implicit lazy val uriJListConfigs: Configs[ju.List[URI]] =
-    stringJListConfigs.map(_.map(new URI(_)))
 
 }

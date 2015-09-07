@@ -16,6 +16,13 @@
 
 package com.github.kxbmap.configs
 
+import java.io.File
+import java.net.{InetAddress, URI}
+import java.nio.file.{Path, Paths}
+import java.util.{Locale, UUID}
+import java.{lang => jl}
+import scala.reflect.{ClassTag, classTag}
+
 trait Converter[A, B] {
 
   def convert(a: A): B
@@ -37,13 +44,40 @@ object Converter {
   }
 
 
-  private[this] val _identity: Converter[Any, Any] = identity
+  private[this] final val _identity: Converter[Any, Any] = identity
 
   implicit def identityConverter[A]: Converter[A, A] =
     _identity.asInstanceOf[Converter[A, A]]
 
 
-  implicit val symbolFromString: FromString[Symbol] =
+  implicit lazy val symbolFromString: FromString[Symbol] =
     Symbol.apply
+
+  implicit def javaEnumFromString[A <: jl.Enum[A] : ClassTag]: FromString[A] = {
+    val enums: Map[String, A] =
+      classTag[A].runtimeClass.asInstanceOf[Class[A]].getEnumConstants.map(a => a.name() -> a)(collection.breakOut)
+    s => enums.getOrElse(s, throw new NoSuchElementException(s"$s must be one of ${enums.keys.mkString(", ")}"))
+  }
+
+  implicit lazy val uuidFromString: FromString[UUID] =
+    UUID.fromString
+
+  implicit lazy val localeFromString: FromString[Locale] = {
+    val availableLocales: Map[String, Locale] =
+      Locale.getAvailableLocales.map(l => l.toString -> l)(collection.breakOut)
+    s => availableLocales.getOrElse(s, throw new NoSuchElementException(s"Locale '$s' is not available"))
+  }
+
+  implicit lazy val pathFromString: FromString[Path] =
+    Paths.get(_)
+
+  implicit lazy val fileFromString: FromString[File] =
+    new File(_)
+
+  implicit lazy val inetAddressFromString: FromString[InetAddress] =
+    InetAddress.getByName
+
+  implicit lazy val uriFromString: FromString[URI] =
+    new URI(_)
 
 }
