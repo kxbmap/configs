@@ -327,4 +327,12 @@ private[configs] abstract class ConfigsInstances extends ConfigsInstances0 {
   implicit lazy val configMemorySizeJListConfigs: Configs[ju.List[ConfigMemorySize]] =
     _.getMemorySizeList(_)
 
+
+  implicit lazy val javaPropertiesConfigs: Configs[ju.Properties] =
+    Configs[ju.Map[String, String]].map { m =>
+      val p = new ju.Properties()
+      m.forEach(p.setProperty)
+      p
+    }
+
 }
