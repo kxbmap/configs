@@ -82,10 +82,10 @@ private[configs] abstract class ConfigsInstances extends ConfigsInstances0 {
 
 
   def fromConverter[A, B](implicit A: Configs[A], C: Converter[A, B]): Configs[B] =
-    Configs.from(A.get(_, _) |> C.convert)
+    A.map(C.convert)
 
   def fromConverterJList[A, B](implicit A: Configs[ju.List[A]], C: Converter[A, B]): Configs[ju.List[B]] =
-    Configs.from(A.get(_, _).map(C.convert))
+    A.map(_.map(C.convert))
 
   implicit def fromStringConfigs[A: Converter.FromString]: Configs[A] =
     fromConverter[String, A]
