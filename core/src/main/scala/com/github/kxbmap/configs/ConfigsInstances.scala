@@ -307,7 +307,7 @@ private[configs] abstract class ConfigsInstances extends ConfigsInstances0 {
     _.getObject(_)
 
   implicit def configValueJMapKeyConfigs[A](implicit A: Converter[String, A]): Configs[ju.Map[A, ConfigValue]] =
-    Configs.from(_.getObject(_).map(t => A.convert(t._1) -> t._2))
+    Configs[ConfigObject].map(_.map(t => A.convert(t._1) -> t._2))
 
 
   implicit lazy val configListConfigs: Configs[ConfigList] =
@@ -331,7 +331,7 @@ private[configs] abstract class ConfigsInstances extends ConfigsInstances0 {
   implicit lazy val javaPropertiesConfigs: Configs[ju.Properties] =
     Configs[ju.Map[String, String]].map { m =>
       val p = new ju.Properties()
-      m.forEach(p.setProperty)
+      p.putAll(m)
       p
     }
 
