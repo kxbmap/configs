@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.github.kxbmap.configs.ops
+package com.github.kxbmap.configs.syntax
 
 import com.github.kxbmap.configs.util._
 import com.typesafe.config.ConfigValueFactory
@@ -23,8 +23,6 @@ import scalaprops.Property.forAll
 import scalaprops.Scalaprops
 
 object ConfigOpsTest extends Scalaprops {
-
-  import com.github.kxbmap.configs.syntax._
 
   val extract = forAll { m: Map[String, java.lang.Integer] =>
     val config = ConfigValueFactory.fromMap(m.asJava).toConfig
