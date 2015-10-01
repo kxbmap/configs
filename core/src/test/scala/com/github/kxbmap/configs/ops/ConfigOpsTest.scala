@@ -18,7 +18,7 @@ package com.github.kxbmap.configs.ops
 
 import com.github.kxbmap.configs.util._
 import com.typesafe.config.ConfigValueFactory
-import scala.collection.JavaConverters._
+import scala.collection.convert.decorateAsJava._
 import scalaprops.Property.forAll
 import scalaprops.Scalaprops
 

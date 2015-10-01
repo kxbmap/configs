@@ -19,7 +19,7 @@ package com.github.kxbmap.configs.instance
 import com.github.kxbmap.configs.Configs
 import com.github.kxbmap.configs.util._
 import java.{math => jm, util => ju}
-import scala.collection.JavaConverters._
+import scala.collection.convert.decorateAsJava._
 import scalaprops.Property.forAll
 import scalaprops.Scalaprops
 import scalaz.Equal

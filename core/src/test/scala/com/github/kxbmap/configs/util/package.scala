@@ -19,7 +19,7 @@ package com.github.kxbmap.configs
 import com.typesafe.config.{Config, ConfigFactory, ConfigList, ConfigMemorySize, ConfigObject, ConfigUtil, ConfigValue, ConfigValueFactory}
 import java.{lang => jl, time => jt, util => ju}
 import scala.annotation.tailrec
-import scala.collection.JavaConverters._
+import scala.collection.convert.decorateAll._
 import scala.collection.generic.CanBuildFrom
 import scala.reflect.{ClassTag, classTag}
 import scalaprops.Or.Empty

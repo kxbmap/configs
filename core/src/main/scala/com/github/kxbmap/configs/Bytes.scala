@@ -17,7 +17,7 @@
 package com.github.kxbmap.configs
 
 import java.{util => ju}
-import scala.collection.JavaConverters._
+import scala.collection.convert.decorateAll._
 
 case class Bytes(value: Long) extends Ordered[Bytes] {
 
