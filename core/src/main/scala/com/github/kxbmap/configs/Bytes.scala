@@ -17,7 +17,6 @@
 package com.github.kxbmap.configs
 
 import java.{util => ju}
-import scala.collection.JavaConversions._
 import scala.collection.JavaConverters._
 
 case class Bytes(value: Long) extends Ordered[Bytes] {
@@ -45,7 +44,7 @@ object Bytes {
     _.getBytes(_) |> (Bytes(_))
 
   implicit val bytesJListConfigs: Configs[ju.List[Bytes]] =
-    _.getBytesList(_).map(Bytes(_)).asJava
+    _.getBytesList(_).asScala.map(Bytes(_)).asJava
 
 
   implicit val bytesOrdering: Ordering[Bytes] = Ordering.by(_.value)
