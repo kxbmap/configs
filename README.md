@@ -1,6 +1,9 @@
 configs
 =======
 [![Build Status](https://travis-ci.org/kxbmap/configs.svg?branch=master)](https://travis-ci.org/kxbmap/configs)
+[![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.github.kxbmap/configs_2.11/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.github.kxbmap/configs_2.11)
+[![Scaladoc](http://javadoc-badge.appspot.com/com.github.kxbmap/configs_2.11.svg?label=scaladoc)](http://javadoc-badge.appspot.com/com.github.kxbmap/configs_2.11)
+[![License](https://img.shields.io/github/license/kxbmap/configs.svg)](https://github.com/kxbmap/configs/blob/master/LICENSE)
 
 A Scala wrapper for Typesafe config
 
@@ -83,7 +86,3 @@ val l = config.get[Either[Throwable, Int]]("string")     // == Left(ConfigExcept
 val s = config.get[Try[String]]("string")  // == Success("something")
 val f = config.get[Try[Int]]("string")     // == Failure(ConfigException.WrongType(...))
 ```
-
-License
--------
-Apache License, Version 2.0
