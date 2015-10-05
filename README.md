@@ -1,88 +1,112 @@
 configs
 =======
+
 [![Build Status](https://travis-ci.org/kxbmap/configs.svg?branch=master)](https://travis-ci.org/kxbmap/configs)
 [![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.github.kxbmap/configs_2.11/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.github.kxbmap/configs_2.11)
 [![Scaladoc](http://javadoc-badge.appspot.com/com.github.kxbmap/configs_2.11.svg?label=scaladoc)](http://javadoc-badge.appspot.com/com.github.kxbmap/configs_2.11)
 [![License](https://img.shields.io/github/license/kxbmap/configs.svg)](https://github.com/kxbmap/configs/blob/master/LICENSE)
 
-A Scala wrapper for Typesafe config
-
+Scala wrapper for [Typesafe config](https://github.com/typesafehub/config)
 
 Usage
 -----
-### build.sbt
-```scala
-libraryDependencies += "com.github.kxbmap" %% "configs" % "0.2.5"
-```
 
-### Imports
+build.sbt:
 ```scala
-import com.github.kxbmap.configs._
+libraryDependencies += "com.github.kxbmap" %% "configs" % "0.3.0"
 ```
 
 Examples
 --------
+
+preparation of each example:
 ```scala
+import com.github.kxbmap.configs.syntax._
 import com.typesafe.config.ConfigFactory
 
 val config = ConfigFactory.load()
 ```
 
-#### Standard values
+### case class
+
 ```scala
-val a = config.get[Int]("a")          // == config.getInt("a")
-val b = config.get[String]("b")       // == config.getString("b")
-val c = config.get[List[Double]]("c") // Returns scala.List[Double], NOT java.util.List[java.lang.Double]
+case class CaseClassSetting(
+  foo: Int,
+  bar: String,
+  baz: List[java.util.Locale]
+)
 ```
 
-#### Bytes
-Use `com.github.kxbmap.configs.Bytes`
-```scala
-val Bytes(bytes) = config.get[Bytes]("bs") // bytes == config.getBytes("bs").longValue()
+```hocon
+setting.foo = 42
+setting.bar = hello
+setting.baz = [ja_JP, en_US]
 ```
 
-#### Map
 ```scala
-val m = config.get[Map[String, Int]]("m")
+scala> config.get[CaseClassSetting]("setting")
+res1: CaseClassSetting = CaseClassSetting(42,hello,List(ja_JP, en_US))
 ```
 
-#### Duration
+### sealed trait and case class/object
+
 ```scala
-import scala.concurrent.duration.Duration
-val d = config.get[Duration]("d")
+import com.github.kxbmap.configs.Configs
+
+sealed trait SealedSetting
+
+case object SealedObject extends SealedSetting
+case class SealdCaseClass(value: Long) extends SealedSetting
+
+// Need to define Configs[SealedSetting]
+implicit val sealedSettingConfigs: Configs[SealedSetting] =
+  Configs.of[SealedSetting]
 ```
 
-#### Option
-```scala
-val s = config.get[Option[String]]("string")  // == Some("something")
-val t = config.opt[String]("string")          // alias
+```hocon
+foo = SealedObject
+bar {
+  value = 42
+}
 ```
 
-By default, `get[Option[T]]` handles only `ConfigException.Missing`
 ```scala
-// read missing value
-val m = config.opt[String]("missing")  // == None
+scala> config.get[SealedSetting]("foo")
+res3: SealedSetting = SealedObject
 
-// read wrong type value
-val n = config.opt[Int]("string")  // Exception! throws ConfigException.WrongType
+scala> config.get[SealedSetting]("bar")
+res4: SealedSetting = SealdCaseClass(42)
 ```
 
-Import implicit `CatchCond` (alias for `Throwable => Boolean`) value, change this behavior
-```scala
-import CatchCond.configException
+### Java beans
 
-// read wrong type value
-val n = config.opt[Int]("string")  // == None
+```java
+public class BeanSetting {
+  private Integer foo;
+  private String bar;
+  private java.util.List<java.util.Locale> baz;
+  // omit setters and getters
+}
 ```
 
-#### Either
 ```scala
-val r = config.get[Either[Throwable, String]]("string")  // == Right("something")
-val l = config.get[Either[Throwable, Int]]("string")     // == Left(ConfigException.WrongType(...))
+import com.github.kxbmap.configs.Configs
+
+// Define Configs[BeanSetting]
+implicit val beanSettingConfigs: Configs[BeanSetting] =
+  Configs.bean[BeanSetting]
 ```
 
-#### Try
+```hocon
+setting.foo = 42
+setting.bar = hello
+setting.baz = [ja_JP, en_US]
+```
+
 ```scala
-val s = config.get[Try[String]]("string")  // == Success("something")
-val f = config.get[Try[Int]]("string")     // == Failure(ConfigException.WrongType(...))
+scala> config.get[BeanSetting]("setting")
+res1: BeanSetting = BeanSetting@56dc0deb
+
+scala> (res1.getFoo, res1.getBar, res1.getBaz)
+res2: (Integer, String, java.util.List[java.util.Locale]) = (42,hello,[ja_JP, en_US])
 ```
