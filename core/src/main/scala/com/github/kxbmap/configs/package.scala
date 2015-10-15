@@ -16,39 +16,11 @@
 
 package com.github.kxbmap
 
-import com.typesafe.config.Config
-
 package object configs {
 
   private[configs] implicit class PipeOps[A](private val self: A) extends AnyVal {
 
     def |>[B](f: A => B): B = f(self)
-
-  }
-
-
-  @deprecated("Use Configs[A] instead", "0.3.0")
-  type AtPath[A] = Configs[A]
-
-
-  @deprecated("Use ConfigOps instead", "0.3.0")
-  implicit class EnrichTypesafeConfig(val c: Config) extends AnyVal {
-
-    @deprecated("import com.github.kxbmap.configs.syntax._ instead", "0.3.0")
-    def extract[A: Configs]: A =
-      new syntax.ConfigOps(c).extract[A]
-
-    @deprecated("import com.github.kxbmap.configs.syntax._ instead", "0.3.0")
-    def get[A: Configs](path: String): A =
-      new syntax.ConfigOps(c).get[A](path)
-
-    @deprecated("import com.github.kxbmap.configs.syntax._ instead", "0.3.0")
-    def opt[A: Configs](path: String): Option[A] =
-      new syntax.ConfigOps(c).getOpt[A](path)
-
-    @deprecated("import com.github.kxbmap.configs.syntax._ instead", "0.3.0")
-    def getOrElse[A: Configs](path: String, default: => A): A =
-      new syntax.ConfigOps(c).getOrElse(path, default)
 
   }
 

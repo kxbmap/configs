@@ -89,11 +89,4 @@ object Configs extends ConfigsInstances {
       new MapF(c)
   }
 
-
-  @deprecated("Use Configs.onPath instead", "0.3.0")
-  def configs[A](f: Config => A): Configs[A] = _.getConfig(_) |> f
-
-  @deprecated("Use Configs.from instead", "0.3.0")
-  def atPath[A](f: (Config, String) => A): Configs[A] = f(_, _)
-
 }
