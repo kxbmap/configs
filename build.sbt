@@ -9,7 +9,7 @@ lazy val core = project.settings(
   initialCommands :=
     """import com.typesafe.config._
       |import ConfigFactory._
-      |import com.github.kxbmap.configs.{Configs, Bytes}
-      |import com.github.kxbmap.configs.syntax._
+      |import configs.{Configs, Bytes}
+      |import configs.syntax._
       |""".stripMargin
 )
