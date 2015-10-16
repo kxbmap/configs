@@ -17,7 +17,7 @@
 package com.github.kxbmap.configs.instance
 
 import com.github.kxbmap.configs.util._
-import com.typesafe.config.{Config, ConfigList, ConfigMemorySize, ConfigObject, ConfigValue}
+import com.typesafe.config.{Config, ConfigList, ConfigObject, ConfigValue}
 import java.{util => ju}
 import scalaprops.Scalaprops
 import scalaz.std.string._
@@ -55,14 +55,6 @@ object ConfigTypeConfigsTest extends Scalaprops {
   val configObjectJList = {
     implicit val h = hideConfigs[ConfigObject]
     check[ju.List[ConfigObject]]
-  }
-
-
-  val configMemorySize = check[ConfigMemorySize]
-
-  val configMemorySizeJList = {
-    implicit val h = hideConfigs[ConfigMemorySize]
-    check[ju.List[ConfigMemorySize]]
   }
 
 }

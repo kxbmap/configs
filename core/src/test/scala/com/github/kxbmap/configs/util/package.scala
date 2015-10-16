@@ -16,7 +16,7 @@
 
 package com.github.kxbmap.configs
 
-import com.typesafe.config.{Config, ConfigFactory, ConfigList, ConfigMemorySize, ConfigObject, ConfigUtil, ConfigValue, ConfigValueFactory}
+import com.typesafe.config.{Config, ConfigFactory, ConfigList, ConfigObject, ConfigUtil, ConfigValue, ConfigValueFactory}
 import java.{lang => jl, time => jt, util => ju}
 import scala.annotation.tailrec
 import scala.collection.convert.decorateAll._
@@ -194,9 +194,6 @@ package object util {
   implicit lazy val javaDurationGen: Gen[jt.Duration] =
     Gen.nonNegativeLong.map(jt.Duration.ofNanos)
 
-  implicit lazy val configMemorySizeGen: Gen[ConfigMemorySize] =
-    Gen.nonNegativeLong.map(ConfigMemorySize.ofBytes)
-
 
   implicit def genConfigValue0[A: Gen : ToConfigValue]: Gen[ConfigValue :@ A] =
     Gen[A].map(_.toConfigValue).tag[A]
@@ -307,8 +304,5 @@ package object util {
 
   implicit lazy val configListEqual: Equal[ConfigList] =
     Equal.equalA[ConfigList]
-
-  implicit lazy val configMemorySizeEqual: Equal[ConfigMemorySize] =
-    Equal.equalA[ConfigMemorySize]
 
 }

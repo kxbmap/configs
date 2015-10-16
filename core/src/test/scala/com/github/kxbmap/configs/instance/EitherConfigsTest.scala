@@ -20,10 +20,11 @@ import com.github.kxbmap.configs.util._
 import scalaprops.{Gen, Scalaprops}
 import scalaz.Equal
 import scalaz.std.option._
+import scalaz.std.string._
 
 object EitherConfigsTest extends Scalaprops {
 
-  val either = check[Either[Throwable, java.time.Duration]]
+  val either = check[Either[Throwable, String]]
 
 
   implicit def eitherGen[A: Gen]: Gen[Either[Throwable, A]] =

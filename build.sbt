@@ -3,7 +3,7 @@ name := "configs"
 disablePublishSettings
 
 lazy val core = project.settings(
-  name := "configs",
+  name := "configs-java7",
   dependencies.core,
   scalapropsSettings,
   initialCommands :=

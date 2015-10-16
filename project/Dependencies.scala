@@ -23,7 +23,7 @@ object Dependencies extends AutoPlugin {
   import autoImport._
 
   override lazy val projectSettings: Seq[Setting[_]] = Seq(
-    configVersion := "1.3.0",
+    configVersion := "1.2.1",
     scalapropsVersion := "0.1.15"
   )
 

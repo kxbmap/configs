@@ -16,9 +16,9 @@
 
 package com.github.kxbmap.configs
 
-import com.typesafe.config.{Config, ConfigException, ConfigList, ConfigMemorySize, ConfigObject, ConfigUtil, ConfigValue}
+import com.typesafe.config.{Config, ConfigException, ConfigList, ConfigObject, ConfigUtil, ConfigValue}
 import java.util.concurrent.TimeUnit
-import java.{lang => jl, math => jm, time => jt, util => ju}
+import java.{lang => jl, math => jm, util => ju}
 import scala.collection.convert.decorateAll._
 import scala.collection.generic.CanBuildFrom
 import scala.concurrent.duration.{Duration, FiniteDuration}
@@ -63,7 +63,12 @@ private[configs] abstract class ConfigsInstances extends ConfigsInstances0 {
 
 
   implicit def optionConfigs[A: Configs]: Configs[Option[A]] =
-    (c, p) => if (c.hasPath(p) && !c.getIsNull(p)) Some(Configs[A].get(c, p)) else None
+    (c, p) =>
+      if (c.hasPath(p))
+        try Some(Configs[A].get(c, p)) catch {
+          case _: ConfigException.Null => None
+        }
+      else None
 
 
   implicit def tryConfigs[A: Configs]: Configs[Try[A]] =
@@ -256,13 +261,6 @@ private[configs] abstract class ConfigsInstances extends ConfigsInstances0 {
     _.getStringList(_)
 
 
-  implicit lazy val javaDurationConfigs: Configs[jt.Duration] =
-    _.getDuration(_)
-
-  implicit lazy val javaDurationListConfigs: Configs[ju.List[jt.Duration]] =
-    _.getDurationList(_)
-
-
   implicit lazy val finiteDurationConfigs: Configs[FiniteDuration] =
     _.getDuration(_, TimeUnit.NANOSECONDS) |> Duration.fromNanos
 
@@ -318,13 +316,6 @@ private[configs] abstract class ConfigsInstances extends ConfigsInstances0 {
 
   implicit lazy val configObjectJListConfigs: Configs[ju.List[ConfigObject]] =
     _.getObjectList(_).asInstanceOf[ju.List[ConfigObject]]
-
-
-  implicit lazy val configMemorySizeConfigs: Configs[ConfigMemorySize] =
-    _.getMemorySize(_)
-
-  implicit lazy val configMemorySizeJListConfigs: Configs[ju.List[ConfigMemorySize]] =
-    _.getMemorySizeList(_)
 
 
   implicit lazy val javaPropertiesConfigs: Configs[ju.Properties] =

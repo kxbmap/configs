@@ -16,7 +16,7 @@
 
 package com.github.kxbmap.configs.util
 
-import com.typesafe.config.{ConfigMemorySize, ConfigValue}
+import com.typesafe.config.ConfigValue
 import java.{lang => jl, time => jt}
 import scala.util.Try
 import scalaprops.Gen
@@ -58,10 +58,6 @@ object BadValue {
     }
   }
 
-
-  implicit val configMemorySizeBadValue: BadValue[ConfigMemorySize] = BadValue.from {
-    genConfigValue(Gen.alphaString)
-  }
 
   implicit val javaDurationBadValue: BadValue[jt.Duration] = BadValue.from {
     genConfigValue(Gen.alphaString)

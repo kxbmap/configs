@@ -21,10 +21,11 @@ import scala.util.{Failure, Success, Try}
 import scalaprops.{Gen, Scalaprops}
 import scalaz.Equal
 import scalaz.std.option._
+import scalaz.std.string._
 
 object TryConfigsTest extends Scalaprops {
 
-  val `try` = check[Try[java.time.Duration]]
+  val `try` = check[Try[String]]
 
 
   implicit def tryGen[A: Gen]: Gen[Try[A]] =

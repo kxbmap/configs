@@ -18,7 +18,7 @@ package com.github.kxbmap.configs.util
 
 import com.github.kxbmap.configs._
 import com.typesafe.config.ConfigValueFactory.fromAnyRef
-import com.typesafe.config.{Config, ConfigMemorySize, ConfigValue}
+import com.typesafe.config.{Config, ConfigValue}
 import java.{lang => jl, time => jt, util => ju}
 import scala.collection.convert.decorateAll._
 
@@ -86,9 +86,6 @@ object ToConfigValue {
     javaDoubleToConfigValue.asInstanceOf[ToConfigValue[Double]]
 
   
-  implicit val configMemorySizeToConfigValue: ToConfigValue[ConfigMemorySize] =
-    fromAnyRef(_)
-
   implicit val javaDurationToConfigValue: ToConfigValue[jt.Duration] =
     ToConfigValue[String].contramap(d => s"${d.toNanos}ns")
 
