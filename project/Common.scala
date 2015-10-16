@@ -5,7 +5,10 @@ object Common extends AutoPlugin {
 
   override def trigger = allRequirements
 
+  override def requires: Plugins = plugins.IvyPlugin
+
   override lazy val projectSettings: Seq[Setting[_]] = Seq(
+    moduleName := s"${moduleName.value}-java7",
     scalaVersion := "2.11.7",
     description := "Scala wrapper for Typesafe config",
     organization := "com.github.kxbmap",
