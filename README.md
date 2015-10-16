@@ -11,9 +11,14 @@ Scala wrapper for [Typesafe config](https://github.com/typesafehub/config)
 Usage
 -----
 
-build.sbt:
+For Java 8 (depends config 1.3.x):
 ```scala
 libraryDependencies += "com.github.kxbmap" %% "configs" % "0.3.0"
+```
+
+For Java 7 (depends config 1.2.x):
+```scala
+libraryDependencies += "com.github.kxbmap" %% "configs-java7" % "0.3.0"
 ```
 
 Examples
