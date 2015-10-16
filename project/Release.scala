@@ -23,6 +23,7 @@ object Release extends AutoPlugin {
     readmeFile := baseDirectory.value / "README.md",
     releaseCrossBuild := true,
     releasePublishArtifactsAction := publishSigned.value,
+    releaseTagName := s"${releaseTagName.value}-java7",
     releaseProcess := Seq(
       checkSnapshotDependencies,
       inquireVersions,
