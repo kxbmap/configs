@@ -17,7 +17,7 @@
 package com.github.kxbmap.configs.util
 
 import com.typesafe.config.ConfigValue
-import java.{lang => jl, time => jt}
+import java.{lang => jl}
 import scala.util.Try
 import scalaprops.Gen
 
@@ -56,11 +56,6 @@ object BadValue {
     val gen: Option[Gen[ConfigValue]] = BadValue[A].gen.map {
       genNonEmptyConfigList(_).as[ConfigValue]
     }
-  }
-
-
-  implicit val javaDurationBadValue: BadValue[jt.Duration] = BadValue.from {
-    genConfigValue(Gen.alphaString)
   }
 
 }

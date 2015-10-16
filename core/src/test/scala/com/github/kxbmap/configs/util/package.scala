@@ -17,7 +17,7 @@
 package com.github.kxbmap.configs
 
 import com.typesafe.config.{Config, ConfigFactory, ConfigList, ConfigObject, ConfigUtil, ConfigValue, ConfigValueFactory}
-import java.{lang => jl, time => jt, util => ju}
+import java.{lang => jl, util => ju}
 import scala.annotation.tailrec
 import scala.collection.convert.decorateAll._
 import scala.collection.generic.CanBuildFrom
@@ -191,9 +191,6 @@ package object util {
   implicit lazy val javaDoubleGen: Gen[jl.Double] =
     doubleGen.map(Double.box)
 
-  implicit lazy val javaDurationGen: Gen[jt.Duration] =
-    Gen.nonNegativeLong.map(jt.Duration.ofNanos)
-
 
   implicit def genConfigValue0[A: Gen : ToConfigValue]: Gen[ConfigValue :@ A] =
     Gen[A].map(_.toConfigValue).tag[A]
@@ -286,9 +283,6 @@ package object util {
 
   implicit lazy val javaBooleanEqual: Equal[jl.Boolean] =
     Equal.equalBy(_.booleanValue())
-
-  implicit lazy val javaDurationEqual: Equal[jt.Duration] =
-    Equal.equalA[jt.Duration]
 
   implicit lazy val symbolOrder: Order[Symbol] =
     Order[String].contramap(_.name)

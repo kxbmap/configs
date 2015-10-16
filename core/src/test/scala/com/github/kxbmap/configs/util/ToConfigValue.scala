@@ -19,7 +19,7 @@ package com.github.kxbmap.configs.util
 import com.github.kxbmap.configs._
 import com.typesafe.config.ConfigValueFactory.fromAnyRef
 import com.typesafe.config.{Config, ConfigValue}
-import java.{lang => jl, time => jt, util => ju}
+import java.{lang => jl, util => ju}
 import scala.collection.convert.decorateAll._
 
 trait ToConfigValue[A] {
@@ -84,10 +84,6 @@ object ToConfigValue {
 
   implicit val doubleToConfigValue: ToConfigValue[Double] =
     javaDoubleToConfigValue.asInstanceOf[ToConfigValue[Double]]
-
-  
-  implicit val javaDurationToConfigValue: ToConfigValue[jt.Duration] =
-    ToConfigValue[String].contramap(d => s"${d.toNanos}ns")
 
   
   implicit def javaIterableToConfigValue[F[_], A: ToConfigValue](implicit ev: F[A] <:< jl.Iterable[A]): ToConfigValue[F[A]] =
