@@ -20,6 +20,10 @@ object Common extends AutoPlugin {
       "-language:implicitConversions",
       "-language:experimental.macros"
     ),
+    javacOptions ++= Seq(
+      "-source", "1.7",
+      "-target", "1.7"
+    ),
     updateOptions := updateOptions.value.withCachedResolution(true)
   )
 
