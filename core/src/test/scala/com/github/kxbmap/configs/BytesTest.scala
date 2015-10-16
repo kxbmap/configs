@@ -30,7 +30,7 @@ object BytesTest extends Scalaprops {
 
   val bytesJList = {
     implicit val h = hideConfigs[Bytes]
-    check[ju.List[Bytes]]
+    check[ju.List[Bytes]].ignore("config 1.2.x incompatible (ConfigImpl.fromAnyRef)")
   }
 
 

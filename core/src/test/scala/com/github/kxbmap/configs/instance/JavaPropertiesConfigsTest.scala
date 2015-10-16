@@ -26,7 +26,7 @@ import scalaz.std.string._
 
 object JavaPropertiesConfigsTest extends Scalaprops {
 
-  val javaProperties = check[ju.Properties]
+  val javaProperties = check[ju.Properties].ignore("config 1.2.x incompatible (ConfigImpl.fromAnyRef)")
 
 
   implicit lazy val javaPropertiesGen: Gen[ju.Properties] =

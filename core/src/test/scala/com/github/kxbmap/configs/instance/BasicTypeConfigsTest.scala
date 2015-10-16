@@ -27,95 +27,95 @@ object BasicTypeConfigsTest extends Scalaprops {
   val byte = check[Byte]
   val byteJList = {
     implicit val h = hideConfigs[Byte]
-    check[ju.List[Byte]]
+    check[ju.List[Byte]].ignore("config 1.2.x incompatible (ConfigImpl.fromAnyRef)")
   }
   val javaByte = check[jl.Byte]
   val javaByteList = {
     implicit val h = hideConfigs[jl.Byte]
-    check[ju.List[jl.Byte]]
+    check[ju.List[jl.Byte]].ignore("config 1.2.x incompatible (ConfigImpl.fromAnyRef)")
   }
 
   val short = check[Short]
   val shortJList = {
     implicit val h = hideConfigs[Short]
-    check[ju.List[Short]]
+    check[ju.List[Short]].ignore("config 1.2.x incompatible (ConfigImpl.fromAnyRef)")
   }
   val javaShort = check[jl.Short]
   val javaShortList = {
     implicit val h = hideConfigs[jl.Short]
-    check[ju.List[jl.Short]]
+    check[ju.List[jl.Short]].ignore("config 1.2.x incompatible (ConfigImpl.fromAnyRef)")
   }
 
   val int = check[Int]
   val intJList = {
     implicit val h = hideConfigs[Int]
-    check[ju.List[Int]]
+    check[ju.List[Int]].ignore("config 1.2.x incompatible (ConfigImpl.fromAnyRef)")
   }
   val javaInteger = check[jl.Integer]
   val javaIntegerList = {
     implicit val h = hideConfigs[jl.Integer]
-    check[ju.List[jl.Integer]]
+    check[ju.List[jl.Integer]].ignore("config 1.2.x incompatible (ConfigImpl.fromAnyRef)")
   }
 
   val long = check[Long]
   val longJList = {
     implicit val h = hideConfigs[Long]
-    check[ju.List[Long]]
+    check[ju.List[Long]].ignore("config 1.2.x incompatible (ConfigImpl.fromAnyRef)")
   }
   val javaLong = check[jl.Long]
   val javaLongList = {
     implicit val h = hideConfigs[jl.Long]
-    check[ju.List[jl.Long]]
+    check[ju.List[jl.Long]].ignore("config 1.2.x incompatible (ConfigImpl.fromAnyRef)")
   }
 
   val float = check[Float]
   val floatJList = {
     implicit val h = hideConfigs[Float]
-    check[ju.List[Float]]
+    check[ju.List[Float]].ignore("config 1.2.x incompatible (ConfigImpl.fromAnyRef)")
   }
   val javaFloat = check[jl.Float]
   val javaFloatList = {
     implicit val h = hideConfigs[jl.Float]
-    check[ju.List[jl.Float]]
+    check[ju.List[jl.Float]].ignore("config 1.2.x incompatible (ConfigImpl.fromAnyRef)")
   }
 
   val double = check[Double]
   val doubleJList = {
     implicit val h = hideConfigs[Double]
-    check[ju.List[Double]]
+    check[ju.List[Double]].ignore("config 1.2.x incompatible (ConfigImpl.fromAnyRef)")
   }
   val javaDouble = check[jl.Double]
   val javaDoubleList = {
     implicit val h = hideConfigs[jl.Double]
-    check[ju.List[jl.Double]]
+    check[ju.List[jl.Double]].ignore("config 1.2.x incompatible (ConfigImpl.fromAnyRef)")
   }
 
   val boolean = check[Boolean]
   val booleanJList = {
     implicit val h = hideConfigs[Boolean]
-    check[ju.List[Boolean]]
+    check[ju.List[Boolean]].ignore("config 1.2.x incompatible (ConfigImpl.fromAnyRef)")
   }
   val javaBoolean = check[jl.Boolean]
   val javaBooleanList = {
     implicit val h = hideConfigs[jl.Boolean]
-    check[ju.List[jl.Boolean]]
+    check[ju.List[jl.Boolean]].ignore("config 1.2.x incompatible (ConfigImpl.fromAnyRef)")
   }
 
   val character = check[Char]
   val characterJList = {
     implicit val h = hideConfigs[Char]
-    check[ju.List[Char]]
+    check[ju.List[Char]].ignore("config 1.2.x incompatible (ConfigImpl.fromAnyRef)")
   }
   val javaCharacter = check[jl.Character]
   val javaCharacterList = {
     implicit val h = hideConfigs[jl.Character]
-    check[ju.List[jl.Character]]
+    check[ju.List[jl.Character]].ignore("config 1.2.x incompatible (ConfigImpl.fromAnyRef)")
   }
 
   val string = check[String]
   val stringJList = {
     implicit val h = hideConfigs[String]
-    check[ju.List[String]]
+    check[ju.List[String]].ignore("config 1.2.x incompatible (ConfigImpl.fromAnyRef)")
   }
 
 }

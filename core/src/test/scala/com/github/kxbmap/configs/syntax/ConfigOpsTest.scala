@@ -39,12 +39,12 @@ object ConfigOpsTest extends Scalaprops {
     val p = "path"
     val config = n.toConfigValue.atKey(p)
     config.getOpt[Int](p) == n
-  }
+  }.ignore("config 1.2.x incompatible (ConfigImpl.fromAnyRef)")
 
   val getOrElse = forAll { (n: Option[Int], m: Int) =>
     val p = "path"
     val config = n.toConfigValue.atKey(p)
     config.getOrElse[Int](p, m) == n.getOrElse(m)
-  }
+  }.ignore("config 1.2.x incompatible (ConfigImpl.fromAnyRef)")
 
 }

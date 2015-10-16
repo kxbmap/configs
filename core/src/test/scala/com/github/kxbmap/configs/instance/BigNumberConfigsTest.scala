@@ -43,7 +43,7 @@ object BigNumberConfigsTest extends Scalaprops {
       Configs[ju.List[BigInt]].extract(ds.toConfigValue) === ds.map(_.toBigInt()).asJava
     }
     check[ju.List[BigInt]].product(decimal.toProperties("from decimal"))
-  }
+  }.ignore("config 1.2.x incompatible (ConfigImpl.fromAnyRef)")
 
   val bigInteger = {
     val decimal = forAll { d: jm.BigDecimal =>
@@ -58,20 +58,20 @@ object BigNumberConfigsTest extends Scalaprops {
       Configs[ju.List[jm.BigInteger]].extract(ds.toConfigValue) === ds.map(_.toBigInteger).asJava
     }
     check[ju.List[jm.BigInteger]].product(decimal.toProperties("from decimal"))
-  }
+  }.ignore("config 1.2.x incompatible (ConfigImpl.fromAnyRef)")
 
   val bigDecimal = check[BigDecimal]
 
   val bigDecimalList = {
     implicit val h = hideConfigs[BigDecimal]
-    check[ju.List[BigDecimal]]
+    check[ju.List[BigDecimal]].ignore("config 1.2.x incompatible (ConfigImpl.fromAnyRef)")
   }
 
   val javaBigDecimal = check[jm.BigDecimal]
 
   val javaBigDecimalList = {
     implicit val h = hideConfigs[jm.BigDecimal]
-    check[ju.List[jm.BigDecimal]]
+    check[ju.List[jm.BigDecimal]].ignore("config 1.2.x incompatible (ConfigImpl.fromAnyRef)")
   }
 
   implicit lazy val javaBigDecimalEqual: Equal[jm.BigDecimal] =

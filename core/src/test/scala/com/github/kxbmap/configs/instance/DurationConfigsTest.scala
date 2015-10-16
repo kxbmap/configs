@@ -28,7 +28,7 @@ object DurationConfigsTest extends Scalaprops {
 
   val finiteDurationJList = {
     implicit val h = hideConfigs[FiniteDuration]
-    check[ju.List[FiniteDuration]]
+    check[ju.List[FiniteDuration]].ignore("config 1.2.x incompatible (ConfigImpl.fromAnyRef)")
   }
 
   val duration = check[Duration]
