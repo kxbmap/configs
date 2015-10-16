@@ -26,17 +26,10 @@ object Release extends AutoPlugin {
     releaseTagName := s"${releaseTagName.value}-java7",
     releaseProcess := Seq(
       checkSnapshotDependencies,
-      inquireVersions,
       runClean,
       runTest,
-      setReleaseVersion,
-      commitReleaseVersion,
-      updateReadme,
-      commitReadme,
       tagRelease,
-      publishArtifacts,
-      setNextVersion,
-      commitNextVersion
+      publishArtifacts
     )
   )
 
