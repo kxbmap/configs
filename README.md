@@ -4,7 +4,6 @@ configs
 [![Build Status](https://travis-ci.org/kxbmap/configs.svg?branch=master)](https://travis-ci.org/kxbmap/configs)
 [![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.github.kxbmap/configs_2.11/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.github.kxbmap/configs_2.11)
 [![Scaladoc](http://javadoc-badge.appspot.com/com.github.kxbmap/configs_2.11.svg?label=scaladoc)](http://javadoc-badge.appspot.com/com.github.kxbmap/configs_2.11)
-[![License](https://img.shields.io/github/license/kxbmap/configs.svg)](https://github.com/kxbmap/configs/blob/master/LICENSE)
 
 Scala wrapper for [Typesafe config](https://github.com/typesafehub/config)
 
@@ -115,3 +114,9 @@ res1: BeanSetting = BeanSetting@56dc0deb
 scala> (res1.getFoo, res1.getBar, res1.getBaz)
 res2: (Integer, String, java.util.List[java.util.Locale]) = (42,hello,[ja_JP, en_US])
 ```
+
+
+License
+-------
+
+Apache License, Version 2.0
