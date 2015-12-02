@@ -21,20 +21,29 @@ import java.net.{InetAddress, URI}
 import java.nio.file.{Path, Paths}
 import java.util.{Locale, UUID}
 import java.{lang => jl}
-import scala.reflect.{ClassTag, classTag}
+import scala.reflect.ClassTag
 
 trait Converter[A, B] {
 
-  def convert(a: A): B
+  def convert(a: A): Attempt[B]
 
   def map[C](f: B => C): Converter[A, C] =
-    convert(_) |> f
+    convert(_).map(f)
 
+  def flatMap[C](f: B => Converter[A, C]): Converter[A, C] =
+    a => convert(a).flatMap(f(_).convert(a))
 }
 
 object Converter {
 
   def apply[A, B](implicit C: Converter[A, B]): Converter[A, B] = C
+
+
+  def from[A, B](f: A => Attempt[B]): Converter[A, B] =
+    a => Attempt(f(a)).flatten
+
+  def attempt[A, B](f: A => B): Converter[A, B] =
+    a => Attempt(f(a))
 
 
   type FromString[A] = Converter[String, A]
@@ -44,40 +53,45 @@ object Converter {
   }
 
 
-  private[this] final val _identity: Converter[Any, Any] = identity
+  private[this] final val _identity: Converter[Any, Any] =
+    Attempt.successful(_)
 
   implicit def identityConverter[A]: Converter[A, A] =
     _identity.asInstanceOf[Converter[A, A]]
 
 
   implicit lazy val symbolFromString: FromString[Symbol] =
-    Symbol.apply
+    attempt(Symbol.apply)
 
-  implicit def javaEnumFromString[A <: jl.Enum[A] : ClassTag]: FromString[A] = {
-    val enums: Map[String, A] =
-      classTag[A].runtimeClass.asInstanceOf[Class[A]].getEnumConstants.map(a => a.name() -> a)(collection.breakOut)
-    s => enums.getOrElse(s, throw new NoSuchElementException(s"$s must be one of ${enums.keys.mkString(", ")}"))
+  implicit def javaEnumFromString[A <: jl.Enum[A]](implicit A: ClassTag[A]): FromString[A] = {
+    val enums = A.runtimeClass.asInstanceOf[Class[A]].getEnumConstants
+    attempt { s =>
+      enums.find(_.name() == s).getOrElse {
+        throw new NoSuchElementException(s"$s must be one of ${enums.mkString(", ")}")
+      }
+    }
   }
 
   implicit lazy val uuidFromString: FromString[UUID] =
-    UUID.fromString
+    s => Attempt(UUID.fromString(s))
 
-  implicit lazy val localeFromString: FromString[Locale] = {
-    val availableLocales: Map[String, Locale] =
-      Locale.getAvailableLocales.map(l => l.toString -> l)(collection.breakOut)
-    s => availableLocales.getOrElse(s, throw new NoSuchElementException(s"Locale '$s' is not available"))
-  }
+  implicit lazy val localeFromString: FromString[Locale] =
+    attempt { s =>
+      Locale.getAvailableLocales.find(_.toString == s).getOrElse {
+        throw new NoSuchElementException(s"Locale '$s' is not available")
+      }
+    }
 
   implicit lazy val pathFromString: FromString[Path] =
-    Paths.get(_)
+    attempt(Paths.get(_))
 
   implicit lazy val fileFromString: FromString[File] =
-    new File(_)
+    attempt(new File(_))
 
   implicit lazy val inetAddressFromString: FromString[InetAddress] =
-    InetAddress.getByName
+    attempt(InetAddress.getByName)
 
   implicit lazy val uriFromString: FromString[URI] =
-    new URI(_)
+    attempt(new URI(_))
 
 }

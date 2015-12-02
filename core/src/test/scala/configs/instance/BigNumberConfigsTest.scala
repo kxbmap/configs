@@ -32,7 +32,7 @@ object BigNumberConfigsTest extends Scalaprops {
 
   val bigInt = {
     val decimal = forAll { d: BigDecimal =>
-      Configs[BigInt].extract(d.toConfigValue) === d.toBigInt()
+      Configs[BigInt].extract(d.toConfigValue).exists(_ === d.toBigInt())
     }
     check[BigInt].product(decimal.toProperties("from decimal"))
   }
@@ -40,14 +40,14 @@ object BigNumberConfigsTest extends Scalaprops {
   val bigIntList = {
     implicit val h = hideConfigs[BigInt]
     val decimal = forAll { ds: List[BigDecimal] =>
-      Configs[ju.List[BigInt]].extract(ds.toConfigValue) === ds.map(_.toBigInt()).asJava
+      Configs[ju.List[BigInt]].extract(ds.toConfigValue).exists(_ === ds.map(_.toBigInt()).asJava)
     }
     check[ju.List[BigInt]].product(decimal.toProperties("from decimal"))
   }
 
   val bigInteger = {
     val decimal = forAll { d: jm.BigDecimal =>
-      Configs[jm.BigInteger].extract(d.toConfigValue) === d.toBigInteger
+      Configs[jm.BigInteger].extract(d.toConfigValue).exists(_ === d.toBigInteger)
     }
     check[jm.BigInteger].product(decimal.toProperties("from decimal"))
   }
@@ -55,7 +55,7 @@ object BigNumberConfigsTest extends Scalaprops {
   val bigIntegerList = {
     implicit val h = hideConfigs[jm.BigInteger]
     val decimal = forAll { ds: List[jm.BigDecimal] =>
-      Configs[ju.List[jm.BigInteger]].extract(ds.toConfigValue) === ds.map(_.toBigInteger).asJava
+      Configs[ju.List[jm.BigInteger]].extract(ds.toConfigValue).exists(_ === ds.map(_.toBigInteger).asJava)
     }
     check[ju.List[jm.BigInteger]].product(decimal.toProperties("from decimal"))
   }

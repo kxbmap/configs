@@ -17,11 +17,12 @@
 package configs.util
 
 import com.typesafe.config.ConfigException
+import configs.{Attempt, ConfigError}
 import scala.util.{Failure, Try}
 import scalaz.Need
 
 trait IsMissing[A] {
-  def check(a: Need[A]): Boolean
+  def check(a: Need[Attempt[A]]): Boolean
 }
 
 object IsMissing {
@@ -32,9 +33,10 @@ object IsMissing {
   implicit def defaultIsMissing[A]: IsMissing[A] =
     default.asInstanceOf[IsMissing[A]]
 
-  private[this] final val default: IsMissing[Any] = a =>
-    intercept0(a.value) {
-      case _: ConfigException.Missing => true
+  private[this] final val default: IsMissing[Any] =
+    _.value match {
+      case Attempt.Failure(ConfigError.Missing(_)) => true
+      case _                                       => false
     }
 
 
@@ -42,22 +44,23 @@ object IsMissing {
     option.asInstanceOf[IsMissing[Option[A]]]
 
   private[this] final val option: IsMissing[Option[Any]] =
-    _.value.isEmpty
+    _.value.exists(_.isEmpty)
 
 
   implicit def eitherIsMissing[A]: IsMissing[Either[Throwable, A]] =
     either.asInstanceOf[IsMissing[Either[Throwable, A]]]
 
   private[this] final val either: IsMissing[Either[Throwable, Any]] =
-    _.value.left.exists(_.isInstanceOf[ConfigException.Missing])
+    _.value.exists(_.left.exists(_.isInstanceOf[ConfigException.Missing]))
 
 
   implicit def tryIsMissing[A]: IsMissing[Try[A]] =
     tryM.asInstanceOf[IsMissing[Try[A]]]
 
-  private[this] final val tryM: IsMissing[Try[Any]] = _.value match {
-    case Failure(_: ConfigException.Missing) => true
-    case _                                   => false
-  }
+  private[this] final val tryM: IsMissing[Try[Any]] =
+    _.value.exists {
+      case Failure(_: ConfigException.Missing) => true
+      case _                                   => false
+    }
 
 }

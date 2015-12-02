@@ -41,10 +41,10 @@ case class Bytes(value: Long) extends Ordered[Bytes] {
 object Bytes {
 
   implicit val bytesConfigs: Configs[Bytes] =
-    _.getBytes(_) |> (Bytes(_))
+    Configs.from(_.getBytes(_) |> (Bytes(_)))
 
   implicit val bytesJListConfigs: Configs[ju.List[Bytes]] =
-    _.getBytesList(_).asScala.map(Bytes(_)).asJava
+    Configs.from(_.getBytesList(_).asScala.map(Bytes(_)).asJava)
 
 
   implicit val bytesOrdering: Ordering[Bytes] = Ordering.by(_.value)

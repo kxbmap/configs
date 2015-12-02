@@ -16,8 +16,8 @@
 
 package configs.instance
 
-import configs.Converter
 import configs.util._
+import configs.{Attempt, Converter}
 import java.{util => ju}
 import scalaprops.{Gen, Scalaprops}
 import scalaz.Equal
@@ -36,7 +36,7 @@ object FromStringConfigsTest extends Scalaprops {
   }
 
   implicit lazy val fooFromString: Converter[String, Foo] =
-    Foo.apply
+    s => Attempt(Foo(s))
 
 
   implicit lazy val fooGen: Gen[Foo] =
@@ -48,7 +48,7 @@ object FromStringConfigsTest extends Scalaprops {
   implicit lazy val fooToConfigValue: ToConfigValue[Foo] =
     ToConfigValue[String].contramap(_.value)
 
-  implicit lazy val fooBadValue: BadValue[Foo] =
-    BadValue.from(Gen.nonEmptyString(Gen.alphaUpperChar).map(_.toConfigValue))
+//  implicit lazy val fooBadValue: BadValue[Foo] =
+//    BadValue.from(Gen.nonEmptyString(Gen.alphaUpperChar).map(_.toConfigValue))
 
 }

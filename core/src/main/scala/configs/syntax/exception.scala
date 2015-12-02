@@ -14,30 +14,26 @@
  * limitations under the License.
  */
 
-package configs
+package configs.syntax
 
 import com.typesafe.config.Config
+import configs.Configs
 
-package object syntax {
+object exception {
 
-  @deprecated("import configs.syntax.exception._ instead", "0.4.0")
   implicit class ConfigOps(private val self: Config) extends AnyVal {
 
-    @deprecated("import configs.syntax.exception._ instead", "0.4.0")
-    def extract[A: Configs]: A =
-      exception.ConfigOps(self).extract[A]
+    def extract[A](implicit A: Configs[A]): A =
+      A.extract(self).rescue(e => throw e.toConfigException)
 
-    @deprecated("import configs.syntax.exception._ instead", "0.4.0")
-    def get[A: Configs](path: String): A =
-      exception.ConfigOps(self).get(path)
+    def get[A](path: String)(implicit A: Configs[A]): A =
+      A.get(self, path).rescue(e => throw e.toConfigException)
 
-    @deprecated("import configs.syntax.exception._ instead", "0.4.0")
     def getOpt[A: Configs](path: String): Option[A] =
-      exception.ConfigOps(self).getOpt(path)
+      get[Option[A]](path)
 
-    @deprecated("import configs.syntax.exception._ instead", "0.4.0")
     def getOrElse[A: Configs](path: String, default: => A): A =
-      exception.ConfigOps(self).getOrElse(path, default)
+      getOpt[A](path).getOrElse(default)
 
   }
 

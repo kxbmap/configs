@@ -32,7 +32,7 @@ object ConverterTest extends Scalaprops {
   val identity = {
     def id[A: Gen : ClassTag](implicit A: Converter[A, A]) =
       forAll { a: A =>
-        A.convert(a) == a
+        A.convert(a) == Attempt.successful(a)
       }.toProperties(classTag[A].runtimeClass.getSimpleName)
 
     Properties.list(
@@ -45,7 +45,7 @@ object ConverterTest extends Scalaprops {
   val fromString = {
     def to[A: Converter.FromString : Gen : ClassTag](string: A => String = (_: A).toString) =
       forAll { (a: A) =>
-        Converter[String, A].convert(string(a)) == a
+        Converter[String, A].convert(string(a)) == Attempt.successful(a)
       }.toProperties(s"to ${classTag[A].runtimeClass.getSimpleName}")
 
     Properties.list(

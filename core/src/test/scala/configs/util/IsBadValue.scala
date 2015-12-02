@@ -17,11 +17,12 @@
 package configs.util
 
 import com.typesafe.config.ConfigException
+import configs.Attempt
 import scala.util.{Failure, Try}
 import scalaz.Need
 
 trait IsBadValue[A] {
-  def check(a: Need[A]): Boolean
+  def check(a: Need[Attempt[A]]): Boolean
 }
 
 object IsBadValue {
@@ -32,25 +33,24 @@ object IsBadValue {
   implicit def defaultIsBadValue[A]: IsBadValue[A] =
     default.asInstanceOf[IsBadValue[A]]
 
-  private[this] final val default: IsBadValue[Any] = a =>
-    intercept0(a.value) {
-      case _: ConfigException.BadValue => true
-    }
+  private[this] final val default: IsBadValue[Any] =
+    _.value.fold(_.toConfigException.isInstanceOf[ConfigException.BadValue], _ => false)
 
 
   implicit def eitherIsBadValue[A]: IsBadValue[Either[Throwable, A]] =
     either.asInstanceOf[IsBadValue[Either[Throwable, A]]]
 
   private[this] final val either: IsBadValue[Either[Throwable, Any]] =
-    _.value.left.exists(_.isInstanceOf[ConfigException.BadValue])
+    _.value.exists(_.left.exists(_.isInstanceOf[ConfigException.BadValue]))
 
 
   implicit def tryIsBadValue[A]: IsBadValue[Try[A]] =
     tryB.asInstanceOf[IsBadValue[Try[A]]]
 
-  private[this] final val tryB: IsBadValue[Try[Any]] = _.value match {
-    case Failure(_: ConfigException.BadValue) => true
-    case _                                    => false
-  }
+  private[this] final val tryB: IsBadValue[Try[Any]] =
+    _.value.exists {
+      case Failure(_: ConfigException.BadValue) => true
+      case _                                    => false
+    }
 
 }

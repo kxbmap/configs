@@ -27,32 +27,34 @@ object ConfigsTest extends Scalaprops {
 
   val get = forAll { (p: String, v: Int) =>
     val config = ConfigFactory.parseString(s"${q(p)} = $v")
-    val configs: Configs[Int] = _.getInt(_)
-    configs.get(config, q(p)) == v
+    val configs: Configs[Int] = Configs.from(_.getInt(_))
+    configs.get(config, q(p)).exists(_ == v)
   }
 
   val extractC = forAll { (p: String, v: Int) =>
     val config = ConfigFactory.parseString(s"${q(p)} = $v")
-    val configs: Configs[Map[String, Int]] = _.getConfig(_).root().mapValues(_.unwrapped().asInstanceOf[Int]).toMap
-    configs.extract(config) == Map(p -> v)
+    val configs: Configs[Map[String, Int]] = Configs.from {
+      _.getConfig(_).root().mapValues(_.unwrapped().asInstanceOf[Int]).toMap
+    }
+    configs.extract(config).exists(_ == Map(p -> v))
   }
 
   val extractV = forAll { v: Int =>
     val cv = ConfigValueFactory.fromAnyRef(v)
-    val configs: Configs[Int] = _.getInt(_)
-    configs.extract(cv) == v
+    val configs: Configs[Int] = Configs.from(_.getInt(_))
+    configs.extract(cv).exists(_ == v)
   }
 
   val map = {
     val identity = forAll { (p: String, v: Int) =>
       val config = ConfigFactory.parseString(s"${q(p)} = $v")
-      val configs: Configs[Int] = _.getInt(_)
+      val configs: Configs[Int] = Configs.from(_.getInt(_))
       configs.map(a => a).get(config, q(p)) == configs.get(config, q(p))
     }
     val composite = forAll { (p: String, v: Int, f: Int => String, g: String => Long) =>
       val config = ConfigFactory.parseString(s"${q(p)} = $v")
-      val configs: Configs[Int] = _.getInt(_)
-      configs.map(f).map(g).get(config, q(p)) == (g compose f)(configs.get(config, q(p)))
+      val configs: Configs[Int] = Configs.from(_.getInt(_))
+      configs.map(f).map(g).get(config, q(p)) == configs.get(config, q(p)).map(g compose f)
     }
     Properties.list(
       identity.toProperties("identity"),
@@ -62,17 +64,17 @@ object ConfigsTest extends Scalaprops {
 
   val mapF = {
     val list = {
-      val c: Configs[List[Int]] = _.getIntList(_).map(_.toInt).toList
+      val c: Configs[List[Int]] = Configs.from(_.getIntList(_).map(_.toInt).toList)
       val cc: Configs[List[String]] = c.mapF((_: Int).toString)
       forAll { xs: List[Int] =>
-        cc.extract(xs.toConfigValue) == xs.map(_.toString)
+        cc.extract(xs.toConfigValue).exists(_ == xs.map(_.toString))
       }
     }
     val array = {
-      val c: Configs[Array[Int]] = _.getIntList(_).map(_.toInt).toArray
+      val c: Configs[Array[Int]] = Configs.from(_.getIntList(_).map(_.toInt).toArray)
       val cc: Configs[Array[String]] = c.mapF((_: Int).toString)
       forAll { xs: Array[Int] =>
-        cc.extract(xs.toConfigValue).sameElements(xs.map(_.toString))
+        cc.extract(xs.toConfigValue).exists(_.sameElements(xs.map(_.toString)))
       }
     }
     Properties.list(
@@ -82,11 +84,11 @@ object ConfigsTest extends Scalaprops {
   }
 
   val flatMap = {
-    val c0: Configs[String] = _.getConfig(_).getString("type")
+    val c0: Configs[String] = Configs.from(_.getConfig(_).getString("type"))
     val c: Configs[Any] = c0.flatMap {
-      case "int"    => _.getConfig(_).getInt("value")
-      case "string" => _.getConfig(_).getString("value")
-      case "bool"   => _.getConfig(_).getBoolean("value")
+      case "int"    => Configs.from(_.getConfig(_).getInt("value"))
+      case "string" => Configs.from(_.getConfig(_).getString("value"))
+      case "bool"   => Configs.from(_.getConfig(_).getBoolean("value"))
       case s        => throw new RuntimeException(s)
     }
     val g = Gen.oneOf[(String, Any)](
@@ -105,39 +107,32 @@ object ConfigsTest extends Scalaprops {
              |value = $qv
              |""".stripMargin)
 
-        c.extract(config) == v
+        c.extract(config).exists(_ == v)
     }
   }
 
   val orElse = {
     val config = ConfigFactory.empty()
-    val ce: Configs[Int] = (_, _) => throw new ConfigException.Generic("CE")
-    val re: Configs[Int] = (_, _) => throw new RuntimeException("RE")
+    val ce: Configs[Int] = Configs.from((_, _) => throw new ConfigException.Generic("CE"))
 
     val p1 = forAll { (v: Int) =>
-      val cv: Configs[Int] = (_, _) => v
-      cv.orElse(ce).get(config, "dummy") == v
+      val cv: Configs[Int] = Configs.from((_, _) => v)
+      cv.orElse(ce).get(config, "dummy").exists(_ == v)
     }
     val p2 = forAll { (v: Int) =>
-      val cv: Configs[Int] = (_, _) => v
-      ce.orElse(cv).get(config, "dummy") == v
+      val cv: Configs[Int] = Configs.from((_, _) => v)
+      ce.orElse(cv).get(config, "dummy").exists(_ == v)
     }
-    val p3 = intercept {
-      ce.orElse(ce).get(config, "dummy")
-    } {
-      case e: ConfigException => e.getMessage == "CE" && e.getSuppressed.exists(_.getMessage == "CE")
-    }
-    val p4 = intercept {
-      val cv: Configs[Int] = (_, _) => 42
-      re.orElse(cv).get(config, "dummy")
-    } {
-      case e: RuntimeException => e.getMessage == "RE"
+    val p3 = forAll {
+      ce.orElse(ce).get(config, "dummy").fold(
+        e => e.messages == Seq("CE"),
+        _ => false
+      )
     }
     Properties.list(
       p1.toProperties("value orElse CE"),
       p2.toProperties("CE orElse value"),
-      p3.toProperties("CE orElse CE"),
-      p4.toProperties("RE orElse value")
+      p3.toProperties("CE orElse CE")
     )
   }
 

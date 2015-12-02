@@ -16,39 +16,32 @@
 
 package configs
 
-import com.typesafe.config.{Config, ConfigException, ConfigValue}
+import com.typesafe.config.{Config, ConfigValue}
 import scala.collection.generic.CanBuildFrom
-import scala.util.control.NonFatal
 
 
 trait Configs[A] {
 
-  def get(config: Config, path: String): A
+  def get(config: Config, path: String): Attempt[A]
 
-  def extract(config: Config): A = get(config.atKey(Configs.ExtractKey), Configs.ExtractKey)
+  def extract(config: Config): Attempt[A] =
+    get(config.atKey(Configs.ExtractKey), Configs.ExtractKey)
 
-  def extract(value: ConfigValue): A = get(value.atKey(Configs.ExtractKey), Configs.ExtractKey)
+  def extract(value: ConfigValue): Attempt[A] =
+    get(value.atKey(Configs.ExtractKey), Configs.ExtractKey)
 
-  def map[B](f: A => B): Configs[B] = Configs.from(get(_, _) |> f)
+  def map[B](f: A => B): Configs[B] =
+    (c, p) => get(c, p).map(f)
 
   def mapF[F[_], B, C](f: B => C)(implicit ev1: A =:= F[B], ev2: F[B] => Traversable[B], cbf: CanBuildFrom[Nothing, C, F[C]]): Configs[F[C]] =
     map(ev1(_).map(f)(collection.breakOut))
 
-  def flatMap[B](f: A => Configs[B]): Configs[B] = Configs.from((c, p) => f(get(c, p)).get(c, p))
+  def flatMap[B](f: A => Configs[B]): Configs[B] =
+    (c, p) => get(c, p).flatMap(f(_).get(c, p))
 
-  def orElse[B >: A](other: Configs[B]): Configs[B] = (c, p) =>
-    try
-      get(c, p)
-    catch {
-      case suppress: ConfigException =>
-        try
-          other.get(c, p)
-        catch {
-          case NonFatal(e) =>
-            e.addSuppressed(suppress)
-            throw e
-        }
-    }
+  def orElse[B >: A](fallback: Configs[B]): Configs[B] =
+    (c, p) => get(c, p).orElse(fallback.get(c, p))
+
 }
 
 object Configs extends ConfigsInstances {
@@ -69,15 +62,17 @@ object Configs extends ConfigsInstances {
     macro macros.BeanConfigsMacro.materializeI[A]
 
 
-  def from[A](f: (Config, String) => A): Configs[A] = (c, p) =>
-    try
-      f(c, p)
-    catch {
-      case e: ConfigException => throw e
-      case NonFatal(e)        => throw new ConfigException.BadValue(c.origin(), p, e.getMessage, e)
-    }
+  def from[A](f: (Config, String) => A): Configs[A] =
+    (c, p) => Attempt(f(c, p))
 
-  def onPath[A](f: Config => A): Configs[A] = from(_.getConfig(_) |> f)
+  def attempt[A](f: (Config, String) => Attempt[A]): Configs[A] =
+    (c, p) => Attempt(f(c, p)).flatten
+
+  def onPath[A](f: Config => A): Configs[A] =
+    from(_.getConfig(_) |> f)
+
+  def attemptOnPath[A](f: Config => Attempt[A]): Configs[A] =
+    attempt(_.getConfig(_) |> f)
 
 
   final class MapF[F[_], A, B] private(c: Configs[F[A]])(implicit ev: F[A] => Traversable[A], cbf: CanBuildFrom[Nothing, B, F[B]]) {

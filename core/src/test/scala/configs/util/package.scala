@@ -67,7 +67,7 @@ package object util {
     )
 
   private def checkGet[A: Configs : Gen : Equal : ToConfigValue] = forAll { value: A =>
-    Equal[A].equal(Configs[A].extract(value.toConfigValue), value)
+    Configs[A].extract(value.toConfigValue).exists(Equal[A].equal(_, value))
   }
 
   private def checkMissing[A: Configs : IsMissing] = forAll {

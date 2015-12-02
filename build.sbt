@@ -5,7 +5,7 @@ disablePublishSettings
 lazy val core = project.settings(
   name := "configs",
   dependencies.core,
-  scalapropsSettings,
+  scalapropsWithScalazlaws,
   initialCommands :=
     """import com.typesafe.config._
       |import ConfigFactory._

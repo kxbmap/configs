@@ -27,7 +27,7 @@ import scalaz.std.string._
 object MapFTest extends Scalaprops {
 
   implicit def ints[F[_]](implicit cbf: CanBuildFrom[Nothing, Int, F[Int]]): Configs[F[Int]] =
-    _.getIntList(_).map(_.intValue())(collection.breakOut)
+    Configs.from(_.getIntList(_).map(_.intValue())(collection.breakOut))
 
   case class Wrap(n: Int)
 
@@ -36,10 +36,10 @@ object MapFTest extends Scalaprops {
 
   val mapF = {
     val list = forAll { (cl: ConfigList :@ Int) =>
-      wrapInt[List].extract(cl) == cl.map(_.unwrapped().asInstanceOf[Int] |> Wrap).toList
+      wrapInt[List].extract(cl).exists(_ == cl.map(_.unwrapped().asInstanceOf[Int] |> Wrap).toList)
     }
     val set = forAll { (cl: ConfigList :@ Int) =>
-      wrapInt[Set].extract(cl) == cl.map(_.unwrapped().asInstanceOf[Int] |> Wrap).toSet
+      wrapInt[Set].extract(cl).exists(_ == cl.map(_.unwrapped().asInstanceOf[Int] |> Wrap).toSet)
     }
     Properties.list(
       list.toProperties("List"),

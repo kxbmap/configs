@@ -22,19 +22,22 @@ import java.{lang => jl, math => jm, time => jt, util => ju}
 import scala.collection.convert.decorateAll._
 import scala.collection.generic.CanBuildFrom
 import scala.concurrent.duration.{Duration, FiniteDuration}
-import scala.reflect.{ClassTag, classTag}
-import scala.util.Try
+import scala.reflect.ClassTag
+import scala.util.{Failure, Success, Try}
 
 private[configs] sealed abstract class MacroConfigsInstances {
 
-  implicit def materializeConfigs[A]: Configs[A] = macro macros.ConfigsMacro.materialize[A]
+  implicit def materializeConfigs[A]: Configs[A] =
+    macro macros.ConfigsMacro.materialize[A]
 
 }
 
 private[configs] sealed abstract class ConfigsInstances0 extends MacroConfigsInstances {
 
-  implicit def javaListConfigs[A: Configs]: Configs[ju.List[A]] =
-    _.getList(_).asScala.map(Configs[A].extract).asJava
+  implicit def javaListConfigs[A](implicit A: Configs[A]): Configs[ju.List[A]] =
+    Configs.attempt { (c, p) =>
+      Attempt.sequence(c.getList(p).asScala.map(A.extract)).map(_.asJava)
+    }
 
 }
 
@@ -47,44 +50,47 @@ private[configs] abstract class ConfigsInstances extends ConfigsInstances0 {
     C.asInstanceOf[Configs[ju.Collection[A]]]
 
   implicit def javaSetConfigs[A](implicit C: Configs[ju.List[A]]): Configs[ju.Set[A]] =
-    C.get(_, _).asScala.toSet.asJava
+    C.map(_.asScala.toSet.asJava)
 
   implicit def javaMapConfigs[A, B](implicit A: Converter[String, A], B: Configs[B]): Configs[ju.Map[A, B]] =
-    Configs.onPath { c =>
-      c.root().asScala.keysIterator.map(k => A.convert(k) -> B.get(c, ConfigUtil.quoteString(k))).toMap.asJava
+    Configs.attemptOnPath { c =>
+      Attempt.sequence(
+        c.root().asScala.keysIterator.map(k => Attempt.tuple2(A.convert(k), B.get(c, ConfigUtil.quoteString(k)))))
+        .map(_.toMap.asJava)
     }
 
 
   implicit def fromJListConfigs[F[_], A](implicit C: Configs[ju.List[A]], cbf: CanBuildFrom[Nothing, A, F[A]]): Configs[F[A]] =
-    C.get(_, _).asScala.to[F]
+    C.map(_.asScala.to[F])
 
   implicit def fromJMapConfigs[M[_, _], A, B](implicit C: Configs[ju.Map[A, B]], cbf: CanBuildFrom[Nothing, (A, B), M[A, B]]): Configs[M[A, B]] =
-    C.get(_, _).asScala.to[({type F[_] = M[A, B]})#F]
+    C.map(_.asScala.to[({type F[_] = M[A, B]})#F])
 
 
-  implicit def optionConfigs[A: Configs]: Configs[Option[A]] =
-    (c, p) => if (c.hasPath(p) && !c.getIsNull(p)) Some(Configs[A].get(c, p)) else None
+  implicit def optionConfigs[A](implicit A: Configs[A]): Configs[Option[A]] =
+    A.get(_, _).map(Some(_)).handle {
+      case ConfigError.Missing(_) => None
+    }
 
+  implicit def tryConfigs[A](implicit A: Configs[A]): Configs[Try[A]] =
+    A.get(_, _).map(Success(_)).handle {
+      case e => Failure(e.throwable)
+    }
 
-  implicit def tryConfigs[A: Configs]: Configs[Try[A]] =
-    (c, p) => Try(Configs[A].get(c, p))
-
-
-  implicit def eitherConfigs[E <: Throwable : ClassTag, A: Configs]: Configs[Either[E, A]] =
-    (c, p) =>
-      try
-        Right(Configs[A].get(c, p))
-      catch {
-        case e if classTag[E].runtimeClass.isAssignableFrom(e.getClass) =>
-          Left(e.asInstanceOf[E])
-      }
+  implicit def eitherConfigs[E <: Throwable, A](implicit E: ClassTag[E], A: Configs[A]): Configs[Either[E, A]] =
+    A.get(_, _).map(Right(_)).handle {
+      case e if E.runtimeClass.isAssignableFrom(e.throwable.getClass) =>
+        Left(e.throwable.asInstanceOf[E])
+    }
 
 
   def fromConverter[A, B](implicit A: Configs[A], C: Converter[A, B]): Configs[B] =
-    A.map(C.convert)
+    A.get(_, _).flatMap(C.convert)
 
   def fromConverterJList[A, B](implicit A: Configs[ju.List[A]], C: Converter[A, B]): Configs[ju.List[B]] =
-    A.map(_.asScala.map(C.convert).asJava)
+    A.get(_, _).flatMap { as =>
+      Attempt.sequence(as.asScala.map(C.convert)).map(_.asJava)
+    }
 
   implicit def fromStringConfigs[A: Converter.FromString]: Configs[A] =
     fromConverter[String, A]
@@ -100,10 +106,10 @@ private[configs] abstract class ConfigsInstances extends ConfigsInstances0 {
   }
 
   implicit lazy val byteConfigs: Configs[Byte] =
-    (c, p) => toByte(c.getNumber(p), c, p)
+    Configs.from((c, p) => toByte(c.getNumber(p), c, p))
 
   implicit lazy val byteJListConfigs: Configs[ju.List[Byte]] =
-    (c, p) => c.getNumberList(p).asScala.map(toByte(_, c, p)).asJava
+    Configs.from((c, p) => c.getNumberList(p).asScala.map(toByte(_, c, p)).asJava)
 
   implicit lazy val javaByteConfigs: Configs[jl.Byte] =
     byteConfigs.asInstanceOf[Configs[jl.Byte]]
@@ -119,10 +125,10 @@ private[configs] abstract class ConfigsInstances extends ConfigsInstances0 {
   }
 
   implicit lazy val shortConfigs: Configs[Short] =
-    (c, p) => toShort(c.getNumber(p), c, p)
+    Configs.from((c, p) => toShort(c.getNumber(p), c, p))
 
   implicit lazy val shortJListConfigs: Configs[ju.List[Short]] =
-    (c, p) => c.getNumberList(p).asScala.map(toShort(_, c, p)).asJava
+    Configs.from((c, p) => c.getNumberList(p).asScala.map(toShort(_, c, p)).asJava)
 
   implicit lazy val javaShortConfigs: Configs[jl.Short] =
     shortConfigs.asInstanceOf[Configs[jl.Short]]
@@ -132,7 +138,7 @@ private[configs] abstract class ConfigsInstances extends ConfigsInstances0 {
 
 
   implicit lazy val intConfigs: Configs[Int] =
-    _.getInt(_)
+    Configs.from(_.getInt(_))
 
   implicit lazy val intJListConfigs: Configs[ju.List[Int]] =
     javaIntegerListConfigs.asInstanceOf[Configs[ju.List[Int]]]
@@ -141,7 +147,7 @@ private[configs] abstract class ConfigsInstances extends ConfigsInstances0 {
     intConfigs.asInstanceOf[Configs[jl.Integer]]
 
   implicit lazy val javaIntegerListConfigs: Configs[ju.List[jl.Integer]] =
-    _.getIntList(_)
+    Configs.from(_.getIntList(_))
 
 
   private[this] def parseLong(s: String, c: Config, p: String): Long = {
@@ -155,10 +161,10 @@ private[configs] abstract class ConfigsInstances extends ConfigsInstances0 {
   }
 
   implicit lazy val longConfigs: Configs[Long] =
-    (c, p) => parseLong(c.getString(p), c, p)
+    Configs.from((c, p) => parseLong(c.getString(p), c, p))
 
   implicit lazy val longJListConfigs: Configs[ju.List[Long]] =
-    (c, p) => c.getStringList(p).asScala.map(parseLong(_, c, p)).asJava
+    Configs.from((c, p) => c.getStringList(p).asScala.map(parseLong(_, c, p)).asJava)
 
   implicit lazy val javaLongConfigs: Configs[jl.Long] =
     longConfigs.asInstanceOf[Configs[jl.Long]]
@@ -168,10 +174,10 @@ private[configs] abstract class ConfigsInstances extends ConfigsInstances0 {
 
 
   implicit lazy val floatConfigs: Configs[Float] =
-    _.getDouble(_) |> (_.toFloat)
+    Configs.from(_.getDouble(_) |> (_.toFloat))
 
   implicit lazy val floatJListConfigs: Configs[ju.List[Float]] =
-    _.getDoubleList(_).asScala.map(_.floatValue()).asJava
+    Configs.from(_.getDoubleList(_).asScala.map(_.floatValue()).asJava)
 
   implicit lazy val javaFloatConfigs: Configs[jl.Float] =
     floatConfigs.asInstanceOf[Configs[jl.Float]]
@@ -181,7 +187,7 @@ private[configs] abstract class ConfigsInstances extends ConfigsInstances0 {
 
 
   implicit lazy val doubleConfigs: Configs[Double] =
-    _.getDouble(_)
+    Configs.from(_.getDouble(_))
 
   implicit lazy val doubleJListConfigs: Configs[ju.List[Double]] =
     javaDoubleListConfigs.asInstanceOf[Configs[ju.List[Double]]]
@@ -190,7 +196,7 @@ private[configs] abstract class ConfigsInstances extends ConfigsInstances0 {
     doubleConfigs.asInstanceOf[Configs[jl.Double]]
 
   implicit lazy val javaDoubleListConfigs: Configs[ju.List[jl.Double]] =
-    _.getDoubleList(_)
+    Configs.from(_.getDoubleList(_))
 
 
   implicit lazy val bigIntConfigs: Configs[BigInt] =
@@ -220,7 +226,7 @@ private[configs] abstract class ConfigsInstances extends ConfigsInstances0 {
 
 
   implicit lazy val booleanConfigs: Configs[Boolean] =
-    _.getBoolean(_)
+    Configs.from(_.getBoolean(_))
 
   implicit lazy val booleanJListConfigs: Configs[ju.List[Boolean]] =
     javaBooleanListConfigs.asInstanceOf[Configs[ju.List[Boolean]]]
@@ -229,18 +235,18 @@ private[configs] abstract class ConfigsInstances extends ConfigsInstances0 {
     booleanConfigs.asInstanceOf[Configs[jl.Boolean]]
 
   implicit lazy val javaBooleanListConfigs: Configs[ju.List[jl.Boolean]] =
-    _.getBooleanList(_)
+    Configs.from(_.getBooleanList(_))
 
 
   implicit lazy val charConfigs: Configs[Char] =
-    (c, p) => {
+    Configs.from { (c, p) =>
       val s = c.getString(p)
       if (s.length == 1) s(0)
       else throw new ConfigException.WrongType(c.origin(), p, "single BMP char", s"STRING value '$s'")
     }
 
   implicit lazy val charJListConfigs: Configs[ju.List[Char]] =
-    (c, p) => ju.Arrays.asList(c.getString(p).toCharArray: _*)
+    Configs.from((c, p) => ju.Arrays.asList(c.getString(p).toCharArray: _*))
 
   implicit lazy val javaCharConfigs: Configs[jl.Character] =
     charConfigs.asInstanceOf[Configs[jl.Character]]
@@ -250,81 +256,90 @@ private[configs] abstract class ConfigsInstances extends ConfigsInstances0 {
 
 
   implicit lazy val stringConfigs: Configs[String] =
-    _.getString(_)
+    Configs.from(_.getString(_))
 
   implicit lazy val stringJListConfigs: Configs[ju.List[String]] =
-    _.getStringList(_)
+    Configs.from(_.getStringList(_))
 
 
   implicit lazy val javaDurationConfigs: Configs[jt.Duration] =
-    _.getDuration(_)
+    Configs.from(_.getDuration(_))
 
   implicit lazy val javaDurationListConfigs: Configs[ju.List[jt.Duration]] =
-    _.getDurationList(_)
+    Configs.from(_.getDurationList(_))
 
 
   implicit lazy val finiteDurationConfigs: Configs[FiniteDuration] =
-    _.getDuration(_, TimeUnit.NANOSECONDS) |> Duration.fromNanos
+    Configs.from(_.getDuration(_, TimeUnit.NANOSECONDS) |> Duration.fromNanos)
 
   implicit lazy val finiteDurationJListConfigs: Configs[ju.List[FiniteDuration]] =
-    _.getDurationList(_, TimeUnit.NANOSECONDS).asScala.map(Duration.fromNanos(_)).asJava
+    Configs.from(_.getDurationList(_, TimeUnit.NANOSECONDS).asScala.map(Duration.fromNanos(_)).asJava)
 
 
   implicit lazy val durationConfigs: Configs[Duration] =
-    finiteDurationConfigs.orElse { (c, p) =>
+    finiteDurationConfigs.orElse(Configs.from { (c, p) =>
       c.getString(p) match {
         case "infinity" | "+infinity" => Duration.Inf
         case "-infinity"              => Duration.MinusInf
         case "undefined"              => Duration.Undefined
         case s                        => throw new ConfigException.BadValue(c.origin(), p, s"Could not parse duration '$s'")
       }
+    })
+
+
+  implicit lazy val configConfigs: Configs[Config] =
+    new Configs[Config] {
+      def get(config: Config, path: String): Attempt[Config] =
+        Attempt(config.getConfig(path))
+
+      override def extract(config: Config): Attempt[Config] =
+        Attempt.successful(config)
+    }
+
+  implicit lazy val configJListConfigs: Configs[ju.List[Config]] =
+    Configs.from(_.getConfigList(_).asInstanceOf[ju.List[Config]])
+
+
+  implicit lazy val configValueConfigs: Configs[ConfigValue] =
+    new Configs[ConfigValue] {
+      def get(config: Config, path: String): Attempt[ConfigValue] =
+        Attempt(config.getValue(path))
+
+      override def extract(config: Config): Attempt[ConfigValue] =
+        Attempt.successful(config.root())
+
+      override def extract(value: ConfigValue): Attempt[ConfigValue] =
+        Attempt.successful(value)
+    }
+
+  implicit lazy val configValueJListConfigs: Configs[ju.List[ConfigValue]] =
+    Configs.from(_.getList(_))
+
+  implicit lazy val configValueJMapConfigs: Configs[ju.Map[String, ConfigValue]] =
+    Configs.from(_.getObject(_))
+
+  implicit def configValueJMapKeyConfigs[A](implicit A: Converter[String, A]): Configs[ju.Map[A, ConfigValue]] =
+    configObjectConfigs.get(_, _).flatMap { co =>
+      Attempt.sequence(co.asScala.map { case (k, v) => A.convert(k).map(_ -> v) }).map(_.toMap.asJava)
     }
 
 
-  implicit lazy val configConfigs: Configs[Config] = new Configs[Config] {
-    def get(config: Config, path: String): Config = config.getConfig(path)
-
-    override def extract(config: Config): Config = config
-  }
-
-  implicit lazy val configJListConfigs: Configs[ju.List[Config]] =
-    _.getConfigList(_).asInstanceOf[ju.List[Config]]
-
-
-  implicit lazy val configValueConfigs: Configs[ConfigValue] = new Configs[ConfigValue] {
-    def get(config: Config, path: String): ConfigValue = config.getValue(path)
-
-    override def extract(config: Config): ConfigValue = config.root()
-
-    override def extract(value: ConfigValue): ConfigValue = value
-  }
-
-  implicit lazy val configValueJListConfigs: Configs[ju.List[ConfigValue]] =
-    _.getList(_)
-
-  implicit lazy val configValueJMapConfigs: Configs[ju.Map[String, ConfigValue]] =
-    _.getObject(_)
-
-  implicit def configValueJMapKeyConfigs[A](implicit A: Converter[String, A]): Configs[ju.Map[A, ConfigValue]] =
-    Configs[ConfigObject].map(_.asScala.map(t => A.convert(t._1) -> t._2).asJava)
-
-
   implicit lazy val configListConfigs: Configs[ConfigList] =
-    _.getList(_)
+    Configs.from(_.getList(_))
 
 
   implicit lazy val configObjectConfigs: Configs[ConfigObject] =
-    _.getObject(_)
+    Configs.from(_.getObject(_))
 
   implicit lazy val configObjectJListConfigs: Configs[ju.List[ConfigObject]] =
-    _.getObjectList(_).asInstanceOf[ju.List[ConfigObject]]
+    Configs.from(_.getObjectList(_).asInstanceOf[ju.List[ConfigObject]])
 
 
   implicit lazy val configMemorySizeConfigs: Configs[ConfigMemorySize] =
-    _.getMemorySize(_)
+    Configs.from(_.getMemorySize(_))
 
   implicit lazy val configMemorySizeJListConfigs: Configs[ju.List[ConfigMemorySize]] =
-    _.getMemorySizeList(_)
+    Configs.from(_.getMemorySizeList(_))
 
 
   implicit lazy val javaPropertiesConfigs: Configs[ju.Properties] =
