@@ -47,7 +47,7 @@ object CaseFormatTest extends Scalaprops {
           case (s, f) => toLowerHyphenCase(s) == f
         }.toProperties(id)
     }
-    Properties.list(props.head, props.tail: _*)
+    Properties.list(props.head, props.tail.toList: _*)
   }
 
 }

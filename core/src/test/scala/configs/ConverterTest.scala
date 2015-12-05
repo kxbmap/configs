@@ -69,7 +69,7 @@ object ConverterTest extends Scalaprops {
   }
 
   implicit lazy val pathGen: Gen[Path] =
-    Gen.nonEmptyList(Gen.nonEmptyString(Gen.alphaChar)).map(p => Paths.get(p.head, p.tail: _*))
+    Gen.nonEmptyList(Gen.nonEmptyString(Gen.alphaChar)).map(p => Paths.get(p.head, p.tail.toList: _*))
 
   implicit lazy val fileGen: Gen[File] =
     pathGen.map(_.toFile)
