@@ -119,4 +119,6 @@ res2: (Integer, String, java.util.List[java.util.Locale]) = (42,hello,[ja_JP, en
 License
 -------
 
+Copyright 2013-2016 Tsukasa Kitachi
+
 Apache License, Version 2.0
