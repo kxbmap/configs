@@ -52,23 +52,18 @@ object Sample1 extends App {
   println(config.origin())
 
   println("-" * 80)
-  config.get[A]("success") match {
-    case Attempt.Success(a) =>
-      val expected =
-        A(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, Some(
-          A(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, None)))
+  config.get[A]("success").foreach { a =>
+    val expected =
+      A(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, Some(
+        A(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, None)))
 
-      println(a)
-      println(a == expected)
-
-    case Attempt.Failure(e) =>
+    println(a)
+    println(a == expected)
   }
 
   println("-" * 80)
-  config.get[A]("failure") match {
-    case Attempt.Success(_) =>
-    case Attempt.Failure(e) =>
-      e.messages.foreach(println)
+  config.get[A]("failure").failed.foreach { e =>
+    e.messages.foreach(println)
   }
 
 }

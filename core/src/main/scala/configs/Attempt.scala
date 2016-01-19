@@ -48,6 +48,10 @@ sealed abstract class Attempt[+A] extends Product with Serializable {
   final def forall(f: A => Boolean): Boolean =
     !exists(f)
 
+  def foreach(f: A => Unit): Unit
+
+  def failed: Attempt[ConfigError]
+
   def toOption: Option[A]
 
   def toEither: Either[ConfigError, A]
@@ -118,6 +122,12 @@ object Attempt {
     def exists(f: A => Boolean): Boolean =
       f(value)
 
+    def foreach(f: A => Unit): Unit =
+      f(value)
+
+    def failed: Attempt[ConfigError] =
+      Failure(ConfigError.Generic(new UnsupportedOperationException("Success.failed")))
+
     def toOption: Option[A] =
       Some(value)
 
@@ -172,6 +182,12 @@ object Attempt {
 
     def exists(f: Nothing => Boolean): Boolean =
       false
+
+    def foreach(f: Nothing => Unit): Unit =
+      ()
+
+    def failed: Attempt[ConfigError] =
+      Success(error)
 
     def toOption: Option[Nothing] =
       None
