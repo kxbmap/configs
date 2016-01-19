@@ -18,7 +18,6 @@ package configs.util
 
 import com.typesafe.config.ConfigValueFactory.fromAnyRef
 import com.typesafe.config.{Config, ConfigMemorySize, ConfigValue}
-import configs._
 import java.{lang => jl, time => jt, util => ju}
 import scala.collection.convert.decorateAll._
 
@@ -26,7 +25,8 @@ trait ToConfigValue[A] {
 
   def toConfigValue(value: A): ConfigValue
 
-  def contramap[B](f: B => A): ToConfigValue[B] = f(_) |> toConfigValue
+  def contramap[B](f: B => A): ToConfigValue[B] =
+    b => toConfigValue(f(b))
 
 }
 
@@ -39,7 +39,7 @@ object ToConfigValue {
 
 
   private[this] final val any: ToConfigValue[Any] =
-    _.toString |> fromAnyRef
+    a => fromAnyRef(a.toString)
 
   implicit def anyToConfigValue[A]: ToConfigValue[A] =
     any.asInstanceOf[ToConfigValue[A]]
@@ -94,7 +94,7 @@ object ToConfigValue {
 
   
   implicit def javaIterableToConfigValue[F[_], A: ToConfigValue](implicit ev: F[A] <:< jl.Iterable[A]): ToConfigValue[F[A]] =
-    ev(_).asScala.map(_.toConfigValue).asJava |> fromAnyRef
+    fa => fromAnyRef(ev(fa).asScala.map(_.toConfigValue).asJava)
 
   implicit def traversableToConfigValue[F[_], A: ToConfigValue](implicit ev: F[A] <:< Traversable[A]): ToConfigValue[F[A]] =
     ToConfigValue[jl.Iterable[A]].contramap(_.toIterable.asJava)
@@ -103,16 +103,16 @@ object ToConfigValue {
     ToConfigValue[jl.Iterable[A]].contramap(_.toIterable.asJava)
 
   implicit def javaStringMapToConfigValue[A: ToConfigValue]: ToConfigValue[ju.Map[String, A]] =
-    _.asScala.mapValues(_.toConfigValue).asJava |> fromAnyRef
+    m => fromAnyRef(m.asScala.mapValues(_.toConfigValue).asJava)
 
   implicit def javaSymbolMapToConfigValue[A: ToConfigValue]: ToConfigValue[ju.Map[Symbol, A]] =
-    _.asScala.map(t => t._1.name -> t._2.toConfigValue).asJava |> fromAnyRef
+    m => fromAnyRef(m.asScala.map(t => t._1.name -> t._2.toConfigValue).asJava)
 
   implicit def mapToConfigValue[M[_, _], A, B](implicit T: ToConfigValue[ju.Map[A, B]], ev: M[A, B] <:< collection.Map[A, B]): ToConfigValue[M[A, B]] =
     T.contramap(_.toMap.asJava)
 
   implicit def optionToConfigValue[A: ToConfigValue]: ToConfigValue[Option[A]] =
-    _.map(_.toConfigValue).orNull |> fromAnyRef
+    o => fromAnyRef(o.map(_.toConfigValue).orNull)
 
   implicit val charJListToConfigValue: ToConfigValue[ju.List[Char]] =
     xs => fromAnyRef(new String(xs.asScala.toArray))

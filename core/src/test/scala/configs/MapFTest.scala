@@ -36,10 +36,10 @@ object MapFTest extends Scalaprops {
 
   val mapF = {
     val list = forAll { (cl: ConfigList :@ Int) =>
-      wrapInt[List].extract(cl).exists(_ == cl.map(_.unwrapped().asInstanceOf[Int] |> Wrap).toList)
+      wrapInt[List].extract(cl).exists(_ == cl.map(_.unwrapped().asInstanceOf[Int]).map(Wrap).toList)
     }
     val set = forAll { (cl: ConfigList :@ Int) =>
-      wrapInt[Set].extract(cl).exists(_ == cl.map(_.unwrapped().asInstanceOf[Int] |> Wrap).toSet)
+      wrapInt[Set].extract(cl).exists(_ == cl.map(_.unwrapped().asInstanceOf[Int]).map(Wrap).toSet)
     }
     Properties.list(
       list.toProperties("List"),

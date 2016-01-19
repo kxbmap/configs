@@ -69,10 +69,10 @@ object Configs extends ConfigsInstances {
     (c, p) => Attempt(f(c, p)).flatten
 
   def onPath[A](f: Config => A): Configs[A] =
-    from(_.getConfig(_) |> f)
+    from((c, p) => f(c.getConfig(p)))
 
   def attemptOnPath[A](f: Config => Attempt[A]): Configs[A] =
-    attempt(_.getConfig(_) |> f)
+    attempt((c, p) => f(c.getConfig(p)))
 
 
   final class MapF[F[_], A, B] private(c: Configs[F[A]])(implicit ev: F[A] => Traversable[A], cbf: CanBuildFrom[Nothing, B, F[B]]) {

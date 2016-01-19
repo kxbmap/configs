@@ -174,7 +174,7 @@ private[configs] abstract class ConfigsInstances extends ConfigsInstances0 {
 
 
   implicit lazy val floatConfigs: Configs[Float] =
-    Configs.from(_.getDouble(_) |> (_.toFloat))
+    Configs.from(_.getDouble(_).toFloat)
 
   implicit lazy val floatJListConfigs: Configs[ju.List[Float]] =
     Configs.from(_.getDoubleList(_).asScala.map(_.floatValue()).asJava)
@@ -270,7 +270,7 @@ private[configs] abstract class ConfigsInstances extends ConfigsInstances0 {
 
 
   implicit lazy val finiteDurationConfigs: Configs[FiniteDuration] =
-    Configs.from(_.getDuration(_, TimeUnit.NANOSECONDS) |> Duration.fromNanos)
+    Configs.from(_.getDuration(_, TimeUnit.NANOSECONDS)).map(Duration.fromNanos)
 
   implicit lazy val finiteDurationJListConfigs: Configs[ju.List[FiniteDuration]] =
     Configs.from(_.getDurationList(_, TimeUnit.NANOSECONDS).asScala.map(Duration.fromNanos(_)).asJava)

@@ -213,14 +213,14 @@ package object util {
     ).tag[Number]
 
   implicit def genConfigList0[A: Gen : ToConfigValue]: Gen[ConfigList :@ A] =
-    Gen.list(genConfigValue0[A]).map(_.asJava |> ConfigValueFactory.fromIterable).tag[A]
+    Gen.list(genConfigValue0[A]).map(_.asJava).map(ConfigValueFactory.fromIterable).tag[A]
 
   def genConfigList[A: ToConfigValue](g: Gen[A]): Gen[ConfigList] =
     genConfigList0(g, ToConfigValue[A]).untag
 
   def genNonEmptyConfigList[A: ToConfigValue](g: Gen[A]): Gen[ConfigList] = {
     val cg = genConfigValue(g)
-    Apply[Gen].apply2(cg, Gen.list(cg))(_ :: _).map(_.asJava |> ConfigValueFactory.fromIterable)
+    Apply[Gen].apply2(cg, Gen.list(cg))(_ :: _).map(_.asJava).map(ConfigValueFactory.fromIterable)
   }
 
   implicit lazy val configListGen: Gen[ConfigList] =
@@ -230,7 +230,7 @@ package object util {
     Gen[ConfigList].map(cl => cl)
 
   implicit lazy val configObjectGen: Gen[ConfigObject] =
-    Gen.mapGen(Gen[String], configValueGen).map(_.asJava |> ConfigValueFactory.fromMap)
+    Gen.mapGen(Gen[String], configValueGen).map(_.asJava).map(ConfigValueFactory.fromMap)
 
   implicit lazy val configValueJavaMapGen: Gen[ju.Map[String, ConfigValue]] =
     Gen[ConfigObject].map(co => co)

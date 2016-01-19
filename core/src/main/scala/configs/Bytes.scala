@@ -41,7 +41,7 @@ case class Bytes(value: Long) extends Ordered[Bytes] {
 object Bytes {
 
   implicit val bytesConfigs: Configs[Bytes] =
-    Configs.from(_.getBytes(_) |> (Bytes(_)))
+    Configs.from(_.getBytes(_)).map(Bytes(_))
 
   implicit val bytesJListConfigs: Configs[ju.List[Bytes]] =
     Configs.from(_.getBytesList(_).asScala.map(Bytes(_)).asJava)
