@@ -62,27 +62,6 @@ object ConfigsTest extends Scalaprops {
     )
   }
 
-  val mapF = {
-    val list = {
-      val c: Configs[List[Int]] = Configs.from(_.getIntList(_).map(_.toInt).toList)
-      val cc: Configs[List[String]] = c.mapF((_: Int).toString)
-      forAll { xs: List[Int] =>
-        cc.extract(xs.toConfigValue).exists(_ == xs.map(_.toString))
-      }
-    }
-    val array = {
-      val c: Configs[Array[Int]] = Configs.from(_.getIntList(_).map(_.toInt).toArray)
-      val cc: Configs[Array[String]] = c.mapF((_: Int).toString)
-      forAll { xs: Array[Int] =>
-        cc.extract(xs.toConfigValue).exists(_.sameElements(xs.map(_.toString)))
-      }
-    }
-    Properties.list(
-      list.toProperties("list"),
-      array.toProperties("array")
-    )
-  }
-
   val flatMap = {
     val c0: Configs[String] = Configs.from(_.getConfig(_).getString("type"))
     val c: Configs[Any] = c0.flatMap {

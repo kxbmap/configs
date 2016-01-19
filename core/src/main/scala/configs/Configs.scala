@@ -17,7 +17,6 @@
 package configs
 
 import com.typesafe.config.{Config, ConfigValue}
-import scala.collection.generic.CanBuildFrom
 
 
 trait Configs[A] {
@@ -32,9 +31,6 @@ trait Configs[A] {
 
   def map[B](f: A => B): Configs[B] =
     (c, p) => get(c, p).map(f)
-
-  def mapF[F[_], B, C](f: B => C)(implicit ev1: A =:= F[B], ev2: F[B] => Traversable[B], cbf: CanBuildFrom[Nothing, C, F[C]]): Configs[F[C]] =
-    map(ev1(_).map(f)(collection.breakOut))
 
   def flatMap[B](f: A => Configs[B]): Configs[B] =
     (c, p) => get(c, p).flatMap(f(_).get(c, p))
@@ -73,15 +69,5 @@ object Configs extends ConfigsInstances {
 
   def attemptOnPath[A](f: Config => Attempt[A]): Configs[A] =
     attempt((c, p) => f(c.getConfig(p)))
-
-
-  final class MapF[F[_], A, B] private(c: Configs[F[A]])(implicit ev: F[A] => Traversable[A], cbf: CanBuildFrom[Nothing, B, F[B]]) {
-    def apply(f: A => B): Configs[F[B]] = c.mapF(f)
-  }
-
-  object MapF {
-    implicit def mkMapF[F[_], A, B](implicit c: Configs[F[A]], ev: F[A] => Traversable[A], cbf: CanBuildFrom[Nothing, B, F[B]]): MapF[F, A, B] =
-      new MapF(c)
-  }
 
 }
