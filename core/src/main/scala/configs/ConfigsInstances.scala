@@ -60,10 +60,10 @@ private[configs] abstract class ConfigsInstances extends ConfigsInstances0 {
     }
 
 
-  implicit def fromJListConfigs[F[_], A](implicit C: Configs[ju.List[A]], cbf: CanBuildFrom[Nothing, A, F[A]]): Configs[F[A]] =
+  implicit def cbfJListConfigs[F[_], A](implicit C: Configs[ju.List[A]], cbf: CanBuildFrom[Nothing, A, F[A]]): Configs[F[A]] =
     C.map(_.asScala.to[F])
 
-  implicit def fromJMapConfigs[M[_, _], A, B](implicit C: Configs[ju.Map[A, B]], cbf: CanBuildFrom[Nothing, (A, B), M[A, B]]): Configs[M[A, B]] =
+  implicit def cbfJMapConfigs[M[_, _], A, B](implicit C: Configs[ju.Map[A, B]], cbf: CanBuildFrom[Nothing, (A, B), M[A, B]]): Configs[M[A, B]] =
     C.map(_.asScala.to[({type F[_] = M[A, B]})#F])
 
 
@@ -84,19 +84,19 @@ private[configs] abstract class ConfigsInstances extends ConfigsInstances0 {
     }
 
 
-  def fromConverter[A, B](implicit A: Configs[A], C: Converter[A, B]): Configs[B] =
+  def convertConfigs[A, B](implicit A: Configs[A], C: Converter[A, B]): Configs[B] =
     A.get(_, _).flatMap(C.convert)
 
-  def fromConverterJList[A, B](implicit A: Configs[ju.List[A]], C: Converter[A, B]): Configs[ju.List[B]] =
+  def convertJListConfigs[A, B](implicit A: Configs[ju.List[A]], C: Converter[A, B]): Configs[ju.List[B]] =
     A.get(_, _).flatMap { as =>
       Attempt.sequence(as.asScala.map(C.convert)).map(_.asJava)
     }
 
-  implicit def fromStringConfigs[A: Converter.FromString]: Configs[A] =
-    fromConverter[String, A]
+  implicit def convertStringConfigs[A: Converter.FromString]: Configs[A] =
+    convertConfigs[String, A]
 
-  implicit def fromStringJListConfigs[A: Converter.FromString]: Configs[ju.List[A]] =
-    fromConverterJList[String, A]
+  implicit def convertStringJListConfigs[A: Converter.FromString]: Configs[ju.List[A]] =
+    convertJListConfigs[String, A]
 
 
   private[this] def toByte(n: Number, c: Config, p: String): Byte = {
