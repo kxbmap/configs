@@ -34,7 +34,7 @@ sealed abstract class Attempt[+A] extends Product with Serializable {
 
   def getOrElse[B >: A](default: => B): B
 
-  def rescue[B >: A](f: ConfigError => B): B
+  def getOrHandle[B >: A](f: ConfigError => B): B
 
   def handleWith[B >: A](pf: PartialFunction[ConfigError, Attempt[B]]): Attempt[B]
 
@@ -110,7 +110,7 @@ object Attempt {
     def getOrElse[B >: A](default: => B): B =
       value
 
-    def rescue[B >: A](f: ConfigError => B): B =
+    def getOrHandle[B >: A](f: ConfigError => B): B =
       value
 
     def handleWith[B >: A](pf: PartialFunction[ConfigError, Attempt[B]]): Attempt[B] =
@@ -163,7 +163,7 @@ object Attempt {
     def getOrElse[B >: Nothing](default: => B): B =
       default
 
-    def rescue[B >: Nothing](f: ConfigError => B): B =
+    def getOrHandle[B >: Nothing](f: ConfigError => B): B =
       f(error)
 
     def handleWith[B >: Nothing](pf: PartialFunction[ConfigError, Attempt[B]]): Attempt[B] =
