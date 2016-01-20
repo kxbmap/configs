@@ -28,7 +28,7 @@ object Sample1 extends App {
       a21: Int, a22: Int, a23: Int, next: Option[A])
 
   implicit lazy val aConfigs: Configs[A] =
-    Configs.attemptOnPath { c =>
+    Configs.from { c =>
       Attempt.apply2(
         Attempt.tuple12(
           c.get[Int]("a1"), c.get[Int]("a2"), c.get[Int]("a3"), c.get[Int]("a4"), c.get[Int]("a5"),

@@ -42,7 +42,7 @@ object Converter {
   def from[A, B](f: A => Attempt[B]): Converter[A, B] =
     a => Attempt(f(a)).flatten
 
-  def attempt[A, B](f: A => B): Converter[A, B] =
+  def fromTry[A, B](f: A => B): Converter[A, B] =
     a => Attempt(f(a))
 
 
@@ -61,11 +61,11 @@ object Converter {
 
 
   implicit lazy val symbolFromString: FromString[Symbol] =
-    attempt(Symbol.apply)
+    fromTry(Symbol.apply)
 
   implicit def javaEnumFromString[A <: jl.Enum[A]](implicit A: ClassTag[A]): FromString[A] = {
     val enums = A.runtimeClass.asInstanceOf[Class[A]].getEnumConstants
-    attempt { s =>
+    fromTry { s =>
       enums.find(_.name() == s).getOrElse {
         throw new NoSuchElementException(s"$s must be one of ${enums.mkString(", ")}")
       }
@@ -73,25 +73,25 @@ object Converter {
   }
 
   implicit lazy val uuidFromString: FromString[UUID] =
-    s => Attempt(UUID.fromString(s))
+    fromTry(UUID.fromString)
 
   implicit lazy val localeFromString: FromString[Locale] =
-    attempt { s =>
+    fromTry { s =>
       Locale.getAvailableLocales.find(_.toString == s).getOrElse {
         throw new NoSuchElementException(s"Locale '$s' is not available")
       }
     }
 
   implicit lazy val pathFromString: FromString[Path] =
-    attempt(Paths.get(_))
+    fromTry(Paths.get(_))
 
   implicit lazy val fileFromString: FromString[File] =
-    attempt(new File(_))
+    fromTry(new File(_))
 
   implicit lazy val inetAddressFromString: FromString[InetAddress] =
-    attempt(InetAddress.getByName)
+    fromTry(InetAddress.getByName)
 
   implicit lazy val uriFromString: FromString[URI] =
-    attempt(new URI(_))
+    fromTry(new URI(_))
 
 }

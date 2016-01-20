@@ -101,7 +101,7 @@ object CollectionConfigsTest extends Scalaprops {
   object configs {
 
     val fooConfigs: Configs[Foo] =
-      Configs.onPath(c => Foo(c.getInt("v")))
+      Configs.fromTry(c => Foo(c.getInt("v")))
 
     val fooJListConfigs: Configs[ju.List[Foo]] =
       Configs.javaListConfigs(fooConfigs)

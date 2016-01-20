@@ -36,7 +36,7 @@ object FromStringConfigsTest extends Scalaprops {
   }
 
   implicit lazy val fooFromString: Converter[String, Foo] =
-    s => Attempt(Foo(s))
+    Converter.fromTry(Foo)
 
 
   implicit lazy val fooGen: Gen[Foo] =

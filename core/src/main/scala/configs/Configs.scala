@@ -58,16 +58,16 @@ object Configs extends ConfigsInstances {
     macro macros.BeanConfigsMacro.materializeI[A]
 
 
-  def from[A](f: (Config, String) => A): Configs[A] =
-    (c, p) => Attempt(f(c, p))
-
-  def attempt[A](f: (Config, String) => Attempt[A]): Configs[A] =
+  def from[A](f: (Config, String) => Attempt[A]): Configs[A] =
     (c, p) => Attempt(f(c, p)).flatten
 
-  def onPath[A](f: Config => A): Configs[A] =
+  def from[A](f: Config => Attempt[A]): Configs[A] =
     from((c, p) => f(c.getConfig(p)))
 
-  def attemptOnPath[A](f: Config => Attempt[A]): Configs[A] =
-    attempt((c, p) => f(c.getConfig(p)))
+  def fromTry[A](f: (Config, String) => A): Configs[A] =
+    (c, p) => Attempt(f(c, p))
+
+  def fromTry[A](f: Config => A): Configs[A] =
+    fromTry((c, p) => f(c.getConfig(p)))
 
 }

@@ -27,13 +27,13 @@ object ConfigsTest extends Scalaprops {
 
   val get = forAll { (p: String, v: Int) =>
     val config = ConfigFactory.parseString(s"${q(p)} = $v")
-    val configs: Configs[Int] = Configs.from(_.getInt(_))
+    val configs: Configs[Int] = Configs.fromTry(_.getInt(_))
     configs.get(config, q(p)).exists(_ == v)
   }
 
   val extractC = forAll { (p: String, v: Int) =>
     val config = ConfigFactory.parseString(s"${q(p)} = $v")
-    val configs: Configs[Map[String, Int]] = Configs.from {
+    val configs: Configs[Map[String, Int]] = Configs.fromTry {
       _.getConfig(_).root().mapValues(_.unwrapped().asInstanceOf[Int]).toMap
     }
     configs.extract(config).exists(_ == Map(p -> v))
@@ -41,19 +41,19 @@ object ConfigsTest extends Scalaprops {
 
   val extractV = forAll { v: Int =>
     val cv = ConfigValueFactory.fromAnyRef(v)
-    val configs: Configs[Int] = Configs.from(_.getInt(_))
+    val configs: Configs[Int] = Configs.fromTry(_.getInt(_))
     configs.extract(cv).exists(_ == v)
   }
 
   val map = {
     val identity = forAll { (p: String, v: Int) =>
       val config = ConfigFactory.parseString(s"${q(p)} = $v")
-      val configs: Configs[Int] = Configs.from(_.getInt(_))
+      val configs: Configs[Int] = Configs.fromTry(_.getInt(_))
       configs.map(a => a).get(config, q(p)) == configs.get(config, q(p))
     }
     val composite = forAll { (p: String, v: Int, f: Int => String, g: String => Long) =>
       val config = ConfigFactory.parseString(s"${q(p)} = $v")
-      val configs: Configs[Int] = Configs.from(_.getInt(_))
+      val configs: Configs[Int] = Configs.fromTry(_.getInt(_))
       configs.map(f).map(g).get(config, q(p)) == configs.get(config, q(p)).map(g compose f)
     }
     Properties.list(
@@ -63,11 +63,11 @@ object ConfigsTest extends Scalaprops {
   }
 
   val flatMap = {
-    val c0: Configs[String] = Configs.from(_.getConfig(_).getString("type"))
+    val c0: Configs[String] = Configs.fromTry(_.getConfig(_).getString("type"))
     val c: Configs[Any] = c0.flatMap {
-      case "int"    => Configs.from(_.getConfig(_).getInt("value"))
-      case "string" => Configs.from(_.getConfig(_).getString("value"))
-      case "bool"   => Configs.from(_.getConfig(_).getBoolean("value"))
+      case "int"    => Configs.fromTry(_.getConfig(_).getInt("value"))
+      case "string" => Configs.fromTry(_.getConfig(_).getString("value"))
+      case "bool"   => Configs.fromTry(_.getConfig(_).getBoolean("value"))
       case s        => throw new RuntimeException(s)
     }
     val g = Gen.oneOf[(String, Any)](
@@ -92,14 +92,14 @@ object ConfigsTest extends Scalaprops {
 
   val orElse = {
     val config = ConfigFactory.empty()
-    val ce: Configs[Int] = Configs.from((_, _) => throw new ConfigException.Generic("CE"))
+    val ce: Configs[Int] = Configs.fromTry((_, _) => throw new ConfigException.Generic("CE"))
 
     val p1 = forAll { (v: Int) =>
-      val cv: Configs[Int] = Configs.from((_, _) => v)
+      val cv: Configs[Int] = Configs.fromTry((_, _) => v)
       cv.orElse(ce).get(config, "dummy").exists(_ == v)
     }
     val p2 = forAll { (v: Int) =>
-      val cv: Configs[Int] = Configs.from((_, _) => v)
+      val cv: Configs[Int] = Configs.fromTry((_, _) => v)
       ce.orElse(cv).get(config, "dummy").exists(_ == v)
     }
     val p3 = forAll {
