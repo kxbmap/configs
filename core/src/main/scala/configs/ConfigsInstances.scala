@@ -74,9 +74,10 @@ private[configs] abstract class ConfigsInstances extends ConfigsInstances0 {
 
 
   implicit def optionConfigs[A](implicit A: Configs[A]): Configs[Option[A]] =
-    A.get(_, _).map(Some(_)).handle {
-      case Vector(ConfigError.Missing(_, _)) => None
-    }
+    (c, p) =>
+      A.get(c, p).map(Some(_)).handle {
+        case Vector(ConfigError.Missing(_, `p` :: Nil)) => None
+      }
 
   implicit def tryConfigs[A](implicit A: Configs[A]): Configs[Try[A]] =
     A.get(_, _).map(Success(_)).handle {
