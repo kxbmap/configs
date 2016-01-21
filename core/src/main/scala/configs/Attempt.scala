@@ -36,6 +36,9 @@ sealed abstract class Attempt[+A] extends Product with Serializable {
 
   def getOrHandle[B >: A](f: ConfigError => B): B
 
+  final def getOrThrow: A =
+    getOrHandle(e => throw e.toConfigException)
+
   def handleWith[B >: A](pf: PartialFunction[ConfigError, Attempt[B]]): Attempt[B]
 
   final def handle[B >: A](pf: PartialFunction[ConfigError, B]): Attempt[B] =

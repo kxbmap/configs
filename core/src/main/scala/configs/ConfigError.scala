@@ -31,6 +31,9 @@ case class ConfigError(head: ConfigError.Entry, tail: Vector[ConfigError.Entry] 
 
   def withPath(path: String): ConfigError =
     ConfigError(head.pushPath(path), tail.map(_.pushPath(path)))
+
+  def toConfigException: ConfigException =
+    head.toConfigException
 }
 
 object ConfigError {

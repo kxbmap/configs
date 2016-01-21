@@ -24,10 +24,10 @@ object exception {
   implicit class ConfigOps(private val self: Config) extends AnyVal {
 
     def extract[A](implicit A: Configs[A]): A =
-      A.extract(self).getOrHandle(e => throw e.head.toConfigException)
+      A.extract(self).getOrThrow
 
     def get[A](path: String)(implicit A: Configs[A]): A =
-      A.get(self, path).getOrHandle(e => throw e.head.toConfigException)
+      A.get(self, path).getOrThrow
 
     def getOpt[A: Configs](path: String): Option[A] =
       get[Option[A]](path)
