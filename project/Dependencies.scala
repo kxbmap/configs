@@ -24,7 +24,7 @@ object Dependencies extends AutoPlugin {
 
   override lazy val projectSettings: Seq[Setting[_]] = Seq(
     configVersion := "1.3.0",
-    scalapropsVersion := "0.2.0"
+    scalapropsVersion := "0.2.1"
   )
 
 }
