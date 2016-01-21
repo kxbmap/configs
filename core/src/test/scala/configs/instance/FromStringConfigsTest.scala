@@ -16,8 +16,8 @@
 
 package configs.instance
 
+import configs.Converter
 import configs.util._
-import configs.{Attempt, Converter}
 import java.{util => ju}
 import scalaprops.{Gen, Scalaprops}
 import scalaz.Equal

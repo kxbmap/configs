@@ -17,22 +17,22 @@
 package configs.syntax
 
 import com.typesafe.config.Config
-import configs.{Attempt, Configs}
+import configs.{Configs, Result}
 
-object attempt {
+object result {
 
   implicit class ConfigOps(private val self: Config) extends AnyVal {
 
-    def extract[A](implicit A: Configs[A]): Attempt[A] =
+    def extract[A](implicit A: Configs[A]): Result[A] =
       A.extract(self)
 
-    def get[A](path: String)(implicit A: Configs[A]): Attempt[A] =
+    def get[A](path: String)(implicit A: Configs[A]): Result[A] =
       A.get(self, path)
 
-    def getOpt[A: Configs](path: String): Attempt[Option[A]] =
+    def getOpt[A: Configs](path: String): Result[Option[A]] =
       get[Option[A]](path)
 
-    def getOrElse[A: Configs](path: String, default: => A): Attempt[A] =
+    def getOrElse[A: Configs](path: String, default: => A): Result[A] =
       getOpt[A](path).map(_.getOrElse(default))
 
   }

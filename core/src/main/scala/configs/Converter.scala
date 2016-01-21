@@ -25,7 +25,7 @@ import scala.reflect.ClassTag
 
 trait Converter[A, B] {
 
-  def convert(a: A): Attempt[B]
+  def convert(a: A): Result[B]
 
   def map[C](f: B => C): Converter[A, C] =
     convert(_).map(f)
@@ -39,11 +39,11 @@ object Converter {
   def apply[A, B](implicit C: Converter[A, B]): Converter[A, B] = C
 
 
-  def from[A, B](f: A => Attempt[B]): Converter[A, B] =
-    a => Attempt(f(a)).flatten
+  def from[A, B](f: A => Result[B]): Converter[A, B] =
+    a => Result(f(a)).flatten
 
   def fromTry[A, B](f: A => B): Converter[A, B] =
-    a => Attempt(f(a))
+    a => Result(f(a))
 
 
   type FromString[A] = Converter[String, A]
@@ -54,7 +54,7 @@ object Converter {
 
 
   private[this] final val _identity: Converter[Any, Any] =
-    Attempt.successful(_)
+    Result.successful(_)
 
   implicit def identityConverter[A]: Converter[A, A] =
     _identity.asInstanceOf[Converter[A, A]]

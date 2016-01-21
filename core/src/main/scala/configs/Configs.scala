@@ -22,14 +22,14 @@ import com.typesafe.config.{Config, ConfigValue}
 trait Configs[A] {
   self =>
 
-  def get(config: Config, path: String): Attempt[A]
+  def get(config: Config, path: String): Result[A]
 
   def extractKey: String = "extract"
 
-  def extract(config: Config): Attempt[A] =
+  def extract(config: Config): Result[A] =
     get(config.atKey(extractKey), extractKey)
 
-  def extract(value: ConfigValue): Attempt[A] =
+  def extract(value: ConfigValue): Result[A] =
     get(value.atKey(extractKey), extractKey)
 
   def map[B](f: A => B): Configs[B] =
@@ -46,7 +46,7 @@ trait Configs[A] {
 
   def withExtractKey(key: String): Configs[A] =
     new Configs[A] {
-      def get(config: Config, path: String): Attempt[A] =
+      def get(config: Config, path: String): Result[A] =
         self.get(config, path)
 
       override def extractKey: String =
@@ -71,14 +71,14 @@ object Configs extends ConfigsInstances {
     macro macros.BeanConfigsMacro.materializeI[A]
 
 
-  def from[A](f: (Config, String) => Attempt[A]): Configs[A] =
-    withPath((c, p) => Attempt(f(c, p)).flatten)
+  def from[A](f: (Config, String) => Result[A]): Configs[A] =
+    withPath((c, p) => Result(f(c, p)).flatten)
 
-  def from[A](f: Config => Attempt[A]): Configs[A] =
+  def from[A](f: Config => Result[A]): Configs[A] =
     from((c, p) => f(c.getConfig(p)))
 
   def fromTry[A](f: (Config, String) => A): Configs[A] =
-    withPath((c, p) => Attempt(f(c, p)))
+    withPath((c, p) => Result(f(c, p)))
 
   def fromTry[A](f: Config => A): Configs[A] =
     fromTry((c, p) => f(c.getConfig(p)))

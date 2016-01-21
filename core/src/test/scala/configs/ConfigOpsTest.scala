@@ -35,13 +35,13 @@ object ConfigOpsTest extends Scalaprops {
     )
   }
 
-  val attempt = {
-    import syntax.attempt._
+  val result = {
+    import syntax.result._
     Properties.list(
-      extract(_.extract[Map[String, java.lang.Integer]] == Attempt.successful(_)),
-      get(_.get[Int](_) == Attempt.successful(_)),
-      getOpt(_.getOpt[Int](_) == Attempt.successful(_)),
-      getOrElse(_.getOrElse[Int](_, _) == Attempt.successful(_))
+      extract(_.extract[Map[String, java.lang.Integer]] == Result.successful(_)),
+      get(_.get[Int](_) == Result.successful(_)),
+      getOpt(_.getOpt[Int](_) == Result.successful(_)),
+      getOrElse(_.getOrElse[Int](_, _) == Result.successful(_))
     )
   }
 

@@ -17,12 +17,12 @@
 package configs.util
 
 import com.typesafe.config.ConfigException
-import configs.{Attempt, ConfigError}
+import configs.{ConfigError, Result}
 import scala.util.{Failure, Try}
 import scalaz.Need
 
 trait IsMissing[A] {
-  def check(a: Need[Attempt[A]]): Boolean
+  def check(a: Need[Result[A]]): Boolean
 }
 
 object IsMissing {
@@ -35,8 +35,8 @@ object IsMissing {
 
   private[this] final val default: IsMissing[Any] =
     _.value match {
-      case Attempt.Failure(ConfigError(ConfigError.Missing(_, _ :: Nil), _)) => true
-      case _                                                                 => false
+      case Result.Failure(ConfigError(ConfigError.Missing(_, _ :: Nil), _)) => true
+      case _                                                                => false
     }
 
 

@@ -17,12 +17,12 @@
 package configs.util
 
 import com.typesafe.config.ConfigException
-import configs.Attempt
+import configs.Result
 import scala.util.{Failure, Try}
 import scalaz.Need
 
 trait IsWrongType[A] {
-  def check(a: Need[Attempt[A]]): Boolean
+  def check(a: Need[Result[A]]): Boolean
 }
 
 object IsWrongType {

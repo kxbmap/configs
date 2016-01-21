@@ -36,7 +36,7 @@ private[configs] sealed abstract class ConfigsInstances0 extends MacroConfigsIns
 
   implicit def javaListConfigs[A](implicit A: Configs[A]): Configs[ju.List[A]] =
     Configs.from { (c, p) =>
-      Attempt.sequence(
+      Result.sequence(
         c.getList(p).asScala.zipWithIndex.map {
           case (v, i) => A.withExtractKey(i.toString).extract(v)
         })
@@ -58,9 +58,9 @@ private[configs] abstract class ConfigsInstances extends ConfigsInstances0 {
 
   implicit def javaMapConfigs[A, B](implicit A: Converter[String, A], B: Configs[B]): Configs[ju.Map[A, B]] =
     Configs.from { c =>
-      Attempt.sequence(
+      Result.sequence(
         c.root().asScala.keysIterator.map {
-          k => Attempt.tuple2(A.convert(k), B.get(c, ConfigUtil.quoteString(k)))
+          k => Result.tuple2(A.convert(k), B.get(c, ConfigUtil.quoteString(k)))
         })
         .map(_.toMap.asJava)
     }
@@ -96,7 +96,7 @@ private[configs] abstract class ConfigsInstances extends ConfigsInstances0 {
 
   def convertJListConfigs[A, B](implicit A: Configs[ju.List[A]], C: Converter[A, B]): Configs[ju.List[B]] =
     A.get(_, _).flatMap { as =>
-      Attempt.sequence(as.asScala.map(C.convert)).map(_.asJava)
+      Result.sequence(as.asScala.map(C.convert)).map(_.asJava)
     }
 
   implicit def convertStringConfigs[A: Converter.FromString]: Configs[A] =
@@ -296,15 +296,15 @@ private[configs] abstract class ConfigsInstances extends ConfigsInstances0 {
 
   implicit lazy val configConfigs: Configs[Config] =
     Configs.withPath(new Configs[Config] {
-      def get(config: Config, path: String): Attempt[Config] =
-        Attempt(config.getConfig(path))
+      def get(config: Config, path: String): Result[Config] =
+        Result(config.getConfig(path))
 
-      override def extract(config: Config): Attempt[Config] =
-        Attempt.successful(config)
+      override def extract(config: Config): Result[Config] =
+        Result.successful(config)
 
-      override def extract(value: ConfigValue): Attempt[Config] =
+      override def extract(value: ConfigValue): Result[Config] =
         value match {
-          case co: ConfigObject => Attempt.successful(co.toConfig)
+          case co: ConfigObject => Result.successful(co.toConfig)
           case _                => super.extract(value)
         }
     })
@@ -315,14 +315,14 @@ private[configs] abstract class ConfigsInstances extends ConfigsInstances0 {
 
   implicit lazy val configValueConfigs: Configs[ConfigValue] =
     Configs.withPath(new Configs[ConfigValue] {
-      def get(config: Config, path: String): Attempt[ConfigValue] =
-        Attempt(config.getValue(path))
+      def get(config: Config, path: String): Result[ConfigValue] =
+        Result(config.getValue(path))
 
-      override def extract(config: Config): Attempt[ConfigValue] =
-        Attempt.successful(config.root())
+      override def extract(config: Config): Result[ConfigValue] =
+        Result.successful(config.root())
 
-      override def extract(value: ConfigValue): Attempt[ConfigValue] =
-        Attempt.successful(value)
+      override def extract(value: ConfigValue): Result[ConfigValue] =
+        Result.successful(value)
     })
 
   implicit lazy val configValueJListConfigs: Configs[ju.List[ConfigValue]] =
@@ -333,7 +333,7 @@ private[configs] abstract class ConfigsInstances extends ConfigsInstances0 {
 
   implicit def configValueJMapKeyConfigs[A](implicit A: Converter[String, A]): Configs[ju.Map[A, ConfigValue]] =
     configObjectConfigs.get(_, _).flatMap { co =>
-      Attempt.sequence(
+      Result.sequence(
         co.asScala.map {
           case (k, v) => A.convert(k).map(_ -> v)
         })
