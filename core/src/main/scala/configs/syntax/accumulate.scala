@@ -19,9 +19,9 @@ package configs.syntax
 import com.typesafe.config.Config
 import configs.{Configs, Result}
 
-object result {
+object accumulate {
 
-  implicit class ConfigOps(private val self: Config) extends AnyVal {
+  implicit class ConfigAccumulateOps(private val self: Config) extends AnyVal {
 
     def extract[A](implicit A: Configs[A]): Result[A] =
       A.extract(self)

@@ -25,8 +25,8 @@ import scalaz.std.string._
 
 object ConfigOpsTest extends Scalaprops {
 
-  val exception = {
-    import syntax.exception._
+  val throws = {
+    import syntax.throws._
     Properties.list(
       extract(_.extract[Map[String, java.lang.Integer]] == _),
       get(_.get[Int](_) == _),
@@ -35,8 +35,8 @@ object ConfigOpsTest extends Scalaprops {
     )
   }
 
-  val result = {
-    import syntax.result._
+  val accumulate = {
+    import syntax.accumulate._
     Properties.list(
       extract(_.extract[Map[String, java.lang.Integer]] == Result.successful(_)),
       get(_.get[Int](_) == Result.successful(_)),

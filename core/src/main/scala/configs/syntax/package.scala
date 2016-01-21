@@ -17,27 +17,28 @@
 package configs
 
 import com.typesafe.config.Config
+import configs.syntax.throws.ConfigThrowsOps
 
 package object syntax {
 
-  @deprecated("import configs.syntax.exception._ instead", "0.4.0")
+  @deprecated("import configs.syntax.throws._ instead", "0.4.0")
   implicit class ConfigOps(private val self: Config) extends AnyVal {
 
-    @deprecated("import configs.syntax.exception._ instead", "0.4.0")
+    @deprecated("import configs.syntax.throws._ instead", "0.4.0")
     def extract[A: Configs]: A =
-      exception.ConfigOps(self).extract[A]
+      new ConfigThrowsOps(self).extract[A]
 
-    @deprecated("import configs.syntax.exception._ instead", "0.4.0")
+    @deprecated("import configs.syntax.throws._ instead", "0.4.0")
     def get[A: Configs](path: String): A =
-      exception.ConfigOps(self).get(path)
+      new ConfigThrowsOps(self).get(path)
 
-    @deprecated("import configs.syntax.exception._ instead", "0.4.0")
+    @deprecated("import configs.syntax.throws._ instead", "0.4.0")
     def getOpt[A: Configs](path: String): Option[A] =
-      exception.ConfigOps(self).getOpt(path)
+      new ConfigThrowsOps(self).getOpt(path)
 
-    @deprecated("import configs.syntax.exception._ instead", "0.4.0")
+    @deprecated("import configs.syntax.throws._ instead", "0.4.0")
     def getOrElse[A: Configs](path: String, default: => A): A =
-      exception.ConfigOps(self).getOrElse(path, default)
+      new ConfigThrowsOps(self).getOrElse(path, default)
 
   }
 

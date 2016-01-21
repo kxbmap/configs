@@ -10,8 +10,8 @@ lazy val core = project
     initialCommands :=
       """import com.typesafe.config._
         |import ConfigFactory._
-        |import configs.{Attempt, Bytes, Configs}
-        |import configs.syntax.attempt._
+        |import configs.{Bytes, Configs, Result}
+        |import configs.syntax.accumulate._
         |""".stripMargin
   )
 

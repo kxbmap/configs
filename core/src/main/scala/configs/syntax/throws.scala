@@ -19,9 +19,9 @@ package configs.syntax
 import com.typesafe.config.Config
 import configs.Configs
 
-object exception {
+object throws {
 
-  implicit class ConfigOps(private val self: Config) extends AnyVal {
+  implicit class ConfigThrowsOps(private val self: Config) extends AnyVal {
 
     def extract[A](implicit A: Configs[A]): A =
       A.extract(self).getOrThrow
