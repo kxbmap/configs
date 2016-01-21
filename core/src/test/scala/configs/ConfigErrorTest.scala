@@ -40,18 +40,18 @@ trait ConfigErrorImplicits {
 
   implicit lazy val configErrorGen: Gen[ConfigError] =
     Gen.oneOf(
-      Gen[String].map(M).map(ConfigError.Missing),
-      Gen[String].map(C).map(ConfigError.Config),
-      Gen[String].map(G).map(ConfigError.Generic)
+      Gen[String].map(M).map(ConfigError.Missing(_)),
+      Gen[String].map(C).map(ConfigError.Config(_)),
+      Gen[String].map(G).map(ConfigError.Generic(_))
     )
 
   implicit lazy val configErrorCogen: Cogen[ConfigError] =
     new Cogen[ConfigError] {
       def cogen[B](a: ConfigError, g: CogenState[B]): CogenState[B] =
         a match {
-          case e@ConfigError.Missing(_) => Cogen[String].cogen(s"m:${e.message}", g)
-          case e@ConfigError.Config(_)  => Cogen[String].cogen(s"c:${e.message}", g)
-          case e@ConfigError.Generic(_) => Cogen[String].cogen(s"g:${e.message}", g)
+          case e@ConfigError.Missing(_, _) => Cogen[String].cogen(s"m:${e.message}", g)
+          case e@ConfigError.Config(_, _)  => Cogen[String].cogen(s"c:${e.message}", g)
+          case e@ConfigError.Generic(_, _) => Cogen[String].cogen(s"g:${e.message}", g)
         }
     }
 

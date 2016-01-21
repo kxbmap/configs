@@ -20,6 +20,7 @@ import com.typesafe.config.{Config, ConfigValue}
 
 
 trait Configs[A] {
+  self =>
 
   def get(config: Config, path: String): Attempt[A]
 
@@ -30,13 +31,25 @@ trait Configs[A] {
     get(value.atKey(Configs.ExtractKey), Configs.ExtractKey)
 
   def map[B](f: A => B): Configs[B] =
-    (c, p) => get(c, p).map(f)
+    get(_, _).map(f)
 
   def flatMap[B](f: A => Configs[B]): Configs[B] =
     (c, p) => get(c, p).flatMap(f(_).get(c, p))
 
   def orElse[B >: A](fallback: Configs[B]): Configs[B] =
     (c, p) => get(c, p).orElse(fallback.get(c, p))
+
+  def withPath: Configs[A] =
+    new Configs[A] {
+      def get(config: Config, path: String): Attempt[A] =
+        self.get(config, path).mapErrors(_.map(_.pushPath(path)))
+
+      override def extract(config: Config): Attempt[A] =
+        self.extract(config)
+
+      override def extract(value: ConfigValue): Attempt[A] =
+        self.extract(value)
+    }
 
 }
 
@@ -59,15 +72,19 @@ object Configs extends ConfigsInstances {
 
 
   def from[A](f: (Config, String) => Attempt[A]): Configs[A] =
-    (c, p) => Attempt(f(c, p)).flatten
+    withPath((c, p) => Attempt(f(c, p)).flatten)
 
   def from[A](f: Config => Attempt[A]): Configs[A] =
     from((c, p) => f(c.getConfig(p)))
 
   def fromTry[A](f: (Config, String) => A): Configs[A] =
-    (c, p) => Attempt(f(c, p))
+    withPath((c, p) => Attempt(f(c, p)))
 
   def fromTry[A](f: Config => A): Configs[A] =
     fromTry((c, p) => f(c.getConfig(p)))
+
+
+  def withPath[A](configs: Configs[A]): Configs[A] =
+    configs.withPath
 
 }

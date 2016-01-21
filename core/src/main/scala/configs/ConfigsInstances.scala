@@ -69,7 +69,7 @@ private[configs] abstract class ConfigsInstances extends ConfigsInstances0 {
 
   implicit def optionConfigs[A](implicit A: Configs[A]): Configs[Option[A]] =
     A.get(_, _).map(Some(_)).handle {
-      case Vector(ConfigError.Missing(_)) => None
+      case Vector(ConfigError.Missing(_, _)) => None
     }
 
   implicit def tryConfigs[A](implicit A: Configs[A]): Configs[Try[A]] =
@@ -288,7 +288,7 @@ private[configs] abstract class ConfigsInstances extends ConfigsInstances0 {
 
 
   implicit lazy val configConfigs: Configs[Config] =
-    new Configs[Config] {
+    Configs.withPath(new Configs[Config] {
       def get(config: Config, path: String): Attempt[Config] =
         Attempt(config.getConfig(path))
 
@@ -300,14 +300,14 @@ private[configs] abstract class ConfigsInstances extends ConfigsInstances0 {
           case co: ConfigObject => Attempt.successful(co.toConfig)
           case _                => super.extract(value)
         }
-    }
+    })
 
   implicit lazy val configJListConfigs: Configs[ju.List[Config]] =
     Configs.fromTry(_.getConfigList(_).asInstanceOf[ju.List[Config]])
 
 
   implicit lazy val configValueConfigs: Configs[ConfigValue] =
-    new Configs[ConfigValue] {
+    Configs.withPath(new Configs[ConfigValue] {
       def get(config: Config, path: String): Attempt[ConfigValue] =
         Attempt(config.getValue(path))
 
@@ -316,7 +316,7 @@ private[configs] abstract class ConfigsInstances extends ConfigsInstances0 {
 
       override def extract(value: ConfigValue): Attempt[ConfigValue] =
         Attempt.successful(value)
-    }
+    })
 
   implicit lazy val configValueJListConfigs: Configs[ju.List[ConfigValue]] =
     Configs.fromTry(_.getList(_))

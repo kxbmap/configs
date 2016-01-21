@@ -24,6 +24,10 @@ sealed abstract class ConfigError extends Product with Serializable {
 
   def origin: Option[ConfigOrigin]
 
+  def paths: List[String]
+
+  def pushPath(path: String): ConfigError
+
   def throwable: Throwable
 
   def toConfigException: ConfigException
@@ -39,37 +43,46 @@ object ConfigError {
     }
 
 
-  case class Missing(throwable: ConfigException.Missing) extends ConfigError {
+  case class Missing(throwable: ConfigException.Missing, paths: List[String] = Nil) extends ConfigError {
 
     def message: String =
-      throwable.getMessage
+      s"${paths.mkString(".")}: ${throwable.getMessage}"
 
     def origin: Option[ConfigOrigin] =
       Option(throwable.origin())
+
+    def pushPath(path: String): ConfigError =
+      copy(paths = path :: paths)
 
     def toConfigException: ConfigException =
       throwable
   }
 
-  case class Config(throwable: ConfigException) extends ConfigError {
+  case class Config(throwable: ConfigException, paths: List[String] = Nil) extends ConfigError {
 
     def message: String =
-      throwable.getMessage
+      s"${paths.mkString(".")}: ${throwable.getMessage}"
 
     def origin: Option[ConfigOrigin] =
       Option(throwable.origin())
+
+    def pushPath(path: String): ConfigError =
+      copy(paths = path :: paths)
 
     def toConfigException: ConfigException =
       throwable
   }
 
-  case class Generic(throwable: Throwable) extends ConfigError {
+  case class Generic(throwable: Throwable, paths: List[String] = Nil) extends ConfigError {
 
     def message: String =
-      throwable.getMessage
+      s"${paths.mkString(".")}: ${throwable.getMessage}"
 
     def origin: Option[ConfigOrigin] =
       None
+
+    def pushPath(path: String): ConfigError =
+      copy(paths = path :: paths)
 
     def toConfigException: ConfigException =
       new ConfigException.Generic(throwable.getMessage, throwable)
