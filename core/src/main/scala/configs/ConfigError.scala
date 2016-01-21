@@ -16,76 +16,80 @@
 
 package configs
 
-import com.typesafe.config.{ConfigException, ConfigOrigin}
+import com.typesafe.config.{ConfigException, ConfigUtil}
 
-sealed abstract class ConfigError extends Product with Serializable {
+case class ConfigError(head: ConfigError.Entry, tail: Vector[ConfigError.Entry] = Vector.empty) {
 
-  def message: String
+  def entries: Vector[ConfigError.Entry] =
+    head +: tail
 
-  def origin: Option[ConfigOrigin]
+  def messages: Seq[String] =
+    entries.map(_.messageWithPath)
 
-  def paths: List[String]
+  def ++(that: ConfigError): ConfigError =
+    copy(tail = tail ++ that.entries)
 
-  def pushPath(path: String): ConfigError
-
-  def throwable: Throwable
-
-  def toConfigException: ConfigException
+  def withPath(path: String): ConfigError =
+    ConfigError(head.pushPath(path), tail.map(_.pushPath(path)))
 }
 
 object ConfigError {
 
+  def apply(message: String): ConfigError =
+    ConfigError(Generic(message))
+
   def fromThrowable(throwable: Throwable): ConfigError =
-    throwable match {
+    ConfigError(throwable match {
       case e: ConfigException.Missing => Missing(e)
-      case e: ConfigException         => Config(e)
-      case e                          => Generic(e)
-    }
+      case e                          => Except(e)
+    })
 
 
-  case class Missing(throwable: ConfigException.Missing, paths: List[String] = Nil) extends ConfigError {
+  sealed abstract class Entry extends Product with Serializable {
 
-    def message: String =
-      s"${paths.mkString(".")}: ${throwable.getMessage}"
+    def message: String
 
-    def origin: Option[ConfigOrigin] =
-      Option(throwable.origin())
+    def paths: List[String]
 
-    def pushPath(path: String): ConfigError =
-      copy(paths = path :: paths)
+    def messageWithPath: String =
+      if (paths.nonEmpty) s"${ConfigUtil.joinPath(paths: _*)}: $message" else message
 
-    def toConfigException: ConfigException =
-      throwable
+    def pushPath(path: String): Entry
+
+    def toConfigException: ConfigException
   }
 
-  case class Config(throwable: ConfigException, paths: List[String] = Nil) extends ConfigError {
+  case class Missing(toConfigException: ConfigException.Missing, paths: List[String] = Nil) extends Entry {
 
     def message: String =
-      s"${paths.mkString(".")}: ${throwable.getMessage}"
+      toConfigException.getMessage
 
-    def origin: Option[ConfigOrigin] =
-      Option(throwable.origin())
-
-    def pushPath(path: String): ConfigError =
+    def pushPath(path: String): Entry =
       copy(paths = path :: paths)
-
-    def toConfigException: ConfigException =
-      throwable
   }
 
-  case class Generic(throwable: Throwable, paths: List[String] = Nil) extends ConfigError {
+  case class Except(throwable: Throwable, paths: List[String] = Nil) extends Entry {
 
     def message: String =
-      s"${paths.mkString(".")}: ${throwable.getMessage}"
+      throwable.getMessage
 
-    def origin: Option[ConfigOrigin] =
-      None
-
-    def pushPath(path: String): ConfigError =
+    def pushPath(path: String): Entry =
       copy(paths = path :: paths)
 
     def toConfigException: ConfigException =
-      new ConfigException.Generic(throwable.getMessage, throwable)
+      throwable match {
+        case e: ConfigException => e
+        case e                  => new ConfigException.Generic(message, e)
+      }
+  }
+
+  case class Generic(message: String, paths: List[String] = Nil) extends Entry {
+
+    def pushPath(path: String): Entry =
+      copy(paths = path :: paths)
+
+    def toConfigException: ConfigException =
+      new ConfigException.Generic(message)
   }
 
 }

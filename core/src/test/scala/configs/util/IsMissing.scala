@@ -35,8 +35,8 @@ object IsMissing {
 
   private[this] final val default: IsMissing[Any] =
     _.value match {
-      case Attempt.Failure(Vector(ConfigError.Missing(_, _))) => true
-      case _                                                  => false
+      case Attempt.Failure(ConfigError(ConfigError.Missing(_, _ :: Nil), _)) => true
+      case _                                                                 => false
     }
 
 

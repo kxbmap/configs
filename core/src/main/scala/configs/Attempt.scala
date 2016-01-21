@@ -20,7 +20,7 @@ import scala.collection.generic.CanBuildFrom
 
 sealed abstract class Attempt[+A] extends Product with Serializable {
 
-  def fold[B](ifFailure: Vector[ConfigError] => B, ifSuccess: A => B): B
+  def fold[B](ifFailure: ConfigError => B, ifSuccess: A => B): B
 
   def map[B](f: A => B): Attempt[B]
 
@@ -34,14 +34,14 @@ sealed abstract class Attempt[+A] extends Product with Serializable {
 
   def getOrElse[B >: A](default: => B): B
 
-  def getOrHandle[B >: A](f: Vector[ConfigError] => B): B
+  def getOrHandle[B >: A](f: ConfigError => B): B
 
-  def handleWith[B >: A](pf: PartialFunction[Vector[ConfigError], Attempt[B]]): Attempt[B]
+  def handleWith[B >: A](pf: PartialFunction[ConfigError, Attempt[B]]): Attempt[B]
 
-  final def handle[B >: A](pf: PartialFunction[Vector[ConfigError], B]): Attempt[B] =
+  final def handle[B >: A](pf: PartialFunction[ConfigError, B]): Attempt[B] =
     handleWith(pf.andThen(Attempt.successful))
 
-  def mapErrors(f: Vector[ConfigError] => Vector[ConfigError]): Attempt[A]
+  def mapError(f: ConfigError => ConfigError): Attempt[A]
 
   def exists(f: A => Boolean): Boolean
 
@@ -50,11 +50,11 @@ sealed abstract class Attempt[+A] extends Product with Serializable {
 
   def foreach(f: A => Unit): Unit
 
-  def failed: Attempt[Vector[ConfigError]]
+  def failed: Attempt[ConfigError]
 
   def toOption: Option[A]
 
-  def toEither: Either[Vector[ConfigError], A]
+  def toEither: Either[ConfigError, A]
 }
 
 
@@ -70,10 +70,10 @@ object Attempt {
   def successful[A](value: A): Attempt[A] =
     Success(value)
 
-  def failure[A](e: ConfigError, es: ConfigError*): Attempt[A] =
-    Failure((e +: es).toVector)
+  def failure[A](e: ConfigError): Attempt[A] =
+    Failure(e)
 
-  def fromEither[A](either: Either[Vector[ConfigError], A]): Attempt[A] =
+  def fromEither[A](either: Either[ConfigError, A]): Attempt[A] =
     either.fold(Failure, Success(_))
 
   def fromThrowable[A](throwable: Throwable): Attempt[A] =
@@ -82,7 +82,7 @@ object Attempt {
 
   final case class Success[A](value: A) extends Attempt[A] {
 
-    override def fold[B](ifFailure: Vector[ConfigError] => B, ifSuccess: A => B): B =
+    override def fold[B](ifFailure: ConfigError => B, ifSuccess: A => B): B =
       ifSuccess(value)
 
     override def map[B](f: A => B): Attempt[B] =
@@ -110,13 +110,13 @@ object Attempt {
     override def getOrElse[B >: A](default: => B): B =
       value
 
-    override def getOrHandle[B >: A](f: Vector[ConfigError] => B): B =
+    override def getOrHandle[B >: A](f: ConfigError => B): B =
       value
 
-    override def handleWith[B >: A](pf: PartialFunction[Vector[ConfigError], Attempt[B]]): Attempt[B] =
+    override def handleWith[B >: A](pf: PartialFunction[ConfigError, Attempt[B]]): Attempt[B] =
       this
 
-    override def mapErrors(f: Vector[ConfigError] => Vector[ConfigError]): Attempt[A] =
+    override def mapError(f: ConfigError => ConfigError): Attempt[A] =
       this
 
     override def exists(f: A => Boolean): Boolean =
@@ -125,22 +125,22 @@ object Attempt {
     override def foreach(f: A => Unit): Unit =
       f(value)
 
-    override def failed: Attempt[Vector[ConfigError]] =
-      failure(ConfigError.Generic(new UnsupportedOperationException("Success.failed")))
+    override def failed: Attempt[ConfigError] =
+      Failure(ConfigError("Success.failed"))
 
     override def toOption: Option[A] =
       Some(value)
 
-    override def toEither: Either[Vector[ConfigError], A] =
+    override def toEither: Either[ConfigError, A] =
       Right(value)
 
   }
 
 
-  final case class Failure(errors: Vector[ConfigError]) extends Attempt[Nothing] {
+  final case class Failure(error: ConfigError) extends Attempt[Nothing] {
 
-    override def fold[B](ifFailure: Vector[ConfigError] => B, ifSuccess: Nothing => B): B =
-      ifFailure(errors)
+    override def fold[B](ifFailure: ConfigError => B, ifSuccess: Nothing => B): B =
+      ifFailure(error)
 
     override def map[B](f: Nothing => B): Attempt[B] =
       this
@@ -154,7 +154,7 @@ object Attempt {
     override def ap[B](f: Attempt[Nothing => B]): Attempt[B] =
       f match {
         case Success(_)  => this
-        case Failure(es) => Failure(es ++ errors)
+        case Failure(es) => Failure(es ++ error)
       }
 
     override def orElse[B >: Nothing](fallback: => Attempt[B]): Attempt[B] =
@@ -163,19 +163,19 @@ object Attempt {
     override def getOrElse[B >: Nothing](default: => B): B =
       default
 
-    override def getOrHandle[B >: Nothing](f: Vector[ConfigError] => B): B =
-      f(errors)
+    override def getOrHandle[B >: Nothing](f: ConfigError => B): B =
+      f(error)
 
-    override def handleWith[B >: Nothing](pf: PartialFunction[Vector[ConfigError], Attempt[B]]): Attempt[B] =
+    override def handleWith[B >: Nothing](pf: PartialFunction[ConfigError, Attempt[B]]): Attempt[B] =
       try
-        if (pf.isDefinedAt(errors)) pf(errors) else this
+        if (pf.isDefinedAt(error)) pf(error) else this
       catch {
         case e: Throwable => fromThrowable(e)
       }
 
-    override def mapErrors(f: Vector[ConfigError] => Vector[ConfigError]): Attempt[Nothing] =
+    override def mapError(f: ConfigError => ConfigError): Attempt[Nothing] =
       try
-        Failure(f(errors))
+        Failure(f(error))
       catch {
         case e: Throwable => fromThrowable(e)
       }
@@ -186,14 +186,14 @@ object Attempt {
     override def foreach(f: Nothing => Unit): Unit =
       ()
 
-    override def failed: Attempt[Vector[ConfigError]] =
-      Success(errors)
+    override def failed: Attempt[ConfigError] =
+      Success(error)
 
     override def toOption: Option[Nothing] =
       None
 
-    override def toEither: Either[Vector[ConfigError], Nothing] =
-      Left(errors)
+    override def toEither: Either[ConfigError, Nothing] =
+      Left(error)
   }
 
 

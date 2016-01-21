@@ -34,7 +34,7 @@ object IsBadValue {
     default.asInstanceOf[IsBadValue[A]]
 
   private[this] final val default: IsBadValue[Any] =
-    _.value.fold(_.headOption.exists(_.throwable.isInstanceOf[ConfigException.BadValue]), _ => false)
+    _.value.fold(_.head.toConfigException.isInstanceOf[ConfigException.BadValue], _ => false)
 
 
   implicit def eitherIsBadValue[A]: IsBadValue[Either[Throwable, A]] =

@@ -34,7 +34,7 @@ object IsWrongType {
     default.asInstanceOf[IsWrongType[A]]
 
   private[this] final val default: IsWrongType[Any] =
-    _.value.fold(_.headOption.exists(_.throwable.isInstanceOf[ConfigException.WrongType]), _ => false)
+    _.value.fold(_.head.toConfigException.isInstanceOf[ConfigException.WrongType], _ => false)
 
 
   implicit def eitherIsWrongType[A]: IsWrongType[Either[Throwable, A]] =

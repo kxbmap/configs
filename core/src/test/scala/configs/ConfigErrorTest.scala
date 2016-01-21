@@ -19,40 +19,54 @@ package configs
 import com.typesafe.config.ConfigException
 import configs.util._
 import scala.util.control.NoStackTrace
-import scalaprops.{Cogen, CogenState, Gen, Scalaprops}
-import scalaz.Equal
+import scalaprops.{Cogen, CogenState, Gen, Scalaprops, scalazlaws}
+import scalaz.{Equal, NonEmptyList, Semigroup}
 
 object ConfigErrorTest extends Scalaprops with ConfigErrorImplicits {
+
+  val laws = scalazlaws.semigroup.all[ConfigError]
 
 }
 
 trait ConfigErrorImplicits {
 
+  implicit lazy val configErrorSemigroup: Semigroup[ConfigError] =
+    _ ++ _
+
   implicit lazy val configErrorEqual: Equal[ConfigError] =
     Equal.equalA[ConfigError]
 
 
-  private case class M(m: String) extends ConfigException.Missing(m) with NoStackTrace
+  private case class M(n: Int) extends ConfigException.Missing(n.toString) with NoStackTrace
 
-  private case class C(m: String) extends ConfigException(m) with NoStackTrace
+  private case class C(n: Int) extends ConfigException.Generic(n.toString) with NoStackTrace
 
-  private case class G(m: String) extends RuntimeException(m) with NoStackTrace
+  private case class E(n: Int) extends RuntimeException(n.toString) with NoStackTrace
 
-  implicit lazy val configErrorGen: Gen[ConfigError] =
+  implicit lazy val configErrorEntryGen: Gen[ConfigError.Entry] =
     Gen.oneOf(
-      Gen[String].map(M).map(ConfigError.Missing(_)),
-      Gen[String].map(C).map(ConfigError.Config(_)),
-      Gen[String].map(G).map(ConfigError.Generic(_))
+      Gen[Int].map(M).map(ConfigError.Missing(_)),
+      Gen[Int].map(C).map(ConfigError.Except(_)),
+      Gen[Int].map(E).map(ConfigError.Except(_)),
+      Gen[String].map(ConfigError.Generic(_))
     )
 
-  implicit lazy val configErrorCogen: Cogen[ConfigError] =
-    new Cogen[ConfigError] {
-      def cogen[B](a: ConfigError, g: CogenState[B]): CogenState[B] =
+  implicit lazy val configErrorEntryCogen: Cogen[ConfigError.Entry] =
+    new Cogen[ConfigError.Entry] {
+      def cogen[B](a: ConfigError.Entry, g: CogenState[B]): CogenState[B] =
         a match {
-          case e@ConfigError.Missing(_, _) => Cogen[String].cogen(s"m:${e.message}", g)
-          case e@ConfigError.Config(_, _)  => Cogen[String].cogen(s"c:${e.message}", g)
-          case e@ConfigError.Generic(_, _) => Cogen[String].cogen(s"g:${e.message}", g)
+          case ConfigError.Missing(M(n), _) => Cogen[Int].cogen(n * 3, g)
+          case ConfigError.Except(C(n), _)  => Cogen[Int].cogen(n * 3 + 1, g)
+          case ConfigError.Except(E(n), _)  => Cogen[Int].cogen(n * 3 + 2, g)
+          case ConfigError.Generic(m, _)    => Cogen[String].cogen(m, g)
+          case _                            => sys.error("bug or broken")
         }
     }
+
+  implicit lazy val configErrorGen: Gen[ConfigError] =
+    Gen[NonEmptyList[ConfigError.Entry]].map(xs => ConfigError(xs.head, xs.tail.toVector))
+
+  implicit lazy val configErrorCogen: Cogen[ConfigError] =
+    Cogen[NonEmptyList[ConfigError.Entry]].contramap(e => NonEmptyList(e.head, e.tail: _*))
 
 }

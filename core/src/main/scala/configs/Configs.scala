@@ -42,7 +42,7 @@ trait Configs[A] {
     (c, p) => get(c, p).orElse(fallback.get(c, p))
 
   def withPath: Configs[A] =
-    (c, p) => get(c, p).mapErrors(_.map(_.pushPath(p)))
+    (c, p) => get(c, p).mapError(_.withPath(p))
 
   def withExtractKey(key: String): Configs[A] =
     new Configs[A] {
