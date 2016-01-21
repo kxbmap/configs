@@ -48,6 +48,12 @@ object ConfigError {
     })
 
 
+  object Single {
+    def unapply(e: ConfigError): Option[Entry] =
+      if (e.tail.isEmpty) Some(e.head) else None
+  }
+
+
   sealed abstract class Entry extends Product with Serializable {
 
     def message: String
