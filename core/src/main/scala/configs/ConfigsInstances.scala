@@ -69,17 +69,17 @@ private[configs] abstract class ConfigsInstances extends ConfigsInstances0 {
 
   implicit def optionConfigs[A](implicit A: Configs[A]): Configs[Option[A]] =
     A.get(_, _).map(Some(_)).handle {
-      case ConfigError.Missing(_) => None
+      case Vector(ConfigError.Missing(_)) => None
     }
 
   implicit def tryConfigs[A](implicit A: Configs[A]): Configs[Try[A]] =
     A.get(_, _).map(Success(_)).handle {
-      case e => Failure(e.throwable)
+      case Vector(e, _@_*) => Failure(e.throwable)
     }
 
   implicit def eitherConfigs[E <: Throwable, A](implicit E: ClassTag[E], A: Configs[A]): Configs[Either[E, A]] =
     A.get(_, _).map(Right(_)).handle {
-      case e if E.runtimeClass.isAssignableFrom(e.throwable.getClass) =>
+      case Vector(e, _@_*) if E.runtimeClass.isAssignableFrom(e.throwable.getClass) =>
         Left(e.throwable.asInstanceOf[E])
     }
 

@@ -104,7 +104,7 @@ object ConfigsTest extends Scalaprops {
     }
     val p3 = forAll {
       ce.orElse(ce).get(config, "dummy").fold(
-        e => e.messages == Seq("CE"),
+        es => es.map(_.message) == Vector("CE"),
         _ => false
       )
     }
