@@ -63,7 +63,7 @@ sealed abstract class Result[+A] extends Product with Serializable {
 
 object Result {
 
-  def apply[A](a: => A): Result[A] =
+  def Try[A](a: => A): Result[A] =
     try
       Success(a)
     catch {
@@ -89,7 +89,7 @@ object Result {
       ifSuccess(value)
 
     override def map[B](f: A => B): Result[B] =
-      Result(f(value))
+      Result.Try(f(value))
 
     override def flatMap[B](f: A => Result[B]): Result[B] =
       try
@@ -103,7 +103,7 @@ object Result {
 
     override def ap[B](f: Result[A => B]): Result[B] =
       f match {
-        case Success(f0)   => Result(f0(value))
+        case Success(f0)   => Result.Try(f0(value))
         case fa@Failure(_) => fa
       }
 

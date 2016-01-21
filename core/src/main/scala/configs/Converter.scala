@@ -40,10 +40,10 @@ object Converter {
 
 
   def from[A, B](f: A => Result[B]): Converter[A, B] =
-    a => Result(f(a)).flatten
+    a => Result.Try(f(a)).flatten
 
   def fromTry[A, B](f: A => B): Converter[A, B] =
-    a => Result(f(a))
+    a => Result.Try(f(a))
 
 
   type FromString[A] = Converter[String, A]

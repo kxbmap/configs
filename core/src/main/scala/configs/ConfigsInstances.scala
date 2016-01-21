@@ -297,7 +297,7 @@ private[configs] abstract class ConfigsInstances extends ConfigsInstances0 {
   implicit lazy val configConfigs: Configs[Config] =
     Configs.withPath(new Configs[Config] {
       def get(config: Config, path: String): Result[Config] =
-        Result(config.getConfig(path))
+        Result.Try(config.getConfig(path))
 
       override def extract(config: Config): Result[Config] =
         Result.successful(config)
@@ -316,7 +316,7 @@ private[configs] abstract class ConfigsInstances extends ConfigsInstances0 {
   implicit lazy val configValueConfigs: Configs[ConfigValue] =
     Configs.withPath(new Configs[ConfigValue] {
       def get(config: Config, path: String): Result[ConfigValue] =
-        Result(config.getValue(path))
+        Result.Try(config.getValue(path))
 
       override def extract(config: Config): Result[ConfigValue] =
         Result.successful(config.root())

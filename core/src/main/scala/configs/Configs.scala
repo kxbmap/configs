@@ -72,13 +72,13 @@ object Configs extends ConfigsInstances {
 
 
   def from[A](f: (Config, String) => Result[A]): Configs[A] =
-    withPath((c, p) => Result(f(c, p)).flatten)
+    withPath((c, p) => Result.Try(f(c, p)).flatten)
 
   def from[A](f: Config => Result[A]): Configs[A] =
     from((c, p) => f(c.getConfig(p)))
 
   def fromTry[A](f: (Config, String) => A): Configs[A] =
-    withPath((c, p) => Result(f(c, p)))
+    withPath((c, p) => Result.Try(f(c, p)))
 
   def fromTry[A](f: Config => A): Configs[A] =
     fromTry((c, p) => f(c.getConfig(p)))
