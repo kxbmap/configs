@@ -294,6 +294,12 @@ private[configs] abstract class ConfigsInstances extends ConfigsInstances0 {
 
       override def extract(config: Config): Attempt[Config] =
         Attempt.successful(config)
+
+      override def extract(value: ConfigValue): Attempt[Config] =
+        value match {
+          case co: ConfigObject => Attempt.successful(co.toConfig)
+          case _                => super.extract(value)
+        }
     }
 
   implicit lazy val configJListConfigs: Configs[ju.List[Config]] =
