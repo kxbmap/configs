@@ -81,12 +81,12 @@ private[configs] abstract class ConfigsInstances extends ConfigsInstances0 {
 
   implicit def tryConfigs[A](implicit A: Configs[A]): Configs[Try[A]] =
     A.get(_, _).map(Success(_)).handle {
-      case ConfigError(e, _) => Failure(e.toConfigException)
+      case e => Failure(e.toConfigException)
     }
 
   implicit def eitherConfigs[E <: Throwable, A](implicit E: ClassTag[E], A: Configs[A]): Configs[Either[E, A]] =
     A.get(_, _).map(Right(_)).handle {
-      case ConfigError(e, _) if E.runtimeClass.isAssignableFrom(e.toConfigException.getClass) =>
+      case e if E.runtimeClass.isAssignableFrom(e.toConfigException.getClass) =>
         Left(e.toConfigException.asInstanceOf[E])
     }
 
