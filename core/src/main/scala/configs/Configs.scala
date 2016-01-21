@@ -24,11 +24,13 @@ trait Configs[A] {
 
   def get(config: Config, path: String): Attempt[A]
 
+  def extractKey: String = "extract"
+
   def extract(config: Config): Attempt[A] =
-    get(config.atKey(Configs.ExtractKey), Configs.ExtractKey)
+    get(config.atKey(extractKey), extractKey)
 
   def extract(value: ConfigValue): Attempt[A] =
-    get(value.atKey(Configs.ExtractKey), Configs.ExtractKey)
+    get(value.atKey(extractKey), extractKey)
 
   def map[B](f: A => B): Configs[B] =
     get(_, _).map(f)
@@ -40,22 +42,20 @@ trait Configs[A] {
     (c, p) => get(c, p).orElse(fallback.get(c, p))
 
   def withPath: Configs[A] =
+    (c, p) => get(c, p).mapErrors(_.map(_.pushPath(p)))
+
+  def withExtractKey(key: String): Configs[A] =
     new Configs[A] {
       def get(config: Config, path: String): Attempt[A] =
-        self.get(config, path).mapErrors(_.map(_.pushPath(path)))
+        self.get(config, path)
 
-      override def extract(config: Config): Attempt[A] =
-        self.extract(config)
-
-      override def extract(value: ConfigValue): Attempt[A] =
-        self.extract(value)
+      override def extractKey: String =
+        key
     }
 
 }
 
 object Configs extends ConfigsInstances {
-
-  private final val ExtractKey = "configs-extract"
 
   @inline
   def apply[A](implicit A: Configs[A]): Configs[A] = A

@@ -36,7 +36,11 @@ private[configs] sealed abstract class ConfigsInstances0 extends MacroConfigsIns
 
   implicit def javaListConfigs[A](implicit A: Configs[A]): Configs[ju.List[A]] =
     Configs.from { (c, p) =>
-      Attempt.sequence(c.getList(p).asScala.map(A.extract)).map(_.asJava)
+      Attempt.sequence(
+        c.getList(p).asScala.zipWithIndex.map {
+          case (v, i) => A.withExtractKey(i.toString).extract(v)
+        })
+        .map(_.asJava)
     }
 
 }
@@ -55,7 +59,9 @@ private[configs] abstract class ConfigsInstances extends ConfigsInstances0 {
   implicit def javaMapConfigs[A, B](implicit A: Converter[String, A], B: Configs[B]): Configs[ju.Map[A, B]] =
     Configs.from { c =>
       Attempt.sequence(
-        c.root().asScala.keysIterator.map(k => Attempt.tuple2(A.convert(k), B.get(c, ConfigUtil.quoteString(k)))))
+        c.root().asScala.keysIterator.map {
+          k => Attempt.tuple2(A.convert(k), B.get(c, ConfigUtil.quoteString(k)))
+        })
         .map(_.toMap.asJava)
     }
 
@@ -326,7 +332,11 @@ private[configs] abstract class ConfigsInstances extends ConfigsInstances0 {
 
   implicit def configValueJMapKeyConfigs[A](implicit A: Converter[String, A]): Configs[ju.Map[A, ConfigValue]] =
     configObjectConfigs.get(_, _).flatMap { co =>
-      Attempt.sequence(co.asScala.map { case (k, v) => A.convert(k).map(_ -> v) }).map(_.toMap.asJava)
+      Attempt.sequence(
+        co.asScala.map {
+          case (k, v) => A.convert(k).map(_ -> v)
+        })
+        .map(_.toMap.asJava)
     }
 
 
