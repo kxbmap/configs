@@ -65,10 +65,10 @@ object Converter {
 
   implicit def javaEnumFromString[A <: jl.Enum[A]](implicit A: ClassTag[A]): FromString[A] = {
     val enums = A.runtimeClass.asInstanceOf[Class[A]].getEnumConstants
-    fromTry { s =>
-      enums.find(_.name() == s).getOrElse {
-        throw new NoSuchElementException(s"$s must be one of ${enums.mkString(", ")}")
-      }
+    from { s =>
+      enums.find(_.name() == s).fold(
+        Result.failure[A](ConfigError(s"$s must be one of ${enums.mkString(", ")}")))(
+        Result.successful)
     }
   }
 
@@ -76,10 +76,10 @@ object Converter {
     fromTry(UUID.fromString)
 
   implicit lazy val localeFromString: FromString[Locale] =
-    fromTry { s =>
-      Locale.getAvailableLocales.find(_.toString == s).getOrElse {
-        throw new NoSuchElementException(s"Locale '$s' is not available")
-      }
+    from { s =>
+      Locale.getAvailableLocales.find(_.toString == s).fold(
+        Result.failure[Locale](ConfigError(s"Locale '$s' is not available")))(
+        Result.successful)
     }
 
   implicit lazy val pathFromString: FromString[Path] =
