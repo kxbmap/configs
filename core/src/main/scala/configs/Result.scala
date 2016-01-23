@@ -34,10 +34,10 @@ sealed abstract class Result[+A] extends Product with Serializable {
 
   def getOrElse[B >: A](default: => B): B
 
-  def getOrHandle[B >: A](f: ConfigError => B): B
-
   final def getOrThrow: A =
-    getOrHandle(e => throw e.toConfigException)
+    valueOr(e => throw e.toConfigException)
+
+  def valueOr[B >: A](f: ConfigError => B): B
 
   def handleWith[B >: A](pf: PartialFunction[ConfigError, Result[B]]): Result[B]
 
@@ -113,7 +113,7 @@ object Result {
     override def getOrElse[B >: A](default: => B): B =
       value
 
-    override def getOrHandle[B >: A](f: ConfigError => B): B =
+    override def valueOr[B >: A](f: ConfigError => B): B =
       value
 
     override def handleWith[B >: A](pf: PartialFunction[ConfigError, Result[B]]): Result[B] =
@@ -166,7 +166,7 @@ object Result {
     override def getOrElse[B >: Nothing](default: => B): B =
       default
 
-    override def getOrHandle[B >: Nothing](f: ConfigError => B): B =
+    override def valueOr[B >: Nothing](f: ConfigError => B): B =
       f(error)
 
     override def handleWith[B >: Nothing](pf: PartialFunction[ConfigError, Result[B]]): Result[B] =
