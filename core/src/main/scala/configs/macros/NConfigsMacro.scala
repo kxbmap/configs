@@ -85,6 +85,8 @@ private[macros] abstract class NHelper {
   }
 
   sealed abstract class Method {
+    def method: MethodSymbol
+
     def applyTrees(args: Seq[Seq[Tree]]): Tree
 
     def applyTerms(args: Seq[Seq[TermName]]): Tree =
@@ -92,15 +94,18 @@ private[macros] abstract class NHelper {
 
     def returnType: Type
 
-    def paramLists: List[List[Param]]
+    def paramLists: List[List[Param]] =
+      method.paramLists.map(_.map(Param))
   }
 
   case class ApplyMethod(returnType: Type, module: ModuleSymbol, method: MethodSymbol) extends Method {
     def applyTrees(args: Seq[Seq[Tree]]): Tree =
       q"$module.$method(...$args)"
+  }
 
-    def paramLists: List[List[Param]] =
-      method.paramLists.map(_.map(Param))
+  case class Constructor(returnType: Type, method: MethodSymbol) extends Method {
+    def applyTrees(args: Seq[Seq[Tree]]): Tree =
+      q"new $returnType(...$args)"
   }
 
 }
@@ -113,20 +118,32 @@ class NConfigsMacro(val c: blackbox.Context) extends NHelper {
     val tpe = weakTypeOf[A]
     val instance = tpe.typeSymbol match {
       case typeSym if typeSym.isClass =>
+        typeSym.info // SI-7046
         val classSym = typeSym.asClass
-        if (classSym.isCaseClass)
-          caseClassConfigs(tpe, classSym.companion.asModule)
-        else
-          abort(s"$tpe is not case class")
+        if (classSym.isAbstract) {
+          if (classSym.isSealed)
+            sealedClassConfigs(tpe, classSym)
+          else
+            abort(s"$tpe is abstract but not sealed")
+        } else {
+          if (classSym.isCaseClass)
+            caseClassConfigs(tpe, classSym.companion.asModule)
+          else
+            plainClassConfigs(tpe)
+        }
 
-      case _ =>
-        abort(s"$tpe is not class")
+      case _ => abort(s"$tpe is not class")
     }
     val self = freshName("s")
     q"""
       implicit lazy val $self: ${tConfigs(tpe)} = $instance
       $self
      """
+  }
+
+
+  private def sealedClassConfigs(tpe: Type, classSym: ClassSymbol): Tree = {
+    ???
   }
 
   private def caseClassConfigs(tpe: Type, module: ModuleSymbol): Tree = {
@@ -143,6 +160,17 @@ class NConfigsMacro(val c: blackbox.Context) extends NHelper {
       abort(s"$tpe has no available apply methods")
     else
       applies.map(methodConfigs).reduceLeft((l, r) => q"$l.orElse($r)")
+  }
+
+  private def plainClassConfigs(tpe: Type): Tree = {
+    val ctors = tpe.decls.sorted.collect {
+      case m: MethodSymbol if m.isConstructor && m.isPublic && length(m.paramLists) > 0 =>
+        Constructor(tpe, m)
+    }
+    if (ctors.isEmpty)
+      abort(s"$tpe has no public constructor")
+    else
+      ctors.map(methodConfigs).reduceLeft((l, r) => q"$l.orElse($r)")
   }
 
   private def methodConfigs(method: Method): Tree = {

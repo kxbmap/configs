@@ -20,14 +20,16 @@ import com.typesafe.config.ConfigFactory
 import configs.util._
 import scalaprops.Property.forAll
 import scalaprops.{Gen, Properties, Scalaprops}
+import scalaz.std.anyVal._
 import scalaz.std.string._
+import scalaz.std.tuple._
 import scalaz.syntax.equal._
 import scalaz.{Apply, Equal}
 
 
 object DeriveConfigsTest extends Scalaprops {
 
-  def checkMat[A: Gen : Configs : ToConfigValue : Equal] =
+  def checkDerived[A: Gen : Configs : ToConfigValue : Equal] =
     forAll { a: A =>
       Configs[A].extract(a.toConfigValue).exists(_ === a)
     }
@@ -49,7 +51,7 @@ object DeriveConfigsTest extends Scalaprops {
         ))
   }
 
-  val caseClass1 = checkMat[CC1]
+  val caseClass1 = checkDerived[CC1]
 
 
   case class CC22(
@@ -72,7 +74,7 @@ object DeriveConfigsTest extends Scalaprops {
         }.toMap)
   }
 
-  val caseClass22 = checkMat[CC22]
+  val caseClass22 = checkDerived[CC22]
 
 
   case class CC23(
@@ -99,7 +101,7 @@ object DeriveConfigsTest extends Scalaprops {
         }.toMap)
   }
 
-  val caseClass23 = checkMat[CC23]
+  val caseClass23 = checkDerived[CC23]
 
 
   case class SubApply(a1: Int, a2: Int)
@@ -124,7 +126,7 @@ object DeriveConfigsTest extends Scalaprops {
   }
 
   val subApply = {
-    val p1 = checkMat[SubApply]
+    val p1 = checkDerived[SubApply]
     val p2 =
       forAll { (a1: Int, a2: Int, s1: Int, s2: Int) =>
         val c = ConfigFactory.parseString(
@@ -133,11 +135,49 @@ object DeriveConfigsTest extends Scalaprops {
              |s1 = $s1
              |s2 = $s2
            """.stripMargin)
-        Configs[SubApply].extract(c).exists(_ == SubApply(a1, a2))
+        Configs[SubApply].extract(c).exists(_ === SubApply(a1, a2))
       }
     Properties.list(
       p1.toProperties("sub apply"),
       p2.toProperties("synthetic first")
+    )
+  }
+
+
+  class PlainClass(val a1: Int, val a2: Int, val a3: Int) {
+    def this(a1: Int, a2: Int) =
+      this(a1, a2, 42)
+  }
+
+  object PlainClass {
+    implicit lazy val gen: Gen[PlainClass] =
+      Apply[Gen].apply3(Gen[Int], Gen[Int], Gen[Int])(new PlainClass(_, _, _))
+
+    implicit lazy val equal: Equal[PlainClass] =
+      Equal.equalBy(p => (p.a1, p.a2, p.a3))
+
+    implicit lazy val toConfigValue: ToConfigValue[PlainClass] =
+      ToConfigValue.fromMap(p =>
+        Map(
+          "a1" -> p.a1.toConfigValue,
+          "a2" -> p.a2.toConfigValue,
+          "a3" -> p.a3.toConfigValue
+        ))
+  }
+
+  val plainClass = {
+    val p1 = checkDerived[PlainClass]
+    val p2 =
+      forAll { (a1: Int, a2: Int) =>
+        val c = ConfigFactory.parseString(
+          s"""a1 = $a1
+             |a2 = $a2
+           """.stripMargin)
+        Configs[PlainClass].extract(c).exists(_ === new PlainClass(a1, a2, 42))
+      }
+    Properties.list(
+      p1.toProperties("plain class"),
+      p2.toProperties("sub constructor")
     )
   }
 
