@@ -61,8 +61,8 @@ object Configs extends ConfigsInstances {
   def apply[A](implicit A: Configs[A]): Configs[A] = A
 
 
-  def of[A]: Configs[A] =
-    macro macros.ConfigsMacro.materialize[A]
+  def derive[A]: Configs[A] =
+    macro macros.NConfigsMacro.materializeConfigs[A]
 
   def bean[A]: Configs[A] =
     macro macros.BeanConfigsMacro.materializeA[A]
