@@ -57,7 +57,7 @@ private[configs] abstract class ConfigsInstances extends ConfigsInstances0 {
     C.map(_.asScala.toSet.asJava)
 
   implicit def javaMapConfigs[A, B](implicit A: Converter[String, A], B: Configs[B]): Configs[ju.Map[A, B]] =
-    Configs.from { c =>
+    Configs.fromConfig { c =>
       Result.sequence(
         c.root().asScala.keysIterator.map {
           k => Result.tuple2(A.convert(k), B.get(c, ConfigUtil.quoteString(k)))

@@ -74,15 +74,20 @@ object Configs extends ConfigsInstances {
   def from[A](f: (Config, String) => Result[A]): Configs[A] =
     withPath((c, p) => Result.Try(f(c, p)).flatten)
 
-  def from[A](f: Config => Result[A]): Configs[A] =
+  def fromConfig[A](f: Config => Result[A]): Configs[A] =
     from((c, p) => f(c.getConfig(p)))
 
   def fromTry[A](f: (Config, String) => A): Configs[A] =
     withPath((c, p) => Result.Try(f(c, p)))
 
-  def fromTry[A](f: Config => A): Configs[A] =
+  def fromConfigTry[A](f: Config => A): Configs[A] =
     fromTry((c, p) => f(c.getConfig(p)))
 
+  def failure[A](msg: String): Configs[A] =
+    withPath((c, p) => Result.failure(ConfigError(msg)))
+
+  def get[A](path: String)(implicit A: Configs[A]): Configs[A] =
+    (c, p) => Configs[Config].get(c, p).flatMap(A.get(_, path))
 
   def withPath[A](configs: Configs[A]): Configs[A] =
     configs.withPath

@@ -28,20 +28,28 @@ private[macros] abstract class NHelper {
   lazy val tConfig =
     tq"_root_.com.typesafe.config.Config"
 
+  lazy val ConfigException =
+    q"_root_.com.typesafe.config.ConfigException"
+
   lazy val Configs =
     q"_root_.configs.Configs"
 
   def tConfigs(arg: Type): Tree =
     tq"_root_.configs.Configs[$arg]"
 
+  lazy val tString = typeOf[String]
+
   val MaxApplyN = 22
   val MaxTupleN = 22
 
+  lazy val Result =
+    q"_root_.configs.Result"
+
   def applyResultN(n: Int): Tree =
-    q"_root_.configs.Result.${TermName(s"apply$n")}"
+    q"$Result.${TermName(s"apply$n")}"
 
   def tupleResultN(n: Int): Tree =
-    q"_root_.configs.Result.${TermName(s"tuple$n")}"
+    q"$Result.${TermName(s"tuple$n")}"
 
   def tTupleN(n: Int): Tree =
     tq"_root_.scala.${TypeName(s"Tuple$n")}"
@@ -92,20 +100,18 @@ private[macros] abstract class NHelper {
     def applyTerms(args: Seq[Seq[TermName]]): Tree =
       applyTrees(args.map(_.map(t => q"$t")))
 
-    def returnType: Type
-
     def paramLists: List[List[Param]] =
       method.paramLists.map(_.map(Param))
   }
 
-  case class ApplyMethod(returnType: Type, module: ModuleSymbol, method: MethodSymbol) extends Method {
+  case class ApplyMethod(module: ModuleSymbol, method: MethodSymbol) extends Method {
     def applyTrees(args: Seq[Seq[Tree]]): Tree =
       q"$module.$method(...$args)"
   }
 
-  case class Constructor(returnType: Type, method: MethodSymbol) extends Method {
+  case class Constructor(tpe: Type, method: MethodSymbol) extends Method {
     def applyTrees(args: Seq[Seq[Tree]]): Tree =
-      q"new $returnType(...$args)"
+      q"new $tpe(...$args)"
   }
 
 }
@@ -118,7 +124,6 @@ class NConfigsMacro(val c: blackbox.Context) extends NHelper {
     val tpe = weakTypeOf[A]
     val instance = tpe.typeSymbol match {
       case typeSym if typeSym.isClass =>
-        typeSym.info // SI-7046
         val classSym = typeSym.asClass
         if (classSym.isAbstract) {
           if (classSym.isSealed)
@@ -143,15 +148,63 @@ class NConfigsMacro(val c: blackbox.Context) extends NHelper {
 
 
   private def sealedClassConfigs(tpe: Type, classSym: ClassSymbol): Tree = {
-    ???
+    val knownSubclasses = {
+      def go(cs: ClassSymbol): List[ClassSymbol] =
+        if (cs.isSealed) {
+          val subs = cs.knownDirectSubclasses.toList.map(_.asClass).flatMap(go)
+          if (cs.isAbstract) subs else cs :: subs
+        }
+        else if (!cs.isAbstract) List(cs)
+        else Nil
+      go(classSym)
+    }
+    if (knownSubclasses.isEmpty)
+      abort(s"$tpe has no known sub classes")
+
+    val parts = knownSubclasses.map { cs =>
+      val name = nameOf(cs)
+      val inst =
+        if (cs.isModuleClass)
+          q"$Configs.fromConfig[$tpe](_ => $Result.successful(${cs.module}))"
+        else if (cs.isCaseClass)
+          caseClassConfigs(cs.toType, cs.companion.asModule, tpe)
+        else
+          plainClassConfigs(cs.toType, tpe)
+      val module =
+        if (cs.isModuleClass) Some(cs.module) else None
+      (cq"$name => $inst", module.map(m => cq"$name => $m"))
+    }
+
+    val typeKey = "type"
+    val typeInst =
+      q"""
+        $Configs.get[$tString]($typeKey).flatMap[$tpe] {
+          case ..${parts.map(_._1)}
+          case s => $Configs.failure("unknown type: " + s)
+        }
+       """
+    if (parts.forall(_._2.isEmpty)) typeInst
+    else {
+      val moduleInst =
+        q"""
+          $Configs[$tString].map[$tpe] {
+            case ..${parts.flatMap(_._2)}
+            case s => throw new $ConfigException.Generic("unknown module: " + s)
+          }
+         """
+      q"$moduleInst.orElse($typeInst)"
+    }
   }
 
-  private def caseClassConfigs(tpe: Type, module: ModuleSymbol): Tree = {
-    val applies = module.infoIn(tpe).decls.sorted
+  private def caseClassConfigs(tpe: Type, module: ModuleSymbol): Tree =
+    caseClassConfigs(tpe, module, tpe)
+
+  private def caseClassConfigs(tpe: Type, module: ModuleSymbol, target: Type): Tree = {
+    val applies = module.info.decls.sorted
       .collect {
         case m: MethodSymbol
           if m.isPublic && m.returnType =:= tpe && nameOf(m) == "apply" && length(m.paramLists) > 0 =>
-          ApplyMethod(tpe, module, m)
+          ApplyMethod(module, m)
       }
       // synthetic first
       .sortBy(!_.method.isSynthetic)
@@ -159,10 +212,13 @@ class NConfigsMacro(val c: blackbox.Context) extends NHelper {
     if (applies.isEmpty)
       abort(s"$tpe has no available apply methods")
     else
-      applies.map(methodConfigs).reduceLeft((l, r) => q"$l.orElse($r)")
+      applies.map(methodConfigs(_, target)).reduceLeft((l, r) => q"$l.orElse($r)")
   }
 
-  private def plainClassConfigs(tpe: Type): Tree = {
+  private def plainClassConfigs(tpe: Type): Tree =
+    plainClassConfigs(tpe, tpe)
+
+  private def plainClassConfigs(tpe: Type, target: Type): Tree = {
     val ctors = tpe.decls.sorted.collect {
       case m: MethodSymbol if m.isConstructor && m.isPublic && length(m.paramLists) > 0 =>
         Constructor(tpe, m)
@@ -170,10 +226,10 @@ class NConfigsMacro(val c: blackbox.Context) extends NHelper {
     if (ctors.isEmpty)
       abort(s"$tpe has no public constructor")
     else
-      ctors.map(methodConfigs).reduceLeft((l, r) => q"$l.orElse($r)")
+      ctors.map(methodConfigs(_, target)).reduceLeft((l, r) => q"$l.orElse($r)")
   }
 
-  private def methodConfigs(method: Method): Tree = {
+  private def methodConfigs(method: Method, target: Type): Tree = {
     val config = freshName("c")
     val paramLists = method.paramLists
     val configs = mutable.Buffer[(Type, TermName, Tree)]()
@@ -246,7 +302,7 @@ class NConfigsMacro(val c: blackbox.Context) extends NHelper {
       case (_, n, t) => q"val $n = $t"
     }
     q"""
-      $Configs.from[${method.returnType}] { $config: $tConfig =>
+      $Configs.fromConfig[$target] { $config: $tConfig =>
         ..$vals
         $body
       }

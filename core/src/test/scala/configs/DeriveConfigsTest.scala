@@ -31,7 +31,12 @@ object DeriveConfigsTest extends Scalaprops {
 
   def checkDerived[A: Gen : Configs : ToConfigValue : Equal] =
     forAll { a: A =>
-      Configs[A].extract(a.toConfigValue).exists(_ === a)
+      val actual = Configs[A].extract(a.toConfigValue)
+      val result = actual.exists(_ === a)
+      if (!result) {
+        println(s"\nactual: $actual, expected value: $a")
+      }
+      result
     }
 
 
@@ -178,6 +183,76 @@ object DeriveConfigsTest extends Scalaprops {
     Properties.list(
       p1.toProperties("plain class"),
       p2.toProperties("sub constructor")
+    )
+  }
+
+  sealed trait Sealed
+
+  case class SealedCase(a1: Int) extends Sealed
+
+  class SealedPlain(val a1: Int) extends Sealed
+
+  case object SealedCaseObject extends Sealed
+
+  object SealedObject extends Sealed
+
+  sealed abstract class SealedSealed extends Sealed
+
+  case class SealedSealedClass(a1: Int) extends SealedSealed
+
+  sealed class SealedConcrete(val a1: Int) extends Sealed
+
+  object Sealed {
+    // SI-7046
+    implicit lazy val configs: Configs[Sealed] =
+      Configs.derive[Sealed]
+
+    implicit lazy val gen: Gen[Sealed] =
+      Gen.oneOf(
+        Gen[Int].map(SealedCase),
+        Gen[Int].map(new SealedPlain(_)),
+        Gen.elements(SealedCaseObject, SealedObject),
+        Gen[Int].map(SealedSealedClass),
+        Gen[Int].map(new SealedConcrete(_))
+      )
+
+    implicit lazy val equal: Equal[Sealed] =
+      Equal.equalBy {
+        case SealedCase(a1) => ("CA", a1)
+        case p: SealedPlain => ("PL", p.a1)
+        case SealedCaseObject => ("CO", 0)
+        case SealedObject => ("SO", 0)
+        case SealedSealedClass(a1) => ("SS", a1)
+        case s: SealedConcrete => ("SC", s.a1)
+      }
+
+    implicit lazy val toConfigValue: ToConfigValue[Sealed] =
+      ToConfigValue.fromMap { s =>
+        val m = Map("type" -> s.getClass.getSimpleName.stripSuffix("$").toConfigValue)
+        s match {
+          case SealedCase(a1) => m + ("a1" -> a1.toConfigValue)
+          case p: SealedPlain => m + ("a1" -> p.a1.toConfigValue)
+          case SealedCaseObject => m
+          case SealedObject => m
+          case SealedSealedClass(a1) => m + ("a1" -> a1.toConfigValue)
+          case s: SealedConcrete => m + ("a1" -> s.a1.toConfigValue)
+        }
+      }
+  }
+
+  val sealedClass = {
+    val p1 = checkDerived[Sealed]
+    val p2 = {
+      implicit val moduleAsStringTCV: ToConfigValue[Sealed] = {
+        case SealedCaseObject => "SealedCaseObject".toConfigValue
+        case SealedObject => "SealedObject".toConfigValue
+        case s => Sealed.toConfigValue.toConfigValue(s)
+      }
+      checkDerived[Sealed]
+    }
+    Properties.list(
+      p1.toProperties("sealed class"),
+      p2.toProperties("module as string")
     )
   }
 
