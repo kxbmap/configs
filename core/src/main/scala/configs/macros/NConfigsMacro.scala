@@ -49,6 +49,15 @@ private[macros] abstract class NHelper {
   def nameOf(sym: Symbol): String =
     sym.name.decodedName.toString
 
+  def nameOf(tpe: Type): String =
+    nameOf(tpe.typeSymbol)
+
+  def fullNameOf(sym: Symbol): String =
+    sym.fullName
+
+  def fullNameOf(tpe: Type): String =
+    fullNameOf(tpe.typeSymbol)
+
   def freshName(): TermName =
     TermName(c.freshName())
 
@@ -61,6 +70,39 @@ private[macros] abstract class NHelper {
   def abort(msg: String): Nothing =
     c.abort(c.enclosingPosition, msg)
 
+  def echo(msg: String): Unit =
+    c.echo(c.enclosingPosition, msg)
+
+
+  case class Param(sym: Symbol) {
+    val name = nameOf(sym)
+    val term = sym.asTerm
+    val tpe = sym.info
+
+    def isImplicit: Boolean = term.isImplicit
+
+    def isParamWithDefault: Boolean = term.isParamWithDefault
+  }
+
+  sealed abstract class Method {
+    def applyTrees(args: Seq[Seq[Tree]]): Tree
+
+    def applyTerms(args: Seq[Seq[TermName]]): Tree =
+      applyTrees(args.map(_.map(t => q"$t")))
+
+    def returnType: Type
+
+    def paramLists: List[List[Param]]
+  }
+
+  case class ApplyMethod(returnType: Type, module: ModuleSymbol, method: MethodSymbol) extends Method {
+    def applyTrees(args: Seq[Seq[Tree]]): Tree =
+      q"$module.$method(...$args)"
+
+    def paramLists: List[List[Param]] =
+      method.paramLists.map(_.map(Param))
+  }
+
 }
 
 class NConfigsMacro(val c: blackbox.Context) extends NHelper {
@@ -69,41 +111,43 @@ class NConfigsMacro(val c: blackbox.Context) extends NHelper {
 
   def materializeConfigs[A: WeakTypeTag]: Tree = {
     val tpe = weakTypeOf[A]
-    tpe.typeSymbol match {
+    val instance = tpe.typeSymbol match {
       case typeSym if typeSym.isClass =>
         val classSym = typeSym.asClass
         if (classSym.isCaseClass)
-          materializeCaseClass(tpe, classSym.companion.asModule)
+          caseClassConfigs(tpe, classSym.companion.asModule)
         else
           abort(s"$tpe is not case class")
 
       case _ =>
         abort(s"$tpe is not class")
     }
+    val self = freshName("s")
+    q"""
+      implicit lazy val $self: ${tConfigs(tpe)} = $instance
+      $self
+     """
   }
 
+  private def caseClassConfigs(tpe: Type, module: ModuleSymbol): Tree = {
+    val applies = module.infoIn(tpe).decls.sorted
+      .collect {
+        case m: MethodSymbol
+          if m.isPublic && m.returnType =:= tpe && nameOf(m) == "apply" && length(m.paramLists) > 0 =>
+          ApplyMethod(tpe, module, m)
+      }
+      // synthetic first
+      .sortBy(!_.method.isSynthetic)
 
-  private case class Param(sym: Symbol, site: Type) {
-    val name = nameOf(sym)
-    val term = sym.asTerm
-    val tpe = sym.infoIn(site)
-
-    def isImplicit: Boolean = term.isImplicit
-
-    def isParamWithDefault: Boolean = term.isParamWithDefault
+    if (applies.isEmpty)
+      abort(s"$tpe has no available apply methods")
+    else
+      applies.map(methodConfigs).reduceLeft((l, r) => q"$l.orElse($r)")
   }
 
-  private def materializeCaseClass(tpe: Type, moduleSym: ModuleSymbol): Tree = {
-    val apply =
-      moduleSym.infoIn(tpe).decls.sorted
-        .collectFirst {
-          case m: MethodSymbol
-            if m.isPublic && m.isSynthetic && m.returnType =:= tpe && nameOf(m) == "apply" => m
-        }
-        .getOrElse(abort(s"$moduleSym has no apply method"))
-
-    val config = TermName("config")
-    val paramLists = apply.paramLists.map(_.map(Param(_, tpe)))
+  private def methodConfigs(method: Method): Tree = {
+    val config = freshName("c")
+    val paramLists = method.paramLists
     val configs = mutable.Buffer[(Type, TermName, Tree)]()
     def getConfigs(tpe: Type): TermName =
       configs.find(_._1 =:= tpe).map(_._2).getOrElse {
@@ -112,15 +156,15 @@ class NConfigsMacro(val c: blackbox.Context) extends NHelper {
         c
       }
 
-    def singleArgClass: Tree = {
+    def oneParamMethod: Tree = {
       val a = freshName("a")
       val param = paramLists.collectFirst { case p :: _ => p }.getOrElse(abort("bug or broken"))
       val result = q"${getConfigs(param.tpe)}.get($config, ${param.name})"
       val args = paramLists.map(_.map(_ => a))
-      q"""$result.map(($a: ${param.tpe}) => $moduleSym.$apply(...$args))"""
+      q"""$result.map(($a: ${param.tpe}) => ${method.applyTerms(args)})"""
     }
 
-    def smallClass(n: Int): Tree = {
+    def smallMethod(n: Int): Tree = {
       val parts = paramLists.map(_.map { p =>
         val a = freshName("a")
         (q"${getConfigs(p.tpe)}.get($config, ${p.name})", q"$a: ${p.tpe}", a)
@@ -128,10 +172,10 @@ class NConfigsMacro(val c: blackbox.Context) extends NHelper {
       val results = parts.flatMap(_._1)
       val params = parts.flatMap(_._2)
       val args = parts.map(_._3)
-      q"""${applyResultN(n)}(..$results)(..$params => $moduleSym.$apply(...$args))"""
+      q"""${applyResultN(n)}(..$results)(..$params => ${method.applyTerms(args)})"""
     }
 
-    def largeClass(n: Int): Tree = {
+    def largeMethod(n: Int): Tree = {
       val results = paramLists.flatMap(_.map { p =>
         (p.tpe, q"${getConfigs(p.tpe)}.get($config, ${p.name})")
       })
@@ -145,7 +189,7 @@ class NConfigsMacro(val c: blackbox.Context) extends NHelper {
           val r = q"""${tupleResultN(m)}(..${group.map(_._2)})"""
           val t = freshName("t")
           val tt = tq"${tTupleN(m)}[..${group.map(_._1)}]"
-          val as = (1 to m).map(a => q"$t.${TermName(s"_$a")}")
+          val as = (1 to m).map(i => q"$t.${TermName(s"_$i")}")
           (r, q"$t: $tt", as)
         }.toList.unzip3
       val args = {
@@ -159,32 +203,25 @@ class NConfigsMacro(val c: blackbox.Context) extends NHelper {
           }
         fit(gArgs.flatten, paramLists, Nil)
       }
-      q"""${applyResultN(rs.length)}(..$rs)(..$params => $moduleSym.$apply(...$args))"""
+      q"""${applyResultN(rs.length)}(..$rs)(..$params => ${method.applyTrees(args)})"""
     }
 
     val body = length(paramLists) match {
       case 0 => abort("0-arg method is unsupported")
-      case 1 => singleArgClass
-      case n if n <= MaxApplyN => smallClass(n)
-      case n if n <= MaxTupleN * MaxApplyN => largeClass(n)
-      case n => abort(s"$apply is too large")
+      case 1 => oneParamMethod
+      case n if n <= MaxApplyN => smallMethod(n)
+      case n if n <= MaxTupleN * MaxApplyN => largeMethod(n)
+      case _ => abort("too large param lists")
     }
 
     val vals = configs.map {
       case (_, n, t) => q"val $n = $t"
     }
-    val instance =
-      q"""
-        $Configs.from[$tpe] { $config: $tConfig =>
-          ..$vals
-          $body
-        }
-       """
-
-    val self = TermName("self")
     q"""
-      implicit lazy val $self: ${tConfigs(tpe)} = $instance
-      $self
+      $Configs.from[${method.returnType}] { $config: $tConfig =>
+        ..$vals
+        $body
+      }
      """
   }
 

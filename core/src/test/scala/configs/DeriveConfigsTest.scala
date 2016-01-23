@@ -16,9 +16,11 @@
 
 package configs
 
+import com.typesafe.config.ConfigFactory
 import configs.util._
 import scalaprops.Property.forAll
-import scalaprops.{Gen, Scalaprops}
+import scalaprops.{Gen, Properties, Scalaprops}
+import scalaz.std.string._
 import scalaz.syntax.equal._
 import scalaz.{Apply, Equal}
 
@@ -48,26 +50,6 @@ object DeriveConfigsTest extends Scalaprops {
   }
 
   val caseClass1 = checkMat[CC1]
-
-
-  case class CC2(a1: Int, a2: Int)
-
-  object CC2 {
-    implicit lazy val gen: Gen[CC2] =
-      Apply[Gen].apply2(Gen[Int], Gen[Int])(CC2.apply)
-
-    implicit lazy val equal: Equal[CC2] =
-      Equal.equalA[CC2]
-
-    implicit lazy val toConfigValue: ToConfigValue[CC2] =
-      ToConfigValue.fromMap(cc =>
-        Map(
-          "a1" -> cc.a1.toConfigValue,
-          "a2" -> cc.a2.toConfigValue
-        ))
-  }
-
-  val caseClass2 = checkMat[CC2]
 
 
   case class CC22(
@@ -118,6 +100,46 @@ object DeriveConfigsTest extends Scalaprops {
   }
 
   val caseClass23 = checkMat[CC23]
+
+
+  case class SubApply(a1: Int, a2: Int)
+
+  object SubApply {
+
+    def apply(s1: String, s2: String): SubApply =
+      new SubApply(s1.toInt, s2.toInt)
+
+    implicit lazy val gen: Gen[SubApply] =
+      Apply[Gen].apply2(Gen[Int], Gen[Int])(SubApply.apply)
+
+    implicit lazy val equal: Equal[SubApply] =
+      Equal.equalA[SubApply]
+
+    implicit lazy val toConfigValue: ToConfigValue[SubApply] =
+      ToConfigValue.fromMap(cc =>
+        Map(
+          "s1" -> cc.a1.toString.toConfigValue,
+          "s2" -> cc.a2.toString.toConfigValue
+        ))
+  }
+
+  val subApply = {
+    val p1 = checkMat[SubApply]
+    val p2 =
+      forAll { (a1: Int, a2: Int, s1: Int, s2: Int) =>
+        val c = ConfigFactory.parseString(
+          s"""a1 = $a1
+             |a2 = $a2
+             |s1 = $s1
+             |s2 = $s2
+           """.stripMargin)
+        Configs[SubApply].extract(c).exists(_ == SubApply(a1, a2))
+      }
+    Properties.list(
+      p1.toProperties("sub apply"),
+      p2.toProperties("synthetic first")
+    )
+  }
 
 
   //  case class CC254(
