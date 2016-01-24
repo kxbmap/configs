@@ -60,6 +60,9 @@ private[macros] abstract class NHelper {
   def nameOf(tpe: Type): String =
     nameOf(tpe.typeSymbol)
 
+  def encodedNameOf(sym: Symbol): String =
+    sym.name.encodedName.toString
+
   def fullNameOf(sym: Symbol): String =
     sym.fullName
 
@@ -75,6 +78,25 @@ private[macros] abstract class NHelper {
   def length(xss: Seq[Seq[_]]): Int =
     xss.foldLeft(0)(_ + _.length)
 
+  def zipWithParamPos(paramLists: List[List[Symbol]]): List[List[(Symbol, Int)]] =
+    paramLists.zip(paramLists.scanLeft(1)(_ + _.length)).map {
+      case (ps, s) => ps.zip(Stream.from(s))
+    }
+
+  def fitShape[A](xs: List[A], shape: List[List[_]]): List[List[A]] = {
+    if (xs.length != length(shape)) abort(s"mismatch length")
+    @annotation.tailrec
+    def loop(xs: List[A], shape: List[List[_]], acc: List[List[A]]): List[List[A]] =
+      shape match {
+        case Nil => acc.reverse
+        case s :: ss =>
+          val (h, t) = xs.splitAt(s.length)
+          loop(t, ss, h :: acc)
+      }
+    loop(xs, shape, Nil)
+  }
+
+
   def abort(msg: String): Nothing =
     c.abort(c.enclosingPosition, msg)
 
@@ -82,18 +104,19 @@ private[macros] abstract class NHelper {
     c.echo(c.enclosingPosition, msg)
 
 
-  case class Param(sym: Symbol) {
+  case class Param(sym: Symbol, method: Method, pos: Int) {
     val name = nameOf(sym)
     val term = sym.asTerm
     val tpe = sym.info
 
-    def isImplicit: Boolean = term.isImplicit
-
-    def isParamWithDefault: Boolean = term.isParamWithDefault
+    def defaultMethod: Option[Method] =
+      if (term.isParamWithDefault) method.defaultMethod(pos) else None
   }
 
   sealed abstract class Method {
     def method: MethodSymbol
+
+    def companion: Option[ModuleSymbol]
 
     def applyTrees(args: Seq[Seq[Tree]]): Tree
 
@@ -101,15 +124,42 @@ private[macros] abstract class NHelper {
       applyTrees(args.map(_.map(t => q"$t")))
 
     def paramLists: List[List[Param]] =
-      method.paramLists.map(_.map(Param))
+      zipWithParamPos(method.paramLists).map(_.map {
+        case (s, p) => Param(s, this, p)
+      })
+
+    def defaultMethod(pos: Int): Option[Method] =
+      defaultMethods.get(pos)
+
+    private lazy val defaultMethods: Map[Int, Method] =
+      companion match {
+        case None => Map.empty
+        case Some(cmp) =>
+          val prefix = s"${method.name.encodedName}$$default$$"
+          cmp.info.decls.collect {
+            case m: MethodSymbol if encodedNameOf(m).startsWith(prefix) =>
+              encodedNameOf(m).drop(prefix.length).toInt -> ModuleMethod(cmp, m)
+          }(collection.breakOut)
+      }
   }
 
-  case class ApplyMethod(module: ModuleSymbol, method: MethodSymbol) extends Method {
+  case class ModuleMethod(module: ModuleSymbol, method: MethodSymbol) extends Method {
+
+    lazy val companion: Option[ModuleSymbol] =
+      Some(module)
+
     def applyTrees(args: Seq[Seq[Tree]]): Tree =
       q"$module.$method(...$args)"
   }
 
   case class Constructor(tpe: Type, method: MethodSymbol) extends Method {
+
+    lazy val companion: Option[ModuleSymbol] =
+      tpe.typeSymbol.companion match {
+        case NoSymbol => None
+        case s => Some(s.asModule)
+      }
+
     def applyTrees(args: Seq[Seq[Tree]]): Tree =
       q"new $tpe(...$args)"
   }
@@ -203,8 +253,8 @@ class NConfigsMacro(val c: blackbox.Context) extends NHelper {
     val applies = module.info.decls.sorted
       .collect {
         case m: MethodSymbol
-          if m.isPublic && m.returnType =:= tpe && nameOf(m) == "apply" && length(m.paramLists) > 0 =>
-          ApplyMethod(module, m)
+          if m.isPublic && m.returnType =:= tpe && nameOf(m) == "apply" =>
+          ModuleMethod(module, m)
       }
       // synthetic first
       .sortBy(!_.method.isSynthetic)
@@ -220,7 +270,7 @@ class NConfigsMacro(val c: blackbox.Context) extends NHelper {
 
   private def plainClassConfigs(tpe: Type, target: Type): Tree = {
     val ctors = tpe.decls.sorted.collect {
-      case m: MethodSymbol if m.isConstructor && m.isPublic && length(m.paramLists) > 0 =>
+      case m: MethodSymbol if m.isConstructor && m.isPublic =>
         Constructor(tpe, m)
     }
     if (ctors.isEmpty)
@@ -240,9 +290,17 @@ class NConfigsMacro(val c: blackbox.Context) extends NHelper {
         c
       }
 
-    def oneParamMethod: Tree = {
+    def noArgMethod: Tree = {
+      val args = paramLists.map(_.map(_ => abort(s"bug or broken: $method")))
+      q"""$Result.successful(${method.applyTrees(args)})"""
+    }
+
+    def oneArgMethod: Tree = {
       val a = freshName("a")
-      val param = paramLists.collectFirst { case p :: _ => p }.getOrElse(abort("bug or broken"))
+      val param = paramLists.flatten match {
+        case p :: Nil => p
+        case _ => abort(s"bug or broken: $method")
+      }
       val result = q"${getConfigs(param.tpe)}.get($config, ${param.name})"
       val args = paramLists.map(_.map(_ => a))
       q"""$result.map(($a: ${param.tpe}) => ${method.applyTerms(args)})"""
@@ -276,23 +334,13 @@ class NConfigsMacro(val c: blackbox.Context) extends NHelper {
           val as = (1 to m).map(i => q"$t.${TermName(s"_$i")}")
           (r, q"$t: $tt", as)
         }.toList.unzip3
-      val args = {
-        @annotation.tailrec
-        def fit(xs: List[Tree], shape: List[List[_]], acc: List[List[Tree]]): List[List[Tree]] =
-          shape match {
-            case Nil => acc.reverse
-            case s :: ss =>
-              val (h, t) = xs.splitAt(s.length)
-              fit(t, ss, h :: acc)
-          }
-        fit(gArgs.flatten, paramLists, Nil)
-      }
+      val args = fitShape(gArgs.flatten, paramLists)
       q"""${applyResultN(rs.length)}(..$rs)(..$params => ${method.applyTrees(args)})"""
     }
 
     val body = length(paramLists) match {
-      case 0 => abort("0-arg method is unsupported")
-      case 1 => oneParamMethod
+      case 0 => noArgMethod
+      case 1 => oneArgMethod
       case n if n <= MaxApplyN => smallMethod(n)
       case n if n <= MaxTupleN * MaxApplyN => largeMethod(n)
       case _ => abort("too large param lists")

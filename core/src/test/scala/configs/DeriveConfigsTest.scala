@@ -40,6 +40,22 @@ object DeriveConfigsTest extends Scalaprops {
     }
 
 
+  case class CC0()
+
+  object CC0 {
+    implicit lazy val gen: Gen[CC0] =
+      Gen.elements(CC0())
+
+    implicit lazy val equal: Equal[CC0] =
+      Equal.equalA[CC0]
+
+    implicit lazy val toConfigValue: ToConfigValue[CC0] =
+      _ => ConfigFactory.empty().root()
+  }
+
+  val caseClass0 = checkDerived[CC0]
+
+
   case class CC1(a1: Int)
 
   object CC1 {
@@ -186,6 +202,7 @@ object DeriveConfigsTest extends Scalaprops {
     )
   }
 
+
   sealed trait Sealed
 
   case class SealedCase(a1: Int) extends Sealed
@@ -202,6 +219,8 @@ object DeriveConfigsTest extends Scalaprops {
 
   sealed class SealedConcrete(val a1: Int) extends Sealed
 
+  class NoArgClass extends Sealed
+
   object Sealed {
     // SI-7046
     implicit lazy val configs: Configs[Sealed] =
@@ -211,9 +230,9 @@ object DeriveConfigsTest extends Scalaprops {
       Gen.oneOf(
         Gen[Int].map(SealedCase),
         Gen[Int].map(new SealedPlain(_)),
-        Gen.elements(SealedCaseObject, SealedObject),
         Gen[Int].map(SealedSealedClass),
-        Gen[Int].map(new SealedConcrete(_))
+        Gen[Int].map(new SealedConcrete(_)),
+        Gen.elements(SealedCaseObject, SealedObject, new NoArgClass())
       )
 
     implicit lazy val equal: Equal[Sealed] =
@@ -224,6 +243,7 @@ object DeriveConfigsTest extends Scalaprops {
         case SealedObject => ("SO", 0)
         case SealedSealedClass(a1) => ("SS", a1)
         case s: SealedConcrete => ("SC", s.a1)
+        case _: NoArgClass => ("NA", 0)
       }
 
     implicit lazy val toConfigValue: ToConfigValue[Sealed] =
@@ -236,6 +256,7 @@ object DeriveConfigsTest extends Scalaprops {
           case SealedObject => m
           case SealedSealedClass(a1) => m + ("a1" -> a1.toConfigValue)
           case s: SealedConcrete => m + ("a1" -> s.a1.toConfigValue)
+          case _: NoArgClass => m
         }
       }
   }
