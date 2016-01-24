@@ -49,7 +49,7 @@ object DeriveConfigsTest extends Scalaprops {
     implicit lazy val equal: Equal[CC0] =
       Equal.equalA[CC0]
 
-    implicit lazy val toConfigValue: ToConfigValue[CC0] =
+    implicit lazy val tcv: ToConfigValue[CC0] =
       _ => ConfigFactory.empty().root()
   }
 
@@ -65,11 +65,10 @@ object DeriveConfigsTest extends Scalaprops {
     implicit lazy val equal: Equal[CC1] =
       Equal.equalA[CC1]
 
-    implicit lazy val toConfigValue: ToConfigValue[CC1] =
-      ToConfigValue.fromMap(cc =>
-        Map(
-          "a1" -> cc.a1.toConfigValue
-        ))
+    implicit lazy val tcv: ToConfigValue[CC1] =
+      ToConfigValue.fromMap {
+        case CC1(a1) => Map("a1" -> a1.toConfigValue)
+      }
   }
 
   val caseClass1 = checkDerived[CC1]
@@ -88,7 +87,7 @@ object DeriveConfigsTest extends Scalaprops {
     implicit lazy val equal: Equal[CC22] =
       Equal.equalA[CC22]
 
-    implicit lazy val toConfigValue: ToConfigValue[CC22] =
+    implicit lazy val tcv: ToConfigValue[CC22] =
       ToConfigValue.fromMap(
         _.productIterator.zipWithIndex.map {
           case (a, i) => s"a${i + 1}" -> a.asInstanceOf[Int].toConfigValue
@@ -115,7 +114,7 @@ object DeriveConfigsTest extends Scalaprops {
     implicit lazy val equal: Equal[CC23] =
       Equal.equalA[CC23]
 
-    implicit lazy val toConfigValue: ToConfigValue[CC23] =
+    implicit lazy val tcv: ToConfigValue[CC23] =
       ToConfigValue.fromMap(
         _.productIterator.zipWithIndex.map {
           case (a, i) => s"a${i + 1}" -> a.asInstanceOf[Int].toConfigValue
@@ -138,7 +137,7 @@ object DeriveConfigsTest extends Scalaprops {
     implicit lazy val equal: Equal[SubApply] =
       Equal.equalA[SubApply]
 
-    implicit lazy val toConfigValue: ToConfigValue[SubApply] =
+    implicit lazy val tcv: ToConfigValue[SubApply] =
       ToConfigValue.fromMap(cc =>
         Map(
           "s1" -> cc.a1.toString.toConfigValue,
@@ -177,7 +176,7 @@ object DeriveConfigsTest extends Scalaprops {
     implicit lazy val equal: Equal[PlainClass] =
       Equal.equalBy(p => (p.a1, p.a2, p.a3))
 
-    implicit lazy val toConfigValue: ToConfigValue[PlainClass] =
+    implicit lazy val tcv: ToConfigValue[PlainClass] =
       ToConfigValue.fromMap(p =>
         Map(
           "a1" -> p.a1.toConfigValue,
@@ -246,7 +245,7 @@ object DeriveConfigsTest extends Scalaprops {
         case _: NoArgClass => ("NA", 0)
       }
 
-    implicit lazy val toConfigValue: ToConfigValue[Sealed] =
+    implicit lazy val tcv: ToConfigValue[Sealed] =
       ToConfigValue.fromMap { s =>
         val m = Map("type" -> s.getClass.getSimpleName.stripSuffix("$").toConfigValue)
         s match {
@@ -267,13 +266,44 @@ object DeriveConfigsTest extends Scalaprops {
       implicit val moduleAsStringTCV: ToConfigValue[Sealed] = {
         case SealedCaseObject => "SealedCaseObject".toConfigValue
         case SealedObject => "SealedObject".toConfigValue
-        case s => Sealed.toConfigValue.toConfigValue(s)
+        case s => Sealed.tcv.toConfigValue(s)
       }
       checkDerived[Sealed]
     }
     Properties.list(
       p1.toProperties("sealed class"),
       p2.toProperties("module as string")
+    )
+  }
+
+
+  case class Default1(a1: Int = 1)
+
+  object Default1 {
+    implicit lazy val equal: Equal[Default1] =
+      Equal.equalA[Default1]
+  }
+
+  val default1 = {
+    val p1 = {
+      implicit val gen: Gen[Default1] =
+        Gen[Int].map(Default1.apply)
+      implicit val tcv: ToConfigValue[Default1] =
+        ToConfigValue.fromMap {
+          case Default1(a1) => Map("a1" -> a1.toConfigValue)
+        }
+      checkDerived[Default1]
+    }
+    val p2 = {
+      implicit val gen: Gen[Default1] =
+        Gen.elements(Default1())
+      implicit val tcv: ToConfigValue[Default1] =
+        _ => ConfigFactory.empty().root()
+      checkDerived[Default1]
+    }
+    Properties.list(
+      p1.toProperties("w/o default"),
+      p2.toProperties("w/ default")
     )
   }
 

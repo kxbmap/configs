@@ -19,101 +19,75 @@ package configs.macros
 import scala.collection.mutable
 import scala.reflect.macros.blackbox
 
-private[macros] abstract class NHelper {
-
-  val c: blackbox.Context
+class NConfigsMacro(val c: blackbox.Context) extends MacroUtil {
 
   import c.universe._
 
-  lazy val tConfig =
-    tq"_root_.com.typesafe.config.Config"
+  def materializeConfigs[A: WeakTypeTag]: Tree = {
+    val tpe = weakTypeOf[A]
+    val instance = tpe.typeSymbol match {
+      case typeSym if typeSym.isClass =>
+        val classSym = typeSym.asClass
+        if (classSym.isAbstract) {
+          if (classSym.isSealed)
+            sealedClassConfigs(tpe, classSym)
+          else
+            abort(s"$tpe is abstract but not sealed")
+        } else {
+          if (classSym.isCaseClass)
+            caseClassConfigs(tpe, classSym.companion.asModule)
+          else
+            plainClassConfigs(tpe)
+        }
 
-  lazy val ConfigException =
-    q"_root_.com.typesafe.config.ConfigException"
-
-  lazy val Configs =
-    q"_root_.configs.Configs"
-
-  def tConfigs(arg: Type): Tree =
-    tq"_root_.configs.Configs[$arg]"
-
-  lazy val tString = typeOf[String]
-
-  val MaxApplyN = 22
-  val MaxTupleN = 22
-
-  lazy val Result =
-    q"_root_.configs.Result"
-
-  def applyResultN(n: Int): Tree =
-    q"$Result.${TermName(s"apply$n")}"
-
-  def tupleResultN(n: Int): Tree =
-    q"$Result.${TermName(s"tuple$n")}"
-
-  def tTupleN(n: Int): Tree =
-    tq"_root_.scala.${TypeName(s"Tuple$n")}"
-
-  def nameOf(sym: Symbol): String =
-    sym.name.decodedName.toString
-
-  def nameOf(tpe: Type): String =
-    nameOf(tpe.typeSymbol)
-
-  def encodedNameOf(sym: Symbol): String =
-    sym.name.encodedName.toString
-
-  def fullNameOf(sym: Symbol): String =
-    sym.fullName
-
-  def fullNameOf(tpe: Type): String =
-    fullNameOf(tpe.typeSymbol)
-
-  def freshName(): TermName =
-    TermName(c.freshName())
-
-  def freshName(name: String): TermName =
-    TermName(c.freshName(name))
-
-  def length(xss: Seq[Seq[_]]): Int =
-    xss.foldLeft(0)(_ + _.length)
-
-  def zipWithParamPos(paramLists: List[List[Symbol]]): List[List[(Symbol, Int)]] =
-    paramLists.zip(paramLists.scanLeft(1)(_ + _.length)).map {
-      case (ps, s) => ps.zip(Stream.from(s))
+      case _ => abort(s"$tpe is not class")
     }
-
-  def fitShape[A](xs: List[A], shape: List[List[_]]): List[List[A]] = {
-    if (xs.length != length(shape)) abort(s"mismatch length")
-    @annotation.tailrec
-    def loop(xs: List[A], shape: List[List[_]], acc: List[List[A]]): List[List[A]] =
-      shape match {
-        case Nil => acc.reverse
-        case s :: ss =>
-          val (h, t) = xs.splitAt(s.length)
-          loop(t, ss, h :: acc)
-      }
-    loop(xs, shape, Nil)
+    val self = freshName("s")
+    q"""
+      implicit lazy val $self: ${tConfigs(tpe)} = $instance
+      $self
+     """
   }
 
 
-  def abort(msg: String): Nothing =
-    c.abort(c.enclosingPosition, msg)
+  private class State {
+    private val buf = mutable.Buffer[(Type, TermName, Tree)]()
+    val config: TermName = freshName("c")
 
-  def echo(msg: String): Unit =
-    c.echo(c.enclosingPosition, msg)
+    def configParam: Tree = q"$config: $tConfig"
 
+    def vals: Seq[Tree] =
+      buf.map {
+        case (_, n, t) => q"val $n = $t"
+      }
 
-  case class Param(sym: Symbol, method: Method, pos: Int) {
+    def configs(tpe: Type): TermName =
+      buf.find(_._1 =:= tpe).map(_._2).getOrElse {
+        val c = freshName("c")
+        buf += ((tpe, c, q"$Configs[$tpe]"))
+        c
+      }
+  }
+
+  private case class Param(sym: Symbol, method: Method, pos: Int) {
     val name = nameOf(sym)
     val term = sym.asTerm
     val tpe = sym.info
+
+    def toResult(implicit st: State): Tree =
+      q"${st.configs(pType)}.get(${st.config}, $name)"
+
+    def pType: Type =
+      if (term.isParamWithDefault) tOption(tpe) else tpe
+
+    def toArg(a: TermName): Tree =
+      defaultMethod.fold[Tree](q"$a")(m => q"$a.getOrElse(${m.applyTrees(Nil)})")
 
     def defaultMethod: Option[Method] =
       if (term.isParamWithDefault) method.defaultMethod(pos) else None
   }
 
-  sealed abstract class Method {
+  private sealed abstract class Method {
     def method: MethodSymbol
 
     def companion: Option[ModuleSymbol]
@@ -143,7 +117,7 @@ private[macros] abstract class NHelper {
       }
   }
 
-  case class ModuleMethod(module: ModuleSymbol, method: MethodSymbol) extends Method {
+  private case class ModuleMethod(module: ModuleSymbol, method: MethodSymbol) extends Method {
 
     lazy val companion: Option[ModuleSymbol] =
       Some(module)
@@ -152,7 +126,7 @@ private[macros] abstract class NHelper {
       q"$module.$method(...$args)"
   }
 
-  case class Constructor(tpe: Type, method: MethodSymbol) extends Method {
+  private case class Constructor(tpe: Type, method: MethodSymbol) extends Method {
 
     lazy val companion: Option[ModuleSymbol] =
       tpe.typeSymbol.companion match {
@@ -162,38 +136,6 @@ private[macros] abstract class NHelper {
 
     def applyTrees(args: Seq[Seq[Tree]]): Tree =
       q"new $tpe(...$args)"
-  }
-
-}
-
-class NConfigsMacro(val c: blackbox.Context) extends NHelper {
-
-  import c.universe._
-
-  def materializeConfigs[A: WeakTypeTag]: Tree = {
-    val tpe = weakTypeOf[A]
-    val instance = tpe.typeSymbol match {
-      case typeSym if typeSym.isClass =>
-        val classSym = typeSym.asClass
-        if (classSym.isAbstract) {
-          if (classSym.isSealed)
-            sealedClassConfigs(tpe, classSym)
-          else
-            abort(s"$tpe is abstract but not sealed")
-        } else {
-          if (classSym.isCaseClass)
-            caseClassConfigs(tpe, classSym.companion.asModule)
-          else
-            plainClassConfigs(tpe)
-        }
-
-      case _ => abort(s"$tpe is not class")
-    }
-    val self = freshName("s")
-    q"""
-      implicit lazy val $self: ${tConfigs(tpe)} = $instance
-      $self
-     """
   }
 
 
@@ -280,15 +222,8 @@ class NConfigsMacro(val c: blackbox.Context) extends NHelper {
   }
 
   private def methodConfigs(method: Method, target: Type): Tree = {
-    val config = freshName("c")
+    implicit val st = new State()
     val paramLists = method.paramLists
-    val configs = mutable.Buffer[(Type, TermName, Tree)]()
-    def getConfigs(tpe: Type): TermName =
-      configs.find(_._1 =:= tpe).map(_._2).getOrElse {
-        val c = freshName("c")
-        configs += ((tpe, c, q"$Configs[$tpe]"))
-        c
-      }
 
     def noArgMethod: Tree = {
       val args = paramLists.map(_.map(_ => abort(s"bug or broken: $method")))
@@ -301,15 +236,14 @@ class NConfigsMacro(val c: blackbox.Context) extends NHelper {
         case p :: Nil => p
         case _ => abort(s"bug or broken: $method")
       }
-      val result = q"${getConfigs(param.tpe)}.get($config, ${param.name})"
-      val args = paramLists.map(_.map(_ => a))
-      q"""$result.map(($a: ${param.tpe}) => ${method.applyTerms(args)})"""
+      val args = paramLists.map(_.map(_.toArg(a)))
+      q"""${param.toResult}.map(($a: ${param.pType}) => ${method.applyTrees(args)})"""
     }
 
     def smallMethod(n: Int): Tree = {
       val parts = paramLists.map(_.map { p =>
         val a = freshName("a")
-        (q"${getConfigs(p.tpe)}.get($config, ${p.name})", q"$a: ${p.tpe}", a)
+        (p.toResult, q"$a: ${p.tpe}", a)
       }.unzip3)
       val results = parts.flatMap(_._1)
       val params = parts.flatMap(_._2)
@@ -318,9 +252,7 @@ class NConfigsMacro(val c: blackbox.Context) extends NHelper {
     }
 
     def largeMethod(n: Int): Tree = {
-      val results = paramLists.flatMap(_.map { p =>
-        (p.tpe, q"${getConfigs(p.tpe)}.get($config, ${p.name})")
-      })
+      val results = paramLists.flatMap(_.map(p => (p.tpe, p.toResult)))
       val g = {
         val d = (n + MaxTupleN - 1) / MaxTupleN
         (n + d - 1) / d
@@ -345,13 +277,9 @@ class NConfigsMacro(val c: blackbox.Context) extends NHelper {
       case n if n <= MaxTupleN * MaxApplyN => largeMethod(n)
       case _ => abort("too large param lists")
     }
-
-    val vals = configs.map {
-      case (_, n, t) => q"val $n = $t"
-    }
     q"""
-      $Configs.fromConfig[$target] { $config: $tConfig =>
-        ..$vals
+      $Configs.fromConfig[$target] { ${st.configParam} =>
+        ..${st.vals}
         $body
       }
      """
