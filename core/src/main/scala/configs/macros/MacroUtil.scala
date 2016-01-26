@@ -98,6 +98,11 @@ private[macros] abstract class MacroUtil {
     loop(xs, shape, Nil)
   }
 
+  def fitZip[A, B](xs: List[A], yss: List[List[B]]): List[List[(A, B)]] = {
+    val xss = fitShape(xs, yss)
+    xss.zip(yss).map(t => t._1.zip(t._2))
+  }
+
   def abort(msg: String): Nothing =
     c.abort(c.enclosingPosition, msg)
 

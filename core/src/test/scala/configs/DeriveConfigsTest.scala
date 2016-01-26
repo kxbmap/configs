@@ -308,6 +308,84 @@ object DeriveConfigsTest extends Scalaprops {
   }
 
 
+  class Default22(
+      val a1: Int, val a2: Int, val a3: Int, val a4: Int, val a5: Int, val a6: Int, val a7: Int,
+      val a8: Int = 8,
+      val a9: Int = 9,
+      val a10: Int = 10)(
+      val a11: Int,
+      val a12: Int = a1 + a8,
+      val a13: Int = 13,
+      val a14: Int,
+      val a15: Int = a10 + 15)(
+      val a16: Int = 16,
+      val a17: Int,
+      val a18: Int = 18 + a2,
+      val a19: Int,
+      val a20: Int,
+      val a21: Int = a3 + a13 + 21,
+      val a22: Int = 22 + a9 + a14) {
+
+    override def toString: String = {
+      val as1 = (a1, a2, a3, a4, a5, a6, a7, a8, a9, a10)
+      val as2 = (a11, a12, a13, a14, a15)
+      val as3 = (a16, a17, a18, a19, a20, a21, a22)
+      s"${getClass.getSimpleName}(${(as1, as2, as3)})"
+    }
+  }
+
+  object Default22 {
+    implicit lazy val equal: Equal[Default22] =
+      Equal.equalBy(d => (
+        (d.a1, d.a2, d.a3, d.a4, d.a5, d.a6, d.a7, d.a8),
+        (d.a9, d.a10, d.a11, d.a12, d.a13, d.a14, d.a15, d.a16),
+        (d.a17, d.a18, d.a19, d.a20, d.a21, d.a22)))
+  }
+
+  val default22 = {
+    val p1 = {
+      implicit val gen: Gen[Default22] =
+        Gen[(Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int)].map {
+          case (a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15, a16, a17, a18, a19, a20, a21, a22) =>
+            new Default22(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10)(a11, a12, a13, a14, a15)(a16, a17, a18, a19, a20, a21, a22)
+          }
+      implicit val tcv: ToConfigValue[Default22] =
+        ToConfigValue.fromMap(d => Map(
+          "a1" -> d.a1.toConfigValue, "a2" -> d.a2.toConfigValue, "a3" -> d.a3.toConfigValue,
+          "a4" -> d.a4.toConfigValue, "a5" -> d.a5.toConfigValue, "a6" -> d.a6.toConfigValue,
+          "a7" -> d.a7.toConfigValue, "a8" -> d.a8.toConfigValue, "a9" -> d.a9.toConfigValue,
+          "a10" -> d.a10.toConfigValue,
+          "a11" -> d.a11.toConfigValue, "a12" -> d.a12.toConfigValue, "a13" -> d.a13.toConfigValue,
+          "a14" -> d.a14.toConfigValue, "a15" -> d.a15.toConfigValue,
+          "a16" -> d.a16.toConfigValue, "a17" -> d.a17.toConfigValue, "a18" -> d.a18.toConfigValue,
+          "a19" -> d.a19.toConfigValue, "a20" -> d.a20.toConfigValue, "a21" -> d.a21.toConfigValue,
+          "a22" -> d.a22.toConfigValue
+        ))
+      checkDerived[Default22]
+    }
+    val p2 = {
+      implicit val gen: Gen[Default22] =
+        Gen[(Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int)].map {
+          case (a1, a2, a3, a4, a5, a6, a7, a11, a14, a17, a19, a20) =>
+            new Default22(a1, a2, a3, a4, a5, a6, a7)(a11 = a11, a14 = a14)(a17 = a17, a19 = a19, a20 = a20)
+        }
+      implicit val tcv: ToConfigValue[Default22] =
+        ToConfigValue.fromMap(d => Map(
+          "a1" -> d.a1.toConfigValue, "a2" -> d.a2.toConfigValue, "a3" -> d.a3.toConfigValue,
+          "a4" -> d.a4.toConfigValue, "a5" -> d.a5.toConfigValue, "a6" -> d.a6.toConfigValue,
+          "a7" -> d.a7.toConfigValue,
+          "a11" -> d.a11.toConfigValue, "a14" -> d.a14.toConfigValue,
+          "a17" -> d.a17.toConfigValue, "a19" -> d.a19.toConfigValue, "a20" -> d.a20.toConfigValue
+        ))
+      checkDerived[Default22]
+    }
+    Properties.list(
+      p1.toProperties("w/o defaults"),
+      p2.toProperties("w/ defaults")
+    )
+  }
+
+
   //  case class CC254(
   //      a1: Int, a2: Int, a3: Int, a4: Int, a5: Int, a6: Int, a7: Int, a8: Int, a9: Int, a10: Int,
   //      a11: Int, a12: Int, a13: Int, a14: Int, a15: Int, a16: Int, a17: Int, a18: Int, a19: Int, a20: Int,

@@ -73,15 +73,19 @@ class NConfigsMacro(val c: blackbox.Context) extends MacroUtil {
     val name = nameOf(sym)
     val term = sym.asTerm
     val tpe = sym.info
+    val vType = if (term.isParamWithDefault) tOption(tpe) else tpe
 
-    def toResult(implicit st: State): Tree =
-      q"${st.configs(pType)}.get(${st.config}, $name)"
+    def result()(implicit st: State): Tree =
+      q"${st.configs(vType)}.get(${st.config}, $name)"
 
-    def pType: Type =
-      if (term.isParamWithDefault) tOption(tpe) else tpe
+    def param(name: TermName): Tree =
+      q"$name: $vType"
 
-    def toArg(a: TermName): Tree =
-      defaultMethod.fold[Tree](q"$a")(m => q"$a.getOrElse(${m.applyTrees(Nil)})")
+    def value(name: TermName, defaultArgs: List[List[TermName]]): Tree =
+      defaultMethod.fold[Tree](q"$name")(m => q"$name.getOrElse(${m.applyTerms(defaultArgs)})")
+
+    def valueF(name: TermName): List[List[TermName]] => Tree =
+      value(name, _)
 
     def defaultMethod: Option[Method] =
       if (term.isParamWithDefault) method.defaultMethod(pos) else None
@@ -232,33 +236,43 @@ class NConfigsMacro(val c: blackbox.Context) extends MacroUtil {
 
     def oneArgMethod: Tree = {
       val a = freshName("a")
-      val param = paramLists.flatten match {
-        case p :: Nil => p
+      val p = paramLists.flatten match {
+        case p0 :: Nil => p0
         case _ => abort(s"bug or broken: $method")
       }
-      val args = paramLists.map(_.map(_.toArg(a)))
-      q"""${param.toResult}.map(($a: ${param.pType}) => ${method.applyTrees(args)})"""
+      val args = paramLists.map(_.map(_.value(a, Nil)))
+      q"""${p.result()}.map((${p.param(a)}) => ${method.applyTrees(args)})"""
     }
 
     def smallMethod(n: Int): Tree = {
-      val parts = paramLists.map(_.map { p =>
+      val (results, params, a0) = paramLists.map(_.map { p =>
         val a = freshName("a")
-        (p.toResult, q"$a: ${p.tpe}", a)
-      }.unzip3)
-      val results = parts.flatMap(_._1)
-      val params = parts.flatMap(_._2)
-      val args = parts.map(_._3)
-      q"""${applyResultN(n)}(..$results)(..$params => ${method.applyTerms(args)})"""
+        val v = freshName("v")
+        (p.result(), p.param(a), (v, p.valueF(a)))
+      }.unzip3).unzip3
+      val args = a0.map(_.map(_._1))
+      val dmArgs = args.map(_.length).zip(args.inits.toList.reverse).flatMap {
+        case (l, vs) => List.fill(l)(vs)
+      }
+      val vals = fitZip(dmArgs, a0).flatMap(_.map {
+        case (ds, (v, fa)) => q"val $v = ${fa(ds)}"
+      })
+      q"""
+        ${applyResultN(n)}(..${results.flatten}) { ..${params.flatten} =>
+          ..$vals
+          ${method.applyTerms(args)}
+        }
+       """
     }
 
     def largeMethod(n: Int): Tree = {
-      val results = paramLists.flatMap(_.map(p => (p.tpe, p.toResult)))
+      val rs = paramLists.flatMap(_.map(p => (p.vType, p.result())))
       val g = {
         val d = (n + MaxTupleN - 1) / MaxTupleN
         (n + d - 1) / d
       }
-      val (rs, params, gArgs) =
-        results.grouped(g).map { group =>
+      val (results, params, gArgs) =
+        rs.grouped(g).map { group =>
           val m = group.length
           val r = q"""${tupleResultN(m)}(..${group.map(_._2)})"""
           val t = freshName("t")
@@ -267,7 +281,11 @@ class NConfigsMacro(val c: blackbox.Context) extends MacroUtil {
           (r, q"$t: $tt", as)
         }.toList.unzip3
       val args = fitShape(gArgs.flatten, paramLists)
-      q"""${applyResultN(rs.length)}(..$rs)(..$params => ${method.applyTrees(args)})"""
+      q"""
+        ${applyResultN(results.length)}(..$results) { ..$params =>
+          ${method.applyTrees(args)}
+        }
+       """
     }
 
     val body = length(paramLists) match {
