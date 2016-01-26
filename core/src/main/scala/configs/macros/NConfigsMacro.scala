@@ -24,49 +24,38 @@ class NConfigsMacro(val c: blackbox.Context) extends MacroUtil {
   import c.universe._
 
   def materializeConfigs[A: WeakTypeTag]: Tree = {
-    val tpe = weakTypeOf[A]
-    val instance = tpe.typeSymbol match {
-      case typeSym if typeSym.isClass =>
-        val classSym = typeSym.asClass
-        if (classSym.isAbstract) {
-          if (classSym.isSealed)
-            sealedClassConfigs(tpe, classSym)
-          else
-            abort(s"$tpe is abstract but not sealed")
-        } else {
-          if (classSym.isCaseClass)
-            caseClassConfigs(tpe, classSym.companion.asModule)
-          else
-            plainClassConfigs(tpe)
-        }
-
-      case _ => abort(s"$tpe is not class")
-    }
-    val self = freshName("s")
-    q"""
-      implicit lazy val $self: ${tConfigs(tpe)} = $instance
-      $self
-     """
+    val ctx = new MaterializeContext(weakTypeOf[A])
+    val instance = classConfigs(ctx)
+    ctx.materialize(instance)
   }
 
 
-  private class State {
-    private val buf = mutable.Buffer[(Type, TermName, Tree)]()
-    val config: TermName = freshName("c")
+  private class MaterializeContext(val target: Type) {
 
-    def configParam: Tree = q"$config: $tConfig"
+    val config = freshName("c")
 
-    def vals: Seq[Tree] =
-      buf.map {
-        case (_, n, t) => q"val $n = $t"
-      }
+    private val self = freshName("s")
+    private val buffer = mutable.Buffer[(Type, TermName, Tree)]()
 
     def configs(tpe: Type): TermName =
-      buf.find(_._1 =:= tpe).map(_._2).getOrElse {
+      buffer.find(_._1 =:= tpe).map(_._2).getOrElse {
         val c = freshName("c")
-        buf += ((tpe, c, q"$Configs[$tpe]"))
+        buffer += ((tpe, c, q"$Configs[$tpe]"))
         c
       }
+
+    def materialize(instance: Tree): Tree = {
+      val vals = buffer.map {
+        case (_, n, t) => q"val $n = $t"
+      }
+      q"""
+        lazy val $self: ${tConfigs(target)} = {
+          ..$vals
+          $instance
+        }
+        $self
+       """
+    }
   }
 
   private case class Param(sym: Symbol, method: Method, pos: Int) {
@@ -75,8 +64,8 @@ class NConfigsMacro(val c: blackbox.Context) extends MacroUtil {
     val tpe = sym.info
     val vType = if (term.isParamWithDefault) tOption(tpe) else tpe
 
-    def result()(implicit st: State): Tree =
-      q"${st.configs(vType)}.get(${st.config}, $name)"
+    def result()(implicit ctx: MaterializeContext): Tree =
+      q"${ctx.configs(vType)}.get(${ctx.config}, $name)"
 
     def param(name: TermName): Tree =
       q"$name: $vType"
@@ -96,7 +85,7 @@ class NConfigsMacro(val c: blackbox.Context) extends MacroUtil {
     def applyTrees(args: Seq[Seq[Tree]]): Tree
 
     def applyTerms(args: Seq[Seq[TermName]]): Tree =
-      applyTrees(args.map(_.map(t => q"$t")))
+      applyTrees(args.map(_.map(Ident.apply)))
 
     def paramLists: List[List[Param]] =
       zipWithParamPos(method.paramLists).map(_.map {
@@ -140,7 +129,26 @@ class NConfigsMacro(val c: blackbox.Context) extends MacroUtil {
   }
 
 
-  private def sealedClassConfigs(tpe: Type, classSym: ClassSymbol): Tree = {
+  private def classConfigs(implicit ctx: MaterializeContext): Tree =
+    ctx.target.typeSymbol match {
+      case typeSym if typeSym.isClass =>
+        val classSym = typeSym.asClass
+        if (classSym.isAbstract) {
+          if (classSym.isSealed)
+            sealedClassConfigs(classSym)
+          else
+            abort(s"${ctx.target} is abstract but not sealed")
+        } else {
+          if (classSym.isCaseClass)
+            caseClassConfigs(ctx.target, classSym.companion.asModule)
+          else
+            plainClassConfigs(ctx.target)
+        }
+
+      case _ => abort(s"${ctx.target} is not a class")
+    }
+
+  private def sealedClassConfigs(classSym: ClassSymbol)(implicit ctx: MaterializeContext): Tree = {
     val knownSubclasses = {
       def go(cs: ClassSymbol): List[ClassSymbol] =
         if (cs.isSealed) {
@@ -152,17 +160,17 @@ class NConfigsMacro(val c: blackbox.Context) extends MacroUtil {
       go(classSym)
     }
     if (knownSubclasses.isEmpty)
-      abort(s"$tpe has no known sub classes")
+      abort(s"${ctx.target} has no known sub classes")
 
     val parts = knownSubclasses.map { cs =>
       val name = nameOf(cs)
       val inst =
         if (cs.isModuleClass)
-          q"$Configs.fromConfig[$tpe](_ => $Result.successful(${cs.module}))"
+          q"$Configs.fromConfig[${ctx.target}](_ => $Result.successful(${cs.module}))"
         else if (cs.isCaseClass)
-          caseClassConfigs(cs.toType, cs.companion.asModule, tpe)
+          caseClassConfigs(cs.toType, cs.companion.asModule)
         else
-          plainClassConfigs(cs.toType, tpe)
+          plainClassConfigs(cs.toType)
       val module =
         if (cs.isModuleClass) Some(cs.module) else None
       (cq"$name => $inst", module.map(m => cq"$name => $m"))
@@ -171,7 +179,7 @@ class NConfigsMacro(val c: blackbox.Context) extends MacroUtil {
     val typeKey = "type"
     val typeInst =
       q"""
-        $Configs.get[$tString]($typeKey).flatMap[$tpe] {
+        $Configs.get[$tString]($typeKey).flatMap[${ctx.target}] {
           case ..${parts.map(_._1)}
           case s => $Configs.failure("unknown type: " + s)
         }
@@ -180,7 +188,7 @@ class NConfigsMacro(val c: blackbox.Context) extends MacroUtil {
     else {
       val moduleInst =
         q"""
-          $Configs[$tString].map[$tpe] {
+          $Configs[$tString].map[${ctx.target}] {
             case ..${parts.flatMap(_._2)}
             case s => throw new $ConfigException.Generic("unknown module: " + s)
           }
@@ -189,10 +197,7 @@ class NConfigsMacro(val c: blackbox.Context) extends MacroUtil {
     }
   }
 
-  private def caseClassConfigs(tpe: Type, module: ModuleSymbol): Tree =
-    caseClassConfigs(tpe, module, tpe)
-
-  private def caseClassConfigs(tpe: Type, module: ModuleSymbol, target: Type): Tree = {
+  private def caseClassConfigs(tpe: Type, module: ModuleSymbol)(implicit ctx: MaterializeContext): Tree = {
     val applies = module.info.decls.sorted
       .collect {
         case m: MethodSymbol
@@ -205,13 +210,10 @@ class NConfigsMacro(val c: blackbox.Context) extends MacroUtil {
     if (applies.isEmpty)
       abort(s"$tpe has no available apply methods")
     else
-      applies.map(methodConfigs(_, target)).reduceLeft((l, r) => q"$l.orElse($r)")
+      applies.map(methodConfigs(_)).reduceLeft((l, r) => q"$l.orElse($r)")
   }
 
-  private def plainClassConfigs(tpe: Type): Tree =
-    plainClassConfigs(tpe, tpe)
-
-  private def plainClassConfigs(tpe: Type, target: Type): Tree = {
+  private def plainClassConfigs(tpe: Type)(implicit ctx: MaterializeContext): Tree = {
     val ctors = tpe.decls.sorted.collect {
       case m: MethodSymbol if m.isConstructor && m.isPublic =>
         Constructor(tpe, m)
@@ -219,11 +221,10 @@ class NConfigsMacro(val c: blackbox.Context) extends MacroUtil {
     if (ctors.isEmpty)
       abort(s"$tpe has no public constructor")
     else
-      ctors.map(methodConfigs(_, target)).reduceLeft((l, r) => q"$l.orElse($r)")
+      ctors.map(methodConfigs(_)).reduceLeft((l, r) => q"$l.orElse($r)")
   }
 
-  private def methodConfigs(method: Method, target: Type): Tree = {
-    implicit val st = new State()
+  private def methodConfigs(method: Method)(implicit ctx: MaterializeContext): Tree = {
     val paramLists = method.paramLists
 
     def noArgMethod: Tree = {
@@ -237,7 +238,7 @@ class NConfigsMacro(val c: blackbox.Context) extends MacroUtil {
         case p :: Nil => (p.result(), p.param(a))
         case _ => abort(s"bug or broken: $method")
       }
-      val args = paramLists.map(_.map(_.value(q"$a")(Nil)))
+      val args = paramLists.map(_.map(_.value(Ident(a))(Nil)))
       q"""$result.map(($param) => ${method.applyTrees(args)})"""
     }
 
@@ -245,7 +246,7 @@ class NConfigsMacro(val c: blackbox.Context) extends MacroUtil {
       val (results, params, values) =
         paramLists.map(_.map { p =>
           val a = freshName("a")
-          (p.result(), p.param(a), freshName("v") -> p.value(q"$a"))
+          (p.result(), p.param(a), freshName("v") -> p.value(Ident(a)))
         }.unzip3).unzip3
       q"""
         ${applyResultN(n)}(..${results.flatten}) { ..${params.flatten} =>
@@ -297,8 +298,7 @@ class NConfigsMacro(val c: blackbox.Context) extends MacroUtil {
       case _ => abort("too large param lists")
     }
     q"""
-      $Configs.fromConfig[$target] { ${st.configParam} =>
-        ..${st.vals}
+      $Configs.fromConfig[${ctx.target}] { ${ctx.config}: $tConfig =>
         $body
       }
      """
