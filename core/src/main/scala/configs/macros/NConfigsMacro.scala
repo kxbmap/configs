@@ -81,11 +81,8 @@ class NConfigsMacro(val c: blackbox.Context) extends MacroUtil {
     def param(name: TermName): Tree =
       q"$name: $vType"
 
-    def value(name: TermName, defaultArgs: List[List[TermName]]): Tree =
-      defaultMethod.fold[Tree](q"$name")(m => q"$name.getOrElse(${m.applyTerms(defaultArgs)})")
-
-    def valueF(name: TermName): List[List[TermName]] => Tree =
-      value(name, _)
+    def value(v: Tree): List[List[TermName]] => Tree =
+      ds => defaultMethod.fold(v)(m => q"$v.getOrElse(${m.applyTerms(ds)})")
 
     def defaultMethod: Option[Method] =
       if (term.isParamWithDefault) method.defaultMethod(pos) else None
@@ -236,55 +233,59 @@ class NConfigsMacro(val c: blackbox.Context) extends MacroUtil {
 
     def oneArgMethod: Tree = {
       val a = freshName("a")
-      val p = paramLists.flatten match {
-        case p0 :: Nil => p0
+      val (result, param) = paramLists.flatten match {
+        case p :: Nil => (p.result(), p.param(a))
         case _ => abort(s"bug or broken: $method")
       }
-      val args = paramLists.map(_.map(_.value(a, Nil)))
-      q"""${p.result()}.map((${p.param(a)}) => ${method.applyTrees(args)})"""
+      val args = paramLists.map(_.map(_.value(q"$a")(Nil)))
+      q"""$result.map(($param) => ${method.applyTrees(args)})"""
     }
 
     def smallMethod(n: Int): Tree = {
-      val (results, params, a0) = paramLists.map(_.map { p =>
-        val a = freshName("a")
-        val v = freshName("v")
-        (p.result(), p.param(a), (v, p.valueF(a)))
-      }.unzip3).unzip3
-      val args = a0.map(_.map(_._1))
-      val dmArgs = args.map(_.length).zip(args.inits.toList.reverse).flatMap {
-        case (l, vs) => List.fill(l)(vs)
-      }
-      val vals = fitZip(dmArgs, a0).flatMap(_.map {
-        case (ds, (v, fa)) => q"val $v = ${fa(ds)}"
-      })
+      val (results, params, values) =
+        paramLists.map(_.map { p =>
+          val a = freshName("a")
+          (p.result(), p.param(a), freshName("v") -> p.value(q"$a"))
+        }.unzip3).unzip3
       q"""
         ${applyResultN(n)}(..${results.flatten}) { ..${params.flatten} =>
-          ..$vals
-          ${method.applyTerms(args)}
+          ${applyValues(values)}
         }
        """
     }
 
     def largeMethod(n: Int): Tree = {
-      val rs = paramLists.flatMap(_.map(p => (p.vType, p.result())))
-      val g = {
-        val d = (n + MaxTupleN - 1) / MaxTupleN
-        (n + d - 1) / d
-      }
-      val (results, params, gArgs) =
-        rs.grouped(g).map { group =>
-          val m = group.length
-          val r = q"""${tupleResultN(m)}(..${group.map(_._2)})"""
-          val t = freshName("t")
-          val tt = tq"${tTupleN(m)}[..${group.map(_._1)}]"
-          val as = (1 to m).map(i => q"$t.${TermName(s"_$i")}")
-          (r, q"$t: $tt", as)
+      val t = (n + MaxTupleN - 1) / MaxTupleN
+      val g = (n + t - 1) / t
+      val (results, params, values) =
+        paramLists.flatten.grouped(g).map { ps =>
+          val m = ps.length
+          val tpl = q"""${tupleResultN(m)}(..${ps.map(_.result())})"""
+          val tplTpe = tq"${tTupleN(m)}[..${ps.map(_.vType)}]"
+          val a = freshName("a")
+          val vs = ps.zip(1 to m).map {
+            case (p, i) => freshName("v") -> p.value(q"$a.${TermName(s"_$i")}")
+          }
+          (tpl, q"$a: $tplTpe", vs)
         }.toList.unzip3
-      val args = fitShape(gArgs.flatten, paramLists)
       q"""
-        ${applyResultN(results.length)}(..$results) { ..$params =>
-          ${method.applyTrees(args)}
+        ${applyResultN(t)}(..$results) { ..$params =>
+          ${applyValues(fitShape(values.flatten, paramLists))}
         }
+       """
+    }
+
+    def applyValues(values: List[List[(TermName, (List[List[TermName]] => Tree))]]): Tree = {
+      val args = values.map(_.map(_._1))
+      val dmArgs = args.map(_.length).zip(args.inits.toList.reverse).flatMap {
+        case (n, xs) => List.fill(n)(xs)
+      }
+      val vals = fitZip(dmArgs, values).flatMap(_.map {
+        case (ds, (v, f)) => q"val $v = ${f(ds)}"
+      })
+      q"""
+        ..$vals
+        ${method.applyTerms(args)}
        """
     }
 
