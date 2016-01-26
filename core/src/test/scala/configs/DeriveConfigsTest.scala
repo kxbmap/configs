@@ -476,7 +476,6 @@ object DeriveConfigsTest extends Scalaprops {
   case object RNil extends Recursive
 
   object Recursive {
-
     implicit lazy val configs: Configs[Recursive] =
       Configs.derive[Recursive]
 
@@ -501,6 +500,29 @@ object DeriveConfigsTest extends Scalaprops {
   }
 
   val recursive = checkDerived[Recursive]
+
+
+  case class RecursiveOpt(value: Option[RecursiveOpt])
+
+  object RecursiveOpt {
+    implicit lazy val configs: Configs[RecursiveOpt] =
+      Configs.derive[RecursiveOpt]
+
+    implicit lazy val gen: Gen[RecursiveOpt] =
+      Gen.oneOfLazy(
+        Need(Gen[Option[RecursiveOpt]].map(RecursiveOpt.apply))
+      )
+
+    implicit lazy val equal: Equal[RecursiveOpt] =
+      Equal.equalA[RecursiveOpt]
+
+    implicit lazy val tcv: ToConfigValue[RecursiveOpt] = {
+      case RecursiveOpt(Some(r)) => Map("value" -> r.toConfigValue).toConfigValue
+      case RecursiveOpt(None) => ConfigFactory.empty().root()
+    }
+  }
+
+  val recursiveOption = checkDerived[RecursiveOpt]
 
 
   //  case class CC254(

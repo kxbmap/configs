@@ -18,45 +18,62 @@ package configs.macros
 
 import scala.collection.mutable
 import scala.reflect.macros.blackbox
+import scala.util.DynamicVariable
 
 class NConfigsMacro(val c: blackbox.Context) extends MacroUtil {
 
   import c.universe._
 
   def materializeConfigs[A: WeakTypeTag]: Tree = {
-    val ctx = new MaterializeContext(weakTypeOf[A])
-    val instance = classConfigs(ctx)
-    ctx.materialize(instance)
+    implicit val ctx = new MaterializeContext(weakTypeOf[A])
+    ctx.materialize(classConfigs)
   }
 
 
   private class MaterializeContext(val target: Type) {
 
-    val config = freshName("c")
-
     private val self = freshName("s")
-    private val buffer = mutable.Buffer((target, self, EmptyTree))
+    private val config = freshName("c")
 
-    def configs(tpe: Type): TermName =
-      buffer.find(_._1 =:= tpe).map(_._2).getOrElse {
+    private type State = mutable.Buffer[(Type, TermName, Tree)]
+    private val State = mutable.Buffer
+    private val state = new DynamicVariable[State](State.empty)
+
+    private def newState: State = State((target, self, EmptyTree))
+
+    private def configs(tpe: Type): TermName = {
+      val s = state.value
+      s.find(_._1 =:= tpe).map(_._2).getOrElse {
         val c = freshName("c")
-        buffer += ((tpe, c, q"$Configs[$tpe]"))
+        s += ((tpe, c, q"$Configs[$tpe]"))
         c
       }
+    }
 
-    def materialize(instance: Tree): Tree = {
-      val vals = buffer.collect {
-        case (_, n, t) if t.nonEmpty => q"val $n = $t"
-      }
+    def materialize(instance: Tree): Tree =
       q"""
-        lazy val $self: ${tConfigs(target)} = {
-          ..$vals
-          $instance
-        }
+        lazy val $self: ${tConfigs(target)} = $instance
         $self
        """
-    }
+
+    def makeMethodConfigs(body: => Tree): Tree =
+      state.withValue(newState) {
+        val b = body
+        val vals = state.value.collect {
+          case (_, n, t) if t.nonEmpty => q"val $n = $t"
+        }
+        q"""
+          $Configs.fromConfig[$target] { $config: $tConfig =>
+            ..$vals
+            $b
+          }
+         """
+      }
+
+    def makeResult(tpe: Type, name: String): Tree =
+      q"${configs(tpe)}.get($config, $name)"
   }
+
 
   private case class Param(sym: Symbol, method: Method, pos: Int) {
     val name = nameOf(sym)
@@ -65,7 +82,7 @@ class NConfigsMacro(val c: blackbox.Context) extends MacroUtil {
     val vType = if (term.isParamWithDefault) tOption(tpe) else tpe
 
     def result()(implicit ctx: MaterializeContext): Tree =
-      q"${ctx.configs(vType)}.get(${ctx.config}, $name)"
+      ctx.makeResult(vType, name)
 
     def param(name: TermName): Tree =
       q"$name: $vType"
@@ -210,7 +227,7 @@ class NConfigsMacro(val c: blackbox.Context) extends MacroUtil {
     if (applies.isEmpty)
       abort(s"$tpe has no available apply methods")
     else
-      applies.map(methodConfigs(_)).reduceLeft((l, r) => q"$l.orElse($r)")
+      applies.map(methodConfigs).reduceLeft((l, r) => q"$l.orElse($r)")
   }
 
   private def plainClassConfigs(tpe: Type)(implicit ctx: MaterializeContext): Tree = {
@@ -221,87 +238,83 @@ class NConfigsMacro(val c: blackbox.Context) extends MacroUtil {
     if (ctors.isEmpty)
       abort(s"$tpe has no public constructor")
     else
-      ctors.map(methodConfigs(_)).reduceLeft((l, r) => q"$l.orElse($r)")
+      ctors.map(methodConfigs).reduceLeft((l, r) => q"$l.orElse($r)")
   }
 
-  private def methodConfigs(method: Method)(implicit ctx: MaterializeContext): Tree = {
-    val paramLists = method.paramLists
+  private def methodConfigs(method: Method)(implicit ctx: MaterializeContext): Tree =
+    ctx.makeMethodConfigs {
+      val paramLists = method.paramLists
 
-    def noArgMethod: Tree = {
-      val args = paramLists.map(_.map(_ => abort(s"bug or broken: $method")))
-      q"""$Result.successful(${method.applyTrees(args)})"""
-    }
-
-    def oneArgMethod: Tree = {
-      val a = freshName("a")
-      val (result, param) = paramLists.flatten match {
-        case p :: Nil => (p.result(), p.param(a))
-        case _ => abort(s"bug or broken: $method")
+      def noArgMethod: Tree = {
+        val args = paramLists.map(_.map(_ => abort(s"bug or broken: $method")))
+        q"""$Result.successful(${method.applyTrees(args)})"""
       }
-      val args = paramLists.map(_.map(_.value(Ident(a))(Nil)))
-      q"""$result.map(($param) => ${method.applyTrees(args)})"""
-    }
 
-    def smallMethod(n: Int): Tree = {
-      val (results, params, values) =
-        paramLists.map(_.map { p =>
-          val a = freshName("a")
-          (p.result(), p.param(a), freshName("v") -> p.value(Ident(a)))
-        }.unzip3).unzip3
-      q"""
-        ${applyResultN(n)}(..${results.flatten}) { ..${params.flatten} =>
-          ${applyValues(values)}
+      def oneArgMethod: Tree = {
+        val a = freshName("a")
+        val (result, param) = paramLists.flatten match {
+          case p :: Nil => (p.result(), p.param(a))
+          case _ => abort(s"bug or broken: $method")
         }
-       """
-    }
+        val args = paramLists.map(_.map(_.value(Ident(a))(Nil)))
+        q"""$result.map(($param) => ${method.applyTrees(args)})"""
+      }
 
-    def largeMethod(n: Int): Tree = {
-      val t = (n + MaxTupleN - 1) / MaxTupleN
-      val g = (n + t - 1) / t
-      val (results, params, values) =
-        paramLists.flatten.grouped(g).map { ps =>
-          val m = ps.length
-          val tpl = q"""${tupleResultN(m)}(..${ps.map(_.result())})"""
-          val tplTpe = tq"${tTupleN(m)}[..${ps.map(_.vType)}]"
-          val a = freshName("a")
-          val vs = ps.zip(1 to m).map {
-            case (p, i) => freshName("v") -> p.value(q"$a.${TermName(s"_$i")}")
+      def smallMethod(n: Int): Tree = {
+        val (results, params, values) =
+          paramLists.map(_.map { p =>
+            val a = freshName("a")
+            (p.result(), p.param(a), freshName("v") -> p.value(Ident(a)))
+          }.unzip3).unzip3
+        q"""
+          ${applyResultN(n)}(..${results.flatten}) { ..${params.flatten} =>
+            ${applyValues(values)}
           }
-          (tpl, q"$a: $tplTpe", vs)
-        }.toList.unzip3
-      q"""
-        ${applyResultN(t)}(..$results) { ..$params =>
-          ${applyValues(fitShape(values.flatten, paramLists))}
+         """
+      }
+
+      def largeMethod(n: Int): Tree = {
+        val t = (n + MaxTupleN - 1) / MaxTupleN
+        val g = (n + t - 1) / t
+        val (results, params, values) =
+          paramLists.flatten.grouped(g).map { ps =>
+            val m = ps.length
+            val tpl = q"""${tupleResultN(m)}(..${ps.map(_.result())})"""
+            val tplTpe = tq"${tTupleN(m)}[..${ps.map(_.vType)}]"
+            val a = freshName("a")
+            val vs = ps.zip(1 to m).map {
+              case (p, i) => freshName("v") -> p.value(q"$a.${TermName(s"_$i")}")
+            }
+            (tpl, q"$a: $tplTpe", vs)
+          }.toList.unzip3
+        q"""
+          ${applyResultN(t)}(..$results) { ..$params =>
+            ${applyValues(fitShape(values.flatten, paramLists))}
+          }
+         """
+      }
+
+      def applyValues(values: List[List[(TermName, (List[List[TermName]] => Tree))]]): Tree = {
+        val args = values.map(_.map(_._1))
+        val dmArgs = args.map(_.length).zip(args.inits.toList.reverse).flatMap {
+          case (n, xs) => List.fill(n)(xs)
         }
-       """
-    }
-
-    def applyValues(values: List[List[(TermName, (List[List[TermName]] => Tree))]]): Tree = {
-      val args = values.map(_.map(_._1))
-      val dmArgs = args.map(_.length).zip(args.inits.toList.reverse).flatMap {
-        case (n, xs) => List.fill(n)(xs)
+        val vals = fitZip(dmArgs, values).flatMap(_.map {
+          case (ds, (v, f)) => q"val $v = ${f(ds)}"
+        })
+        q"""
+          ..$vals
+          ${method.applyTerms(args)}
+         """
       }
-      val vals = fitZip(dmArgs, values).flatMap(_.map {
-        case (ds, (v, f)) => q"val $v = ${f(ds)}"
-      })
-      q"""
-        ..$vals
-        ${method.applyTerms(args)}
-       """
-    }
 
-    val body = length(paramLists) match {
-      case 0 => noArgMethod
-      case 1 => oneArgMethod
-      case n if n <= MaxApplyN => smallMethod(n)
-      case n if n <= MaxTupleN * MaxApplyN => largeMethod(n)
-      case _ => abort("too large param lists")
-    }
-    q"""
-      $Configs.fromConfig[${ctx.target}] { ${ctx.config}: $tConfig =>
-        $body
+      length(paramLists) match {
+        case 0 => noArgMethod
+        case 1 => oneArgMethod
+        case n if n <= MaxApplyN => smallMethod(n)
+        case n if n <= MaxTupleN * MaxApplyN => largeMethod(n)
+        case _ => abort("too large param lists")
       }
-     """
-  }
+    }
 
 }
