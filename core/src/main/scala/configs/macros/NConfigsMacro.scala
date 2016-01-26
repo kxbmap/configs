@@ -35,7 +35,7 @@ class NConfigsMacro(val c: blackbox.Context) extends MacroUtil {
     val config = freshName("c")
 
     private val self = freshName("s")
-    private val buffer = mutable.Buffer[(Type, TermName, Tree)]()
+    private val buffer = mutable.Buffer((target, self, EmptyTree))
 
     def configs(tpe: Type): TermName =
       buffer.find(_._1 =:= tpe).map(_._2).getOrElse {
@@ -45,8 +45,8 @@ class NConfigsMacro(val c: blackbox.Context) extends MacroUtil {
       }
 
     def materialize(instance: Tree): Tree = {
-      val vals = buffer.map {
-        case (_, n, t) => q"val $n = $t"
+      val vals = buffer.collect {
+        case (_, n, t) if t.nonEmpty => q"val $n = $t"
       }
       q"""
         lazy val $self: ${tConfigs(target)} = {

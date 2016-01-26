@@ -24,7 +24,7 @@ import scalaz.std.anyVal._
 import scalaz.std.string._
 import scalaz.std.tuple._
 import scalaz.syntax.equal._
-import scalaz.{Apply, Equal}
+import scalaz.{Apply, Equal, Need}
 
 
 object DeriveConfigsTest extends Scalaprops {
@@ -467,6 +467,40 @@ object DeriveConfigsTest extends Scalaprops {
       p2.toProperties("w/ defaults")
     )
   }
+
+
+  sealed trait Recursive
+
+  case class RCons(head: Int, tail: Recursive) extends Recursive
+
+  case object RNil extends Recursive
+
+  object Recursive {
+
+    implicit lazy val configs: Configs[Recursive] =
+      Configs.derive[Recursive]
+
+    implicit lazy val gen: Gen[Recursive] =
+      Gen.oneOfLazy(
+        Need(Apply[Gen].apply2(Gen[Int], Gen[Recursive])(RCons)),
+        Need(Gen.elements(RNil))
+      )
+
+    implicit lazy val equal: Equal[Recursive] =
+      Equal.equalA[Recursive]
+
+    implicit lazy val tcv: ToConfigValue[Recursive] = {
+      case RNil => "RNil".toConfigValue
+      case RCons(h, t) =>
+        Map(
+          "type" -> "RCons".toConfigValue,
+          "head" -> h.toConfigValue,
+          "tail" -> t.toConfigValue
+        ).toConfigValue
+    }
+  }
+
+  val recursive = checkDerived[Recursive]
 
 
   //  case class CC254(
