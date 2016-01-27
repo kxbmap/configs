@@ -18,12 +18,13 @@ package configs.macros
 
 import scala.reflect.macros.blackbox
 
-class BeanConfigsMacro(val c: blackbox.Context) extends Helper {
+class OldBeanConfigsMacro(val c: blackbox.Context) extends MacroUtil {
 
   import c.universe._
 
   def materializeA[A: WeakTypeTag]: Tree = {
-    val tpe = abortIfAbstract(weakTypeOf[A])
+    val tpe = weakTypeOf[A]
+    if (tpe.typeSymbol.isAbstract) abort(s"$tpe must be concrete class")
     val hasNoArgCtor = tpe.decls.exists {
       case m: MethodSymbol => m.isConstructor && m.isPublic && m.paramLists.length <= 1 && m.paramLists.forall(_.isEmpty)
       case _               => false
@@ -65,12 +66,12 @@ class BeanConfigsMacro(val c: blackbox.Context) extends Helper {
         val nn = Seq(name, toLowerHyphenCase(name)).distinct
         val opt = nn.map(n => q"$cn.get($config, $n)").reduceLeft((l, r) => q"$l.orElse($r)")
         q"""
-        val $cn = $configsCompanion[${optionType(paramType)}]
+        val $cn = $Configs[${tOption(paramType)}]
         $opt.foreach($obj.$method)
         """
     }
     q"""
-    $configsCompanion.onPath { $config: $configType =>
+    $Configs.onPath { $config: $tConfig =>
       val $obj: $targetType = $newInstance
       ..$sets
       $obj

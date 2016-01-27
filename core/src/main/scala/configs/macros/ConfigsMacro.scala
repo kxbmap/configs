@@ -20,17 +20,17 @@ import scala.collection.mutable
 import scala.reflect.macros.blackbox
 import scala.util.DynamicVariable
 
-class NConfigsMacro(val c: blackbox.Context) extends MacroUtil {
+class ConfigsMacro(val c: blackbox.Context) extends MacroUtil {
 
   import c.universe._
 
-  def materializeConfigs[A: WeakTypeTag]: Tree = {
-    implicit val ctx = new MaterializeContext(weakTypeOf[A])
-    ctx.materialize(classConfigs)
+  def deriveConfigs[A: WeakTypeTag]: Tree = {
+    implicit val ctx = new DerivationContext(weakTypeOf[A])
+    ctx.derive(classConfigs)
   }
 
 
-  private class MaterializeContext(val target: Type) {
+  private class DerivationContext(val target: Type) {
 
     private val self = freshName("s")
     private val config = freshName("c")
@@ -50,7 +50,7 @@ class NConfigsMacro(val c: blackbox.Context) extends MacroUtil {
       }
     }
 
-    def materialize(instance: Tree): Tree =
+    def derive(instance: Tree): Tree =
       q"""
         lazy val $self: ${tConfigs(target)} = $instance
         $self
@@ -84,7 +84,7 @@ class NConfigsMacro(val c: blackbox.Context) extends MacroUtil {
         tOption(tpe)
       else tpe
 
-    def result()(implicit ctx: MaterializeContext): Tree =
+    def result()(implicit ctx: DerivationContext): Tree =
       hyphenName.fold(ctx.makeResult(vType, name)) { h =>
         val r1 = ctx.makeResult(tOption(tpe), name)
         val r2 = ctx.makeResult(vType, h)
@@ -188,7 +188,7 @@ class NConfigsMacro(val c: blackbox.Context) extends MacroUtil {
   }
 
 
-  private def classConfigs(implicit ctx: MaterializeContext): Tree =
+  private def classConfigs(implicit ctx: DerivationContext): Tree =
     ctx.target.typeSymbol match {
       case typeSym if typeSym.isClass =>
         val classSym = typeSym.asClass
@@ -207,7 +207,7 @@ class NConfigsMacro(val c: blackbox.Context) extends MacroUtil {
       case _ => abort(s"${ctx.target} is not a class")
     }
 
-  private def sealedClassConfigs(classSym: ClassSymbol)(implicit ctx: MaterializeContext): Tree = {
+  private def sealedClassConfigs(classSym: ClassSymbol)(implicit ctx: DerivationContext): Tree = {
     val knownSubclasses = {
       def go(cs: ClassSymbol): List[ClassSymbol] =
         if (cs.isSealed) {
@@ -256,7 +256,7 @@ class NConfigsMacro(val c: blackbox.Context) extends MacroUtil {
     }
   }
 
-  private def caseClassConfigs(tpe: Type, module: ModuleSymbol)(implicit ctx: MaterializeContext): Tree = {
+  private def caseClassConfigs(tpe: Type, module: ModuleSymbol)(implicit ctx: DerivationContext): Tree = {
     val applies = module.info.decls.sorted
       .collect {
         case m: MethodSymbol
@@ -272,7 +272,7 @@ class NConfigsMacro(val c: blackbox.Context) extends MacroUtil {
       applies.map(methodConfigs).reduceLeft((l, r) => q"$l.orElse($r)")
   }
 
-  private def plainClassConfigs(tpe: Type)(implicit ctx: MaterializeContext): Tree = {
+  private def plainClassConfigs(tpe: Type)(implicit ctx: DerivationContext): Tree = {
     val ctors = tpe.decls.sorted.collect {
       case m: MethodSymbol if m.isConstructor && m.isPublic =>
         Constructor(tpe, m)
@@ -283,7 +283,7 @@ class NConfigsMacro(val c: blackbox.Context) extends MacroUtil {
       ctors.map(methodConfigs).reduceLeft((l, r) => q"$l.orElse($r)")
   }
 
-  private def methodConfigs(method: Method)(implicit ctx: MaterializeContext): Tree =
+  private def methodConfigs(method: Method)(implicit ctx: DerivationContext): Tree =
     ctx.makeMethodConfigs {
       val paramLists = method.paramLists
 

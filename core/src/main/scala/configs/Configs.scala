@@ -62,13 +62,13 @@ object Configs extends ConfigsInstances {
 
 
   def derive[A]: Configs[A] =
-    macro macros.NConfigsMacro.materializeConfigs[A]
+    macro macros.ConfigsMacro.deriveConfigs[A]
 
   def bean[A]: Configs[A] =
-    macro macros.BeanConfigsMacro.materializeA[A]
+    macro macros.OldBeanConfigsMacro.materializeA[A]
 
   def bean[A](newInstance: => A): Configs[A] =
-    macro macros.BeanConfigsMacro.materializeI[A]
+    macro macros.OldBeanConfigsMacro.materializeI[A]
 
 
   def from[A](f: (Config, String) => Result[A]): Configs[A] =

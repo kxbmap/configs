@@ -28,7 +28,7 @@ import scala.util.{Failure, Success, Try}
 private[configs] sealed abstract class MacroConfigsInstances {
 
   implicit def autoDerivationConfigs[A]: Configs[A] =
-    macro macros.NConfigsMacro.materializeConfigs[A]
+    macro macros.ConfigsMacro.deriveConfigs[A]
 
 }
 
