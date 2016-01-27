@@ -79,7 +79,10 @@ class NConfigsMacro(val c: blackbox.Context) extends MacroUtil {
     val name = nameOf(sym)
     val term = sym.asTerm
     val tpe = sym.info
-    val vType = if (term.isParamWithDefault) tOption(tpe) else tpe
+    val vType =
+      if (term.isParamWithDefault || term.isImplicit)
+        tOption(tpe)
+      else tpe
 
     def result()(implicit ctx: MaterializeContext): Tree =
       ctx.makeResult(vType, name)
@@ -88,10 +91,27 @@ class NConfigsMacro(val c: blackbox.Context) extends MacroUtil {
       q"$name: $vType"
 
     def value(v: Tree): List[List[TermName]] => Tree =
-      ds => defaultMethod.fold(v)(m => q"$v.getOrElse(${m.applyTerms(ds)})")
+      dmArgs => {
+        def implicitError: Tree = abort(s"could not find implicit value for parameter $show")
+        def valueOr(tree: Tree): Tree = q"$v.getOrElse($tree)"
+        def valueOrDefault(m: Method): Tree = valueOr(m.applyTerms(dmArgs))
+        implicitValue
+          .fold(defaultMethod.fold(v)(valueOrDefault)) {
+            case EmptyTree => defaultMethod.fold(implicitError)(valueOrDefault)
+            case implicits => valueOr(implicits)
+          }
+      }
 
-    def defaultMethod: Option[Method] =
+    def show: String = {
+      val d = if (term.isParamWithDefault) " = <default>" else ""
+      s"${nameOf(sym)}: ${nameOf(tpe)}$d"
+    }
+
+    private def defaultMethod: Option[Method] =
       if (term.isParamWithDefault) method.defaultMethod(pos) else None
+
+    private def implicitValue: Option[Tree] =
+      if (term.isImplicit) Some(c.inferImplicitValue(tpe)) else None
   }
 
   private sealed abstract class Method {

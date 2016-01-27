@@ -525,6 +525,47 @@ object DeriveConfigsTest extends Scalaprops {
   val recursiveOption = checkDerived[RecursiveOpt]
 
 
+  class ImplicitParam(implicit val a1: Int, val a2: Long = 2L)
+
+  object ImplicitParam {
+    implicit lazy val gen: Gen[ImplicitParam] =
+      Apply[Gen].apply2(Gen[Int], Gen[Int])(new ImplicitParam()(_, _))
+
+    implicit lazy val equal: Equal[ImplicitParam] =
+      Equal.equalBy(i => (i.a1, i.a2))
+
+    implicit lazy val tcv: ToConfigValue[ImplicitParam] =
+      ToConfigValue.fromMap(i => Map(
+        "a1" -> i.a1.toConfigValue,
+        "a2" -> i.a2.toConfigValue
+      ))
+  }
+
+  val implicitParam = {
+    val p1 =
+      forAll { (a1: Int, a2: Long) =>
+        implicit val i1: Int = a1
+        implicit val i2: Long = a2
+        val c = ConfigFactory.empty()
+        Configs[ImplicitParam].extract(c).exists(_ === new ImplicitParam()(a1, a2))
+      }
+    val p2 =
+      forAll { implicit a1: Int =>
+        val c = ConfigFactory.empty()
+        Configs[ImplicitParam].extract(c).exists(_ === new ImplicitParam()(a1, 2L))
+      }
+    val p3 = {
+      implicit def a1: Int = sys.error("implicit")
+      checkDerived[ImplicitParam]
+    }
+    Properties.list(
+      p1.toProperties("implicit parameters"),
+      p2.toProperties("implicit with default"),
+      p3.toProperties("w/o implicits")
+    )
+  }
+
+
   //  case class CC254(
   //      a1: Int, a2: Int, a3: Int, a4: Int, a5: Int, a6: Int, a7: Int, a8: Int, a9: Int, a10: Int,
   //      a11: Int, a12: Int, a13: Int, a14: Int, a15: Int, a16: Int, a17: Int, a18: Int, a19: Int, a20: Int,
