@@ -47,10 +47,10 @@ private[macros] abstract class MacroUtil {
   lazy val Result =
     q"_root_.configs.Result"
 
-  def applyResultN(n: Int): Tree =
+  def resultApplyN(n: Int): Tree =
     q"$Result.${TermName(s"apply$n")}"
 
-  def tupleResultN(n: Int): Tree =
+  def resultTupleN(n: Int): Tree =
     q"$Result.${TermName(s"tuple$n")}"
 
   def tTupleN(n: Int): Tree =

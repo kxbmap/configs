@@ -566,6 +566,40 @@ object DeriveConfigsTest extends Scalaprops {
   }
 
 
+  class HyphenSeparated(
+      val normalParam: Int,
+      val paramWithDefault: Int = 1,
+      val duplicatedName: Int,
+      val `duplicated-name`: Int)(implicit
+      val implicitParam: Int,
+      val implicitParamWithDefault: Long = 2)
+
+  object HyphenSeparated {
+    implicit lazy val equal: Equal[HyphenSeparated] =
+      Equal.equalBy(h =>
+        (h.normalParam, h.paramWithDefault, h.implicitParam, h.implicitParamWithDefault))
+
+    implicit lazy val tcv: ToConfigValue[HyphenSeparated] =
+      ToConfigValue.fromMap(h => Map(
+        "normal-param" -> h.normalParam.toConfigValue,
+        "param-with-default" -> h.paramWithDefault.toConfigValue,
+        "duplicatedName" -> h.duplicatedName.toConfigValue,
+        "duplicated-name" -> h.`duplicated-name`.toConfigValue,
+        "implicit-param" -> h.implicitParam.toConfigValue,
+        "implicit-param-with-default" -> h.implicitParamWithDefault.toConfigValue
+      ))
+  }
+
+  val hyphenSeparatedPath = {
+    implicit val i: Int = 42
+    implicit val gen: Gen[HyphenSeparated] =
+      Gen[(Int, Int, Int, Int)].map {
+        case (a, b, c, d) => new HyphenSeparated(a, b, c, d)
+      }
+    checkDerived[HyphenSeparated]
+  }
+
+
   //  case class CC254(
   //      a1: Int, a2: Int, a3: Int, a4: Int, a5: Int, a6: Int, a7: Int, a8: Int, a9: Int, a10: Int,
   //      a11: Int, a12: Int, a13: Int, a14: Int, a15: Int, a16: Int, a17: Int, a18: Int, a19: Int, a20: Int,

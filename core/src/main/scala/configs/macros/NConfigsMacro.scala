@@ -75,7 +75,7 @@ class NConfigsMacro(val c: blackbox.Context) extends MacroUtil {
   }
 
 
-  private case class Param(sym: Symbol, method: Method, pos: Int) {
+  private case class Param(sym: Symbol, method: Method, pos: Int, hyphenName: Option[String]) {
     val name = nameOf(sym)
     val term = sym.asTerm
     val tpe = sym.info
@@ -85,7 +85,14 @@ class NConfigsMacro(val c: blackbox.Context) extends MacroUtil {
       else tpe
 
     def result()(implicit ctx: MaterializeContext): Tree =
-      ctx.makeResult(vType, name)
+      hyphenName.fold(ctx.makeResult(vType, name)) { h =>
+        val r1 = ctx.makeResult(tOption(tpe), name)
+        val r2 = ctx.makeResult(vType, h)
+        if (term.isParamWithDefault || term.isImplicit)
+          q"$r1.flatMap(o => if (o.isEmpty) $r2 else $Result.successful(o))"
+        else
+          q"$r1.flatMap(_.fold($r2)($Result.successful))"
+      }
 
     def param(name: TermName): Tree =
       q"$name: $vType"
@@ -114,6 +121,7 @@ class NConfigsMacro(val c: blackbox.Context) extends MacroUtil {
       if (term.isImplicit) Some(c.inferImplicitValue(tpe)) else None
   }
 
+
   private sealed abstract class Method {
     def method: MethodSymbol
 
@@ -124,10 +132,24 @@ class NConfigsMacro(val c: blackbox.Context) extends MacroUtil {
     def applyTerms(args: Seq[Seq[TermName]]): Tree =
       applyTrees(args.map(_.map(Ident.apply)))
 
-    def paramLists: List[List[Param]] =
-      zipWithParamPos(method.paramLists).map(_.map {
-        case (s, p) => Param(s, this, p)
+    lazy val paramLists: List[List[Param]] = {
+      val withPos = zipWithParamPos(method.paramLists)
+      val hyphens: Map[Int, String] = {
+        val nhs = withPos.flatMap(_.map {
+          case (s, p) =>
+            val n = nameOf(s)
+            (p, n, toLowerHyphenCase(n))
+        })
+        val (_, ns, hs) = nhs.unzip3
+        nhs.collect {
+          case (p, n, h) if n != h && !ns.contains(h) && hs.count(_ == h) == 1 =>
+            p -> h
+        }(collection.breakOut)
+      }
+      withPos.map(_.map {
+        case (s, p) => Param(s, this, p, hyphens.get(p))
       })
+    }
 
     def defaultMethod(pos: Int): Option[Method] =
       defaultMethods.get(pos)
@@ -287,7 +309,7 @@ class NConfigsMacro(val c: blackbox.Context) extends MacroUtil {
             (p.result(), p.param(a), freshName("v") -> p.value(Ident(a)))
           }.unzip3).unzip3
         q"""
-          ${applyResultN(n)}(..${results.flatten}) { ..${params.flatten} =>
+          ${resultApplyN(n)}(..${results.flatten}) { ..${params.flatten} =>
             ${applyValues(values)}
           }
          """
@@ -299,7 +321,7 @@ class NConfigsMacro(val c: blackbox.Context) extends MacroUtil {
         val (results, params, values) =
           paramLists.flatten.grouped(g).map { ps =>
             val m = ps.length
-            val tpl = q"""${tupleResultN(m)}(..${ps.map(_.result())})"""
+            val tpl = q"""${resultTupleN(m)}(..${ps.map(_.result())})"""
             val tplTpe = tq"${tTupleN(m)}[..${ps.map(_.vType)}]"
             val a = freshName("a")
             val vs = ps.zip(1 to m).map {
@@ -308,7 +330,7 @@ class NConfigsMacro(val c: blackbox.Context) extends MacroUtil {
             (tpl, q"$a: $tplTpe", vs)
           }.toList.unzip3
         q"""
-          ${applyResultN(t)}(..$results) { ..$params =>
+          ${resultApplyN(t)}(..$results) { ..$params =>
             ${applyValues(fitShape(values.flatten, paramLists))}
           }
          """
