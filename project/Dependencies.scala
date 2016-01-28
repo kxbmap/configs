@@ -14,7 +14,8 @@ object Dependencies extends AutoPlugin {
 
       val core = libraryDependencies ++= Seq(
         "com.typesafe" % "config" % configVersion.value,
-        "org.scala-lang" % "scala-reflect" % scalaVersion.value % "provided"
+        "org.scala-lang" % "scala-reflect" % scalaVersion.value % "provided",
+        "org.projectlombok" % "lombok" % "1.16.6" % "test"
       )
     }
 
