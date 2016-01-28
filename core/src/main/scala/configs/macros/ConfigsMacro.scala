@@ -133,21 +133,18 @@ class ConfigsMacro(val c: blackbox.Context) extends MacroUtil {
       applyTrees(args.map(_.map(Ident.apply)))
 
     lazy val paramLists: List[List[Param]] = {
-      val withPos = zipWithParamPos(method.paramLists)
-      val hyphens: Map[Int, String] = {
-        val nhs = withPos.flatMap(_.map {
-          case (s, p) =>
-            val n = nameOf(s)
-            (p, n, toLowerHyphenCase(n))
-        })
-        val (_, ns, hs) = nhs.unzip3
-        nhs.collect {
-          case (p, n, h) if n != h && !ns.contains(h) && hs.count(_ == h) == 1 =>
-            p -> h
-        }(collection.breakOut)
+      val parts = zipWithPos(method.paramLists).map(_.map {
+        case sp@(s, _) =>
+          val n = nameOf(s)
+          val h = toLowerHyphenCase(n)
+          (n, h, sp)
+      })
+      val (ns, hs) = {
+        val (nss, hss, _) = parts.map(_.unzip3).unzip3
+        (nss.flatten, hss.flatten)
       }
-      withPos.map(_.map {
-        case (s, p) => Param(s, this, p, hyphens.get(p))
+      parts.map(_.map {
+        case (n, h, (s, p)) => Param(s, this, p, validateHyphenName(n, h, ns, hs))
       })
     }
 
@@ -283,80 +280,78 @@ class ConfigsMacro(val c: blackbox.Context) extends MacroUtil {
       ctors.map(methodConfigs).reduceLeft((l, r) => q"$l.orElse($r)")
   }
 
-  private def methodConfigs(method: Method)(implicit ctx: DerivationContext): Tree =
+  private def methodConfigs(method: Method)(implicit ctx: DerivationContext): Tree = {
+    val paramLists = method.paramLists
+
+    def noArgMethod: Tree = {
+      val args = paramLists.map(_.map(_ => abort(s"bug or broken: $method")))
+      q"""$Result.successful(${method.applyTrees(args)})"""
+    }
+
+    def oneArgMethod: Tree = {
+      val a = freshName("a")
+      val (result, param) = paramLists.flatten match {
+        case p :: Nil => (p.result(), p.param(a))
+        case _ => abort(s"bug or broken: $method")
+      }
+      val args = paramLists.map(_.map(_.value(Ident(a))(Nil)))
+      q"""$result.map(($param) => ${method.applyTrees(args)})"""
+    }
+
+    def smallMethod: Tree = {
+      val (results, params, values) =
+        paramLists.map(_.map { p =>
+          val a = freshName("a")
+          (p.result(), p.param(a), freshName("v") -> p.value(Ident(a)))
+        }.unzip3).unzip3
+      q"""
+        ${resultApplyN(results.flatten)} { ..${params.flatten} =>
+          ${applyValues(values)}
+        }
+       """
+    }
+
+    def largeMethod: Tree = {
+      val (results, params, values) =
+        grouping(paramLists.flatten).map { ps =>
+          val tpl = resultTupleN(ps.map(_.result()))
+          val tplTpe = tTupleN(ps.map(_.vType))
+          val a = freshName("a")
+          val vs = ps.zipWithIndex.map {
+            case (p, i) => freshName("v") -> p.value(q"$a.${TermName(s"_${i + 1}")}")
+          }
+          (tpl, q"$a: $tplTpe", vs)
+        }.unzip3
+      q"""
+        ${resultApplyN(results)} { ..$params =>
+          ${applyValues(fitShape(values.flatten, paramLists))}
+        }
+       """
+    }
+
+    def applyValues(values: List[List[(TermName, (List[List[TermName]] => Tree))]]): Tree = {
+      val args = values.map(_.map(_._1))
+      val dmArgs = args.map(_.length).zip(args.inits.toList.reverse).flatMap {
+        case (n, xs) => List.fill(n)(xs)
+      }
+      val vals = fitZip(dmArgs, values).flatMap(_.map {
+        case (ds, (v, f)) => q"val $v = ${f(ds)}"
+      })
+      q"""
+        ..$vals
+        ${method.applyTerms(args)}
+       """
+    }
+
     ctx.makeMethodConfigs {
-      val paramLists = method.paramLists
-
-      def noArgMethod: Tree = {
-        val args = paramLists.map(_.map(_ => abort(s"bug or broken: $method")))
-        q"""$Result.successful(${method.applyTrees(args)})"""
-      }
-
-      def oneArgMethod: Tree = {
-        val a = freshName("a")
-        val (result, param) = paramLists.flatten match {
-          case p :: Nil => (p.result(), p.param(a))
-          case _ => abort(s"bug or broken: $method")
-        }
-        val args = paramLists.map(_.map(_.value(Ident(a))(Nil)))
-        q"""$result.map(($param) => ${method.applyTrees(args)})"""
-      }
-
-      def smallMethod(n: Int): Tree = {
-        val (results, params, values) =
-          paramLists.map(_.map { p =>
-            val a = freshName("a")
-            (p.result(), p.param(a), freshName("v") -> p.value(Ident(a)))
-          }.unzip3).unzip3
-        q"""
-          ${resultApplyN(n)}(..${results.flatten}) { ..${params.flatten} =>
-            ${applyValues(values)}
-          }
-         """
-      }
-
-      def largeMethod(n: Int): Tree = {
-        val t = (n + MaxTupleN - 1) / MaxTupleN
-        val g = (n + t - 1) / t
-        val (results, params, values) =
-          paramLists.flatten.grouped(g).map { ps =>
-            val m = ps.length
-            val tpl = q"""${resultTupleN(m)}(..${ps.map(_.result())})"""
-            val tplTpe = tq"${tTupleN(m)}[..${ps.map(_.vType)}]"
-            val a = freshName("a")
-            val vs = ps.zip(1 to m).map {
-              case (p, i) => freshName("v") -> p.value(q"$a.${TermName(s"_$i")}")
-            }
-            (tpl, q"$a: $tplTpe", vs)
-          }.toList.unzip3
-        q"""
-          ${resultApplyN(t)}(..$results) { ..$params =>
-            ${applyValues(fitShape(values.flatten, paramLists))}
-          }
-         """
-      }
-
-      def applyValues(values: List[List[(TermName, (List[List[TermName]] => Tree))]]): Tree = {
-        val args = values.map(_.map(_._1))
-        val dmArgs = args.map(_.length).zip(args.inits.toList.reverse).flatMap {
-          case (n, xs) => List.fill(n)(xs)
-        }
-        val vals = fitZip(dmArgs, values).flatMap(_.map {
-          case (ds, (v, f)) => q"val $v = ${f(ds)}"
-        })
-        q"""
-          ..$vals
-          ${method.applyTerms(args)}
-         """
-      }
-
       length(paramLists) match {
         case 0 => noArgMethod
         case 1 => oneArgMethod
-        case n if n <= MaxApplyN => smallMethod(n)
-        case n if n <= MaxTupleN * MaxApplyN => largeMethod(n)
+        case n if n <= MaxApplyN => smallMethod
+        case n if n <= MaxTupleN * MaxApplyN => largeMethod
         case _ => abort("too large param lists")
       }
     }
+  }
 
 }

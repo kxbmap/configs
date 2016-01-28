@@ -41,20 +41,27 @@ private[macros] abstract class MacroUtil {
   def tOption(arg: Type): Type =
     appliedType(typeOf[Option[_]].typeConstructor, arg)
 
+  def tTupleN(args: Seq[Type]): Tree =
+    tq"_root_.scala.${TypeName(s"Tuple${args.length}")}[..$args]"
+
   val MaxApplyN = 22
   val MaxTupleN = 22
 
   lazy val Result =
     q"_root_.configs.Result"
 
-  def resultApplyN(n: Int): Tree =
-    q"$Result.${TermName(s"apply$n")}"
+  def resultApplyN(args: Seq[Tree]): Tree =
+    q"$Result.${TermName(s"apply${args.length}")}(..$args)"
 
-  def resultTupleN(n: Int): Tree =
-    q"$Result.${TermName(s"tuple$n")}"
+  def resultTupleN(args: Seq[Tree]): Tree =
+    q"$Result.${TermName(s"tuple${args.length}")}(..$args)"
 
-  def tTupleN(n: Int): Tree =
-    tq"_root_.scala.${TypeName(s"Tuple$n")}"
+  def grouping[A](xs: List[A]): List[List[A]] = {
+    val n = xs.length
+    val t = (n + MaxTupleN - 1) / MaxTupleN
+    val g = (n + t - 1) / t
+    xs.grouped(g).toList
+  }
 
   def nameOf(sym: Symbol): String =
     sym.name.decodedName.toString
@@ -80,9 +87,9 @@ private[macros] abstract class MacroUtil {
   def length(xss: Seq[Seq[_]]): Int =
     xss.foldLeft(0)(_ + _.length)
 
-  def zipWithParamPos(paramLists: List[List[Symbol]]): List[List[(Symbol, Int)]] =
-    paramLists.zip(paramLists.scanLeft(1)(_ + _.length)).map {
-      case (ps, s) => ps.zip(Stream.from(s))
+  def zipWithPos[A](xss: List[List[A]]): List[List[(A, Int)]] =
+    xss.zip(xss.scanLeft(1)(_ + _.length)).map {
+      case (xs, s) => xs.iterator.zip(Iterator.from(s)).toList
     }
 
   def fitShape[A](xs: List[A], shape: List[List[_]]): List[List[A]] = {
@@ -103,11 +110,23 @@ private[macros] abstract class MacroUtil {
     xss.zip(yss).map(t => t._1.zip(t._2))
   }
 
+  def validateHyphenName(name: String, hyphen: String, names: Seq[String], hyphens: Seq[String]): Option[String] =
+    if (name != hyphen && !names.contains(hyphen) && hyphens.count(_ == hyphen) == 1)
+      Some(hyphen)
+    else
+      None
+
   def abort(msg: String): Nothing =
     c.abort(c.enclosingPosition, msg)
 
+  def error(msg: String): Unit =
+    c.error(c.enclosingPosition, msg)
+
   def warning(msg: String): Unit =
     c.warning(c.enclosingPosition, msg)
+
+  def info(msg: String, force: Boolean = false): Unit =
+    c.info(c.enclosingPosition, msg, force)
 
   def echo(msg: String): Unit =
     c.echo(c.enclosingPosition, msg)
