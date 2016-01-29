@@ -16,11 +16,16 @@
 
 package configs
 
+import com.typesafe.config.ConfigFactory
 import configs.util._
+import scala.beans.BeanProperty
 import scala.collection.convert.decorateAsScala._
 import scalaprops.Property.forAll
-import scalaprops.{Gen, Scalaprops}
+import scalaprops.{Properties, Gen, Scalaprops}
 import scalaz.Equal
+import scalaz.std.anyVal._
+import scalaz.std.tuple._
+import scalaz.std.string._
 import scalaz.syntax.equal._
 
 object DeriveBeanConfigsTest extends Scalaprops {
@@ -97,6 +102,37 @@ object DeriveBeanConfigsTest extends Scalaprops {
         }.toMap)
 
     checkDerived[Bean484]
+  }
+
+
+  class Factory(
+      @BeanProperty var a1: Int,
+      @BeanProperty var a2: Int)
+
+  object Factory {
+    implicit val equal: Equal[Factory] =
+      Equal.equalBy(f => (f.a1, f.a2))
+  }
+
+  val factory = {
+    val C = Configs.bean(new Factory(1, 42))
+    val p1 =
+      forAll { (a1: Int) =>
+        val config = ConfigFactory.parseString(s"a1 = $a1")
+        C.extract(config).exists(_ === new Factory(a1, 42))
+      }
+    val p2 =
+      forAll { (a1: Int, a2: Int) =>
+        val config = ConfigFactory.parseString(s"a1 = $a1, a2 = $a2")
+        (for {
+          a <- C.extract(config)
+          b <- C.extract(config)
+        } yield a === b && (a ne b)).getOrElse(false)
+      }
+    Properties.list(
+      p1.toProperties("factory function"),
+      p2.toProperties("return different instances")
+    )
   }
 
 }
