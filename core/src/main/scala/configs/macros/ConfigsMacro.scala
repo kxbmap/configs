@@ -20,7 +20,7 @@ import scala.collection.mutable
 import scala.reflect.macros.blackbox
 import scala.util.DynamicVariable
 
-class ConfigsMacro(val c: blackbox.Context) extends MacroUtil {
+class ConfigsMacro(val c: blackbox.Context) extends MacroUtil with Util {
 
   import c.universe._
 

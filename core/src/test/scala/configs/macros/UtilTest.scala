@@ -23,7 +23,7 @@ import scalaz.NonEmptyList
 import scalaz.std.string._
 import scalaz.syntax.apply._
 
-object CaseFormatTest extends Scalaprops {
+object UtilTest extends Scalaprops with Util {
 
   private val lower: Gen[String] = Gen.nonEmptyString(Gen.alphaLowerChar)
   private val UPPER: Gen[String] = Gen.nonEmptyString(Gen.alphaUpperChar)

@@ -44,9 +44,6 @@ private[macros] abstract class MacroUtil {
   def tTupleN(args: Seq[Type]): Tree =
     tq"_root_.scala.${TypeName(s"Tuple${args.length}")}[..$args]"
 
-  val MaxApplyN = 22
-  val MaxTupleN = 22
-
   lazy val Result =
     q"_root_.configs.Result"
 
@@ -55,13 +52,6 @@ private[macros] abstract class MacroUtil {
 
   def resultTupleN(args: Seq[Tree]): Tree =
     q"$Result.${TermName(s"tuple${args.length}")}(..$args)"
-
-  def grouping[A](xs: List[A]): List[List[A]] = {
-    val n = xs.length
-    val t = (n + MaxTupleN - 1) / MaxTupleN
-    val g = (n + t - 1) / t
-    xs.grouped(g).toList
-  }
 
   def nameOf(sym: Symbol): String =
     sym.name.decodedName.toString
@@ -83,38 +73,6 @@ private[macros] abstract class MacroUtil {
 
   def freshName(name: String): TermName =
     TermName(c.freshName(name))
-
-  def length(xss: Seq[Seq[_]]): Int =
-    xss.foldLeft(0)(_ + _.length)
-
-  def zipWithPos[A](xss: List[List[A]]): List[List[(A, Int)]] =
-    xss.zip(xss.scanLeft(1)(_ + _.length)).map {
-      case (xs, s) => xs.iterator.zip(Iterator.from(s)).toList
-    }
-
-  def fitShape[A](xs: List[A], shape: List[List[_]]): List[List[A]] = {
-    if (xs.length != length(shape)) abort(s"mismatch length")
-    @annotation.tailrec
-    def loop(xs: List[A], shape: List[List[_]], acc: List[List[A]]): List[List[A]] =
-      shape match {
-        case Nil => acc.reverse
-        case s :: ss =>
-          val (h, t) = xs.splitAt(s.length)
-          loop(t, ss, h :: acc)
-      }
-    loop(xs, shape, Nil)
-  }
-
-  def fitZip[A, B](xs: List[A], yss: List[List[B]]): List[List[(A, B)]] = {
-    val xss = fitShape(xs, yss)
-    xss.zip(yss).map(t => t._1.zip(t._2))
-  }
-
-  def validateHyphenName(name: String, hyphen: String, names: Seq[String], hyphens: Seq[String]): Option[String] =
-    if (name != hyphen && !names.contains(hyphen) && hyphens.count(_ == hyphen) == 1)
-      Some(hyphen)
-    else
-      None
 
   def abort(msg: String): Nothing =
     c.abort(c.enclosingPosition, msg)

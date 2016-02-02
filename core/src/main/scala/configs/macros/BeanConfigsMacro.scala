@@ -19,7 +19,7 @@ package configs.macros
 import scala.collection.mutable
 import scala.reflect.macros.blackbox
 
-class BeanConfigsMacro(val c: blackbox.Context) extends MacroUtil {
+class BeanConfigsMacro(val c: blackbox.Context) extends MacroUtil with Util {
 
   import c.universe._
 
@@ -138,8 +138,9 @@ class BeanConfigsMacro(val c: blackbox.Context) extends MacroUtil {
     if (properties.isEmpty)
       abort(s"${fullNameOf(ctx.target)} has no bean properties")
 
+    val bean = freshName("b")
+
     def singleBean: Tree = {
-      val bean = freshName("b")
       val a = freshName("a")
       val (result, param, set) = properties match {
         case p :: Nil => (p.result(), p.param(a), p.setOpt(bean, Ident(a)))
@@ -147,13 +148,12 @@ class BeanConfigsMacro(val c: blackbox.Context) extends MacroUtil {
       }
       q"""
         $result.map { $param =>
-          ${block(bean, Seq(set))}
+          ${block(Seq(set))}
         }
        """
     }
 
     def smallBean: Tree = {
-      val bean = freshName("b")
       val (results, params, sets) =
         properties.map { p =>
           val a = freshName("a")
@@ -161,13 +161,12 @@ class BeanConfigsMacro(val c: blackbox.Context) extends MacroUtil {
         }.unzip3
       q"""
         ${resultApplyN(results)} { ..$params =>
-          ${block(bean, sets)}
+          ${block(sets)}
         }
        """
     }
 
     def largeBean: Tree = {
-      val bean = freshName("b")
       val (results, params, sets) =
         grouping(properties).map { ps =>
           val tpl = resultTupleN(ps.map(_.result()))
@@ -180,12 +179,12 @@ class BeanConfigsMacro(val c: blackbox.Context) extends MacroUtil {
         }.unzip3
       q"""
         ${resultApplyN(results)} { ..$params =>
-          ${block(bean, sets.flatten)}
+          ${block(sets.flatten)}
         }
        """
     }
 
-    def block(bean: TermName, sets: Seq[Tree]): Tree =
+    def block(sets: Seq[Tree]): Tree =
       q"""
         ${ctx.newInstanceVal(bean)}
         ..$sets
