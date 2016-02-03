@@ -123,7 +123,8 @@ class BeanConfigsMacro(val c: blackbox.Context) extends MacroUtil with Util {
       }.groupBy(_._1).collect {
         case (n0, List((_, m1, t1, isG), (_, m2, t2, _))) if t1 =:= t2 && n0.headOption.exists(_.isUpper) =>
           val (g, s) = if (isG) (m1, m2) else (m2, m1)
-          val n = n0.head.toLower +: n0.tail
+          val w :: ws = words(n0)
+          val n = (toLower(w) :: ws).mkString
           val h = toLowerHyphenCase(n0)
           (n, h, (t1, g, s))
       }.toList

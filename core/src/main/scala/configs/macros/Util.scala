@@ -21,8 +21,11 @@ import scala.annotation.tailrec
 
 private[macros] trait Util {
 
+  def toLower(s: String): String =
+    s.toLowerCase(Locale.ROOT)
+
   def toLowerHyphenCase(s: String): String =
-    words(s).mkString("-").toLowerCase(Locale.ROOT)
+    toLower(words(s).mkString("-"))
 
   def words(s: String): List[String] = {
     @tailrec
