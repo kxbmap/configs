@@ -11,7 +11,6 @@ object Common extends AutoPlugin {
     description := "Scala wrapper for Typesafe config",
     organization := "com.github.kxbmap",
     scalacOptions ++= Seq(
-      "-target:jvm-1.8",
       "-deprecation",
       "-unchecked",
       "-feature",
