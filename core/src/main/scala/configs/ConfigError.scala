@@ -26,7 +26,7 @@ case class ConfigError(head: ConfigError.Entry, tail: Vector[ConfigError.Entry] 
   def messages: Seq[String] =
     entries.map(_.messageWithPath)
 
-  def ++(that: ConfigError): ConfigError =
+  def +(that: ConfigError): ConfigError =
     copy(tail = tail ++ that.entries)
 
   def withPath(path: String): ConfigError =

@@ -218,39 +218,38 @@ class ConfigsMacro(val c: blackbox.Context) extends MacroUtil with Util {
     if (knownSubclasses.isEmpty)
       abort(s"${ctx.target} has no known sub classes")
 
-    val parts = knownSubclasses.map { cs =>
-      val name = nameOf(cs)
-      val inst =
-        if (cs.isModuleClass)
-          q"$Configs.from[${ctx.target}]((_: $tConfig) => $Result.successful(${cs.module}))"
-        else if (cs.isCaseClass)
-          caseClassConfigs(cs.toType, cs.companion.asModule)
-        else
-          plainClassConfigs(cs.toType)
-      val module =
-        if (cs.isModuleClass) Some(cs.module) else None
-      (cq"$name => $inst", module.map(m => cq"$name => $m"))
-    }
-
-    val typeKey = "type"
-    val typeInst =
+    val typeInst = {
+      val key = "type"
+      val types = knownSubclasses.map { cs =>
+        val inst =
+          if (cs.isModuleClass)
+            q"$Configs.successful[${ctx.target}](${cs.module})"
+          else if (cs.isCaseClass)
+            caseClassConfigs(cs.toType, cs.companion.asModule)
+          else
+            plainClassConfigs(cs.toType)
+        cq"${nameOf(cs)} => $inst"
+      }
       q"""
-        $Configs.get[$tString]($typeKey).flatMap[${ctx.target}] {
-          case ..${parts.map(_._1)}
+        $Configs.get[$tString]($key).flatMap[${ctx.target}] {
+          case ..$types
           case s => $Configs.failure("unknown type: " + s)
         }
        """
-    if (parts.forall(_._2.isEmpty)) typeInst
-    else {
-      val moduleInst =
-        q"""
-          $Configs[$tString].map[${ctx.target}] {
-            case ..${parts.flatMap(_._2)}
-            case s => throw new $ConfigException.Generic("unknown module: " + s)
-          }
-         """
-      q"$moduleInst.orElse($typeInst)"
     }
+    val moduleInst =
+      PartialFunction.condOpt(knownSubclasses.collect {
+        case cs if cs.isModuleClass => cq"${nameOf(cs)} => ${cs.module}"
+      }) {
+        case ms if ms.nonEmpty =>
+          q"""
+            $Configs[$tString].map[${ctx.target}] {
+              case ..$ms
+              case s => throw new $ConfigException.Generic("unknown module: " + s)
+            }
+           """
+      }
+    moduleInst.fold(typeInst)(m => q"$m.orElse($typeInst)")
   }
 
   private def caseClassConfigs(tpe: Type, module: ModuleSymbol)(implicit ctx: DerivationContext): Tree = {

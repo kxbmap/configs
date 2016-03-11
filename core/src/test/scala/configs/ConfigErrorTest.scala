@@ -31,7 +31,7 @@ object ConfigErrorTest extends Scalaprops with ConfigErrorImplicits {
 trait ConfigErrorImplicits {
 
   implicit lazy val configErrorSemigroup: Semigroup[ConfigError] =
-    _ ++ _
+    _ + _
 
   implicit lazy val configErrorEqual: Equal[ConfigError] =
     Equal.equalA[ConfigError]

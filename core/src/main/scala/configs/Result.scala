@@ -103,7 +103,7 @@ object Result {
 
     override def ap[B](f: Result[A => B]): Result[B] =
       f match {
-        case Success(f0)   => Result.Try(f0(value))
+        case Success(f0) => Result.Try(f0(value))
         case fa@Failure(_) => fa
       }
 
@@ -156,8 +156,8 @@ object Result {
 
     override def ap[B](f: Result[Nothing => B]): Result[B] =
       f match {
-        case Success(_)  => this
-        case Failure(es) => Failure(es ++ error)
+        case Success(_) => this
+        case Failure(e) => Failure(e + error)
       }
 
     override def orElse[B >: Nothing](fallback: => Result[B]): Result[B] =

@@ -83,6 +83,9 @@ object Configs extends ConfigsInstances {
   def Try[A](f: Config => A): Configs[A] =
     Try((c, p) => f(c.getConfig(p)))
 
+  def successful[A](a: A): Configs[A] =
+    withPath((_, _) => Result.successful(a))
+
   def failure[A](msg: String): Configs[A] =
     withPath((c, p) => Result.failure(ConfigError(msg)))
 
