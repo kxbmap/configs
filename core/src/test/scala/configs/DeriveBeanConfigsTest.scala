@@ -45,7 +45,7 @@ object DeriveBeanConfigsTest extends Scalaprops {
 
   val bean1 = {
     implicit val configs: Configs[Bean1] =
-      Configs.bean[Bean1]
+      Configs.deriveBean[Bean1]
 
     implicit val gen: Gen[Bean1] =
       Gen[Int].map(new Bean1(_))
@@ -64,7 +64,7 @@ object DeriveBeanConfigsTest extends Scalaprops {
 
   val bean22 = {
     implicit val configs: Configs[Bean22] =
-      Configs.bean[Bean22]
+      Configs.deriveBean[Bean22]
 
     implicit val gen: Gen[Bean22] =
       Gen[(Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int)].map {
@@ -87,7 +87,7 @@ object DeriveBeanConfigsTest extends Scalaprops {
 
   val bean484 = {
     implicit val configs: Configs[Bean484] =
-      Configs.bean[Bean484]
+      Configs.deriveBean[Bean484]
 
     implicit val gen: Gen[Bean484] =
       Gen.sequenceNArray(484, Gen[Int]).map(Bean484.fromArray)
@@ -115,7 +115,7 @@ object DeriveBeanConfigsTest extends Scalaprops {
   }
 
   val factory = {
-    val C = Configs.bean(new Factory(1, 42))
+    val C = Configs.deriveBean(new Factory(1, 42))
     val p1 =
       forAll { (a1: Int) =>
         val config = ConfigFactory.parseString(s"a1 = $a1")

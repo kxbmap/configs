@@ -70,7 +70,7 @@ class BeanConfigsMacro(val c: blackbox.Context) extends MacroUtil with Util {
         case (_, n, t) => q"val $n = $t"
       }
       q"""
-        $Configs.fromConfig[$target] { $config: $tConfig =>
+        $Configs.from[$target] { $config: $tConfig =>
           ..$vals
           $b
         }

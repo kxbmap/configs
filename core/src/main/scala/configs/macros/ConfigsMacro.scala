@@ -63,7 +63,7 @@ class ConfigsMacro(val c: blackbox.Context) extends MacroUtil with Util {
           case (_, n, t) if t.nonEmpty => q"val $n = $t"
         }
         q"""
-          $Configs.fromConfig[$target] { $config: $tConfig =>
+          $Configs.from[$target] { $config: $tConfig =>
             ..$vals
             $b
           }
@@ -222,7 +222,7 @@ class ConfigsMacro(val c: blackbox.Context) extends MacroUtil with Util {
       val name = nameOf(cs)
       val inst =
         if (cs.isModuleClass)
-          q"$Configs.fromConfig[${ctx.target}](_ => $Result.successful(${cs.module}))"
+          q"$Configs.from[${ctx.target}]((_: $tConfig) => $Result.successful(${cs.module}))"
         else if (cs.isCaseClass)
           caseClassConfigs(cs.toType, cs.companion.asModule)
         else

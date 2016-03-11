@@ -31,32 +31,32 @@ import scalaz.{Equal, Order}
 object CollectionConfigsTest extends Scalaprops {
 
   val javaList = {
-    implicit val c = configs.fooConfigs
+    implicit val c = Foo.fooConfigs
     check[ju.List[Foo]]
   }
 
   val javaIterable = {
-    implicit val c = configs.fooJListConfigs
+    implicit val c = Foo.fooJListConfigs
     check[jl.Iterable[Foo]]
   }
 
   val javaCollection = {
-    implicit val c = configs.fooJListConfigs
+    implicit val c = Foo.fooJListConfigs
     check[ju.Collection[Foo]]
   }
 
   val javaSet = {
-    implicit val c = configs.fooJListConfigs
+    implicit val c = Foo.fooJListConfigs
     check[ju.Set[Foo]]
   }
 
   val javaMap = {
-    implicit val c = configs.fooConfigs
+    implicit val c = Foo.fooConfigs
     check[ju.Map[String, Foo]]("string map").product(check[ju.Map[Symbol, Foo]]("symbol map"))
   }
 
   val fromJList = {
-    implicit val c = configs.fooJListConfigs
+    implicit val c = Foo.fooJListConfigs
     Properties.list(
       check[List[Foo]].mapId("list " + _),
       check[Vector[Foo]].mapId("vector " + _),
@@ -68,7 +68,7 @@ object CollectionConfigsTest extends Scalaprops {
 
   val fromJMap = {
     val string = {
-      implicit val c = configs.fooJMapConfigs[String]
+      implicit val c = Foo.fooJMapConfigs[String]
       Properties.either(
         "string map",
         check[Map[String, Foo]].mapId("map " + _),
@@ -77,7 +77,7 @@ object CollectionConfigsTest extends Scalaprops {
       )
     }
     val symbol = {
-      implicit val c = configs.fooJMapConfigs[Symbol]
+      implicit val c = Foo.fooJMapConfigs[Symbol]
       implicit val o = Order[Symbol].toScalaOrdering
       Properties.either(
         "symbol map",
@@ -98,10 +98,12 @@ object CollectionConfigsTest extends Scalaprops {
 
   implicit lazy val fooToConfigValue: ToConfigValue[Foo] = _.value.toConfigValue.atKey("v").root()
 
-  object configs {
+  object Foo {
+
+    import configs.syntax.accumulate._
 
     val fooConfigs: Configs[Foo] =
-      Configs.fromConfigTry(c => Foo(c.getInt("v")))
+      Configs.from(_.get[Int]("v").map(Foo(_)))
 
     val fooJListConfigs: Configs[ju.List[Foo]] =
       Configs.javaListConfigs(fooConfigs)

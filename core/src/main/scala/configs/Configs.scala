@@ -64,24 +64,24 @@ object Configs extends ConfigsInstances {
   def derive[A]: Configs[A] =
     macro macros.ConfigsMacro.deriveConfigs[A]
 
-  def bean[A]: Configs[A] =
+  def deriveBean[A]: Configs[A] =
     macro macros.BeanConfigsMacro.deriveBeanConfigsA[A]
 
-  def bean[A](newInstance: => A): Configs[A] =
+  def deriveBean[A](newInstance: => A): Configs[A] =
     macro macros.BeanConfigsMacro.deriveBeanConfigsI[A]
 
 
   def from[A](f: (Config, String) => Result[A]): Configs[A] =
     withPath((c, p) => Result.Try(f(c, p)).flatten)
 
-  def fromConfig[A](f: Config => Result[A]): Configs[A] =
+  def from[A](f: Config => Result[A]): Configs[A] =
     from((c, p) => f(c.getConfig(p)))
 
-  def fromTry[A](f: (Config, String) => A): Configs[A] =
+  def Try[A](f: (Config, String) => A): Configs[A] =
     withPath((c, p) => Result.Try(f(c, p)))
 
-  def fromConfigTry[A](f: Config => A): Configs[A] =
-    fromTry((c, p) => f(c.getConfig(p)))
+  def Try[A](f: Config => A): Configs[A] =
+    Try((c, p) => f(c.getConfig(p)))
 
   def failure[A](msg: String): Configs[A] =
     withPath((c, p) => Result.failure(ConfigError(msg)))

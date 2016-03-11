@@ -42,7 +42,7 @@ object Converter {
   def from[A, B](f: A => Result[B]): Converter[A, B] =
     a => Result.Try(f(a)).flatten
 
-  def fromTry[A, B](f: A => B): Converter[A, B] =
+  def Try[A, B](f: A => B): Converter[A, B] =
     a => Result.Try(f(a))
 
 
@@ -61,7 +61,7 @@ object Converter {
 
 
   implicit lazy val symbolFromString: FromString[Symbol] =
-    fromTry(Symbol.apply)
+    Try(Symbol.apply)
 
   implicit def javaEnumFromString[A <: jl.Enum[A]](implicit A: ClassTag[A]): FromString[A] = {
     val enums = A.runtimeClass.asInstanceOf[Class[A]].getEnumConstants
@@ -73,7 +73,7 @@ object Converter {
   }
 
   implicit lazy val uuidFromString: FromString[UUID] =
-    fromTry(UUID.fromString)
+    Try(UUID.fromString)
 
   implicit lazy val localeFromString: FromString[Locale] =
     from { s =>
@@ -83,15 +83,15 @@ object Converter {
     }
 
   implicit lazy val pathFromString: FromString[Path] =
-    fromTry(Paths.get(_))
+    Try(Paths.get(_))
 
   implicit lazy val fileFromString: FromString[File] =
-    fromTry(new File(_))
+    Try(new File(_))
 
   implicit lazy val inetAddressFromString: FromString[InetAddress] =
-    fromTry(InetAddress.getByName)
+    Try(InetAddress.getByName)
 
   implicit lazy val uriFromString: FromString[URI] =
-    fromTry(new URI(_))
+    Try(new URI(_))
 
 }
