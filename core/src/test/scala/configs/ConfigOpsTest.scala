@@ -25,23 +25,23 @@ import scalaz.std.string._
 
 object ConfigOpsTest extends Scalaprops {
 
-  val throws = {
-    import syntax.throws._
-    Properties.list(
-      extract(_.extract[Map[String, java.lang.Integer]] == _),
-      get(_.get[Int](_) == _),
-      getOpt(_.getOpt[Int](_) == _),
-      getOrElse(_.getOrElse[Int](_, _) == _)
-    )
-  }
-
-  val accumulate = {
-    import syntax.accumulate._
+  val default = {
+    import configs.syntax._
     Properties.list(
       extract(_.extract[Map[String, java.lang.Integer]] == Result.successful(_)),
       get(_.get[Int](_) == Result.successful(_)),
       getOpt(_.getOpt[Int](_) == Result.successful(_)),
       getOrElse(_.getOrElse[Int](_, _) == Result.successful(_))
+    )
+  }
+
+  val throwError = {
+    import configs.syntax.throwError._
+    Properties.list(
+      extract(_.extract[Map[String, java.lang.Integer]] == _),
+      get(_.get[Int](_) == _),
+      getOpt(_.getOpt[Int](_) == _),
+      getOrElse(_.getOrElse[Int](_, _) == _)
     )
   }
 

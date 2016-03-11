@@ -17,23 +17,23 @@
 package configs.syntax
 
 import com.typesafe.config.Config
-import configs.{Configs, Result}
+import configs.Configs
 
-object accumulate {
+object throwError {
 
-  implicit class ConfigAccumulateOps(private val self: Config) extends AnyVal {
+  implicit class ConfigOps(private val self: Config) extends AnyVal {
 
-    def extract[A](implicit A: Configs[A]): Result[A] =
-      A.extract(self)
+    def extract[A](implicit A: Configs[A]): A =
+      A.extract(self).getOrThrow
 
-    def get[A](path: String)(implicit A: Configs[A]): Result[A] =
-      A.get(self, path)
+    def get[A](path: String)(implicit A: Configs[A]): A =
+      A.get(self, path).getOrThrow
 
-    def getOpt[A: Configs](path: String): Result[Option[A]] =
+    def getOpt[A: Configs](path: String): Option[A] =
       get[Option[A]](path)
 
-    def getOrElse[A: Configs](path: String, default: => A): Result[A] =
-      getOpt[A](path).map(_.getOrElse(default))
+    def getOrElse[A: Configs](path: String, default: => A): A =
+      getOpt[A](path).getOrElse(default)
 
   }
 

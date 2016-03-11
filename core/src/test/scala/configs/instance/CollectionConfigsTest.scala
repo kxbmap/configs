@@ -100,7 +100,7 @@ object CollectionConfigsTest extends Scalaprops {
 
   object Foo {
 
-    import configs.syntax.accumulate._
+    import configs.syntax._
 
     val fooConfigs: Configs[Foo] =
       Configs.from(_.get[Int]("v").map(Foo(_)))

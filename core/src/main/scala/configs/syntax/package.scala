@@ -17,28 +17,22 @@
 package configs
 
 import com.typesafe.config.Config
-import configs.syntax.throws.ConfigThrowsOps
 
 package object syntax {
 
-  @deprecated("import configs.syntax.throws._ instead", "0.4.0")
   implicit class ConfigOps(private val self: Config) extends AnyVal {
 
-    @deprecated("import configs.syntax.throws._ instead", "0.4.0")
-    def extract[A: Configs]: A =
-      new ConfigThrowsOps(self).extract[A]
+    def extract[A](implicit A: Configs[A]): Result[A] =
+      A.extract(self)
 
-    @deprecated("import configs.syntax.throws._ instead", "0.4.0")
-    def get[A: Configs](path: String): A =
-      new ConfigThrowsOps(self).get(path)
+    def get[A](path: String)(implicit A: Configs[A]): Result[A] =
+      A.get(self, path)
 
-    @deprecated("import configs.syntax.throws._ instead", "0.4.0")
-    def getOpt[A: Configs](path: String): Option[A] =
-      new ConfigThrowsOps(self).getOpt(path)
+    def getOpt[A: Configs](path: String): Result[Option[A]] =
+      get[Option[A]](path)
 
-    @deprecated("import configs.syntax.throws._ instead", "0.4.0")
-    def getOrElse[A: Configs](path: String, default: => A): A =
-      new ConfigThrowsOps(self).getOrElse(path, default)
+    def getOrElse[A: Configs](path: String, default: => A): Result[A] =
+      getOpt[A](path).map(_.getOrElse(default))
 
   }
 
