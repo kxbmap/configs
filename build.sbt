@@ -12,7 +12,7 @@ lazy val core = project
       """import com.typesafe.config._
         |import ConfigFactory._
         |import configs.{Bytes, Configs, Result}
-        |import configs.syntax.accumulate._
+        |import configs.syntax._
         |""".stripMargin
   )
 
