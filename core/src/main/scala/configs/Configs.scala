@@ -159,7 +159,7 @@ sealed abstract class ConfigsInstances extends ConfigsInstances0 {
     (c, p) =>
       if (c.hasPathOrNull(p))
         A.get(c, p).map(Some(_)).handle {
-          case ConfigError.Single(ConfigError.NullValue(_, `p` :: Nil)) => None
+          case ConfigError(ConfigError.NullValue(_, `p` :: Nil), es) if es.isEmpty => None
         }
       else
         Result.successful(None)
