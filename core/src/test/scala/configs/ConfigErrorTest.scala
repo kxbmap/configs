@@ -17,6 +17,7 @@
 package configs
 
 import com.typesafe.config.ConfigException
+import com.typesafe.config.ConfigFactory.empty
 import configs.util._
 import scala.util.control.NoStackTrace
 import scalaprops.{Cogen, CogenState, Gen, Scalaprops, scalazlaws}
@@ -37,7 +38,7 @@ trait ConfigErrorImplicits {
     Equal.equalA[ConfigError]
 
 
-  private case class M(n: Int) extends ConfigException.Missing(n.toString) with NoStackTrace
+  private case class N(n: Int) extends ConfigException.Null(empty.origin(), "p", null) with NoStackTrace
 
   private case class C(n: Int) extends ConfigException.Generic(n.toString) with NoStackTrace
 
@@ -45,7 +46,7 @@ trait ConfigErrorImplicits {
 
   implicit lazy val configErrorEntryGen: Gen[ConfigError.Entry] =
     Gen.oneOf(
-      Gen[Int].map(M).map(ConfigError.Missing(_)),
+      Gen[Int].map(N).map(ConfigError.NullValue(_)),
       Gen[Int].map(C).map(ConfigError.Except(_)),
       Gen[Int].map(E).map(ConfigError.Except(_)),
       Gen[String].map(ConfigError.Generic(_))
@@ -55,11 +56,11 @@ trait ConfigErrorImplicits {
     new Cogen[ConfigError.Entry] {
       def cogen[B](a: ConfigError.Entry, g: CogenState[B]): CogenState[B] =
         a match {
-          case ConfigError.Missing(M(n), _) => Cogen[Int].cogen(n * 3, g)
-          case ConfigError.Except(C(n), _)  => Cogen[Int].cogen(n * 3 + 1, g)
-          case ConfigError.Except(E(n), _)  => Cogen[Int].cogen(n * 3 + 2, g)
-          case ConfigError.Generic(m, _)    => Cogen[String].cogen(m, g)
-          case _                            => sys.error("bug or broken")
+          case ConfigError.NullValue(N(n), _) => Cogen[Int].cogen(n * 3, g)
+          case ConfigError.Except(C(n), _) => Cogen[Int].cogen(n * 3 + 1, g)
+          case ConfigError.Except(E(n), _) => Cogen[Int].cogen(n * 3 + 2, g)
+          case ConfigError.Generic(m, _) => Cogen[String].cogen(m, g)
+          case _ => sys.error("bug or broken")
         }
     }
 

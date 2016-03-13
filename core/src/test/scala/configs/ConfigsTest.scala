@@ -101,9 +101,10 @@ object ConfigsTest extends Scalaprops {
   val handleErrors = {
     val empty = ConfigFactory.empty()
     val p1 = forAll { p: String =>
+      val config = ConfigFactory.parseString(s"${q(p)} = null")
       val configs = Configs.Try(_.getInt(q(p)))
-      configs.extract(empty).failed.exists { e =>
-        e.head.isInstanceOf[ConfigError.Missing] && e.tail.isEmpty
+      configs.extract(config).failed.exists { e =>
+        e.head.isInstanceOf[ConfigError.NullValue] && e.tail.isEmpty
       }
     }
     val p2 = forAll { s: String =>
@@ -121,7 +122,7 @@ object ConfigsTest extends Scalaprops {
       }
     }
     Properties.list(
-      p1.toProperties("missing"),
+      p1.toProperties("null value"),
       p2.toProperties("config exception"),
       p3.toProperties("other exception")
     )

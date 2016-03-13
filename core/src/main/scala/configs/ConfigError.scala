@@ -43,8 +43,8 @@ object ConfigError {
 
   def fromThrowable(throwable: Throwable): ConfigError =
     ConfigError(throwable match {
-      case e: ConfigException.Missing => Missing(e)
-      case e                          => Except(e)
+      case e: ConfigException.Null => NullValue(e)
+      case e => Except(e)
     })
 
 
@@ -68,7 +68,7 @@ object ConfigError {
     def toConfigException: ConfigException
   }
 
-  case class Missing(toConfigException: ConfigException.Missing, paths: List[String] = Nil) extends Entry {
+  case class NullValue(toConfigException: ConfigException.Null, paths: List[String] = Nil) extends Entry {
 
     def message: String =
       toConfigException.getMessage
@@ -88,7 +88,7 @@ object ConfigError {
     def toConfigException: ConfigException =
       throwable match {
         case e: ConfigException => e
-        case e                  => new ConfigException.Generic(message, e)
+        case e => new ConfigException.Generic(message, e)
       }
   }
 
