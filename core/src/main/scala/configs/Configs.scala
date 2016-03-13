@@ -157,9 +157,12 @@ sealed abstract class ConfigsInstances extends ConfigsInstances0 {
 
   implicit def optionConfigs[A](implicit A: Configs[A]): Configs[Option[A]] =
     (c, p) =>
-      A.get(c, p).map(Some(_)).handle {
-        case ConfigError.Single(ConfigError.Missing(_, `p` :: Nil)) => None
-      }
+      if (c.hasPathOrNull(p))
+        A.get(c, p).map(Some(_)).handle {
+          case ConfigError.Single(ConfigError.Missing(_, `p` :: Nil)) => None
+        }
+      else
+        Result.successful(None)
 
   implicit def tryConfigs[A](implicit A: Configs[A]): Configs[Try[A]] =
     A.get(_, _).map(Success(_)).handle {

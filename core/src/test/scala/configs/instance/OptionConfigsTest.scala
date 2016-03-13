@@ -16,12 +16,37 @@
 
 package configs.instance
 
+import com.typesafe.config.ConfigFactory
+import configs.Configs
 import configs.util._
-import scalaprops.Scalaprops
+import scalaprops.Property.forAll
+import scalaprops.{Properties, Scalaprops}
 import scalaz.std.option._
+import scalaz.std.string._
 
 object OptionConfigsTest extends Scalaprops {
 
   val option = check[Option[java.time.Duration]]
+
+  val missing = forAll { p: String =>
+    val config = ConfigFactory.empty()
+    Configs[Option[Int]].get(config, q(p)).exists(_.isEmpty)
+  }
+
+  val nestedOption = {
+    val OO = Configs[Option[Option[Int]]]
+    val p1 = forAll { p: String =>
+      val config = ConfigFactory.empty()
+      OO.get(config, q(p)).exists(_.isEmpty)
+    }
+    val p2 = forAll { p: String =>
+      val config = ConfigFactory.parseString(s"${q(p)} = null")
+      OO.get(config, q(p)).exists(_.contains(None))
+    }
+    Properties.list(
+      p1.toProperties("missing"),
+      p2.toProperties("null")
+    )
+  }
 
 }

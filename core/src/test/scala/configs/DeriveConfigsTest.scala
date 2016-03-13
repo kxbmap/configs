@@ -458,6 +458,29 @@ object DeriveConfigsTest extends Scalaprops {
   }
 
 
+  case class OptionDefault(opt: Option[Int] = Some(42))
+
+  object OptionDefault {
+    implicit lazy val equal: Equal[OptionDefault] =
+      Equal.equalA[OptionDefault]
+  }
+
+  val optionDefault = {
+    val p1 = forAll {
+      val config = ConfigFactory.empty()
+      Configs[OptionDefault].extract(config).exists(_ == OptionDefault(Some(42)))
+    }
+    val p2 = forAll {
+      val config = ConfigFactory.parseString("opt = null")
+      Configs[OptionDefault].extract(config).exists(_ == OptionDefault(None))
+    }
+    Properties.list(
+      p1.toProperties("missing"),
+      p2.toProperties("null")
+    )
+  }
+
+
   sealed trait Recursive
 
   case class RCons(head: Int, tail: Recursive) extends Recursive
