@@ -16,15 +16,14 @@
 
 package configs
 
-import com.typesafe.config.{Config, ConfigFactory, ConfigList, ConfigMemorySize, ConfigObject, ConfigUtil, ConfigValue, ConfigValueFactory}
+import com.typesafe.config.{Config, ConfigList, ConfigMemorySize, ConfigObject, ConfigUtil, ConfigValue, ConfigValueFactory}
 import java.{lang => jl, time => jt, util => ju}
 import scala.annotation.tailrec
 import scala.collection.convert.decorateAll._
 import scala.collection.generic.CanBuildFrom
 import scala.reflect.{ClassTag, classTag}
-import scalaprops.Or.Empty
-import scalaprops.Property.{forAll, forAllG}
-import scalaprops.{:-:, Gen, Properties, Property}
+import scalaprops.Property.forAll
+import scalaprops.{Gen, Properties, Property}
 import scalaz.std.anyVal._
 import scalaz.std.list._
 import scalaz.std.map._
@@ -33,6 +32,8 @@ import scalaz.{Apply, Equal, Need, Order}
 
 
 package object util {
+
+  val q = ConfigUtil.quoteString _
 
   type :@[A, T] = A { type Tag = T }
 
@@ -44,76 +45,28 @@ package object util {
     def untag: F[A] = g.asInstanceOf[F[A]]
   }
 
-
-  val q = ConfigUtil.quoteString _
-
-
-  def hideConfigs[A: ClassTag]: Configs[A] = (_, _) => sys.error(s"hiding Configs[${classTag[A]}] used")
-
-
-  def check[A: Configs : Gen : Equal : ToConfigValue : IsMissing : WrongTypeValue : IsWrongType : BadValue : IsBadValue]: Properties[Unit :-: String :-: Empty] =
-    checkId(())
-
-  def check[A: Configs : Gen : Equal : ToConfigValue : IsMissing : WrongTypeValue : IsWrongType : BadValue : IsBadValue](id: String): Properties[String :-: String :-: Empty] =
-    checkId(id)
-
-  private def checkId[A: Order, B: Configs : Gen : Equal : ToConfigValue : IsMissing : WrongTypeValue : IsWrongType : BadValue : IsBadValue](id: A) =
-    Properties.either(
-      id,
-      checkGet[B].toProperties("get"),
-      Seq(checkMissing[B].toProperties("missing")) ++
-        checkWrongType[B].map(_.toProperties("wrong type")) ++
-        checkBadValue[B].map(_.toProperties("bad value")): _*
-    )
-
-  private def checkGet[A: Configs : Gen : Equal : ToConfigValue] = forAll { value: A =>
-    Configs[A].extract(value.toConfigValue).exists(Equal[A].equal(_, value))
-  }
-
-  private def checkMissing[A: Configs : IsMissing] = forAll {
-    val p = "missing"
-    val c = ConfigFactory.empty()
-    IsMissing[A].check(Need(Configs[A].get(c, p)))
-  }
-
-  private def checkWrongType[A: Configs : IsWrongType : WrongTypeValue] = WrongTypeValue[A].gen.map {
-    forAllG(_) { cv =>
-      IsWrongType[A].check(Need(Configs[A].extract(cv)))
-    }
-  }
-
-  private def checkBadValue[A: Configs : BadValue : IsBadValue] = BadValue[A].gen.map {
-    forAllG(_) { cv =>
-      IsBadValue[A].check(Need(Configs[A].extract(cv)))
-    }
-  }
-
-
   implicit class ToConfigValueOps[A](private val self: A) {
     def toConfigValue(implicit A: ToConfigValue[A]): ConfigValue = A.toConfigValue(self)
   }
 
 
-  private[util] def intercept0(block: => Unit)(cond: PartialFunction[Throwable, Boolean]): Boolean =
-    try {
-      block
-      false
-    } catch cond
+  def hideConfigs[A: ClassTag]: Configs[A] = (_, _) => sys.error(s"hiding Configs[${classTag[A]}] used")
 
-  def intercept[A](block: => A)(cond: PartialFunction[Throwable, Boolean]): Property =
-    forAll {
-      intercept0(block)(cond)
+
+  def check[A: Configs : Gen : Equal : ToConfigValue]: Property =
+    forAll { value: A =>
+      val actual = Configs[A].extract(value.toConfigValue)
+      val result = actual.exists(Equal[A].equal(_, value))
+      if (!result) {
+        println()
+        println(s"actual: $actual")
+        println(s"expected value: $value")
+      }
+      result
     }
 
-  def intercept[R, A1: Gen](block: A1 => R)(cond: PartialFunction[Throwable, Boolean]): Property =
-    forAll { a1: A1 =>
-      intercept0(block(a1))(cond)
-    }
-
-  def intercept[R, A1: Gen, A2: Gen](block: (A1, A2) => R)(cond: PartialFunction[Throwable, Boolean]): Property =
-    forAll { (a1: A1, a2: A2) =>
-      intercept0(block(a1, a2))(cond)
-    }
+  def check[A: Configs : Gen : Equal : ToConfigValue](id: String): Properties[String] =
+    check[A].toProperties(id)
 
 
   implicit class GenOps[A](private val g: Gen[A]) extends AnyVal {

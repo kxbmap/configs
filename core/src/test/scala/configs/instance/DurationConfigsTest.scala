@@ -43,17 +43,13 @@ object DurationConfigsTest extends Scalaprops {
   implicit lazy val finiteDurationValue: ToConfigValue[FiniteDuration] =
     ToConfigValue[String].contramap(d => s"${d.toNanos}ns")
 
-  implicit lazy val finiteDurationBadValue: BadValue[FiniteDuration] = BadValue.from {
-    genConfigValue(Gen.alphaString)
-  }
-
 
   implicit lazy val durationGen: Gen[Duration] =
     Gen.frequency(
       1 -> Gen.value(Duration.Inf),
       1 -> Gen.value(Duration.MinusInf),
       1 -> Gen.value(Duration.Undefined),
-      47 -> finiteDurationGen.asInstanceOf[Gen[Duration]]
+      47 -> finiteDurationGen.as[Duration]
     )
 
   implicit lazy val durationEqual: Equal[Duration] =
@@ -66,9 +62,5 @@ object DurationConfigsTest extends Scalaprops {
       case d if d eq Duration.Undefined => "undefined"
       case d                            => s"${d.toNanos}ns"
     }
-
-  implicit lazy val durationBadValue: BadValue[Duration] = BadValue.from {
-    genConfigValue(Gen.alphaUpperString)
-  }
 
 }

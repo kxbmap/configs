@@ -30,19 +30,6 @@ import scalaz.syntax.equal._
 
 object DeriveBeanConfigsTest extends Scalaprops {
 
-  def checkDerived[A: Gen : Configs : ToConfigValue : Equal] =
-    forAll { a: A =>
-      val actual = Configs[A].extract(a.toConfigValue)
-      val result = actual.exists(_ === a)
-      if (!result) {
-        println()
-        println(s"actual: $actual")
-        println(s"expected value: $a")
-      }
-      result
-    }
-
-
   val bean1 = {
     implicit val configs: Configs[Bean1] =
       Configs.deriveBean[Bean1]
@@ -58,7 +45,7 @@ object DeriveBeanConfigsTest extends Scalaprops {
         "a1" -> b.a1.toConfigValue
       ))
 
-    checkDerived[Bean1]
+    check[Bean1]
   }
 
 
@@ -81,7 +68,7 @@ object DeriveBeanConfigsTest extends Scalaprops {
           case (n, i) => s"a${i + 1}" -> n.toConfigValue
         }.toMap)
 
-    checkDerived[Bean22]
+    check[Bean22]
   }
 
 
@@ -101,7 +88,7 @@ object DeriveBeanConfigsTest extends Scalaprops {
           case (n, i) => s"a${i + 1}" -> n.toConfigValue
         }.toMap)
 
-    checkDerived[Bean484]
+    check[Bean484]
   }
 
 

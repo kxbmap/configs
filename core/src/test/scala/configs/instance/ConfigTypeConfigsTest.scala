@@ -19,7 +19,7 @@ package configs.instance
 import com.typesafe.config.{Config, ConfigList, ConfigMemorySize, ConfigObject, ConfigValue}
 import configs.util._
 import java.{util => ju}
-import scalaprops.Scalaprops
+import scalaprops.{Properties, Scalaprops}
 import scalaz.std.string._
 
 object ConfigTypeConfigsTest extends Scalaprops {
@@ -41,9 +41,10 @@ object ConfigTypeConfigsTest extends Scalaprops {
 
   val configValueJMap = {
     implicit val h = hideConfigs[ConfigValue]
-    val string = check[ju.Map[String, ConfigValue]]("string map")
-    val symbol = check[ju.Map[Symbol, ConfigValue]]("symbol map")
-    string.product(symbol)
+    Properties.list(
+      check[ju.Map[String, ConfigValue]]("string map"),
+      check[ju.Map[Symbol, ConfigValue]]("symbol map")
+    )
   }
 
 

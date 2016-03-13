@@ -30,34 +30,38 @@ import scalaz.syntax.equal._
 
 object BigNumberConfigsTest extends Scalaprops {
 
-  val bigInt = {
-    val decimal = forAll { d: BigDecimal =>
+  val bigInt = check[BigInt]
+  val bigIntFromDecimal =
+    forAll { d: BigDecimal =>
       Configs[BigInt].extract(d.toConfigValue).exists(_ === d.toBigInt())
     }
-    check[BigInt].product(decimal.toProperties("from decimal"))
-  }
 
   val bigIntList = {
     implicit val h = hideConfigs[BigInt]
-    val decimal = forAll { ds: List[BigDecimal] =>
+    check[ju.List[BigInt]]
+  }
+  val bigIntListFromDecimal = {
+    implicit val h = hideConfigs[BigInt]
+    forAll { ds: List[BigDecimal] =>
       Configs[ju.List[BigInt]].extract(ds.toConfigValue).exists(_ === ds.map(_.toBigInt()).asJava)
     }
-    check[ju.List[BigInt]].product(decimal.toProperties("from decimal"))
   }
 
-  val bigInteger = {
-    val decimal = forAll { d: jm.BigDecimal =>
+  val bigInteger = check[jm.BigInteger]
+  val bigIntegerFromDecimal =
+    forAll { d: jm.BigDecimal =>
       Configs[jm.BigInteger].extract(d.toConfigValue).exists(_ === d.toBigInteger)
     }
-    check[jm.BigInteger].product(decimal.toProperties("from decimal"))
-  }
 
   val bigIntegerList = {
     implicit val h = hideConfigs[jm.BigInteger]
-    val decimal = forAll { ds: List[jm.BigDecimal] =>
+    check[ju.List[jm.BigInteger]]
+  }
+  val bigIntegerListFromDecimal = {
+    implicit val h = hideConfigs[jm.BigInteger]
+    forAll { ds: List[jm.BigDecimal] =>
       Configs[ju.List[jm.BigInteger]].extract(ds.toConfigValue).exists(_ === ds.map(_.toBigInteger).asJava)
     }
-    check[ju.List[jm.BigInteger]].product(decimal.toProperties("from decimal"))
   }
 
   val bigDecimal = check[BigDecimal]

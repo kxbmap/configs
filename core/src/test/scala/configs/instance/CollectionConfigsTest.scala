@@ -52,17 +52,20 @@ object CollectionConfigsTest extends Scalaprops {
 
   val javaMap = {
     implicit val c = Foo.fooConfigs
-    check[ju.Map[String, Foo]]("string map").product(check[ju.Map[Symbol, Foo]]("symbol map"))
+    Properties.list(
+      check[ju.Map[String, Foo]]("string map"),
+      check[ju.Map[Symbol, Foo]]("symbol map")
+    )
   }
 
   val fromJList = {
     implicit val c = Foo.fooJListConfigs
     Properties.list(
-      check[List[Foo]].mapId("list " + _),
-      check[Vector[Foo]].mapId("vector " + _),
-      check[Stream[Foo]].mapId("stream " + _),
-      check[Array[Foo]].mapId("array " + _),
-      check[Set[Foo]].mapId("set " + _)
+      check[List[Foo]]("list"),
+      check[Vector[Foo]]("vector"),
+      check[Stream[Foo]]("stream"),
+      check[Array[Foo]]("array"),
+      check[Set[Foo]]("set")
     )
   }
 
@@ -71,9 +74,9 @@ object CollectionConfigsTest extends Scalaprops {
       implicit val c = Foo.fooJMapConfigs[String]
       Properties.either(
         "string map",
-        check[Map[String, Foo]].mapId("map " + _),
-        check[TreeMap[String, Foo]].mapId("tree map " + _),
-        check[mutable.Map[String, Foo]].mapId("mutable map " + _)
+        check[Map[String, Foo]]("map"),
+        check[TreeMap[String, Foo]]("tree map"),
+        check[mutable.Map[String, Foo]]("mutable map")
       )
     }
     val symbol = {
@@ -81,9 +84,9 @@ object CollectionConfigsTest extends Scalaprops {
       implicit val o = Order[Symbol].toScalaOrdering
       Properties.either(
         "symbol map",
-        check[Map[Symbol, Foo]].mapId("map " + _),
-        check[TreeMap[Symbol, Foo]].mapId("tree map " + _),
-        check[mutable.Map[Symbol, Foo]].mapId("mutable map " + _)
+        check[Map[Symbol, Foo]]("map"),
+        check[TreeMap[Symbol, Foo]]("tree map"),
+        check[mutable.Map[Symbol, Foo]]("mutable map")
       )
     }
     string.product(symbol)

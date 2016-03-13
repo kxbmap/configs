@@ -29,17 +29,6 @@ import scalaz.{Apply, Equal, Need}
 
 object DeriveConfigsTest extends Scalaprops {
 
-  def checkDerived[A: Gen : Configs : ToConfigValue : Equal] =
-    forAll { a: A =>
-      val actual = Configs[A].extract(a.toConfigValue)
-      val result = actual.exists(_ === a)
-      if (!result) {
-        println(s"\nactual: $actual, expected value: $a")
-      }
-      result
-    }
-
-
   case class CC0()
 
   object CC0 {
@@ -53,7 +42,7 @@ object DeriveConfigsTest extends Scalaprops {
       _ => ConfigFactory.empty().root()
   }
 
-  val caseClass0 = checkDerived[CC0]
+  val caseClass0 = check[CC0]
 
 
   case class CC1(a1: Int)
@@ -71,7 +60,7 @@ object DeriveConfigsTest extends Scalaprops {
       }
   }
 
-  val caseClass1 = checkDerived[CC1]
+  val caseClass1 = check[CC1]
 
 
   case class CC22(
@@ -94,7 +83,7 @@ object DeriveConfigsTest extends Scalaprops {
         }.toMap)
   }
 
-  val caseClass22 = checkDerived[CC22]
+  val caseClass22 = check[CC22]
 
 
   case class CC23(
@@ -121,7 +110,7 @@ object DeriveConfigsTest extends Scalaprops {
         }.toMap)
   }
 
-  val caseClass23 = checkDerived[CC23]
+  val caseClass23 = check[CC23]
 
 
   case class SubApply(a1: Int, a2: Int)
@@ -146,7 +135,7 @@ object DeriveConfigsTest extends Scalaprops {
   }
 
   val subApply = {
-    val p1 = checkDerived[SubApply]
+    val p1 = check[SubApply]
     val p2 =
       forAll { (a1: Int, a2: Int, s1: Int, s2: Int) =>
         val c = ConfigFactory.parseString(
@@ -186,7 +175,7 @@ object DeriveConfigsTest extends Scalaprops {
   }
 
   val plainClass = {
-    val p1 = checkDerived[PlainClass]
+    val p1 = check[PlainClass]
     val p2 =
       forAll { (a1: Int, a2: Int) =>
         val c = ConfigFactory.parseString(
@@ -261,14 +250,14 @@ object DeriveConfigsTest extends Scalaprops {
   }
 
   val sealedClass = {
-    val p1 = checkDerived[Sealed]
+    val p1 = check[Sealed]
     val p2 = {
       implicit val moduleAsStringTCV: ToConfigValue[Sealed] = {
         case SealedCaseObject => "SealedCaseObject".toConfigValue
         case SealedObject => "SealedObject".toConfigValue
         case s => Sealed.tcv.toConfigValue(s)
       }
-      checkDerived[Sealed]
+      check[Sealed]
     }
     Properties.list(
       p1.toProperties("sealed class"),
@@ -292,14 +281,14 @@ object DeriveConfigsTest extends Scalaprops {
         ToConfigValue.fromMap {
           case Default1(a1) => Map("a1" -> a1.toConfigValue)
         }
-      checkDerived[Default1]
+      check[Default1]
     }
     val p2 = {
       implicit val gen: Gen[Default1] =
         Gen.elements(Default1())
       implicit val tcv: ToConfigValue[Default1] =
         _ => ConfigFactory.empty().root()
-      checkDerived[Default1]
+      check[Default1]
     }
     Properties.list(
       p1.toProperties("w/o default"),
@@ -361,7 +350,7 @@ object DeriveConfigsTest extends Scalaprops {
           "a19" -> d.a19.toConfigValue, "a20" -> d.a20.toConfigValue, "a21" -> d.a21.toConfigValue,
           "a22" -> d.a22.toConfigValue
         ))
-      checkDerived[Default22]
+      check[Default22]
     }
     val p2 = {
       implicit val gen: Gen[Default22] =
@@ -377,7 +366,7 @@ object DeriveConfigsTest extends Scalaprops {
           "a11" -> d.a11.toConfigValue, "a14" -> d.a14.toConfigValue,
           "a17" -> d.a17.toConfigValue, "a19" -> d.a19.toConfigValue, "a20" -> d.a20.toConfigValue
         ))
-      checkDerived[Default22]
+      check[Default22]
     }
     Properties.list(
       p1.toProperties("w/o defaults"),
@@ -444,7 +433,7 @@ object DeriveConfigsTest extends Scalaprops {
           "a22" -> d.a22.toConfigValue,
           "a23" -> d.a23.toConfigValue
         ))
-      checkDerived[Default23]
+      check[Default23]
     }
     val p2 = {
       implicit val gen: Gen[Default23] =
@@ -460,7 +449,7 @@ object DeriveConfigsTest extends Scalaprops {
           "a11" -> d.a11.toConfigValue, "a14" -> d.a14.toConfigValue,
           "a17" -> d.a17.toConfigValue, "a19" -> d.a19.toConfigValue, "a20" -> d.a20.toConfigValue
         ))
-      checkDerived[Default23]
+      check[Default23]
     }
     Properties.list(
       p1.toProperties("w/o defaults"),
@@ -499,7 +488,7 @@ object DeriveConfigsTest extends Scalaprops {
     }
   }
 
-  val recursive = checkDerived[Recursive]
+  val recursive = check[Recursive]
 
 
   case class RecursiveOpt(value: Option[RecursiveOpt])
@@ -522,7 +511,7 @@ object DeriveConfigsTest extends Scalaprops {
     }
   }
 
-  val recursiveOption = checkDerived[RecursiveOpt]
+  val recursiveOption = check[RecursiveOpt]
 
 
   class ImplicitParam(implicit val a1: Int, val a2: Long = 2L)
@@ -556,7 +545,7 @@ object DeriveConfigsTest extends Scalaprops {
       }
     val p3 = {
       implicit def a1: Int = sys.error("implicit")
-      checkDerived[ImplicitParam]
+      check[ImplicitParam]
     }
     Properties.list(
       p1.toProperties("implicit parameters"),
@@ -596,7 +585,7 @@ object DeriveConfigsTest extends Scalaprops {
       Gen[(Int, Int, Int, Int)].map {
         case (a, b, c, d) => new HyphenSeparated(a, b, c, d)
       }
-    checkDerived[HyphenSeparated]
+    check[HyphenSeparated]
   }
 
 

@@ -93,8 +93,4 @@ object BytesTest extends Scalaprops {
 
   implicit lazy val bytesToConfigValue: ToConfigValue[Bytes] = ToConfigValue[Long].contramap(_.value)
 
-  implicit lazy val bytesBadValue: BadValue[Bytes] = BadValue.from {
-    genConfigValue(Gen.alphaString)
-  }
-
 }
