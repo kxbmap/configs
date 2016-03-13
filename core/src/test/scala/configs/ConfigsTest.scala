@@ -19,8 +19,8 @@ package configs
 import com.typesafe.config.{ConfigException, ConfigFactory, ConfigValueFactory}
 import configs.util._
 import scala.collection.JavaConversions._
-import scalaprops.Property.{forAll, forAllG}
-import scalaprops.{Gen, Properties, Scalaprops}
+import scalaprops.Property.forAll
+import scalaprops.{Properties, Scalaprops}
 import scalaz.std.string._
 
 object ConfigsTest extends Scalaprops {
@@ -31,7 +31,7 @@ object ConfigsTest extends Scalaprops {
     configs.get(config, q(p)).exists(_ == v)
   }
 
-  val extractC = forAll { (p: String, v: Int) =>
+  val extractConfig = forAll { (p: String, v: Int) =>
     val config = ConfigFactory.parseString(s"${q(p)} = $v")
     val configs: Configs[Map[String, Int]] = Configs.Try {
       _.getConfig(_).root().mapValues(_.unwrapped().asInstanceOf[Int]).toMap
@@ -39,79 +39,91 @@ object ConfigsTest extends Scalaprops {
     configs.extract(config).exists(_ == Map(p -> v))
   }
 
-  val extractV = forAll { v: Int =>
+  val extractConfigValue = forAll { v: Int =>
     val cv = ConfigValueFactory.fromAnyRef(v)
     val configs: Configs[Int] = Configs.Try(_.getInt(_))
     configs.extract(cv).exists(_ == v)
   }
 
-  val map = {
-    val identity = forAll { (p: String, v: Int) =>
-      val config = ConfigFactory.parseString(s"${q(p)} = $v")
-      val configs: Configs[Int] = Configs.Try(_.getInt(_))
-      configs.map(a => a).get(config, q(p)) == configs.get(config, q(p))
-    }
-    val composite = forAll { (p: String, v: Int, f: Int => String, g: String => Long) =>
-      val config = ConfigFactory.parseString(s"${q(p)} = $v")
-      val configs: Configs[Int] = Configs.Try(_.getInt(_))
-      configs.map(f).map(g).get(config, q(p)) == configs.get(config, q(p)).map(g compose f)
-    }
-    Properties.list(
-      identity.toProperties("identity"),
-      composite.toProperties("composite")
-    )
+  val map = forAll { (v: Int, f: Int => String) =>
+    val config = ConfigFactory.parseString(s"v = $v")
+    val configs: Configs[Int] = Configs.Try(_.getInt(_))
+    configs.map(f).get(config, "v").exists(_ == f(v))
   }
 
   val flatMap = {
-    val c0: Configs[String] = Configs.get[String]("type")
-    val c: Configs[Any] = c0.flatMap {
-      case "int" => Configs.get[Int]("value").as[Any]
-      case "string" => Configs.get[String]("value").as[Any]
-      case "bool" => Configs.get[Boolean]("value").as[Any]
-      case s => Configs.failure(s)
-    }
-    val g = Gen.oneOf[(String, Any)](
-      Gen[Int].map("int" -> _),
-      Gen[String].map("string" -> _),
-      Gen[Boolean].map("bool" -> _)
-    )
-    forAllG(g) {
-      case (t, v) =>
-        val qv = v match {
-          case s: String => q(s)
-          case _ => v
-        }
-        val config = ConfigFactory.parseString(
-          s"""type = $t
-             |value = $qv
-             |""".stripMargin)
+    case class Foo(a: Int, b: String, c: Boolean)
+    val configs = for {
+      a <- Configs.get[Int]("a")
+      b <- Configs.get[String]("b")
+      c <- Configs.get[Boolean]("c")
+    } yield Foo(a, b, c)
 
-        c.extract(config).exists(_ == v)
+    forAll { (a: Int, b: String, c: Boolean) =>
+      val config = ConfigFactory.parseString(
+        s"""a = $a
+           |b = ${q(b)}
+           |c = $c
+           |""".stripMargin)
+      configs.extract(config).exists(_ == Foo(a, b, c))
     }
   }
 
   val orElse = {
     val config = ConfigFactory.empty()
-    val ce: Configs[Int] = Configs.Try((_, _) => throw new ConfigException.Generic("CE"))
-
-    val p1 = forAll { (v: Int) =>
-      val cv: Configs[Int] = Configs.Try((_, _) => v)
-      cv.orElse(ce).get(config, "dummy").exists(_ == v)
+    val fail: Configs[Int] = Configs.failure("failure")
+    val p1 = forAll { (v1: Int, v2: Int) =>
+      val succ1: Configs[Int] = Configs.successful(v1)
+      val succ2: Configs[Int] = Configs.successful(v2)
+      succ1.orElse(succ2).get(config, "dummy").exists(_ == v1)
     }
     val p2 = forAll { (v: Int) =>
-      val cv: Configs[Int] = Configs.Try((_, _) => v)
-      ce.orElse(cv).get(config, "dummy").exists(_ == v)
+      val succ: Configs[Int] = Configs.successful(v)
+      succ.orElse(fail).get(config, "dummy").exists(_ == v)
     }
-    val p3 = forAll {
-      ce.orElse(ce).get(config, "dummy").fold(
-        e => e.messages == Seq("dummy: CE"),
-        _ => false
+    val p3 = forAll { (v: Int) =>
+      val succ: Configs[Int] = Configs.successful(v)
+      fail.orElse(succ).get(config, "dummy").exists(_ == v)
+    }
+    val p4 = forAll {
+      fail.orElse(fail).get(config, "dummy").failed.exists(
+        _.messages == Seq("dummy: failure")
       )
     }
     Properties.list(
-      p1.toProperties("value orElse CE"),
-      p2.toProperties("CE orElse value"),
-      p3.toProperties("CE orElse CE")
+      p1.toProperties("succ orElse succ"),
+      p2.toProperties("succ orElse fail"),
+      p3.toProperties("fail orElse succ"),
+      p4.toProperties("fail orElse fail")
+    )
+  }
+
+  val handleErrors = {
+    val empty = ConfigFactory.empty()
+    val p1 = forAll { p: String =>
+      val configs = Configs.Try(_.getInt(q(p)))
+      configs.extract(empty).failed.exists { e =>
+        e.head.isInstanceOf[ConfigError.Missing] && e.tail.isEmpty
+      }
+    }
+    val p2 = forAll { s: String =>
+      val ce = new ConfigException.Generic(s)
+      val configs = Configs.Try((_, _) => throw ce)
+      configs.extract(empty).failed.exists { e =>
+        e.head.isInstanceOf[ConfigError.Except] && e.tail.isEmpty && (e.toConfigException eq ce)
+      }
+    }
+    val p3 = forAll { s: String =>
+      val re = new RuntimeException(s)
+      val configs = Configs.Try((_, _) => throw re)
+      configs.extract(empty).failed.exists { e =>
+        e.head.isInstanceOf[ConfigError.Except] && e.tail.isEmpty && (e.toConfigException.getCause eq re)
+      }
+    }
+    Properties.list(
+      p1.toProperties("missing"),
+      p2.toProperties("config exception"),
+      p3.toProperties("other exception")
     )
   }
 
