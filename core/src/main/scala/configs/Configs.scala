@@ -59,6 +59,9 @@ trait Configs[A] {
         key
     }
 
+  def as[B >: A]: Configs[B] =
+    this.asInstanceOf[Configs[B]]
+
 }
 
 object Configs extends ConfigsInstances {
@@ -127,10 +130,10 @@ sealed abstract class ConfigsInstances0 extends ConfigsInstances1 {
 sealed abstract class ConfigsInstances extends ConfigsInstances0 {
 
   implicit def javaIterableConfigs[A](implicit C: Configs[ju.List[A]]): Configs[jl.Iterable[A]] =
-    C.asInstanceOf[Configs[jl.Iterable[A]]]
+    C.as[jl.Iterable[A]]
 
   implicit def javaCollectionConfigs[A](implicit C: Configs[ju.List[A]]): Configs[ju.Collection[A]] =
-    C.asInstanceOf[Configs[ju.Collection[A]]]
+    C.as[ju.Collection[A]]
 
   implicit def javaSetConfigs[A](implicit C: Configs[ju.List[A]]): Configs[ju.Set[A]] =
     C.map(_.asScala.toSet.asJava)

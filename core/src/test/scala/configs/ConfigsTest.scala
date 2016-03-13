@@ -63,12 +63,12 @@ object ConfigsTest extends Scalaprops {
   }
 
   val flatMap = {
-    val c0: Configs[String] = Configs.Try(_.getConfig(_).getString("type"))
+    val c0: Configs[String] = Configs.get[String]("type")
     val c: Configs[Any] = c0.flatMap {
-      case "int"    => Configs.Try(_.getConfig(_).getInt("value"))
-      case "string" => Configs.Try(_.getConfig(_).getString("value"))
-      case "bool"   => Configs.Try(_.getConfig(_).getBoolean("value"))
-      case s        => throw new RuntimeException(s)
+      case "int" => Configs.get[Int]("value").as[Any]
+      case "string" => Configs.get[String]("value").as[Any]
+      case "bool" => Configs.get[Boolean]("value").as[Any]
+      case s => Configs.failure(s)
     }
     val g = Gen.oneOf[(String, Any)](
       Gen[Int].map("int" -> _),
@@ -79,7 +79,7 @@ object ConfigsTest extends Scalaprops {
       case (t, v) =>
         val qv = v match {
           case s: String => q(s)
-          case _         => v
+          case _ => v
         }
         val config = ConfigFactory.parseString(
           s"""type = $t
