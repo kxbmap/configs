@@ -16,7 +16,7 @@
 
 package configs
 
-import com.typesafe.config.{ConfigException, ConfigFactory, ConfigValueFactory}
+import com.typesafe.config.{ConfigFactory, ConfigValueFactory}
 import configs.util._
 import scala.collection.JavaConversions._
 import scalaprops.Property.forAll
@@ -98,34 +98,22 @@ object ConfigsTest extends Scalaprops {
     )
   }
 
-  val handleErrors = {
-    val empty = ConfigFactory.empty()
-    val p1 = forAll { p: String =>
-      val config = ConfigFactory.parseString(s"${q(p)} = null")
-      val configs = Configs.Try(_.getInt(q(p)))
-      configs.extract(config).failed.exists { e =>
-        e.head.isInstanceOf[ConfigError.NullValue] && e.tail.isEmpty
-      }
+  val handleNullValue = forAll { p: String =>
+    val config = ConfigFactory.parseString(s"${q(p)} = null")
+    val configs = Configs.Try(_.getInt(q(p)))
+    configs.extract(config).failed.exists {
+      case ConfigError(_: ConfigError.NullValue, t) if t.isEmpty => true
     }
-    val p2 = forAll { s: String =>
-      val ce = new ConfigException.Generic(s)
-      val configs = Configs.Try((_, _) => throw ce)
-      configs.extract(empty).failed.exists { e =>
-        e.head.isInstanceOf[ConfigError.Except] && e.tail.isEmpty && (e.toConfigException eq ce)
-      }
+  }
+
+  val handleException = forAll {
+    val re = new RuntimeException()
+    val config = ConfigFactory.empty()
+    val configs = Configs.Try((_, _) => throw re)
+    configs.extract(config).failed.exists {
+      case ConfigError(ConfigError.Except(e, _), t) if t.isEmpty => e eq re
+      case _ => false
     }
-    val p3 = forAll { s: String =>
-      val re = new RuntimeException(s)
-      val configs = Configs.Try((_, _) => throw re)
-      configs.extract(empty).failed.exists { e =>
-        e.head.isInstanceOf[ConfigError.Except] && e.tail.isEmpty && (e.toConfigException.getCause eq re)
-      }
-    }
-    Properties.list(
-      p1.toProperties("null value"),
-      p2.toProperties("config exception"),
-      p3.toProperties("other exception")
-    )
   }
 
 }
