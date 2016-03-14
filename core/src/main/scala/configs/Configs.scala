@@ -96,7 +96,7 @@ object Configs extends ConfigsInstances {
     withPath((_, _) => Result.successful(a))
 
   def failure[A](msg: String): Configs[A] =
-    withPath((c, p) => Result.failure(ConfigError(msg)))
+    withPath((_, _) => Result.failure(ConfigError(msg)))
 
   def get[A](path: String)(implicit A: Configs[A]): Configs[A] =
     (c, p) => Configs[Config].get(c, p).flatMap(A.get(_, path))
