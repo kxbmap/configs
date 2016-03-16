@@ -95,18 +95,19 @@ object CollectionConfigsTest extends Scalaprops {
 
   case class Foo(value: Int)
 
-  implicit lazy val fooGen: Gen[Foo] = Gen[Int].map(Foo.apply)
-
-  implicit lazy val fooEqual: Equal[Foo] = Equal.equalA[Foo]
-
-  implicit lazy val fooToConfigValue: ToConfigValue[Foo] = _.value.toConfigValue.atKey("v").root()
-
   object Foo {
 
-    import configs.syntax._
+    implicit val gen: Gen[Foo] =
+      Gen[Int].map(Foo.apply)
+
+    implicit val equal: Equal[Foo] =
+      Equal.equalA[Foo]
+
+    implicit val tcv: ToConfigValue[Foo] =
+      _.value.toConfigValue.atKey("v").root()
 
     val fooConfigs: Configs[Foo] =
-      Configs.from(_.get[Int]("v").map(Foo(_)))
+      Configs.Try(c => Foo(c.getInt("v")))
 
     val fooJListConfigs: Configs[ju.List[Foo]] =
       Configs.javaListConfigs(fooConfigs)

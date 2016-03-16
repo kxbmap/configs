@@ -28,11 +28,8 @@ package object syntax {
     def get[A](path: String)(implicit A: Configs[A]): Result[A] =
       A.get(self, path)
 
-    def getOpt[A: Configs](path: String): Result[Option[A]] =
-      get[Option[A]](path)
-
-    def getOrElse[A: Configs](path: String, default: => A): Result[A] =
-      getOpt[A](path).map(_.getOrElse(default))
+    def getOrElse[A](path: String, default: => A)(implicit A: Configs[Option[A]]): Result[A] =
+      get(path)(A).map(_.getOrElse(default))
 
   }
 

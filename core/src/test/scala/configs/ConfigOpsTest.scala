@@ -30,7 +30,6 @@ object ConfigOpsTest extends Scalaprops {
     Properties.list(
       extract(_.extract[Map[String, java.lang.Integer]] == Result.successful(_)),
       get(_.get[Int](_) == Result.successful(_)),
-      getOpt(_.getOpt[Int](_) == Result.successful(_)),
       getOrElse(_.getOrElse[Int](_, _) == Result.successful(_))
     )
   }
@@ -40,7 +39,6 @@ object ConfigOpsTest extends Scalaprops {
     Properties.list(
       extract(_.extract[Map[String, java.lang.Integer]] == _),
       get(_.get[Int](_) == _),
-      getOpt(_.getOpt[Int](_) == _),
       getOrElse(_.getOrElse[Int](_, _) == _)
     )
   }
@@ -57,13 +55,6 @@ object ConfigOpsTest extends Scalaprops {
       val config = n.toConfigValue.atKey(p)
       check(config, p, n)
     }.toProperties("get")
-
-  private def getOpt(check: (Config, String, Option[Int]) => Boolean) =
-    forAll { n: Option[Int] =>
-      val p = "path"
-      val config = n.toConfigValue.atKey(p)
-      check(config, p, n)
-    }.toProperties("getOpt")
 
   private def getOrElse(check: (Config, String, Int, Int) => Boolean) =
     forAll { (n: Option[Int], m: Int) =>

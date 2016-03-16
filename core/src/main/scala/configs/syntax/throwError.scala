@@ -29,11 +29,8 @@ object throwError {
     def get[A](path: String)(implicit A: Configs[A]): A =
       A.get(self, path).getOrThrow
 
-    def getOpt[A: Configs](path: String): Option[A] =
-      get[Option[A]](path)
-
-    def getOrElse[A: Configs](path: String, default: => A): A =
-      getOpt[A](path).getOrElse(default)
+    def getOrElse[A](path: String, default: => A)(implicit A: Configs[Option[A]]): A =
+      get(path)(A).getOrElse(default)
 
   }
 
