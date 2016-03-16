@@ -15,10 +15,3 @@ lazy val core = project
         |import configs.syntax._
         |""".stripMargin
   )
-
-lazy val sample = project
-  .settings(
-    name := "configs-sample",
-    disablePublishSettings
-  )
-  .dependsOn(core)
