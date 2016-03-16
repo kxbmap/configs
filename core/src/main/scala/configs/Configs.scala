@@ -48,15 +48,19 @@ trait Configs[A] {
     (c, p) => get(c, p).orElse(fallback.get(c, p))
 
   def withPath: Configs[A] =
-    (c, p) => get(c, p).mapError(_.withPath(p))
+    new Configs[A] {
+      override def get(config: Config, path: String): Result[A] =
+        self.get(config, path).mapError(_.withPath(path))
+
+      override def withPath: Configs[A] = this
+    }
 
   def withExtractKey(key: String): Configs[A] =
     new Configs[A] {
       def get(config: Config, path: String): Result[A] =
         self.get(config, path)
 
-      override def extractKey: String =
-        key
+      override def extractKey: String = key
     }
 
   def as[B >: A]: Configs[B] =
