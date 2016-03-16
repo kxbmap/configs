@@ -46,7 +46,7 @@ trait ConfigErrorImplicits {
     Gen.oneOf(
       Gen[Int].map(N).map(ConfigError.NullValue(_)),
       Gen[Int].map(E).map(ConfigError.Except(_)),
-      Gen[String].map(ConfigError.Generic(_))
+      Gen[Option[String]].map(ConfigError.Generic(_))
     )
 
   implicit lazy val configErrorEntryCogen: Cogen[ConfigError.Entry] =
@@ -55,7 +55,7 @@ trait ConfigErrorImplicits {
         a match {
           case ConfigError.NullValue(N(n), _) => Cogen[Int].cogen(n * 2, g)
           case ConfigError.Except(E(n), _) => Cogen[Int].cogen(n * 2 + 1, g)
-          case ConfigError.Generic(m, _) => Cogen[String].cogen(m, g)
+          case ConfigError.Generic(m, _) => Cogen[Option[String]].cogen(m, g)
           case _ => sys.error("bug or broken")
         }
     }
