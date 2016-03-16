@@ -20,6 +20,11 @@ import scala.collection.generic.CanBuildFrom
 
 sealed abstract class Result[+A] extends Product with Serializable {
 
+  def isSuccess: Boolean
+
+  final def isFailure: Boolean =
+    !isSuccess
+
   def fold[B](ifFailure: ConfigError => B, ifSuccess: A => B): B
 
   def map[B](f: A => B): Result[B]
@@ -85,6 +90,8 @@ object Result {
 
   final case class Success[A](value: A) extends Result[A] {
 
+    override def isSuccess: Boolean = true
+
     override def fold[B](ifFailure: ConfigError => B, ifSuccess: A => B): B =
       ifSuccess(value)
 
@@ -141,6 +148,8 @@ object Result {
 
 
   final case class Failure(error: ConfigError) extends Result[Nothing] {
+
+    override def isSuccess: Boolean = false
 
     override def fold[B](ifFailure: ConfigError => B, ifSuccess: Nothing => B): B =
       ifFailure(error)
