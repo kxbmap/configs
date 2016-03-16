@@ -18,7 +18,7 @@ package configs
 
 import com.typesafe.config.{ConfigException, ConfigUtil}
 
-case class ConfigError(head: ConfigError.Entry, tail: Vector[ConfigError.Entry] = Vector.empty) {
+final case class ConfigError(head: ConfigError.Entry, tail: Vector[ConfigError.Entry] = Vector.empty) {
 
   def entries: Vector[ConfigError.Entry] =
     head +: tail
@@ -54,7 +54,7 @@ object ConfigError {
 
     def paths: List[String]
 
-    def messageWithPath: String = {
+    final def messageWithPath: String = {
       val msg = message.getOrElse("null")
       paths match {
         case Nil => msg
@@ -67,7 +67,7 @@ object ConfigError {
     def throwable: Throwable
   }
 
-  case class NullValue(throwable: ConfigException.Null, paths: List[String] = Nil) extends Entry {
+  final case class NullValue(throwable: ConfigException.Null, paths: List[String] = Nil) extends Entry {
 
     def message: Option[String] =
       Option(throwable.getMessage)
@@ -76,7 +76,7 @@ object ConfigError {
       copy(paths = path :: paths)
   }
 
-  case class Except(throwable: Throwable, paths: List[String] = Nil) extends Entry {
+  final case class Except(throwable: Throwable, paths: List[String] = Nil) extends Entry {
 
     def message: Option[String] =
       Option(throwable.getMessage)
@@ -85,7 +85,7 @@ object ConfigError {
       copy(paths = path :: paths)
   }
 
-  case class Generic(message: Option[String], paths: List[String] = Nil) extends Entry {
+  final case class Generic(message: Option[String], paths: List[String] = Nil) extends Entry {
 
     def pushPath(path: String): Entry =
       copy(paths = path :: paths)

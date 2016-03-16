@@ -19,7 +19,7 @@ package configs
 import java.{util => ju}
 import scala.collection.convert.decorateAll._
 
-case class Bytes(value: Long) extends Ordered[Bytes] {
+final case class Bytes(value: Long) extends Ordered[Bytes] {
 
   def compare(rhs: Bytes): Int = value.compare(rhs.value)
 
