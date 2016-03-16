@@ -1,4 +1,4 @@
-name := "configs"
+name := "configs-root"
 
 disablePublishSettings
 
