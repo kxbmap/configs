@@ -32,8 +32,8 @@ case class ConfigError(head: ConfigError.Entry, tail: Vector[ConfigError.Entry] 
   def withPath(path: String): ConfigError =
     ConfigError(head.pushPath(path), tail.map(_.pushPath(path)))
 
-  def toConfigException: ConfigException =
-    head.toConfigException
+  def throwable: Throwable =
+    head.throwable
 }
 
 object ConfigError {
@@ -59,13 +59,13 @@ object ConfigError {
 
     def pushPath(path: String): Entry
 
-    def toConfigException: ConfigException
+    def throwable: Throwable
   }
 
-  case class NullValue(toConfigException: ConfigException.Null, paths: List[String] = Nil) extends Entry {
+  case class NullValue(throwable: ConfigException.Null, paths: List[String] = Nil) extends Entry {
 
     def message: String =
-      toConfigException.getMessage
+      throwable.getMessage
 
     def pushPath(path: String): Entry =
       copy(paths = path :: paths)
@@ -78,12 +78,6 @@ object ConfigError {
 
     def pushPath(path: String): Entry =
       copy(paths = path :: paths)
-
-    def toConfigException: ConfigException =
-      throwable match {
-        case e: ConfigException => e
-        case e => new ConfigException.Generic(message, e)
-      }
   }
 
   case class Generic(message: String, paths: List[String] = Nil) extends Entry {
@@ -91,7 +85,7 @@ object ConfigError {
     def pushPath(path: String): Entry =
       copy(paths = path :: paths)
 
-    def toConfigException: ConfigException =
+    def throwable: Throwable =
       new ConfigException.Generic(message)
   }
 

@@ -21,12 +21,13 @@ import configs.Configs
 import configs.util._
 import scalaprops.Property.forAll
 import scalaprops.{Properties, Scalaprops}
+import scalaz.std.anyVal._
 import scalaz.std.option._
 import scalaz.std.string._
 
 object OptionConfigsTest extends Scalaprops {
 
-  val option = check[Option[java.time.Duration]]
+  val option = check[Option[Int]]
 
   val missing = forAll { p: String =>
     val config = ConfigFactory.empty()

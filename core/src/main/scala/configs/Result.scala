@@ -35,7 +35,7 @@ sealed abstract class Result[+A] extends Product with Serializable {
   def getOrElse[B >: A](default: => B): B
 
   final def getOrThrow: A =
-    valueOr(e => throw e.toConfigException)
+    valueOr(e => throw e.throwable)
 
   def valueOr[B >: A](f: ConfigError => B): B
 

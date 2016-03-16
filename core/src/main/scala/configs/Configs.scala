@@ -166,13 +166,13 @@ sealed abstract class ConfigsInstances extends ConfigsInstances0 {
 
   implicit def tryConfigs[A](implicit A: Configs[A]): Configs[Try[A]] =
     A.get(_, _).map(Success(_)).handle {
-      case e => Failure(e.toConfigException)
+      case e => Failure(e.throwable)
     }
 
   implicit def eitherConfigs[E <: Throwable, A](implicit E: ClassTag[E], A: Configs[A]): Configs[Either[E, A]] =
     A.get(_, _).map(Right(_)).handle {
-      case e if E.runtimeClass.isAssignableFrom(e.toConfigException.getClass) =>
-        Left(e.toConfigException.asInstanceOf[E])
+      case e if E.runtimeClass.isAssignableFrom(e.throwable.getClass) =>
+        Left(e.throwable.asInstanceOf[E])
     }
 
 

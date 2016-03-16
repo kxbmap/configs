@@ -16,16 +16,52 @@
 
 package configs.instance
 
+import com.typesafe.config.{ConfigException, ConfigFactory}
+import configs.Configs
 import configs.util._
 import scala.util.{Failure, Success, Try}
-import scalaprops.{Gen, Scalaprops}
+import scalaprops.Property._
+import scalaprops.{Gen, Properties, Scalaprops}
 import scalaz.Equal
+import scalaz.std.anyVal._
 import scalaz.std.option._
+import scalaz.std.string._
 
 object TryConfigsTest extends Scalaprops {
 
-  val `try` = check[Try[java.time.Duration]]
+  val `try` = check[Try[Int]]
 
+  val handleError = {
+    val p1 = forAll {
+      val config = ConfigFactory.parseString("value = null")
+      val result = Configs[Try[Int]].get(config, "value")
+      result.exists {
+        case Failure(e: ConfigException.Null) => true
+        case _ => false
+      }
+    }
+    val p2 = forAll {
+      val config = ConfigFactory.empty()
+      val e = new RuntimeException
+      implicit val configs: Configs[Int] = Configs.Try((_, _) => throw e)
+      val result = Configs[Try[Int]].get(config, "value")
+      result.exists(_ == Failure(e))
+    }
+    val p3 = forAll { s: String =>
+      val config = ConfigFactory.empty()
+      implicit val configs: Configs[Int] = Configs.failure(s)
+      val result = Configs[Try[Int]].get(config, "value")
+      result.exists {
+        case Failure(e: ConfigException) => e.getMessage == s
+        case _ => false
+      }
+    }
+    Properties.list(
+      p1.toProperties("null value"),
+      p2.toProperties("runtime exception"),
+      p3.toProperties("message as ConfigException")
+    )
+  }
 
   implicit def tryGen[A: Gen]: Gen[Try[A]] =
     Gen.option[A].map {

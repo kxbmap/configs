@@ -16,15 +16,51 @@
 
 package configs.instance
 
+import com.typesafe.config.{ConfigException, ConfigFactory}
+import configs.Configs
 import configs.util._
-import scalaprops.{Gen, Scalaprops}
+import scalaprops.Property.forAll
+import scalaprops.{Gen, Properties, Scalaprops}
 import scalaz.Equal
+import scalaz.std.anyVal._
 import scalaz.std.option._
+import scalaz.std.string._
 
 object EitherConfigsTest extends Scalaprops {
 
-  val either = check[Either[Throwable, java.time.Duration]]
+  val either = check[Either[Throwable, Int]]
 
+  val handleError = {
+    val p1 = forAll {
+      val config = ConfigFactory.parseString("value = null")
+      val result = Configs[Either[ConfigException.Null, Int]].get(config, "value")
+      result.exists {
+        case Left(_: ConfigException.Null) => true
+        case _ => false
+      }
+    }
+    val p2 = forAll {
+      val config = ConfigFactory.empty()
+      val e = new RuntimeException
+      implicit val configs: Configs[Int] = Configs.Try((_, _) => throw e)
+      val result = Configs[Either[RuntimeException, Int]].get(config, "value")
+      result.exists(_ == Left(e))
+    }
+    val p3 = forAll { s: String =>
+      val config = ConfigFactory.empty()
+      implicit val configs: Configs[Int] = Configs.failure(s)
+      val result = Configs[Either[ConfigException, Int]].get(config, "value")
+      result.exists {
+        case Left(e: ConfigException) => e.getMessage == s
+        case _ => false
+      }
+    }
+    Properties.list(
+      p1.toProperties("null value"),
+      p2.toProperties("runtime exception"),
+      p3.toProperties("message as ConfigException")
+    )
+  }
 
   implicit def eitherGen[A: Gen]: Gen[Either[Throwable, A]] =
     Gen.option[A].map(_.toRight(new RuntimeException("dummy")))
