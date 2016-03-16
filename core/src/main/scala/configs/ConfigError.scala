@@ -44,7 +44,7 @@ object ConfigError {
   def fromThrowable(throwable: Throwable): ConfigError =
     ConfigError(throwable match {
       case e: ConfigException.Null => NullValue(e)
-      case e => Except(e)
+      case e => Exceptional(e)
     })
 
 
@@ -76,7 +76,7 @@ object ConfigError {
       copy(paths = path :: paths)
   }
 
-  final case class Except(throwable: Throwable, paths: List[String] = Nil) extends Entry {
+  final case class Exceptional(throwable: Throwable, paths: List[String] = Nil) extends Entry {
 
     def message: Option[String] =
       Option(throwable.getMessage)

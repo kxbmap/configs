@@ -111,7 +111,7 @@ object ConfigsTest extends Scalaprops {
     val config = ConfigFactory.empty()
     val configs = Configs.Try((_, _) => throw re)
     configs.extract(config).failed.exists {
-      case ConfigError(ConfigError.Except(e, _), t) if t.isEmpty => e eq re
+      case ConfigError(ConfigError.Exceptional(e, _), t) if t.isEmpty => e eq re
       case _ => false
     }
   }
