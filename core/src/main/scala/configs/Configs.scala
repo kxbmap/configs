@@ -50,7 +50,7 @@ trait Configs[A] {
   def withPath: Configs[A] =
     new Configs[A] {
       override def get(config: Config, path: String): Result[A] =
-        self.get(config, path).mapError(_.withPath(path))
+        self.get(config, path).withPath(path)
 
       override def withPath: Configs[A] = this
     }
@@ -181,16 +181,16 @@ sealed abstract class ConfigsInstances extends ConfigsInstances0 {
 
 
   def convertConfigs[A, B](implicit A: Configs[A], C: Converter[A, B]): Configs[B] =
-    (c, p) => A.get(c, p).flatMap(C.convert(_).mapError(_.withPath(p)))
+    (c, p) => A.get(c, p).flatMap(C.convert(_).withPath(p))
 
   def convertJListConfigs[A, B](implicit A: Configs[ju.List[A]], C: Converter[A, B]): Configs[ju.List[B]] =
     (c, p) =>
       A.get(c, p).flatMap { as =>
         Result.sequence(
           as.asScala.zipWithIndex.map {
-            case (a, i) => C.convert(a).mapError(_.withPath(i.toString))
+            case (a, i) => C.convert(a).withPath(i.toString)
           })
-          .map(_.asJava).mapError(_.withPath(p))
+          .map(_.asJava).withPath(p)
       }
 
   implicit def convertStringConfigs[A: Converter.FromString]: Configs[A] =

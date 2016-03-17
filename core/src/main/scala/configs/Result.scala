@@ -51,6 +51,9 @@ sealed abstract class Result[+A] extends Product with Serializable {
 
   def mapError(f: ConfigError => ConfigError): Result[A]
 
+  final def withPath(path: String): Result[A] =
+    mapError(_.withPath(path))
+
   def exists(f: A => Boolean): Boolean
 
   final def forall(f: A => Boolean): Boolean =
