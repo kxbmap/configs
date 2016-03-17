@@ -181,12 +181,17 @@ sealed abstract class ConfigsInstances extends ConfigsInstances0 {
 
 
   def convertConfigs[A, B](implicit A: Configs[A], C: Converter[A, B]): Configs[B] =
-    A.get(_, _).flatMap(C.convert)
+    (c, p) => A.get(c, p).flatMap(C.convert(_).mapError(_.withPath(p)))
 
   def convertJListConfigs[A, B](implicit A: Configs[ju.List[A]], C: Converter[A, B]): Configs[ju.List[B]] =
-    A.get(_, _).flatMap { as =>
-      Result.sequence(as.asScala.map(C.convert)).map(_.asJava)
-    }
+    (c, p) =>
+      A.get(c, p).flatMap { as =>
+        Result.sequence(
+          as.asScala.zipWithIndex.map {
+            case (a, i) => C.convert(a).mapError(_.withPath(i.toString))
+          })
+          .map(_.asJava).mapError(_.withPath(p))
+      }
 
   implicit def convertStringConfigs[A: Converter.FromString]: Configs[A] =
     convertConfigs[String, A]
