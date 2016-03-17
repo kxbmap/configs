@@ -42,7 +42,7 @@ object ConfigsTest extends Scalaprops {
   val extractConfigValue = forAll { v: Int =>
     val cv = ConfigValueFactory.fromAnyRef(v)
     val configs: Configs[Int] = Configs.Try(_.getInt(_))
-    configs.extract(cv).exists(_ == v)
+    configs.extractValue(cv).exists(_ == v)
   }
 
   val map = forAll { (v: Int, f: Int => String) =>

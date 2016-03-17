@@ -55,7 +55,7 @@ package object util {
 
   def check[A: Configs : Gen : Equal : ToConfigValue]: Property =
     forAll { value: A =>
-      val actual = Configs[A].extract(value.toConfigValue)
+      val actual = Configs[A].extractValue(value.toConfigValue)
       val result = actual.exists(Equal[A].equal(_, value))
       if (!result) {
         println()

@@ -35,7 +35,7 @@ trait Configs[A] {
   def extract(config: Config): Result[A] =
     get(config.atKey(extractKey), extractKey)
 
-  def extract(value: ConfigValue): Result[A] =
+  def extractValue(value: ConfigValue): Result[A] =
     get(value.atKey(extractKey), extractKey)
 
   def map[B](f: A => B): Configs[B] =
@@ -124,7 +124,7 @@ sealed abstract class ConfigsInstances0 extends ConfigsInstances1 {
     Configs.from { (c, p) =>
       Result.sequence(
         c.getList(p).asScala.zipWithIndex.map {
-          case (v, i) => A.withExtractKey(i.toString).extract(v)
+          case (v, i) => A.withExtractKey(i.toString).extractValue(v)
         })
         .map(_.asJava)
     }
@@ -396,10 +396,10 @@ sealed abstract class ConfigsInstances extends ConfigsInstances0 {
       override def extract(config: Config): Result[Config] =
         Result.successful(config)
 
-      override def extract(value: ConfigValue): Result[Config] =
+      override def extractValue(value: ConfigValue): Result[Config] =
         value match {
           case co: ConfigObject => Result.successful(co.toConfig)
-          case _ => super.extract(value)
+          case _ => super.extractValue(value)
         }
     })
 
@@ -415,7 +415,7 @@ sealed abstract class ConfigsInstances extends ConfigsInstances0 {
       override def extract(config: Config): Result[ConfigValue] =
         Result.successful(config.root())
 
-      override def extract(value: ConfigValue): Result[ConfigValue] =
+      override def extractValue(value: ConfigValue): Result[ConfigValue] =
         Result.successful(value)
     })
 
