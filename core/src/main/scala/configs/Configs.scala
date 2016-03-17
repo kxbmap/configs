@@ -30,13 +30,11 @@ trait Configs[A] {
 
   def get(config: Config, path: String): Result[A]
 
-  def extractKey: String = "extract"
+  def extract(config: Config, key: String = "extract"): Result[A] =
+    get(config.atKey(key), key)
 
-  def extract(config: Config): Result[A] =
-    get(config.atKey(extractKey), extractKey)
-
-  def extractValue(value: ConfigValue): Result[A] =
-    get(value.atKey(extractKey), extractKey)
+  def extractValue(value: ConfigValue, key: String = "extract"): Result[A] =
+    get(value.atKey(key), key)
 
   def map[B](f: A => B): Configs[B] =
     get(_, _).map(f)
@@ -53,14 +51,6 @@ trait Configs[A] {
         self.get(config, path).withPath(path)
 
       override def withPath: Configs[A] = this
-    }
-
-  def withExtractKey(key: String): Configs[A] =
-    new Configs[A] {
-      def get(config: Config, path: String): Result[A] =
-        self.get(config, path)
-
-      override def extractKey: String = key
     }
 
   def as[B >: A]: Configs[B] =
@@ -124,7 +114,7 @@ sealed abstract class ConfigsInstances0 extends ConfigsInstances1 {
     Configs.from { (c, p) =>
       Result.sequence(
         c.getList(p).asScala.zipWithIndex.map {
-          case (v, i) => A.withExtractKey(i.toString).extractValue(v)
+          case (v, i) => A.extractValue(v, i.toString)
         })
         .map(_.asJava)
     }
@@ -393,10 +383,10 @@ sealed abstract class ConfigsInstances extends ConfigsInstances0 {
       def get(config: Config, path: String): Result[Config] =
         Result.Try(config.getConfig(path))
 
-      override def extract(config: Config): Result[Config] =
+      override def extract(config: Config, key: String): Result[Config] =
         Result.successful(config)
 
-      override def extractValue(value: ConfigValue): Result[Config] =
+      override def extractValue(value: ConfigValue, key: String): Result[Config] =
         value match {
           case co: ConfigObject => Result.successful(co.toConfig)
           case _ => super.extractValue(value)
@@ -412,10 +402,10 @@ sealed abstract class ConfigsInstances extends ConfigsInstances0 {
       def get(config: Config, path: String): Result[ConfigValue] =
         Result.Try(config.getValue(path))
 
-      override def extract(config: Config): Result[ConfigValue] =
+      override def extract(config: Config, key: String): Result[ConfigValue] =
         Result.successful(config.root())
 
-      override def extractValue(value: ConfigValue): Result[ConfigValue] =
+      override def extractValue(value: ConfigValue, key: String): Result[ConfigValue] =
         Result.successful(value)
     })
 
