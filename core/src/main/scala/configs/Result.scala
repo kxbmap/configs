@@ -99,7 +99,7 @@ object Result {
       ifSuccess(value)
 
     override def map[B](f: A => B): Result[B] =
-      Result.Try(f(value))
+      Success(f(value))
 
     override def flatMap[B](f: A => Result[B]): Result[B] =
       try
@@ -113,7 +113,7 @@ object Result {
 
     override def ap[B](f: Result[A => B]): Result[B] =
       f match {
-        case Success(f0) => Result.Try(f0(value))
+        case Success(f0) => Success(f0(value))
         case fa@Failure(_) => fa
       }
 
