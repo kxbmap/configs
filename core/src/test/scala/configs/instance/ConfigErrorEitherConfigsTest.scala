@@ -16,26 +16,25 @@
 
 package configs.instance
 
-import com.typesafe.config.{ConfigException, ConfigFactory}
-import configs.Configs
+import com.typesafe.config.ConfigFactory
 import configs.util._
-import scalaprops.Property.forAll
+import configs.{ConfigError, ConfigErrorImplicits, Configs}
+import scalaprops.Property._
 import scalaprops.{Gen, Properties, Scalaprops}
-import scalaz.Equal
 import scalaz.std.anyVal._
-import scalaz.std.option._
 import scalaz.std.string._
+import scalaz.{Equal, \/}
 
-object EitherConfigsTest extends Scalaprops {
+object ConfigErrorEitherConfigsTest extends Scalaprops with ConfigErrorImplicits {
 
-  val either = check[Either[Throwable, Int]]
+  val either = check[Either[ConfigError, Int]]
 
   val handleError = {
     val p1 = forAll {
       val config = ConfigFactory.parseString("value = null")
-      val result = Configs[Either[ConfigException.Null, Int]].get(config, "value")
+      val result = Configs[Either[ConfigError, Int]].get(config, "value")
       result.exists {
-        case Left(_: ConfigException.Null) => true
+        case Left(ConfigError(_: ConfigError.NullValue, _)) => true
         case _ => false
       }
     }
@@ -43,32 +42,35 @@ object EitherConfigsTest extends Scalaprops {
       val config = ConfigFactory.empty()
       val e = new RuntimeException
       implicit val configs: Configs[Int] = Configs.Try((_, _) => throw e)
-      val result = Configs[Either[RuntimeException, Int]].get(config, "value")
-      result.exists(_ == Left(e))
+      val result = Configs[Either[ConfigError, Int]].get(config, "value")
+      result.exists {
+        case Left(ConfigError(ConfigError.Exceptional(`e`, _), _)) => true
+        case _ => false
+      }
     }
     val p3 = forAll { s: String =>
       val config = ConfigFactory.empty()
       implicit val configs: Configs[Int] = Configs.failure(s)
-      val result = Configs[Either[ConfigException, Int]].get(config, "value")
+      val result = Configs[Either[ConfigError, Int]].get(config, "value")
       result.exists {
-        case Left(e: ConfigException) => e.getMessage == s
+        case Left(ConfigError(ConfigError.Generic(Some(m), _), _)) => m == s
         case _ => false
       }
     }
     Properties.list(
       p1.toProperties("null value"),
       p2.toProperties("runtime exception"),
-      p3.toProperties("message as ConfigException")
+      p3.toProperties("failure")
     )
   }
 
-  implicit def eitherGen[A: Gen]: Gen[Either[Throwable, A]] =
-    Gen.option[A].map(_.toRight(new RuntimeException("dummy")))
+  implicit def eitherGen[A: Gen]: Gen[Either[ConfigError, A]] =
+    Gen[A].map(Right(_))
 
-  implicit def eitherEqual[A: Equal]: Equal[Either[Throwable, A]] =
-    Equal[Option[A]].contramap(_.right.toOption)
+  implicit def eitherEqual[A: Equal]: Equal[Either[ConfigError, A]] =
+    Equal[ConfigError \/ A].contramap(\/.fromEither)
 
-  implicit def eitherToConfigValue[A: ToConfigValue]: ToConfigValue[Either[Throwable, A]] =
+  implicit def eitherToConfigValue[A: ToConfigValue]: ToConfigValue[Either[ConfigError, A]] =
     ToConfigValue[Option[A]].contramap(_.right.toOption)
 
 }
