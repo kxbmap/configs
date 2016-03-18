@@ -373,9 +373,9 @@ sealed abstract class ConfigsInstances extends ConfigsInstances0 {
   implicit lazy val durationConfigs: Configs[Duration] =
     finiteDurationConfigs.orElse(Configs.Try { (c, p) =>
       c.getString(p) match {
-        case "infinity" | "+infinity" => Duration.Inf
-        case "-infinity" => Duration.MinusInf
-        case "undefined" => Duration.Undefined
+        case "Infinity" | "+Infinity" => Duration.Inf
+        case "-Infinity" => Duration.MinusInf
+        case "Undefined" | "NaN" | "+NaN" | "-NaN" => Duration.Undefined
         case s => throw new ConfigException.BadValue(c.origin(), p, s"Could not parse duration '$s'")
       }
     })
