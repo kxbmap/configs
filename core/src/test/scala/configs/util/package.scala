@@ -27,7 +27,7 @@ import scalaz.std.anyVal._
 import scalaz.std.list._
 import scalaz.std.map._
 import scalaz.std.string._
-import scalaz.{Apply, Equal, Need, Order}
+import scalaz.{Equal, Need, Order}
 
 
 package object util {
@@ -147,11 +147,8 @@ package object util {
     Gen.nonNegativeLong.map(ConfigMemorySize.ofBytes)
 
 
-  implicit def genConfigValue0[A: Gen : ToConfigValue]: Gen[ConfigValue :@ A] =
+  implicit def genConfigValue[A: Gen : ToConfigValue]: Gen[ConfigValue :@ A] =
     Gen[A].map(_.toConfigValue).tag[A]
-
-  def genConfigValue[A: ToConfigValue](g: Gen[A]): Gen[ConfigValue] =
-    genConfigValue0[A](g, ToConfigValue[A]).as[ConfigValue]
 
   implicit lazy val configNumberGen: Gen[ConfigValue :@ Number] =
     Gen.oneOf(
@@ -161,28 +158,17 @@ package object util {
       Gen[ConfigValue :@ Double].untag
     ).tag[Number]
 
-  implicit def genConfigList0[A: Gen : ToConfigValue]: Gen[ConfigList :@ A] =
-    Gen.list(genConfigValue0[A]).map(_.asJava).map(ConfigValueFactory.fromIterable).tag[A]
-
-  def genConfigList[A: ToConfigValue](g: Gen[A]): Gen[ConfigList] =
-    genConfigList0(g, ToConfigValue[A]).untag
-
-  def genNonEmptyConfigList[A: ToConfigValue](g: Gen[A]): Gen[ConfigList] = {
-    val cg = genConfigValue(g)
-    Apply[Gen].apply2(cg, Gen.list(cg))(_ :: _).map(_.asJava).map(ConfigValueFactory.fromIterable)
-  }
-
   implicit lazy val configListGen: Gen[ConfigList] =
-    genConfigList(configValueGen)
+    Gen.list(configValueGen).map(_.asJava).map(ConfigValueFactory.fromIterable)
 
   implicit lazy val configValueJListGen: Gen[ju.List[ConfigValue]] =
-    Gen[ConfigList].map(cl => cl)
+    Gen[ConfigList].as[ju.List[ConfigValue]]
 
   implicit lazy val configObjectGen: Gen[ConfigObject] =
     Gen.mapGen(Gen[String], configValueGen).map(_.asJava).map(ConfigValueFactory.fromMap)
 
   implicit lazy val configValueJavaMapGen: Gen[ju.Map[String, ConfigValue]] =
-    Gen[ConfigObject].map(co => co)
+    Gen[ConfigObject].as[ju.Map[String, ConfigValue]]
 
   implicit lazy val configValueGen: Gen[ConfigValue] =
     Gen.lazyFrequency(
