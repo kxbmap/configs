@@ -53,7 +53,7 @@ object ConfigErrorEitherConfigsTest extends Scalaprops with ConfigErrorImplicits
       implicit val configs: Configs[Int] = Configs.failure(s)
       val result = Configs[Either[ConfigError, Int]].get(config, "value")
       result.exists {
-        case Left(ConfigError(ConfigError.Generic(Some(m), _), _)) => m == s
+        case Left(ConfigError(ConfigError.Generic(m, _), _)) => m == s
         case _ => false
       }
     }

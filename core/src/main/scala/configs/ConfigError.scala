@@ -39,7 +39,7 @@ final case class ConfigError(head: ConfigError.Entry, tail: Vector[ConfigError.E
 object ConfigError {
 
   def apply(message: String): ConfigError =
-    ConfigError(Generic(Option(message)))
+    ConfigError(Generic(message))
 
   def fromThrowable(throwable: Throwable): ConfigError =
     ConfigError(throwable match {
@@ -50,12 +50,12 @@ object ConfigError {
 
   sealed abstract class Entry extends Product with Serializable {
 
-    def message: Option[String]
+    def message: String
 
     def paths: List[String]
 
     final def messageWithPath: String =
-      s"[${paths.mkString(".")}] ${message.getOrElse("null")}"
+      s"[${paths.mkString(".")}] $message"
 
     def pushPath(path: String): Entry
 
@@ -64,8 +64,8 @@ object ConfigError {
 
   final case class NullValue(throwable: ConfigException.Null, paths: List[String] = Nil) extends Entry {
 
-    def message: Option[String] =
-      Option(throwable.getMessage)
+    def message: String =
+      s"${throwable.getMessage}"
 
     def pushPath(path: String): Entry =
       copy(paths = path :: paths)
@@ -73,20 +73,20 @@ object ConfigError {
 
   final case class Exceptional(throwable: Throwable, paths: List[String] = Nil) extends Entry {
 
-    def message: Option[String] =
-      Option(throwable.getMessage)
+    def message: String =
+      s"${throwable.getMessage}"
 
     def pushPath(path: String): Entry =
       copy(paths = path :: paths)
   }
 
-  final case class Generic(message: Option[String], paths: List[String] = Nil) extends Entry {
+  final case class Generic(message: String, paths: List[String] = Nil) extends Entry {
 
     def pushPath(path: String): Entry =
       copy(paths = path :: paths)
 
     def throwable: Throwable =
-      new ConfigException.Generic(message.orNull)
+      new ConfigException.Generic(message)
   }
 
 }
