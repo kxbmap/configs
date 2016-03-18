@@ -128,18 +128,6 @@ package object util {
   implicit lazy val javaCharacterGen: Gen[jl.Character] =
     charGen.map(Char.box)
 
-  implicit lazy val floatGen: Gen[Float] =
-    Gen.genFiniteFloat
-
-  implicit lazy val javaFloatGen: Gen[jl.Float] =
-    floatGen.map(Float.box)
-
-  implicit lazy val doubleGen: Gen[Double] =
-    Gen.genFiniteDouble
-
-  implicit lazy val javaDoubleGen: Gen[jl.Double] =
-    doubleGen.map(Double.box)
-
   implicit lazy val javaDurationGen: Gen[jt.Duration] =
     Gen.nonNegativeLong.map(jt.Duration.ofNanos)
 
@@ -200,30 +188,6 @@ package object util {
 
   implicit def javaSetEqual[A: Equal]: Equal[ju.Set[A]] =
     Equal.equalBy(_.asScala.toSet)
-
-  implicit lazy val javaByteEqual: Equal[jl.Byte] =
-    Equal.equalBy(_.byteValue())
-
-  implicit lazy val javaShortEqual: Equal[jl.Short] =
-    Equal.equalBy(_.shortValue())
-
-  implicit lazy val javaIntegerEqual: Equal[jl.Integer] =
-    Equal.equalBy(_.intValue())
-
-  implicit lazy val javaLongEqual: Equal[jl.Long] =
-    Equal.equalBy(_.longValue())
-
-  implicit lazy val javaFloatEqual: Equal[jl.Float] =
-    Equal.equalBy(_.floatValue())
-
-  implicit lazy val javaDoubleEqual: Equal[jl.Double] =
-    Equal.equalBy(_.doubleValue())
-
-  implicit lazy val javaCharacterEqual: Equal[jl.Character] =
-    Equal.equalBy(_.charValue())
-
-  implicit lazy val javaBooleanEqual: Equal[jl.Boolean] =
-    Equal.equalBy(_.booleanValue())
 
   implicit lazy val javaDurationEqual: Equal[jt.Duration] =
     Equal.equalA[jt.Duration]

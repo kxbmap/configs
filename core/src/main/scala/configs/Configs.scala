@@ -175,51 +175,34 @@ sealed abstract class ConfigsInstances extends ConfigsInstances0 {
     Configs.from((c, p) => A.from(c.getString(p)))
 
 
-  private[this] def toByte(n: Number, c: Config, p: String): Byte = {
-    val l = n.longValue()
-    if (l.isValidByte) l.toByte
-    else throw new ConfigException.WrongType(c.origin(), p, "byte (8-bit integer)", s"out-of-range value $l")
-  }
+  private[this] def integral[A](expected: String, valid: BigInt => Boolean, value: BigInt => A): Configs[A] =
+    bigIntConfigs.flatMap { n =>
+      Configs.Try { (c, p) =>
+        if (valid(n)) value(n)
+        else throw new ConfigException.WrongType(c.origin(), p, expected, s"out-of-range value $n")
+      }
+    }
 
   implicit lazy val byteConfigs: Configs[Byte] =
-    Configs.Try((c, p) => toByte(c.getNumber(p), c, p))
+    integral("byte (8-bit integer)", _.isValidByte, _.toByte)
 
   implicit lazy val javaByteConfigs: Configs[jl.Byte] =
     byteConfigs.asInstanceOf[Configs[jl.Byte]]
 
-
-  private[this] def toShort(n: Number, c: Config, p: String): Short = {
-    val l = n.longValue()
-    if (l.isValidShort) l.toShort
-    else throw new ConfigException.WrongType(c.origin(), p, "short (16-bit integer)", s"out-of-range value $l")
-  }
-
   implicit lazy val shortConfigs: Configs[Short] =
-    Configs.Try((c, p) => toShort(c.getNumber(p), c, p))
+    integral("short (16-bit integer)", _.isValidShort, _.toShort)
 
   implicit lazy val javaShortConfigs: Configs[jl.Short] =
     shortConfigs.asInstanceOf[Configs[jl.Short]]
 
-
   implicit lazy val intConfigs: Configs[Int] =
-    Configs.Try(_.getInt(_))
+    integral("int (32-bit integer)", _.isValidInt, _.toInt)
 
   implicit lazy val javaIntegerConfigs: Configs[jl.Integer] =
     intConfigs.asInstanceOf[Configs[jl.Integer]]
 
-
-  private[this] def parseLong(s: String, c: Config, p: String): Long = {
-    val n =
-      try BigDecimal(s).toBigInt() catch {
-        case e: NumberFormatException =>
-          throw new ConfigException.WrongType(c.origin(), p, "long (64-bit integer)", s"STRING value $s", e)
-      }
-    if (n.isValidLong) n.longValue()
-    else throw new ConfigException.WrongType(c.origin(), p, "long (64-bit integer)", s"out-of-range value $n")
-  }
-
   implicit lazy val longConfigs: Configs[Long] =
-    Configs.Try((c, p) => parseLong(c.getString(p), c, p))
+    integral("long (64-bit integer)", _.isValidLong, _.toLong)
 
   implicit lazy val javaLongConfigs: Configs[jl.Long] =
     longConfigs.asInstanceOf[Configs[jl.Long]]
@@ -247,10 +230,16 @@ sealed abstract class ConfigsInstances extends ConfigsInstances0 {
 
 
   implicit lazy val bigDecimalConfigs: Configs[BigDecimal] =
-    stringConfigs.map(BigDecimal.apply)
+    javaBigDecimalConfigs.map(BigDecimal.exact)
 
   implicit lazy val javaBigDecimalConfigs: Configs[jm.BigDecimal] =
-    stringConfigs.map(new jm.BigDecimal(_))
+    Configs.Try { (c, p) =>
+      val s = c.getString(p)
+      try new jm.BigDecimal(s) catch {
+        case e: NumberFormatException =>
+          throw new ConfigException.WrongType(c.origin(), p, "NUMBER", s"STRING value $s", e)
+      }
+    }
 
 
   implicit lazy val booleanConfigs: Configs[Boolean] =

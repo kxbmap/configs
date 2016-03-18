@@ -16,28 +16,63 @@
 
 package configs.instance
 
+import com.typesafe.config.ConfigFactory
+import configs.Configs
 import configs.util._
 import java.{lang => jl}
-import scalaprops.{Gen, Scalaprops}
-import scalaz.std.anyVal._
+import scalaprops.Property.forAll
+import scalaprops.{Gen, Properties, Scalaprops}
+import scalaz.Equal
+import scalaz.std.anyVal.{doubleInstance => _, floatInstance => _, _}
 import scalaz.std.list._
 import scalaz.std.string._
 
 object BasicTypeConfigsTest extends Scalaprops {
 
+  def integralError[A](minM1: BigInt, maxP1: BigInt)(implicit A: Configs[A]) = {
+    val big = "9999999999999999999"
+    val config = ConfigFactory.parseString(
+      s"""nan = NaN
+         |infinite = Infinity
+         |min-m1 = $minM1
+         |max-p1 = $maxP1
+         |too-big = $big
+         |""".stripMargin)
+    def p(id: String)(path: String, msg: String): Properties[String] =
+      forAll {
+        val a = A.get(config, path)
+        val result = a.failed.map(_.head).exists { e =>
+          e.paths == List(path) && e.message.contains(msg)
+        }
+        if (!result) println(s"\n$a")
+        result
+      }.toProperties(id)
+    Properties.list(
+      p("not a number")("nan", "NaN"),
+      p("infinite value")("infinite", "Infinity"),
+      p("min value minus 1")("min-m1", minM1.toString),
+      p("max value plus 1")("max-p1", maxP1.toString),
+      p("too big value")("too-big", big)
+    )
+  }
+
   val byte = check[Byte]
+  val byteError = integralError[Byte](Byte.MinValue - 1, Byte.MaxValue + 1)
 
   val javaByte = check[jl.Byte]
 
   val short = check[Short]
+  val shortError = integralError[Short](Short.MinValue - 1, Short.MaxValue + 1)
 
   val javaShort = check[jl.Short]
 
   val int = check[Int]
+  val intError = integralError[Int](Int.MinValue - 1L, Int.MaxValue + 1L)
 
   val javaInteger = check[jl.Integer]
 
   val long = check[Long]
+  val longError = integralError[Long](BigInt(Long.MinValue) - 1, BigInt(Long.MaxValue) + 1)
 
   val javaLong = check[jl.Long]
 
@@ -73,5 +108,36 @@ object BasicTypeConfigsTest extends Scalaprops {
   }
 
   val string = check[String]
+
+
+  implicit lazy val javaByteEqual: Equal[jl.Byte] =
+    Equal.equalBy(_.byteValue())
+
+  implicit lazy val javaShortEqual: Equal[jl.Short] =
+    Equal.equalBy(_.shortValue())
+
+  implicit lazy val javaIntegerEqual: Equal[jl.Integer] =
+    Equal.equalBy(_.intValue())
+
+  implicit lazy val javaLongEqual: Equal[jl.Long] =
+    Equal.equalBy(_.longValue())
+
+  implicit lazy val doubleEqual: Equal[Double] =
+    Equal.equal((a, b) => a.isNaN && b.isNaN || a == b)
+
+  implicit lazy val javaDoubleEqual: Equal[jl.Double] =
+    doubleEqual.asInstanceOf[Equal[jl.Double]]
+
+  implicit lazy val floatEqual: Equal[Float] =
+    Equal.equal((a, b) => a.isNaN && b.isNaN || a == b)
+
+  implicit lazy val javaFloatEqual: Equal[jl.Float] =
+    floatEqual.asInstanceOf[Equal[jl.Float]]
+
+  implicit lazy val javaCharacterEqual: Equal[jl.Character] =
+    Equal.equalBy(_.charValue())
+
+  implicit lazy val javaBooleanEqual: Equal[jl.Boolean] =
+    Equal.equalBy(_.booleanValue())
 
 }
