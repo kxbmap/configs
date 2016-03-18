@@ -16,18 +16,15 @@
 
 package configs
 
-import com.typesafe.config.{Config, ConfigList, ConfigMemorySize, ConfigObject, ConfigUtil, ConfigValue, ConfigValueFactory}
-import java.{lang => jl, time => jt, util => ju}
+import com.typesafe.config.{ConfigUtil, ConfigValue}
+import java.{lang => jl, util => ju}
 import scala.annotation.tailrec
 import scala.collection.convert.decorateAll._
-import scala.collection.generic.CanBuildFrom
 import scalaprops.Property.forAll
 import scalaprops.{Gen, Properties, Property}
-import scalaz.std.anyVal._
 import scalaz.std.list._
 import scalaz.std.map._
-import scalaz.std.string._
-import scalaz.{Equal, Need, Order}
+import scalaz.{Equal, Order}
 
 
 package object util {
@@ -73,26 +70,6 @@ package object util {
   implicit def javaListGen[A: Gen]: Gen[ju.List[A]] =
     Gen.list[A].map(_.asJava)
 
-  implicit def javaStringMapGen[A: Gen]: Gen[ju.Map[String, A]] =
-    Gen[Map[String, A]].map(_.asJava)
-
-  implicit def javaSymbolMapGen[A: Gen]: Gen[ju.Map[Symbol, A]] =
-    Gen[Map[String, A]].map(_.map(t => Symbol(t._1) -> t._2).asJava)
-
-  implicit def javaSetGen[A: Gen]: Gen[ju.Set[A]] =
-    Gen[Set[A]].map(_.asJava)
-
-  implicit def javaIterableGen[A: Gen]: Gen[jl.Iterable[A]] =
-    Gen[ju.List[A]].as[jl.Iterable[A]]
-
-  implicit def javaCollectionGen[A: Gen]: Gen[ju.Collection[A]] =
-    Gen[ju.List[A]].as[ju.Collection[A]]
-
-
-  implicit def cbfMapGen[M[_, _], A: Gen, B: Gen](implicit g: Gen[Map[A, B]], cbf: CanBuildFrom[Nothing, (A, B), M[A, B]]): Gen[M[A, B]] =
-    g.map(_.to[({type F[_] = M[A, B]})#F])
-
-
   implicit lazy val stringGen: Gen[String] = {
     import jl.{Character => C}
     val g = {
@@ -120,94 +97,10 @@ package object util {
   implicit lazy val symbolGen: Gen[Symbol] =
     stringGen.map(Symbol.apply)
 
-  implicit lazy val charGen: Gen[Char] = {
-    import jl.{Character => C}
-    Gen.choose(C.MIN_VALUE, C.MAX_VALUE).map(C.toChars(_)(0))
-  }
-
-  implicit lazy val javaCharacterGen: Gen[jl.Character] =
-    charGen.map(Char.box)
-
-  implicit lazy val javaDurationGen: Gen[jt.Duration] =
-    Gen.nonNegativeLong.map(jt.Duration.ofNanos)
-
-  implicit lazy val configMemorySizeGen: Gen[ConfigMemorySize] =
-    Gen.nonNegativeLong.map(ConfigMemorySize.ofBytes)
-
-
-  implicit def genConfigValue[A: Gen : ToConfigValue]: Gen[ConfigValue :@ A] =
-    Gen[A].map(_.toConfigValue).tag[A]
-
-  implicit lazy val configNumberGen: Gen[ConfigValue :@ Number] =
-    Gen.oneOf(
-      Gen[ConfigValue :@ Byte].untag,
-      Gen[ConfigValue :@ Int].untag,
-      Gen[ConfigValue :@ Long].untag,
-      Gen[ConfigValue :@ Double].untag
-    ).tag[Number]
-
-  implicit lazy val configListGen: Gen[ConfigList] =
-    Gen.list(configValueGen).map(_.asJava).map(ConfigValueFactory.fromIterable)
-
-  implicit lazy val configValueJListGen: Gen[ju.List[ConfigValue]] =
-    Gen[ConfigList].as[ju.List[ConfigValue]]
-
-  implicit lazy val configObjectGen: Gen[ConfigObject] =
-    Gen.mapGen(Gen[String], configValueGen).map(_.asJava).map(ConfigValueFactory.fromMap)
-
-  implicit lazy val configValueJavaMapGen: Gen[ju.Map[String, ConfigValue]] =
-    Gen[ConfigObject].as[ju.Map[String, ConfigValue]]
-
-  implicit lazy val configValueGen: Gen[ConfigValue] =
-    Gen.lazyFrequency(
-      40 -> Need(Gen[ConfigValue :@ String].untag),
-      40 -> Need(Gen[ConfigValue :@ Number].untag),
-      10 -> Need(Gen[ConfigValue :@ Boolean].untag),
-      5 -> Need(configListGen.as[ConfigValue]),
-      5 -> Need(configObjectGen.as[ConfigValue])
-    ).mapSize(_ / 2)
-
-  implicit lazy val configGen: Gen[Config] =
-    configObjectGen.map(_.toConfig)
-
-
-  implicit def arrayEqual[A: Equal]: Equal[Array[A]] =
-    Equal.equalBy(_.toList)
-
-  implicit def mapSubEqual[M[_, _], A: Order, B: Equal](implicit ev: M[A, B] <:< collection.Map[A, B]): Equal[M[A, B]] =
-    Equal.equalBy(_.toMap)
-
-  implicit def setEqual[A: Equal]: Equal[Set[A]] =
-    Equal.equalA[Set[A]]
-
   implicit def javaIterableEqual[F[_], A: Equal](implicit ev: F[A] <:< jl.Iterable[A]): Equal[F[A]] =
     Equal.equalBy(ev(_).asScala.toList)
 
   implicit def javaMapEqual[A: Order, B: Equal]: Equal[ju.Map[A, B]] =
     Equal.equalBy(_.asScala.toMap)
-
-  implicit def javaSetEqual[A: Equal]: Equal[ju.Set[A]] =
-    Equal.equalBy(_.asScala.toSet)
-
-  implicit lazy val javaDurationEqual: Equal[jt.Duration] =
-    Equal.equalA[jt.Duration]
-
-  implicit lazy val symbolOrder: Order[Symbol] =
-    Order[String].contramap(_.name)
-
-  implicit lazy val configEqual: Equal[Config] =
-    Equal.equalA[Config]
-
-  implicit lazy val configValueEqual: Equal[ConfigValue] =
-    Equal.equalA[ConfigValue]
-
-  implicit lazy val configObjectEqual: Equal[ConfigObject] =
-    Equal.equalA[ConfigObject]
-
-  implicit lazy val configListEqual: Equal[ConfigList] =
-    Equal.equalA[ConfigList]
-
-  implicit lazy val configMemorySizeEqual: Equal[ConfigMemorySize] =
-    Equal.equalA[ConfigMemorySize]
 
 }

@@ -18,10 +18,18 @@ package configs.instance
 
 import configs.util._
 import java.{time => jt}
-import scalaprops.Scalaprops
+import scalaprops.{Gen, Scalaprops}
+import scalaz.Equal
 
 object JavaTimeConfigsTest extends Scalaprops {
 
   val javaDuration = check[jt.Duration]
+
+
+  implicit lazy val javaDurationGen: Gen[jt.Duration] =
+    Gen.nonNegativeLong.map(jt.Duration.ofNanos)
+
+  implicit lazy val javaDurationEqual: Equal[jt.Duration] =
+    Equal.equalA[jt.Duration]
 
 }

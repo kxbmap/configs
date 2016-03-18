@@ -19,14 +19,16 @@ package configs.instance
 import configs.Configs
 import configs.util._
 import java.{lang => jl, util => ju}
+import scala.collection.convert.decorateAll._
+import scala.collection.generic.CanBuildFrom
 import scala.collection.immutable.TreeMap
 import scala.collection.mutable
 import scalaprops.{Gen, Properties, Scalaprops}
-import scalaz.Equal
 import scalaz.std.list._
 import scalaz.std.stream._
 import scalaz.std.string._
 import scalaz.std.vector._
+import scalaz.{Equal, Order}
 
 object CollectionConfigsTest extends Scalaprops {
 
@@ -75,5 +77,39 @@ object CollectionConfigsTest extends Scalaprops {
       Configs.Try(c => Foo(c.getInt("v")))
 
   }
+
+
+  implicit lazy val symbolOrder: Order[Symbol] =
+    Order[String].contramap(_.name)
+
+  implicit def cbfMapGen[M[_, _], A: Gen, B: Gen](implicit g: Gen[Map[A, B]], cbf: CanBuildFrom[Nothing, (A, B), M[A, B]]): Gen[M[A, B]] =
+    g.map(_.to[({type F[_] = M[A, B]})#F])
+
+  implicit def javaStringMapGen[A: Gen]: Gen[ju.Map[String, A]] =
+    Gen[Map[String, A]].map(_.asJava)
+
+  implicit def javaSymbolMapGen[A: Gen]: Gen[ju.Map[Symbol, A]] =
+    Gen[Map[String, A]].map(_.map(t => Symbol(t._1) -> t._2).asJava)
+
+  implicit def javaSetGen[A: Gen]: Gen[ju.Set[A]] =
+    Gen[Set[A]].map(_.asJava)
+
+  implicit def javaIterableGen[A: Gen]: Gen[jl.Iterable[A]] =
+    Gen[ju.List[A]].as[jl.Iterable[A]]
+
+  implicit def javaCollectionGen[A: Gen]: Gen[ju.Collection[A]] =
+    Gen[ju.List[A]].as[ju.Collection[A]]
+
+  implicit def arrayEqual[A: Equal]: Equal[Array[A]] =
+    Equal.equalBy(_.toList)
+
+  implicit def mapSubEqual[M[_, _], A: Order, B: Equal](implicit ev: M[A, B] <:< collection.Map[A, B]): Equal[M[A, B]] =
+    Equal.equalBy(_.toMap)
+
+  implicit def setEqual[A: Equal]: Equal[Set[A]] =
+    Equal.equalA[Set[A]]
+
+  implicit def javaSetEqual[A: Equal]: Equal[ju.Set[A]] =
+    Equal.equalBy(_.asScala.toSet)
 
 }

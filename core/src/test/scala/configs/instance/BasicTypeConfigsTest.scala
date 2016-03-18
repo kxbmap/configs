@@ -110,6 +110,14 @@ object BasicTypeConfigsTest extends Scalaprops {
   val string = check[String]
 
 
+  implicit lazy val charGen: Gen[Char] = {
+    import jl.{Character => C}
+    Gen.choose(C.MIN_VALUE, C.MAX_VALUE).map(C.toChars(_)(0))
+  }
+
+  implicit lazy val javaCharacterGen: Gen[jl.Character] =
+    charGen.map(Char.box)
+
   implicit lazy val javaByteEqual: Equal[jl.Byte] =
     Equal.equalBy(_.byteValue())
 
