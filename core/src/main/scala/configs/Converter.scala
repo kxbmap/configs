@@ -78,7 +78,7 @@ object Converter {
   implicit lazy val localeFromString: FromString[Locale] =
     from { s =>
       Locale.getAvailableLocales.find(_.toString == s).fold(
-        Result.failure[Locale](ConfigError(s"Locale '$s' is not available")))(
+        Result.failure[Locale](ConfigError(s"$s is not an available locale")))(
         Result.successful)
     }
 

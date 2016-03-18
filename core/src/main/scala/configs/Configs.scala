@@ -131,8 +131,10 @@ sealed abstract class ConfigsInstances extends ConfigsInstances0 {
   implicit def javaMapConfigs[A, B](implicit A: Converter[String, A], B: Configs[B]): Configs[ju.Map[A, B]] =
     Configs.from { c =>
       Result.sequence(
-        c.root().asScala.keysIterator.map {
-          k => Result.tuple2(A.convert(k), B.get(c, ConfigUtil.quoteString(k)))
+        c.root().asScala.keysIterator.map { k =>
+          val q = k.isEmpty || !k.forall(c => c.isLetterOrDigit || c == '_' || c == '-')
+          val p = if (q) ConfigUtil.quoteString(k) else k
+          Result.tuple2(A.convert(k).withPath(p), B.get(c, p))
         })
         .map(_.toMap.asJava)
     }
@@ -339,15 +341,6 @@ sealed abstract class ConfigsInstances extends ConfigsInstances0 {
 
   implicit lazy val configValueJMapConfigs: Configs[ju.Map[String, ConfigValue]] =
     configObjectConfigs.as[ju.Map[String, ConfigValue]]
-
-  implicit def configValueJMapKeyConfigs[A](implicit A: Converter[String, A]): Configs[ju.Map[A, ConfigValue]] =
-    configObjectConfigs.get(_, _).flatMap { co =>
-      Result.sequence(
-        co.asScala.map {
-          case (k, v) => A.convert(k).map(_ -> v)
-        })
-        .map(_.toMap.asJava)
-    }
 
 
   implicit lazy val configMemorySizeConfigs: Configs[ConfigMemorySize] =

@@ -19,7 +19,7 @@ package configs.instance
 import com.typesafe.config.{Config, ConfigList, ConfigMemorySize, ConfigObject, ConfigValue}
 import configs.util._
 import java.{util => ju}
-import scalaprops.{Properties, Scalaprops}
+import scalaprops.Scalaprops
 import scalaz.std.string._
 
 object ConfigTypeConfigsTest extends Scalaprops {
@@ -30,10 +30,7 @@ object ConfigTypeConfigsTest extends Scalaprops {
 
   val configValueJList = check[ju.List[ConfigValue]]
 
-  val configValueJMap = Properties.list(
-    check[ju.Map[String, ConfigValue]]("string map"),
-    check[ju.Map[Symbol, ConfigValue]]("symbol map")
-  )
+  val configValueJMap = check[ju.Map[String, ConfigValue]]
 
   val configList = check[ConfigList]
 
