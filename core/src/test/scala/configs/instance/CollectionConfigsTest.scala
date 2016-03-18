@@ -25,6 +25,7 @@ import scala.collection.immutable.TreeMap
 import scala.collection.mutable
 import scalaprops.{Gen, Properties, Scalaprops}
 import scalaz.std.list._
+import scalaz.std.map._
 import scalaz.std.stream._
 import scalaz.std.string._
 import scalaz.std.vector._
