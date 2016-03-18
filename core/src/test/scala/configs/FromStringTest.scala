@@ -27,28 +27,16 @@ import scalaprops.{Gen, Properties, Scalaprops}
 import scalaz.Apply
 import scalaz.std.string._
 
-object ConverterTest extends Scalaprops {
-
-  val identity = {
-    def id[A: Gen : ClassTag](implicit A: Converter[A, A]) =
-      forAll { a: A =>
-        A.convert(a) == Result.successful(a)
-      }.toProperties(classTag[A].runtimeClass.getSimpleName)
-
-    Properties.list(
-      id[String],
-      id[Int],
-      id[Long]
-    )
-  }
+object FromStringTest extends Scalaprops {
 
   val fromString = {
-    def to[A: Converter.FromString : Gen : ClassTag](string: A => String = (_: A).toString) =
+    def to[A: FromString : Gen : ClassTag](tos: A => String = (_: A).toString) =
       forAll { (a: A) =>
-        Converter[String, A].convert(string(a)) == Result.successful(a)
+        FromString[A].from(tos(a)) == Result.successful(a)
       }.toProperties(s"to ${classTag[A].runtimeClass.getSimpleName}")
 
     Properties.list(
+      to[String](),
       to[Symbol](_.name),
       to[JavaEnum](),
       to[UUID](),

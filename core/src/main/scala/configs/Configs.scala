@@ -128,13 +128,13 @@ sealed abstract class ConfigsInstances extends ConfigsInstances0 {
   implicit def javaSetConfigs[A](implicit C: Configs[ju.List[A]]): Configs[ju.Set[A]] =
     C.map(_.asScala.toSet.asJava)
 
-  implicit def javaMapConfigs[A, B](implicit A: Converter[String, A], B: Configs[B]): Configs[ju.Map[A, B]] =
+  implicit def javaMapConfigs[A, B](implicit A: FromString[A], B: Configs[B]): Configs[ju.Map[A, B]] =
     Configs.from { c =>
       Result.sequence(
         c.root().asScala.keysIterator.map { k =>
           val q = k.isEmpty || !k.forall(c => c.isLetterOrDigit || c == '_' || c == '-')
           val p = if (q) ConfigUtil.quoteString(k) else k
-          Result.tuple2(A.convert(k).withPath(p), B.get(c, p))
+          Result.tuple2(A.from(k).withPath(p), B.get(c, p))
         })
         .map(_.toMap.asJava)
     }
@@ -171,11 +171,8 @@ sealed abstract class ConfigsInstances extends ConfigsInstances0 {
     (c, p) => Result.successful(A.get(c, p).fold(Left(_), Right(_)))
 
 
-  def convertConfigs[A, B](implicit A: Configs[A], C: Converter[A, B]): Configs[B] =
-    (c, p) => A.get(c, p).flatMap(C.convert(_).withPath(p))
-
-  implicit def convertStringConfigs[A: Converter.FromString]: Configs[A] =
-    convertConfigs[String, A]
+  implicit def fromStringConfigs[A](implicit A: FromString[A]): Configs[A] =
+    Configs.from((c, p) => A.from(c.getString(p)))
 
 
   private[this] def toByte(n: Number, c: Config, p: String): Byte = {

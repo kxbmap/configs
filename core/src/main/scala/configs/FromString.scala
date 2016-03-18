@@ -23,42 +23,31 @@ import java.util.{Locale, UUID}
 import java.{lang => jl}
 import scala.reflect.ClassTag
 
-trait Converter[A, B] {
+trait FromString[A] {
 
-  def convert(a: A): Result[B]
+  def from(s: String): Result[A]
 
-  def map[C](f: B => C): Converter[A, C] =
-    convert(_).map(f)
+  def map[B](f: A => B): FromString[B] =
+    from(_).map(f)
 
-  def flatMap[C](f: B => Converter[A, C]): Converter[A, C] =
-    a => convert(a).flatMap(f(_).convert(a))
+  def flatMap[B](f: A => FromString[B]): FromString[B] =
+    a => from(a).flatMap(f(_).from(a))
 }
 
-object Converter {
+object FromString {
 
-  def apply[A, B](implicit C: Converter[A, B]): Converter[A, B] = C
+  def apply[A](implicit A: FromString[A]): FromString[A] = A
 
 
-  def from[A, B](f: A => Result[B]): Converter[A, B] =
+  def from[A](f: String => Result[A]): FromString[A] =
     a => Result.Try(f(a)).flatten
 
-  def Try[A, B](f: A => B): Converter[A, B] =
+  def Try[A](f: String => A): FromString[A] =
     a => Result.Try(f(a))
 
 
-  type FromString[A] = Converter[String, A]
-
-  object FromString {
-    def apply[A](implicit A: FromString[A]): FromString[A] = A
-  }
-
-
-  private[this] final val _identity: Converter[Any, Any] =
+  implicit val stringFromString: FromString[String] =
     Result.successful(_)
-
-  implicit def identityConverter[A]: Converter[A, A] =
-    _identity.asInstanceOf[Converter[A, A]]
-
 
   implicit lazy val symbolFromString: FromString[Symbol] =
     Try(Symbol.apply)

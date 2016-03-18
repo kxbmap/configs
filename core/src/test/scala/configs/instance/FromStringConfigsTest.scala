@@ -18,14 +18,14 @@ package configs.instance
 
 import com.typesafe.config.ConfigFactory
 import configs.util._
-import configs.{Configs, Converter}
+import configs.{Configs, FromString}
 import java.{util => ju}
 import scalaprops.Property.forAll
 import scalaprops.{Gen, Properties, Scalaprops}
 import scalaz.Equal
 import scalaz.std.string._
 
-object ConverterConfigsTest extends Scalaprops {
+object FromStringConfigsTest extends Scalaprops {
 
   case class Foo(value: String) {
     require(value.forall(_.isLower))
@@ -69,8 +69,8 @@ object ConverterConfigsTest extends Scalaprops {
     )
   }
 
-  implicit lazy val fooFromString: Converter[String, Foo] =
-    Converter.Try(Foo)
+  implicit lazy val fooFromString: FromString[Foo] =
+    FromString.Try(Foo)
 
   implicit lazy val fooGen: Gen[Foo] =
     Gen.alphaLowerString.map(Foo)
