@@ -87,7 +87,7 @@ object ConfigsTest extends Scalaprops {
     }
     val p4 = forAll {
       fail.orElse(fail).get(config, "dummy").failed.exists(
-        _.messages == Seq("dummy: failure")
+        _.messages == Seq("[dummy] failure")
       )
     }
     Properties.list(

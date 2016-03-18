@@ -16,7 +16,7 @@
 
 package configs
 
-import com.typesafe.config.{ConfigException, ConfigUtil}
+import com.typesafe.config.ConfigException
 
 final case class ConfigError(head: ConfigError.Entry, tail: Vector[ConfigError.Entry] = Vector.empty) {
 
@@ -54,13 +54,8 @@ object ConfigError {
 
     def paths: List[String]
 
-    final def messageWithPath: String = {
-      val msg = message.getOrElse("null")
-      paths match {
-        case Nil => msg
-        case ps => s"${ConfigUtil.joinPath(ps: _*)}: $msg"
-      }
-    }
+    final def messageWithPath: String =
+      s"[${paths.mkString(".")}] ${message.getOrElse("null")}"
 
     def pushPath(path: String): Entry
 
