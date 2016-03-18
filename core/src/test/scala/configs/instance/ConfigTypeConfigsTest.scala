@@ -26,44 +26,19 @@ object ConfigTypeConfigsTest extends Scalaprops {
 
   val config = check[Config]
 
-  val configJList = {
-    implicit val h = hideConfigs[Config]
-    check[ju.List[Config]]
-  }
-
-
   val configValue = check[ConfigValue]
 
-  val configValueJList = {
-    implicit val h = hideConfigs[ConfigValue]
-    check[ju.List[ConfigValue]]
-  }
+  val configValueJList = check[ju.List[ConfigValue]]
 
-  val configValueJMap = {
-    implicit val h = hideConfigs[ConfigValue]
-    Properties.list(
-      check[ju.Map[String, ConfigValue]]("string map"),
-      check[ju.Map[Symbol, ConfigValue]]("symbol map")
-    )
-  }
-
+  val configValueJMap = Properties.list(
+    check[ju.Map[String, ConfigValue]]("string map"),
+    check[ju.Map[Symbol, ConfigValue]]("symbol map")
+  )
 
   val configList = check[ConfigList]
 
-
   val configObject = check[ConfigObject]
 
-  val configObjectJList = {
-    implicit val h = hideConfigs[ConfigObject]
-    check[ju.List[ConfigObject]]
-  }
-
-
   val configMemorySize = check[ConfigMemorySize]
-
-  val configMemorySizeJList = {
-    implicit val h = hideConfigs[ConfigMemorySize]
-    check[ju.List[ConfigMemorySize]]
-  }
 
 }

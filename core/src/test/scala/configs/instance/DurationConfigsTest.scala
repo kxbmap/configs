@@ -17,7 +17,6 @@
 package configs.instance
 
 import configs.util._
-import java.{util => ju}
 import scala.concurrent.duration._
 import scalaprops.{Gen, Scalaprops}
 import scalaz.Equal
@@ -25,11 +24,6 @@ import scalaz.Equal
 object DurationConfigsTest extends Scalaprops {
 
   val finiteDuration = check[FiniteDuration]
-
-  val finiteDurationJList = {
-    implicit val h = hideConfigs[FiniteDuration]
-    check[ju.List[FiniteDuration]]
-  }
 
   val duration = check[Duration]
 

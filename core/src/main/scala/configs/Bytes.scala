@@ -16,9 +16,6 @@
 
 package configs
 
-import java.{util => ju}
-import scala.collection.convert.decorateAll._
-
 final case class Bytes(value: Long) extends Ordered[Bytes] {
 
   def compare(rhs: Bytes): Int = value.compare(rhs.value)
@@ -42,10 +39,6 @@ object Bytes {
 
   implicit val bytesConfigs: Configs[Bytes] =
     Configs.Try(_.getBytes(_)).map(Bytes(_))
-
-  implicit val bytesJListConfigs: Configs[ju.List[Bytes]] =
-    Configs.Try(_.getBytesList(_).asScala.map(Bytes(_)).asJava)
-
 
   implicit val bytesOrdering: Ordering[Bytes] = Ordering.by(_.value)
 

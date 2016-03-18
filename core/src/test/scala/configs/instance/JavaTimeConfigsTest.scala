@@ -17,16 +17,11 @@
 package configs.instance
 
 import configs.util._
-import java.{time => jt, util => ju}
+import java.{time => jt}
 import scalaprops.Scalaprops
 
 object JavaTimeConfigsTest extends Scalaprops {
 
   val javaDuration = check[jt.Duration]
-
-  val javaDurationList = {
-    implicit val h = hideConfigs[jt.Duration]
-    check[ju.List[jt.Duration]]
-  }
 
 }

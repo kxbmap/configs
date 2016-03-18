@@ -21,7 +21,6 @@ import java.{lang => jl, time => jt, util => ju}
 import scala.annotation.tailrec
 import scala.collection.convert.decorateAll._
 import scala.collection.generic.CanBuildFrom
-import scala.reflect.{ClassTag, classTag}
 import scalaprops.Property.forAll
 import scalaprops.{Gen, Properties, Property}
 import scalaz.std.anyVal._
@@ -48,9 +47,6 @@ package object util {
   implicit class ToConfigValueOps[A](private val self: A) {
     def toConfigValue(implicit A: ToConfigValue[A]): ConfigValue = A.toConfigValue(self)
   }
-
-
-  def hideConfigs[A: ClassTag]: Configs[A] = (_, _) => sys.error(s"hiding Configs[${classTag[A]}] used")
 
 
   def check[A: Configs : Gen : Equal : ToConfigValue]: Property =

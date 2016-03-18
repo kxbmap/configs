@@ -17,7 +17,6 @@
 package configs
 
 import configs.util._
-import java.{util => ju}
 import scalaprops.Property.forAll
 import scalaprops.{Gen, Properties, Scalaprops}
 import scalaz.Equal
@@ -27,12 +26,6 @@ import scalaz.std.string._
 object BytesTest extends Scalaprops {
 
   val bytes = check[Bytes]
-
-  val bytesJList = {
-    implicit val h = hideConfigs[Bytes]
-    check[ju.List[Bytes]]
-  }
-
 
   val ordering = forAll { bs: List[Bytes] =>
     bs.sorted == bs.map(_.value).sorted.map(Bytes.apply)

@@ -18,8 +18,7 @@ package configs.instance
 
 import configs.Configs
 import configs.util._
-import java.{math => jm, util => ju}
-import scala.collection.convert.decorateAsJava._
+import java.{math => jm}
 import scalaprops.Property.forAll
 import scalaprops.Scalaprops
 import scalaz.Equal
@@ -31,52 +30,21 @@ import scalaz.syntax.equal._
 object BigNumberConfigsTest extends Scalaprops {
 
   val bigInt = check[BigInt]
-  val bigIntFromDecimal =
-    forAll { d: BigDecimal =>
-      Configs[BigInt].extractValue(d.toConfigValue).exists(_ === d.toBigInt())
-    }
 
-  val bigIntList = {
-    implicit val h = hideConfigs[BigInt]
-    check[ju.List[BigInt]]
-  }
-  val bigIntListFromDecimal = {
-    implicit val h = hideConfigs[BigInt]
-    forAll { ds: List[BigDecimal] =>
-      Configs[ju.List[BigInt]].extractValue(ds.toConfigValue).exists(_ === ds.map(_.toBigInt()).asJava)
-    }
+  val bigIntFromDecimal = forAll { d: BigDecimal =>
+    Configs[BigInt].extractValue(d.toConfigValue).exists(_ === d.toBigInt())
   }
 
   val bigInteger = check[jm.BigInteger]
-  val bigIntegerFromDecimal =
-    forAll { d: jm.BigDecimal =>
-      Configs[jm.BigInteger].extractValue(d.toConfigValue).exists(_ === d.toBigInteger)
-    }
 
-  val bigIntegerList = {
-    implicit val h = hideConfigs[jm.BigInteger]
-    check[ju.List[jm.BigInteger]]
-  }
-  val bigIntegerListFromDecimal = {
-    implicit val h = hideConfigs[jm.BigInteger]
-    forAll { ds: List[jm.BigDecimal] =>
-      Configs[ju.List[jm.BigInteger]].extractValue(ds.toConfigValue).exists(_ === ds.map(_.toBigInteger).asJava)
-    }
+  val bigIntegerFromDecimal = forAll { d: jm.BigDecimal =>
+    Configs[jm.BigInteger].extractValue(d.toConfigValue).exists(_ === d.toBigInteger)
   }
 
   val bigDecimal = check[BigDecimal]
 
-  val bigDecimalList = {
-    implicit val h = hideConfigs[BigDecimal]
-    check[ju.List[BigDecimal]]
-  }
-
   val javaBigDecimal = check[jm.BigDecimal]
 
-  val javaBigDecimalList = {
-    implicit val h = hideConfigs[jm.BigDecimal]
-    check[ju.List[jm.BigDecimal]]
-  }
 
   implicit lazy val javaBigDecimalEqual: Equal[jm.BigDecimal] =
     Equal.equalA[jm.BigDecimal]
