@@ -175,8 +175,20 @@ sealed abstract class ConfigsInstances extends ConfigsInstances0 {
     Configs.from((c, p) => A.from(c.getString(p)))
 
 
+  private[this] def bigDecimal(expected: String): Configs[BigDecimal] =
+    Configs.Try { (c, p) =>
+      val s = c.getString(p)
+      try BigDecimal(s) catch {
+        case e: NumberFormatException =>
+          throw new ConfigException.WrongType(c.origin(), p, expected, s"STRING value '$s'", e)
+      }
+    }
+
+  private[this] def bigInt(expected: String): Configs[BigInt] =
+    bigDecimal(expected).map(_.toBigInt)
+
   private[this] def integral[A](expected: String, valid: BigInt => Boolean, value: BigInt => A): Configs[A] =
-    bigIntConfigs.flatMap { n =>
+    bigInt(expected).flatMap { n =>
       Configs.Try { (c, p) =>
         if (valid(n)) value(n)
         else throw new ConfigException.WrongType(c.origin(), p, expected, s"out-of-range value $n")
@@ -223,23 +235,17 @@ sealed abstract class ConfigsInstances extends ConfigsInstances0 {
 
 
   implicit lazy val bigIntConfigs: Configs[BigInt] =
-    bigDecimalConfigs.map(_.toBigInt())
+    bigInt("integer")
 
   implicit lazy val bigIntegerConfigs: Configs[jm.BigInteger] =
-    javaBigDecimalConfigs.map(_.toBigInteger)
+    bigIntConfigs.map(_.bigInteger)
 
 
   implicit lazy val bigDecimalConfigs: Configs[BigDecimal] =
-    javaBigDecimalConfigs.map(BigDecimal.exact)
+    bigDecimal("decimal")
 
   implicit lazy val javaBigDecimalConfigs: Configs[jm.BigDecimal] =
-    Configs.Try { (c, p) =>
-      val s = c.getString(p)
-      try new jm.BigDecimal(s) catch {
-        case e: NumberFormatException =>
-          throw new ConfigException.WrongType(c.origin(), p, "NUMBER", s"STRING value $s", e)
-      }
-    }
+    bigDecimalConfigs.map(_.bigDecimal)
 
 
   implicit lazy val booleanConfigs: Configs[Boolean] =
