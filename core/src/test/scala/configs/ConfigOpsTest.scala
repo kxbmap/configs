@@ -16,51 +16,29 @@
 
 package configs
 
-import com.typesafe.config.{Config, ConfigValueFactory}
+import com.typesafe.config.{ConfigFactory, ConfigValueFactory}
 import configs.util._
 import scala.collection.convert.decorateAsJava._
 import scalaprops.Property.forAll
-import scalaprops.{Properties, Scalaprops}
-import scalaz.std.string._
+import scalaprops.Scalaprops
 
 object ConfigOpsTest extends Scalaprops {
 
-  val default = {
-    import configs.syntax._
-    Properties.list(
-      extract(_.extract[Map[String, java.lang.Integer]] == Result.successful(_)),
-      get(_.get[Int](_) == Result.successful(_)),
-      getOrElse(_.getOrElse[Int](_, _) == Result.successful(_))
-    )
+  import configs.syntax._
+
+  val extract = forAll { m: Map[String, String] =>
+    val config = ConfigValueFactory.fromMap(m.asJava).toConfig
+    config.extract[Map[String, String]] == Result.successful(m)
   }
 
-  val throwError = {
-    import configs.syntax.throwError._
-    Properties.list(
-      extract(_.extract[Map[String, java.lang.Integer]] == _),
-      get(_.get[Int](_) == _),
-      getOrElse(_.getOrElse[Int](_, _) == _)
-    )
+  val get = forAll { n: Int =>
+    val config = ConfigFactory.parseString(s"path = $n")
+    config.get[Int]("path") == Result.successful(n)
   }
 
-  private def extract(check: (Config, Map[String, java.lang.Integer]) => Boolean) =
-    forAll { m: Map[String, java.lang.Integer] =>
-      val config = ConfigValueFactory.fromMap(m.asJava).toConfig
-      check(config, m)
-    }.toProperties("extract")
-
-  private def get(check: (Config, String, Int) => Boolean) =
-    forAll { n: Int =>
-      val p = "path"
-      val config = n.toConfigValue.atKey(p)
-      check(config, p, n)
-    }.toProperties("get")
-
-  private def getOrElse(check: (Config, String, Int, Int) => Boolean) =
-    forAll { (n: Option[Int], m: Int) =>
-      val p = "path"
-      val config = n.toConfigValue.atKey(p)
-      check(config, p, m, n.getOrElse(m))
-    }.toProperties("getOrElse")
+  val getOrElse = forAll { (n: Option[Int], m: Int) =>
+    val config = n.toConfigValue.atKey("path")
+    config.getOrElse[Int]("path", m) == Result.successful(n.getOrElse(m))
+  }
 
 }
