@@ -42,7 +42,7 @@ object ThrowableEitherConfigsTest extends Scalaprops {
     val p2 = forAll {
       val config = ConfigFactory.empty()
       val e = new RuntimeException
-      implicit val configs: Configs[Int] = Configs.Try((_, _) => throw e)
+      implicit val configs: Configs[Int] = Configs.fromTry((_, _) => throw e)
       val result = Configs[Either[RuntimeException, Int]].get(config, "value")
       result.exists(_ == Left(e))
     }

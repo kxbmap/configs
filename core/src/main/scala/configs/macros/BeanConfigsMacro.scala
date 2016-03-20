@@ -23,7 +23,7 @@ class BeanConfigsMacro(val c: blackbox.Context) extends MacroUtil with Util {
 
   import c.universe._
 
-  def deriveBeanConfigsA[A: WeakTypeTag]: Tree = {
+  def deriveBean[A: WeakTypeTag]: Tree = {
     val tpe = weakTypeOf[A]
     if (tpe.typeSymbol.isAbstract) abort(s"$tpe must be concrete class")
     val hasNoArgCtor = tpe.decls.exists {
@@ -36,7 +36,7 @@ class BeanConfigsMacro(val c: blackbox.Context) extends MacroUtil with Util {
     derive(tpe, q"new $tpe()")
   }
 
-  def deriveBeanConfigsI[A: WeakTypeTag](newInstance: Tree): Tree = {
+  def deriveBeanWith[A: WeakTypeTag](newInstance: Tree): Tree = {
     val tpe = weakTypeOf[A]
     val obj = freshName("o")
     val nonNull =
@@ -70,7 +70,7 @@ class BeanConfigsMacro(val c: blackbox.Context) extends MacroUtil with Util {
         case (_, n, t) => q"val $n = $t"
       }
       q"""
-        $Configs.from[$target] { $config: $tConfig =>
+        $Configs.fromConfig[$target] { $config: $tConfig =>
           ..$vals
           $b
         }

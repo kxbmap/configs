@@ -24,7 +24,7 @@ class ConfigsMacro(val c: blackbox.Context) extends MacroUtil with Util {
 
   import c.universe._
 
-  def deriveConfigs[A: WeakTypeTag]: Tree = {
+  def derive[A: WeakTypeTag]: Tree = {
     implicit val ctx = new DerivationContext(weakTypeOf[A])
     ctx.derive(classConfigs)
   }
@@ -63,7 +63,7 @@ class ConfigsMacro(val c: blackbox.Context) extends MacroUtil with Util {
           case (_, n, t) if t.nonEmpty => q"val $n = $t"
         }
         q"""
-          $Configs.from[$target] { $config: $tConfig =>
+          $Configs.fromConfig[$target] { $config: $tConfig =>
             ..$vals
             $b
           }

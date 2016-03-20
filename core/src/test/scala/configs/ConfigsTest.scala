@@ -27,13 +27,13 @@ object ConfigsTest extends Scalaprops {
 
   val get = forAll { (p: String, v: Int) =>
     val config = ConfigFactory.parseString(s"${q(p)} = $v")
-    val configs: Configs[Int] = Configs.Try(_.getInt(_))
+    val configs: Configs[Int] = Configs.fromTry(_.getInt(_))
     configs.get(config, q(p)).exists(_ == v)
   }
 
   val extractConfig = forAll { (p: String, v: Int) =>
     val config = ConfigFactory.parseString(s"${q(p)} = $v")
-    val configs: Configs[Map[String, Int]] = Configs.Try {
+    val configs: Configs[Map[String, Int]] = Configs.fromTry {
       _.getConfig(_).root().mapValues(_.unwrapped().asInstanceOf[Int]).toMap
     }
     configs.extract(config).exists(_ == Map(p -> v))
@@ -41,13 +41,13 @@ object ConfigsTest extends Scalaprops {
 
   val extractConfigValue = forAll { v: Int =>
     val cv = ConfigValueFactory.fromAnyRef(v)
-    val configs: Configs[Int] = Configs.Try(_.getInt(_))
+    val configs: Configs[Int] = Configs.fromTry(_.getInt(_))
     configs.extractValue(cv).exists(_ == v)
   }
 
   val map = forAll { (v: Int, f: Int => String) =>
     val config = ConfigFactory.parseString(s"v = $v")
-    val configs: Configs[Int] = Configs.Try(_.getInt(_))
+    val configs: Configs[Int] = Configs.fromTry(_.getInt(_))
     configs.map(f).get(config, "v").exists(_ == f(v))
   }
 
@@ -100,7 +100,7 @@ object ConfigsTest extends Scalaprops {
 
   val handleNullValue = forAll { p: String =>
     val config = ConfigFactory.parseString(s"${q(p)} = null")
-    val configs = Configs.Try(_.getInt(q(p)))
+    val configs = Configs.fromConfigTry(_.getInt(q(p)))
     configs.extract(config).failed.exists {
       case ConfigError(_: ConfigError.NullValue, t) if t.isEmpty => true
     }
@@ -109,7 +109,7 @@ object ConfigsTest extends Scalaprops {
   val handleException = forAll {
     val re = new RuntimeException()
     val config = ConfigFactory.empty()
-    val configs = Configs.Try((_, _) => throw re)
+    val configs = Configs.fromTry((_, _) => throw re)
     configs.extract(config).failed.exists {
       case ConfigError(ConfigError.Exceptional(e, _), t) if t.isEmpty => e eq re
       case _ => false

@@ -34,7 +34,7 @@ trait FromString[A] {
     a => from(a).flatMap(f(_).from(a))
 }
 
-object FromString {
+object FromString extends FromStringInstances {
 
   def apply[A](implicit A: FromString[A]): FromString[A] = A
 
@@ -42,22 +42,26 @@ object FromString {
   def from[A](f: String => Result[A]): FromString[A] =
     a => Result.Try(f(a)).flatten
 
-  def Try[A](f: String => A): FromString[A] =
+  def fromTry[A](f: String => A): FromString[A] =
     a => Result.Try(f(a))
 
+}
+
+
+sealed abstract class FromStringInstances {
 
   implicit val stringFromString: FromString[String] =
     Result.successful(_)
 
   implicit lazy val symbolFromString: FromString[Symbol] =
-    Try(Symbol.apply)
+    FromString.fromTry(Symbol.apply)
 
   implicit def enumValueFromString[A <: Enumeration]: FromString[A#Value] =
     macro macros.FromStringMacro.enumValueFromString[A]
 
   implicit def javaEnumFromString[A <: jl.Enum[A]](implicit A: ClassTag[A]): FromString[A] = {
     val enums = A.runtimeClass.asInstanceOf[Class[A]].getEnumConstants
-    from { s =>
+    FromString.from { s =>
       enums.find(_.name() == s).fold(
         Result.failure[A](ConfigError(
           s"$s is not a valid value of ${A.runtimeClass.getName} (valid values: ${enums.mkString(", ")})")))(
@@ -66,25 +70,25 @@ object FromString {
   }
 
   implicit lazy val uuidFromString: FromString[UUID] =
-    Try(UUID.fromString)
+    FromString.fromTry(UUID.fromString)
 
   implicit lazy val localeFromString: FromString[Locale] =
-    from { s =>
+    FromString.from { s =>
       Locale.getAvailableLocales.find(_.toString == s).fold(
         Result.failure[Locale](ConfigError(s"$s is not an available locale")))(
         Result.successful)
     }
 
   implicit lazy val pathFromString: FromString[Path] =
-    Try(Paths.get(_))
+    FromString.fromTry(Paths.get(_))
 
   implicit lazy val fileFromString: FromString[File] =
-    Try(new File(_))
+    FromString.fromTry(new File(_))
 
   implicit lazy val inetAddressFromString: FromString[InetAddress] =
-    Try(InetAddress.getByName)
+    FromString.fromTry(InetAddress.getByName)
 
   implicit lazy val uriFromString: FromString[URI] =
-    Try(new URI(_))
+    FromString.fromTry(new URI(_))
 
 }

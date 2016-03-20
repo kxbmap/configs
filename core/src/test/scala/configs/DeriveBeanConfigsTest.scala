@@ -92,21 +92,21 @@ object DeriveBeanConfigsTest extends Scalaprops {
   }
 
 
-  class Factory(
+  class MyBean(
       @BeanProperty var a1: Int,
       @BeanProperty var a2: Int)
 
-  object Factory {
-    implicit val equal: Equal[Factory] =
+  object MyBean {
+    implicit val equal: Equal[MyBean] =
       Equal.equalBy(f => (f.a1, f.a2))
   }
 
-  val factory = {
-    val C = Configs.deriveBean(new Factory(1, 42))
+  val withNewInstance = {
+    val C = Configs.deriveBeanWith(new MyBean(1, 42))
     val p1 =
       forAll { (a1: Int) =>
         val config = ConfigFactory.parseString(s"a1 = $a1")
-        C.extract(config).exists(_ === new Factory(a1, 42))
+        C.extract(config).exists(_ === new MyBean(a1, 42))
       }
     val p2 =
       forAll { (a1: Int, a2: Int) =>
@@ -117,7 +117,7 @@ object DeriveBeanConfigsTest extends Scalaprops {
         } yield a === b && (a ne b)).valueOrElse(false)
       }
     Properties.list(
-      p1.toProperties("factory function"),
+      p1.toProperties("return new instance"),
       p2.toProperties("return different instances")
     )
   }

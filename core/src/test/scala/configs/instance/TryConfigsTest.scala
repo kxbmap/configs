@@ -43,7 +43,7 @@ object TryConfigsTest extends Scalaprops {
     val p2 = forAll {
       val config = ConfigFactory.empty()
       val e = new RuntimeException
-      implicit val configs: Configs[Int] = Configs.Try((_, _) => throw e)
+      implicit val configs: Configs[Int] = Configs.fromTry((_, _) => throw e)
       val result = Configs[Try[Int]].get(config, "value")
       result.exists(_ == Failure(e))
     }

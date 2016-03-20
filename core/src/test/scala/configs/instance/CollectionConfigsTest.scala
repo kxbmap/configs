@@ -75,7 +75,7 @@ object CollectionConfigsTest extends Scalaprops {
       _.value.toConfigValue.atKey("v").root()
 
     implicit val configs: Configs[Foo] =
-      Configs.Try(c => Foo(c.getInt("v")))
+      Configs.fromConfigTry(c => Foo(c.getInt("v")))
 
   }
 

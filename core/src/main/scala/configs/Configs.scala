@@ -65,26 +65,26 @@ object Configs extends ConfigsInstances {
 
 
   def derive[A]: Configs[A] =
-    macro macros.ConfigsMacro.deriveConfigs[A]
+    macro macros.ConfigsMacro.derive[A]
 
   def deriveBean[A]: Configs[A] =
-    macro macros.BeanConfigsMacro.deriveBeanConfigsA[A]
+    macro macros.BeanConfigsMacro.deriveBean[A]
 
-  def deriveBean[A](newInstance: => A): Configs[A] =
-    macro macros.BeanConfigsMacro.deriveBeanConfigsI[A]
+  def deriveBeanWith[A](newInstance: => A): Configs[A] =
+    macro macros.BeanConfigsMacro.deriveBeanWith[A]
 
 
   def from[A](f: (Config, String) => Result[A]): Configs[A] =
     withPath((c, p) => Result.Try(f(c, p)).flatten)
 
-  def from[A](f: Config => Result[A]): Configs[A] =
+  def fromConfig[A](f: Config => Result[A]): Configs[A] =
     from((c, p) => f(c.getConfig(p)))
 
-  def Try[A](f: (Config, String) => A): Configs[A] =
+  def fromTry[A](f: (Config, String) => A): Configs[A] =
     withPath((c, p) => Result.Try(f(c, p)))
 
-  def Try[A](f: Config => A): Configs[A] =
-    Try((c, p) => f(c.getConfig(p)))
+  def fromConfigTry[A](f: Config => A): Configs[A] =
+    fromTry((c, p) => f(c.getConfig(p)))
 
   def successful[A](a: A): Configs[A] =
     withPath((_, _) => Result.successful(a))
@@ -103,8 +103,8 @@ object Configs extends ConfigsInstances {
 
 sealed abstract class ConfigsInstances0 {
 
-  implicit def autoDerivationConfigs[A]: Configs[A] =
-    macro macros.ConfigsMacro.deriveConfigs[A]
+  implicit def autoDeriveConfigs[A]: Configs[A] =
+    macro macros.ConfigsMacro.derive[A]
 
 }
 
@@ -129,7 +129,7 @@ sealed abstract class ConfigsInstances extends ConfigsInstances0 {
     C.map(_.asScala.toSet.asJava)
 
   implicit def javaMapConfigs[A, B](implicit A: FromString[A], B: Configs[B]): Configs[ju.Map[A, B]] =
-    Configs.from { c =>
+    Configs.fromConfig { c =>
       Result.sequence(
         c.root().asScala.keysIterator.map { k =>
           val q = k.isEmpty || !k.forall(c => c.isLetterOrDigit || c == '_' || c == '-')
@@ -176,7 +176,7 @@ sealed abstract class ConfigsInstances extends ConfigsInstances0 {
 
 
   private[this] def bigDecimal(expected: String): Configs[BigDecimal] =
-    Configs.Try { (c, p) =>
+    Configs.fromTry { (c, p) =>
       val s = c.getString(p)
       try BigDecimal(s) catch {
         case e: NumberFormatException =>
@@ -189,7 +189,7 @@ sealed abstract class ConfigsInstances extends ConfigsInstances0 {
 
   private[this] def integral[A](expected: String, valid: BigInt => Boolean, value: BigInt => A): Configs[A] =
     bigInt(expected).flatMap { n =>
-      Configs.Try { (c, p) =>
+      Configs.fromTry { (c, p) =>
         if (valid(n)) value(n)
         else throw new ConfigException.WrongType(c.origin(), p, expected, s"out-of-range value $n")
       }
@@ -221,14 +221,14 @@ sealed abstract class ConfigsInstances extends ConfigsInstances0 {
 
 
   implicit lazy val floatConfigs: Configs[Float] =
-    Configs.Try(_.getDouble(_).toFloat)
+    Configs.fromTry(_.getDouble(_).toFloat)
 
   implicit lazy val javaFloatConfigs: Configs[jl.Float] =
     floatConfigs.asInstanceOf[Configs[jl.Float]]
 
 
   implicit lazy val doubleConfigs: Configs[Double] =
-    Configs.Try(_.getDouble(_))
+    Configs.fromTry(_.getDouble(_))
 
   implicit lazy val javaDoubleConfigs: Configs[jl.Double] =
     doubleConfigs.asInstanceOf[Configs[jl.Double]]
@@ -249,21 +249,21 @@ sealed abstract class ConfigsInstances extends ConfigsInstances0 {
 
 
   implicit lazy val booleanConfigs: Configs[Boolean] =
-    Configs.Try(_.getBoolean(_))
+    Configs.fromTry(_.getBoolean(_))
 
   implicit lazy val javaBooleanConfigs: Configs[jl.Boolean] =
     booleanConfigs.asInstanceOf[Configs[jl.Boolean]]
 
 
   implicit lazy val charConfigs: Configs[Char] =
-    Configs.Try { (c, p) =>
+    Configs.fromTry { (c, p) =>
       val s = c.getString(p)
       if (s.length == 1) s(0)
       else throw new ConfigException.WrongType(c.origin(), p, "single BMP char", s"STRING value '$s'")
     }
 
   implicit lazy val charJListConfigs: Configs[ju.List[Char]] =
-    Configs.Try((c, p) => ju.Arrays.asList(c.getString(p).toCharArray: _*))
+    Configs.fromTry((c, p) => ju.Arrays.asList(c.getString(p).toCharArray: _*))
 
   implicit lazy val javaCharConfigs: Configs[jl.Character] =
     charConfigs.asInstanceOf[Configs[jl.Character]]
@@ -273,17 +273,17 @@ sealed abstract class ConfigsInstances extends ConfigsInstances0 {
 
 
   implicit lazy val stringConfigs: Configs[String] =
-    Configs.Try(_.getString(_))
+    Configs.fromTry(_.getString(_))
 
 
   implicit lazy val javaDurationConfigs: Configs[jt.Duration] =
-    Configs.Try(_.getDuration(_))
+    Configs.fromTry(_.getDuration(_))
 
   implicit lazy val finiteDurationConfigs: Configs[FiniteDuration] =
-    Configs.Try(_.getDuration(_, TimeUnit.NANOSECONDS)).map(Duration.fromNanos)
+    Configs.fromTry(_.getDuration(_, TimeUnit.NANOSECONDS)).map(Duration.fromNanos)
 
   implicit lazy val durationConfigs: Configs[Duration] =
-    finiteDurationConfigs.orElse(Configs.Try { (c, p) =>
+    finiteDurationConfigs.orElse(Configs.fromTry { (c, p) =>
       c.getString(p) match {
         case "Infinity" | "+Infinity" => Duration.Inf
         case "-Infinity" => Duration.MinusInf
@@ -322,21 +322,21 @@ sealed abstract class ConfigsInstances extends ConfigsInstances0 {
     })
 
   implicit lazy val configListConfigs: Configs[ConfigList] =
-    Configs.Try(_.getList(_))
+    Configs.fromTry(_.getList(_))
 
   implicit lazy val configValueJListConfigs: Configs[ju.List[ConfigValue]] =
     configListConfigs.as[ju.List[ConfigValue]]
 
 
   implicit lazy val configObjectConfigs: Configs[ConfigObject] =
-    Configs.Try(_.getObject(_))
+    Configs.fromTry(_.getObject(_))
 
   implicit lazy val configValueJMapConfigs: Configs[ju.Map[String, ConfigValue]] =
     configObjectConfigs.as[ju.Map[String, ConfigValue]]
 
 
   implicit lazy val configMemorySizeConfigs: Configs[ConfigMemorySize] =
-    Configs.Try(_.getMemorySize(_))
+    Configs.fromTry(_.getMemorySize(_))
 
 
   implicit lazy val javaPropertiesConfigs: Configs[ju.Properties] =

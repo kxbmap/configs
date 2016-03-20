@@ -38,7 +38,7 @@ final case class Bytes(value: Long) extends Ordered[Bytes] {
 object Bytes {
 
   implicit val bytesConfigs: Configs[Bytes] =
-    Configs.Try(_.getBytes(_)).map(Bytes(_))
+    Configs.fromTry(_.getBytes(_)).map(Bytes(_))
 
   implicit val bytesOrdering: Ordering[Bytes] = Ordering.by(_.value)
 

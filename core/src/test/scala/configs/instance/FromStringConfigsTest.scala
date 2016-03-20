@@ -70,7 +70,7 @@ object FromStringConfigsTest extends Scalaprops {
   }
 
   implicit lazy val fooFromString: FromString[Foo] =
-    FromString.Try(Foo)
+    FromString.fromTry(Foo)
 
   implicit lazy val fooGen: Gen[Foo] =
     Gen.alphaLowerString.map(Foo)

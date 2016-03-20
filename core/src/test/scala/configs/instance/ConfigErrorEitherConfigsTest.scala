@@ -41,7 +41,7 @@ object ConfigErrorEitherConfigsTest extends Scalaprops with ConfigErrorImplicits
     val p2 = forAll {
       val config = ConfigFactory.empty()
       val e = new RuntimeException
-      implicit val configs: Configs[Int] = Configs.Try((_, _) => throw e)
+      implicit val configs: Configs[Int] = Configs.fromTry((_, _) => throw e)
       val result = Configs[Either[ConfigError, Int]].get(config, "value")
       result.exists {
         case Left(ConfigError(ConfigError.Exceptional(`e`, _), _)) => true
