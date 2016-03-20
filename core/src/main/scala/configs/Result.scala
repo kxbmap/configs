@@ -20,6 +20,8 @@ import scala.collection.generic.CanBuildFrom
 
 sealed abstract class Result[+A] extends Product with Serializable {
 
+  def value: A
+
   def isSuccess: Boolean
 
   final def isFailure: Boolean =
@@ -37,12 +39,9 @@ sealed abstract class Result[+A] extends Product with Serializable {
 
   def orElse[B >: A](fallback: => Result[B]): Result[B]
 
-  def getOrElse[B >: A](default: => B): B
-
-  final def getOrThrow: A =
-    valueOr(e => throw e.throwable)
-
   def valueOr[B >: A](f: ConfigError => B): B
+
+  def valueOrElse[B >: A](default: => B): B
 
   def handleWith[B >: A](pf: PartialFunction[ConfigError, Result[B]]): Result[B]
 
@@ -120,10 +119,10 @@ object Result {
     override def orElse[B >: A](fallback: => Result[B]): Result[B] =
       this
 
-    override def getOrElse[B >: A](default: => B): B =
+    override def valueOr[B >: A](f: ConfigError => B): B =
       value
 
-    override def valueOr[B >: A](f: ConfigError => B): B =
+    override def valueOrElse[B >: A](default: => B): B =
       value
 
     override def handleWith[B >: A](pf: PartialFunction[ConfigError, Result[B]]): Result[B] =
@@ -152,6 +151,9 @@ object Result {
 
   final case class Failure(error: ConfigError) extends Result[Nothing] {
 
+    override def value: Nothing =
+      throw error.throwable
+
     override def isSuccess: Boolean = false
 
     override def fold[B](ifFailure: ConfigError => B, ifSuccess: Nothing => B): B =
@@ -175,11 +177,11 @@ object Result {
     override def orElse[B >: Nothing](fallback: => Result[B]): Result[B] =
       fallback
 
-    override def getOrElse[B >: Nothing](default: => B): B =
-      default
-
     override def valueOr[B >: Nothing](f: ConfigError => B): B =
       f(error)
+
+    override def valueOrElse[B >: Nothing](default: => B): B =
+      default
 
     override def handleWith[B >: Nothing](pf: PartialFunction[ConfigError, Result[B]]): Result[B] =
       try

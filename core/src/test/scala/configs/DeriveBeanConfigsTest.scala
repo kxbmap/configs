@@ -114,7 +114,7 @@ object DeriveBeanConfigsTest extends Scalaprops {
         (for {
           a <- C.extract(config)
           b <- C.extract(config)
-        } yield a === b && (a ne b)).getOrElse(false)
+        } yield a === b && (a ne b)).valueOrElse(false)
       }
     Properties.list(
       p1.toProperties("factory function"),
