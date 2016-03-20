@@ -38,6 +38,7 @@ object FromStringTest extends Scalaprops {
     Properties.list(
       to[String](),
       to[Symbol](_.name),
+      to[Enum.Value](),
       to[JavaEnum](),
       to[UUID](),
       to[Locale](),
@@ -46,6 +47,15 @@ object FromStringTest extends Scalaprops {
       to[InetAddress](_.getHostAddress),
       to[URI]()
     )
+  }
+
+  object Enum extends Enumeration {
+    val Foo, Bar, Baz = Value
+  }
+
+  implicit lazy val enumValueGen: Gen[Enum.Value] = {
+    val vs = Enum.values.toList
+    Gen.elements(vs.head, vs.tail: _*)
   }
 
   implicit lazy val uuidGen: Gen[UUID] =

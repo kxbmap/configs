@@ -52,11 +52,15 @@ object FromString {
   implicit lazy val symbolFromString: FromString[Symbol] =
     Try(Symbol.apply)
 
+  implicit def enumValueFromString[A <: Enumeration]: FromString[A#Value] =
+    macro macros.FromStringMacro.enumValueFromString[A]
+
   implicit def javaEnumFromString[A <: jl.Enum[A]](implicit A: ClassTag[A]): FromString[A] = {
     val enums = A.runtimeClass.asInstanceOf[Class[A]].getEnumConstants
     from { s =>
       enums.find(_.name() == s).fold(
-        Result.failure[A](ConfigError(s"$s must be one of ${enums.mkString(", ")}")))(
+        Result.failure[A](ConfigError(
+          s"$s is not a valid value of ${A.runtimeClass.getName} (valid values: ${enums.mkString(", ")})")))(
         Result.successful)
     }
   }
