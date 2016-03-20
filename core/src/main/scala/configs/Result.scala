@@ -332,97 +332,97 @@ object Result {
 
 
   def tuple2[A, B](a: Result[A], b: Result[B]): Result[(A, B)] =
-    apply2(a, b)((_, _))
+    apply2(a, b)(Tuple2.apply)
 
   def tuple3[A, B, C](a: Result[A], b: Result[B], c: Result[C]): Result[(A, B, C)] =
-    apply3(a, b, c)((_, _, _))
+    apply3(a, b, c)(Tuple3.apply)
 
   def tuple4[A, B, C, D](a: Result[A], b: Result[B], c: Result[C], d: Result[D]): Result[(A, B, C, D)] =
-    apply4(a, b, c, d)((_, _, _, _))
+    apply4(a, b, c, d)(Tuple4.apply)
 
   def tuple5[A, B, C, D, E](a: Result[A], b: Result[B], c: Result[C], d: Result[D], e: Result[E]): Result[(A, B, C, D, E)] =
-    apply5(a, b, c, d, e)((_, _, _, _, _))
+    apply5(a, b, c, d, e)(Tuple5.apply)
 
   def tuple6[A, B, C, D, E, F](
       a: Result[A], b: Result[B], c: Result[C], d: Result[D], e: Result[E], f: Result[F]): Result[(A, B, C, D, E, F)] =
-    apply6(a, b, c, d, e, f)((_, _, _, _, _, _))
+    apply6(a, b, c, d, e, f)(Tuple6.apply)
 
   def tuple7[A, B, C, D, E, F, G](
       a: Result[A], b: Result[B], c: Result[C], d: Result[D], e: Result[E], f: Result[F], g: Result[G]): Result[(A, B, C, D, E, F, G)] =
-    apply7(a, b, c, d, e, f, g)((_, _, _, _, _, _, _))
+    apply7(a, b, c, d, e, f, g)(Tuple7.apply)
 
   def tuple8[A, B, C, D, E, F, G, H](
       a: Result[A], b: Result[B], c: Result[C], d: Result[D], e: Result[E], f: Result[F], g: Result[G], h: Result[H]): Result[(A, B, C, D, E, F, G, H)] =
-    apply8(a, b, c, d, e, f, g, h)((_, _, _, _, _, _, _, _))
+    apply8(a, b, c, d, e, f, g, h)(Tuple8.apply)
 
   def tuple9[A, B, C, D, E, F, G, H, I](
       a: Result[A], b: Result[B], c: Result[C], d: Result[D], e: Result[E], f: Result[F], g: Result[G], h: Result[H], i: Result[I]): Result[(A, B, C, D, E, F, G, H, I)] =
-    apply9(a, b, c, d, e, f, g, h, i)((_, _, _, _, _, _, _, _, _))
+    apply9(a, b, c, d, e, f, g, h, i)(Tuple9.apply)
 
   def tuple10[A, B, C, D, E, F, G, H, I, J](
       a: Result[A], b: Result[B], c: Result[C], d: Result[D], e: Result[E], f: Result[F], g: Result[G], h: Result[H], i: Result[I], j: Result[J]): Result[(A, B, C, D, E, F, G, H, I, J)] =
-    apply10(a, b, c, d, e, f, g, h, i, j)((_, _, _, _, _, _, _, _, _, _))
+    apply10(a, b, c, d, e, f, g, h, i, j)(Tuple10.apply)
 
   def tuple11[A, B, C, D, E, F, G, H, I, J, K](
       a: Result[A], b: Result[B], c: Result[C], d: Result[D], e: Result[E], f: Result[F], g: Result[G], h: Result[H], i: Result[I], j: Result[J],
       k: Result[K]): Result[(A, B, C, D, E, F, G, H, I, J, K)] =
-    apply11(a, b, c, d, e, f, g, h, i, j, k)((_, _, _, _, _, _, _, _, _, _, _))
+    apply11(a, b, c, d, e, f, g, h, i, j, k)(Tuple11.apply)
 
   def tuple12[A, B, C, D, E, F, G, H, I, J, K, L](
       a: Result[A], b: Result[B], c: Result[C], d: Result[D], e: Result[E], f: Result[F], g: Result[G], h: Result[H], i: Result[I], j: Result[J],
       k: Result[K], l: Result[L]): Result[(A, B, C, D, E, F, G, H, I, J, K, L)] =
-    apply12(a, b, c, d, e, f, g, h, i, j, k, l)((_, _, _, _, _, _, _, _, _, _, _, _))
+    apply12(a, b, c, d, e, f, g, h, i, j, k, l)(Tuple12.apply)
 
   def tuple13[A, B, C, D, E, F, G, H, I, J, K, L, M](
       a: Result[A], b: Result[B], c: Result[C], d: Result[D], e: Result[E], f: Result[F], g: Result[G], h: Result[H], i: Result[I], j: Result[J],
       k: Result[K], l: Result[L], m: Result[M]): Result[(A, B, C, D, E, F, G, H, I, J, K, L, M)] =
-    apply13(a, b, c, d, e, f, g, h, i, j, k, l, m)((_, _, _, _, _, _, _, _, _, _, _, _, _))
+    apply13(a, b, c, d, e, f, g, h, i, j, k, l, m)(Tuple13.apply)
 
   def tuple14[A, B, C, D, E, F, G, H, I, J, K, L, M, N](
       a: Result[A], b: Result[B], c: Result[C], d: Result[D], e: Result[E], f: Result[F], g: Result[G], h: Result[H], i: Result[I], j: Result[J],
       k: Result[K], l: Result[L], m: Result[M], n: Result[N]): Result[(A, B, C, D, E, F, G, H, I, J, K, L, M, N)] =
-    apply14(a, b, c, d, e, f, g, h, i, j, k, l, m, n)((_, _, _, _, _, _, _, _, _, _, _, _, _, _))
+    apply14(a, b, c, d, e, f, g, h, i, j, k, l, m, n)(Tuple14.apply)
 
   def tuple15[A, B, C, D, E, F, G, H, I, J, K, L, M, N, O](
       a: Result[A], b: Result[B], c: Result[C], d: Result[D], e: Result[E], f: Result[F], g: Result[G], h: Result[H], i: Result[I], j: Result[J],
       k: Result[K], l: Result[L], m: Result[M], n: Result[N], o: Result[O]): Result[(A, B, C, D, E, F, G, H, I, J, K, L, M, N, O)] =
-    apply15(a, b, c, d, e, f, g, h, i, j, k, l, m, n, o)((_, _, _, _, _, _, _, _, _, _, _, _, _, _, _))
+    apply15(a, b, c, d, e, f, g, h, i, j, k, l, m, n, o)(Tuple15.apply)
 
   def tuple16[A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P](
       a: Result[A], b: Result[B], c: Result[C], d: Result[D], e: Result[E], f: Result[F], g: Result[G], h: Result[H], i: Result[I], j: Result[J],
       k: Result[K], l: Result[L], m: Result[M], n: Result[N], o: Result[O], p: Result[P]): Result[(A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P)] =
-    apply16(a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p)((_, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _))
+    apply16(a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p)(Tuple16.apply)
 
   def tuple17[A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q](
       a: Result[A], b: Result[B], c: Result[C], d: Result[D], e: Result[E], f: Result[F], g: Result[G], h: Result[H], i: Result[I], j: Result[J],
       k: Result[K], l: Result[L], m: Result[M], n: Result[N], o: Result[O], p: Result[P], q: Result[Q]): Result[(A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q)] =
-    apply17(a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q)((_, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _))
+    apply17(a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q)(Tuple17.apply)
 
   def tuple18[A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R](
       a: Result[A], b: Result[B], c: Result[C], d: Result[D], e: Result[E], f: Result[F], g: Result[G], h: Result[H], i: Result[I], j: Result[J],
       k: Result[K], l: Result[L], m: Result[M], n: Result[N], o: Result[O], p: Result[P], q: Result[Q], r: Result[R]): Result[(A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R)] =
-    apply18(a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r)((_, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _))
+    apply18(a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r)(Tuple18.apply)
 
   def tuple19[A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S](
       a: Result[A], b: Result[B], c: Result[C], d: Result[D], e: Result[E], f: Result[F], g: Result[G], h: Result[H], i: Result[I], j: Result[J],
       k: Result[K], l: Result[L], m: Result[M], n: Result[N], o: Result[O], p: Result[P], q: Result[Q], r: Result[R], s: Result[S]): Result[(A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S)] =
-    apply19(a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s)((_, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _))
+    apply19(a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s)(Tuple19.apply)
 
   def tuple20[A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T](
       a: Result[A], b: Result[B], c: Result[C], d: Result[D], e: Result[E], f: Result[F], g: Result[G], h: Result[H], i: Result[I], j: Result[J],
       k: Result[K], l: Result[L], m: Result[M], n: Result[N], o: Result[O], p: Result[P], q: Result[Q], r: Result[R], s: Result[S], t: Result[T]): Result[(A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T)] =
-    apply20(a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t)((_, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _))
+    apply20(a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t)(Tuple20.apply)
 
   def tuple21[A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U](
       a: Result[A], b: Result[B], c: Result[C], d: Result[D], e: Result[E], f: Result[F], g: Result[G], h: Result[H], i: Result[I], j: Result[J],
       k: Result[K], l: Result[L], m: Result[M], n: Result[N], o: Result[O], p: Result[P], q: Result[Q], r: Result[R], s: Result[S], t: Result[T],
       u: Result[U]): Result[(A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U)] =
-    apply21(a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u)((_, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _))
+    apply21(a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u)(Tuple21.apply)
 
   def tuple22[A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V](
       a: Result[A], b: Result[B], c: Result[C], d: Result[D], e: Result[E], f: Result[F], g: Result[G], h: Result[H], i: Result[I], j: Result[J],
       k: Result[K], l: Result[L], m: Result[M], n: Result[N], o: Result[O], p: Result[P], q: Result[Q], r: Result[R], s: Result[S], t: Result[T],
       u: Result[U], v: Result[V]): Result[(A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V)] =
-    apply22(a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v)((_, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _))
+    apply22(a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v)(Tuple22.apply)
 
 }
