@@ -611,6 +611,14 @@ object DeriveConfigsTest extends Scalaprops {
     check[HyphenSeparated]
   }
 
+  val localCaseClass = {
+    case class LocalCC(a1: Int)
+    implicit val gen: Gen[LocalCC] = Gen[Int].map(LocalCC)
+    implicit val equal: Equal[LocalCC] = Equal.equalA[LocalCC]
+    implicit val tcv: ToConfigValue[LocalCC] = _.a1.toConfigValue.atKey("a1").root()
+    check[LocalCC]
+  }
+
 
   //  case class CC254(
   //      a1: Int, a2: Int, a3: Int, a4: Int, a5: Int, a6: Int, a7: Int, a8: Int, a9: Int, a10: Int,

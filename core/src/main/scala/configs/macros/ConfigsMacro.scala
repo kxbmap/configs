@@ -195,7 +195,7 @@ class ConfigsMacro(val c: blackbox.Context) extends MacroUtil with Util {
           else
             abort(s"${ctx.target} is abstract but not sealed")
         } else {
-          if (classSym.isCaseClass)
+          if (classSym.isCaseClass && classSym.companion.isModule)
             caseClassConfigs(ctx.target, classSym.companion.asModule)
           else
             plainClassConfigs(ctx.target)
