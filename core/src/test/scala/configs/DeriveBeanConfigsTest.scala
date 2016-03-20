@@ -42,7 +42,7 @@ object DeriveBeanConfigsTest extends Scalaprops {
 
     implicit val tcv: ToConfigValue[Bean1] =
       ToConfigValue.fromMap(b => Map(
-        "a1" -> b.a1.toConfigValue
+        "a1" -> b.getA1.toConfigValue
       ))
 
     check[Bean1]

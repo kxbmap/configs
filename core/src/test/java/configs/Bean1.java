@@ -24,5 +24,5 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class Bean1 {
-    int a1;
+    private int a1;
 }
