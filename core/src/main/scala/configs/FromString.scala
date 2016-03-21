@@ -45,6 +45,11 @@ object FromString extends FromStringInstances {
   def fromTry[A](f: String => A): FromString[A] =
     a => Result.Try(f(a))
 
+  def fromOption[A](f: String => Option[A], err: String => ConfigError): FromString[A] =
+    from { s =>
+      f(s).fold(Result.failure[A](err(s)))(Result.successful)
+    }
+
 }
 
 
@@ -60,24 +65,20 @@ sealed abstract class FromStringInstances {
     macro macros.FromStringMacro.enumValueFromString[A]
 
   implicit def javaEnumFromString[A <: jl.Enum[A]](implicit A: ClassTag[A]): FromString[A] = {
-    val enums = A.runtimeClass.asInstanceOf[Class[A]].getEnumConstants
-    FromString.from { s =>
-      enums.find(_.name() == s).fold(
-        Result.failure[A](ConfigError(
-          s"$s is not a valid value of ${A.runtimeClass.getName} (valid values: ${enums.mkString(", ")})")))(
-        Result.successful)
-    }
+    val clazz = A.runtimeClass.asInstanceOf[Class[A]]
+    val enums = clazz.getEnumConstants
+    FromString.fromOption(
+      s => enums.find(_.name() == s),
+      s => ConfigError(s"$s is not a valid value for ${clazz.getName} (valid values: ${enums.mkString(", ")})"))
   }
 
   implicit lazy val uuidFromString: FromString[UUID] =
     FromString.fromTry(UUID.fromString)
 
   implicit lazy val localeFromString: FromString[Locale] =
-    FromString.from { s =>
-      Locale.getAvailableLocales.find(_.toString == s).fold(
-        Result.failure[Locale](ConfigError(s"$s is not an available locale")))(
-        Result.successful)
-    }
+    FromString.fromOption(
+      s => Locale.getAvailableLocales.find(_.toString == s),
+      s => ConfigError(s"$s is not an available locale"))
 
   implicit lazy val pathFromString: FromString[Path] =
     FromString.fromTry(Paths.get(_))

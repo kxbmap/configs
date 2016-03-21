@@ -18,22 +18,17 @@ package configs.macros
 
 import scala.reflect.macros.blackbox
 
-class FromStringMacro(val c: blackbox.Context) extends MacroUtil {
+class FromStringMacro(val c: blackbox.Context) {
 
   import c.universe._
-
-  lazy val FromString = q"_root_.configs.FromString"
-  lazy val ConfigError = q"_root_.configs.ConfigError"
 
   def enumValueFromString[A: WeakTypeTag]: Tree = {
     val A = weakTypeOf[A].termSymbol.asModule
     q"""
-      $FromString.from[$A.Value] { s: String =>
-        $A.values.find(_.toString == s).fold(
-          $Result.failure[$A.Value]($ConfigError(
-            s"$$s is not a valid value of $${${A.fullName}} (valid values: $${$A.values.mkString(", ")})"
-          )))($Result.successful)
-      }
+      _root_.configs.FromString.fromOption[$A.Value](
+        s => $A.values.find(_.toString == s),
+        s => _root_.configs.ConfigError(
+          s"$$s is not a valid value for $${${A.fullName}} (valid values: $${$A.values.mkString(", ")})"))
      """
   }
 
