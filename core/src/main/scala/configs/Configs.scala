@@ -171,7 +171,7 @@ sealed abstract class ConfigsInstances extends ConfigsInstances0 {
     (c, p) => Result.successful(A.get(c, p).fold(Left(_), Right(_)))
 
 
-  implicit def fromStringConfigs[A](implicit A: FromString[A]): Configs[A] =
+  implicit def convertFromStringConfigs[A](implicit A: FromString[A]): Configs[A] =
     Configs.from((c, p) => A.from(c.getString(p)))
 
 
