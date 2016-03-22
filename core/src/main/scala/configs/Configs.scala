@@ -156,6 +156,19 @@ sealed abstract class ConfigsInstances extends ConfigsInstances0 {
       else
         Result.successful(None)
 
+  implicit def javaOptionalConfigs[A: Configs]: Configs[ju.Optional[A]] =
+    optionConfigs[A].map(_.fold(ju.Optional.empty[A]())(ju.Optional.of))
+
+  implicit lazy val javaOptionalIntConfigs: Configs[ju.OptionalInt] =
+    optionConfigs[Int].map(_.fold(ju.OptionalInt.empty())(ju.OptionalInt.of))
+
+  implicit lazy val javaOptionalLongConfigs: Configs[ju.OptionalLong] =
+    optionConfigs[Long].map(_.fold(ju.OptionalLong.empty())(ju.OptionalLong.of))
+
+  implicit lazy val javaOptionalDoubleConfigs: Configs[ju.OptionalDouble] =
+    optionConfigs[Double].map(_.fold(ju.OptionalDouble.empty())(ju.OptionalDouble.of))
+
+
   implicit def tryConfigs[A](implicit A: Configs[A]): Configs[Try[A]] =
     A.get(_, _).map(Success(_)).handle {
       case e => Failure(e.throwable)

@@ -5,6 +5,10 @@ object IndyLambda extends AutoPlugin {
 
   override def trigger = allRequirements
 
+  override def requires: Plugins = Dependencies
+
+  import Dependencies.autoImport._
+
   override lazy val projectSettings: Seq[Setting[_]] = Seq(
     scalacOptions ++= seq(scalaVersion.value)(
       "-target:jvm-1.8",
@@ -12,7 +16,7 @@ object IndyLambda extends AutoPlugin {
       "-Ydelambdafy:method"
     ),
     libraryDependencies ++= seq(scalaVersion.value)(
-      "org.scala-lang.modules" %% "scala-java8-compat" % "0.7.0"
+      dependencies.scalaJava8Compat.value
     )
   )
 
