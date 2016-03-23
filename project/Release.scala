@@ -6,6 +6,7 @@ import sbtrelease.ReleasePlugin
 import sbtrelease.ReleasePlugin.autoImport.ReleaseKeys._
 import sbtrelease.ReleasePlugin.autoImport._
 import sbtrelease.ReleaseStateTransformations._
+import sbtrelease.Version.Bump
 import tut.Plugin._
 
 object Release extends AutoPlugin {
@@ -32,6 +33,7 @@ object Release extends AutoPlugin {
     updateReadme <<= updateReadmeTask,
     releaseCrossBuild := true,
     releasePublishArtifactsAction := publishSigned.value,
+    releaseVersionBump := Bump.Minor,
     releaseProcess := Seq(
       checkSnapshotDependencies,
       inquireVersions,
