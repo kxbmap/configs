@@ -15,3 +15,13 @@ lazy val core = project
         |import configs.syntax._
         |""".stripMargin
   )
+
+lazy val doc = project
+  .settings(
+    name := "configs-doc",
+    dependencies.doc,
+    tutSettings,
+    tutSourceDirectory := sourceDirectory.value / "tut",
+    disablePublishSettings
+  )
+  .dependsOn(core % "test")

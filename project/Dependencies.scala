@@ -9,6 +9,7 @@ object Dependencies extends AutoPlugin {
   object autoImport {
 
     val configVersion = settingKey[String]("Typesafe config version")
+    val lombokVersion = settingKey[String]("lombok version")
     val scalaJava8CompatVersion = settingKey[String]("scala-java8-compat version")
 
     object dependencies {
@@ -20,8 +21,17 @@ object Dependencies extends AutoPlugin {
       val core = libraryDependencies ++= Seq(
         "com.typesafe" % "config" % configVersion.value,
         "org.scala-lang" % "scala-reflect" % scalaVersion.value % "provided",
-        "org.projectlombok" % "lombok" % "1.16.8" % "test",
+        "org.projectlombok" % "lombok" % lombokVersion.value % "test",
         scalaJava8Compat.value % "test"
+      )
+
+      val doc = Seq(
+        libraryDependencies ++= Seq(
+          "org.projectlombok" % "lombok" % lombokVersion.value % "test"
+        ),
+        dependencyOverrides ++= Set(
+          "org.scala-lang.modules" %% "scala-xml" % "1.0.5"
+        )
       )
     }
 
@@ -31,6 +41,7 @@ object Dependencies extends AutoPlugin {
 
   override lazy val projectSettings: Seq[Setting[_]] = Seq(
     configVersion := "1.3.0",
+    lombokVersion := "1.16.8",
     scalapropsVersion := "0.3.0",
     scalaJava8CompatVersion := "0.7.0"
   )
