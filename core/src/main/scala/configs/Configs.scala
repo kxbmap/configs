@@ -134,7 +134,7 @@ sealed abstract class ConfigsInstances extends ConfigsInstances0 {
         c.root().asScala.keysIterator.map { k =>
           val q = k.isEmpty || !k.forall(c => c.isLetterOrDigit || c == '_' || c == '-')
           val p = if (q) ConfigUtil.quoteString(k) else k
-          Result.tuple2(A.from(k).withPath(p), B.get(c, p))
+          Result.tuple2(A.read(k).withPath(p), B.get(c, p))
         })
         .map(_.toMap.asJava)
     }
@@ -176,8 +176,8 @@ sealed abstract class ConfigsInstances extends ConfigsInstances0 {
     resultConfigs[A].map(_.toEither)
 
 
-  implicit def convertFromStringConfigs[A](implicit A: FromString[A]): Configs[A] =
-    Configs.from((c, p) => A.from(c.getString(p)))
+  implicit def readStringConfigs[A](implicit A: FromString[A]): Configs[A] =
+    Configs.from((c, p) => A.read(c.getString(p)))
 
 
   private[this] def bigDecimal(expected: String): Configs[BigDecimal] =

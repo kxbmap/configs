@@ -37,10 +37,14 @@ final case class Bytes(value: Long) extends Ordered[Bytes] {
 
 object Bytes {
 
-  implicit val bytesConfigs: Configs[Bytes] =
+  implicit lazy val bytesConfigs: Configs[Bytes] =
     Configs.fromTry(_.getBytes(_)).map(Bytes(_))
 
-  implicit val bytesOrdering: Ordering[Bytes] = Ordering.by(_.value)
+  implicit lazy val bytesToConfig: ToConfig[Bytes] =
+    ToConfig.by(_.value)
+
+  implicit lazy val bytesOrdering: Ordering[Bytes] =
+    Ordering.by(_.value)
 
   implicit class BytesMultiplication(val factor: Double) extends AnyVal {
     def *(bytes: Bytes): Bytes = bytes * factor

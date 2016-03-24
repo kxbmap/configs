@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package configs;
+package configs.testutil;
 
 import java.lang.reflect.Field;
 import java.util.Arrays;

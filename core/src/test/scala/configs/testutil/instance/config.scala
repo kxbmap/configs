@@ -14,31 +14,17 @@
  * limitations under the License.
  */
 
-package configs.instance
+package configs.testutil.instance
 
 import com.typesafe.config.{Config, ConfigList, ConfigMemorySize, ConfigObject, ConfigValue, ConfigValueFactory}
-import configs.util._
+import configs.testutil.gen._
+import configs.testutil.instance.string._
 import java.{util => ju}
 import scala.collection.convert.decorateAsJava._
-import scalaprops.{Gen, Scalaprops}
-import scalaz.std.string._
+import scalaprops.Gen
 import scalaz.{Equal, Need}
 
-object ConfigTypeConfigsTest extends Scalaprops {
-
-  val config = check[Config]
-
-  val configValue = check[ConfigValue]
-
-  val configValueJList = check[ju.List[ConfigValue]]
-
-  val configValueJMap = check[ju.Map[String, ConfigValue]]
-
-  val configList = check[ConfigList]
-
-  val configObject = check[ConfigObject]
-
-  val configMemorySize = check[ConfigMemorySize]
+object config {
 
 
   implicit lazy val configEqual: Equal[Config] =
@@ -56,16 +42,18 @@ object ConfigTypeConfigsTest extends Scalaprops {
   implicit lazy val configObjectEqual: Equal[ConfigObject] =
     Equal.equalA[ConfigObject]
 
-  implicit def genConfigValue[A: Gen : ToConfigValue]: Gen[ConfigValue :@ A] =
-    Gen[A].map(_.toConfigValue).tag[A]
+  private[this] def configValue[A: Gen]: Gen[ConfigValue] =
+    Gen[A].map(ConfigValueFactory.fromAnyRef)
 
-  implicit lazy val configNumberGen: Gen[ConfigValue :@ Number] =
+  private[this] val configNumberGen: Gen[ConfigValue] =
     Gen.oneOf(
-      Gen[ConfigValue :@ Byte].untag,
-      Gen[ConfigValue :@ Int].untag,
-      Gen[ConfigValue :@ Long].untag,
-      Gen[ConfigValue :@ Double].untag
-    ).tag[Number]
+      configValue[Byte],
+      configValue[Short],
+      configValue[Int],
+      configValue[Long],
+      configValue[Float],
+      configValue[Double]
+    )
 
   implicit lazy val configListGen: Gen[ConfigList] =
     Gen.list(configValueGen).map(_.asJava).map(ConfigValueFactory.fromIterable)
@@ -81,9 +69,9 @@ object ConfigTypeConfigsTest extends Scalaprops {
 
   implicit lazy val configValueGen: Gen[ConfigValue] =
     Gen.lazyFrequency(
-      40 -> Need(Gen[ConfigValue :@ String].untag),
-      40 -> Need(Gen[ConfigValue :@ Number].untag),
-      10 -> Need(Gen[ConfigValue :@ Boolean].untag),
+      40 -> Need(configValue[String]),
+      40 -> Need(configNumberGen),
+      10 -> Need(configValue[Boolean]),
       5 -> Need(configListGen.as[ConfigValue]),
       5 -> Need(configObjectGen.as[ConfigValue])
     ).mapSize(_ / 2)

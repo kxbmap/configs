@@ -14,13 +14,11 @@
  * limitations under the License.
  */
 
-package configs
+package configs.testutil;
 
-import configs.testutil.instance.error._
-import scalaprops.{Scalaprops, scalazlaws}
-
-object ConfigErrorTest extends Scalaprops {
-
-  val laws = scalazlaws.semigroup.all[ConfigError]
-
+@SuppressWarnings("unused")
+public enum JavaEnum {
+    FOO,
+    BAR,
+    BAZ
 }

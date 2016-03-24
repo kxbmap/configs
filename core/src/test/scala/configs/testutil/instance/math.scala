@@ -14,11 +14,23 @@
  * limitations under the License.
  */
 
-package configs;
+package configs.testutil.instance
 
-@SuppressWarnings("unused")
-public enum JavaEnum {
-    FOO,
-    BAR,
-    BAZ
+import java.{math => jm}
+import scalaz.{Equal, std}
+
+object math {
+
+  implicit lazy val bigIntEqual: Equal[BigInt] =
+    std.math.bigInt.bigIntInstance
+
+  implicit lazy val bigDecimalEqual: Equal[BigDecimal] =
+    std.math.bigDecimal.bigDecimalInstance
+
+  implicit lazy val javaBigIntegerEqual: Equal[jm.BigInteger] =
+    std.java.math.bigInteger.bigIntegerInstance
+
+  implicit lazy val javaBigDecimalEqual: Equal[jm.BigDecimal] =
+    Equal.equalA[jm.BigDecimal]
+
 }

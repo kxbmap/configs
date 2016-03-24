@@ -14,13 +14,20 @@
  * limitations under the License.
  */
 
-package configs
+package configs.instance
 
-import configs.testutil.instance.error._
-import scalaprops.{Scalaprops, scalazlaws}
+import configs.testutil.fun._
+import configs.testutil.instance.duration._
+import scala.concurrent.duration.{Duration, FiniteDuration}
+import scalaprops.Scalaprops
+import java.{time => jt}
 
-object ConfigErrorTest extends Scalaprops {
+object DurationTypesTest extends Scalaprops {
 
-  val laws = scalazlaws.semigroup.all[ConfigError]
+  val finiteDuration = check[FiniteDuration]
+
+  val duration = check[Duration]
+
+  val javaDuration = check[jt.Duration]
 
 }

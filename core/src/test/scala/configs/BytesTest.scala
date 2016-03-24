@@ -16,11 +16,11 @@
 
 package configs
 
-import configs.util._
+import configs.testutil.fun._
+import configs.testutil.instance.bytes._
+import configs.testutil.instance.string._
 import scalaprops.Property.forAll
-import scalaprops.{Gen, Properties, Scalaprops}
-import scalaz.Equal
-import scalaz.std.string._
+import scalaprops.{Properties, Scalaprops}
 
 
 object BytesTest extends Scalaprops {
@@ -78,12 +78,5 @@ object BytesTest extends Scalaprops {
   val unary_+ = forAll { b: Bytes =>
     +b == b
   }
-
-
-  implicit lazy val bytesGen: Gen[Bytes] = Gen[Long].map(Bytes.apply)
-
-  implicit lazy val bytesEqual: Equal[Bytes] = Equal.equalA[Bytes]
-
-  implicit lazy val bytesToConfigValue: ToConfigValue[Bytes] = ToConfigValue[Long].contramap(_.value)
 
 }

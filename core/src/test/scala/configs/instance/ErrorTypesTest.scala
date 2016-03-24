@@ -17,19 +17,51 @@
 package configs.instance
 
 import com.typesafe.config.ConfigFactory
-import configs.util._
-import configs.{ConfigError, ConfigErrorImplicits, Configs}
-import scalaprops.Property._
-import scalaprops.{Gen, Properties, Scalaprops}
-import scalaz.std.anyVal._
-import scalaz.std.string._
-import scalaz.{Equal, \/}
+import configs.testutil.fun._
+import configs.testutil.instance.anyVal._
+import configs.testutil.instance.either.right._
+import configs.testutil.instance.result.success._
+import configs.testutil.instance.string._
+import configs.{ConfigError, Configs, Result}
+import scalaprops.Property.forAll
+import scalaprops.{Properties, Scalaprops}
 
-object ConfigErrorEitherConfigsTest extends Scalaprops with ConfigErrorImplicits {
+object ErrorTypesTest extends Scalaprops {
+
+  val result = check[Result[Int]]
+
+  val resultHandleConfigError = {
+    val p1 = forAll {
+      val config = ConfigFactory.parseString("value = null")
+      val result = Configs[Result[Int]].get(config, "value")
+      result.exists {
+        case Result.Failure(ConfigError(_: ConfigError.NullValue, _)) => true
+        case _ => false
+      }
+    }
+    val p2 = forAll {
+      val config = ConfigFactory.empty()
+      val e = new RuntimeException
+      implicit val configs: Configs[Int] = Configs.fromTry((_, _) => throw e)
+      val result = Configs[Result[Int]].get(config, "value")
+      result.exists(_ == Configs[Int].get(config, "value"))
+    }
+    val p3 = forAll { s: String =>
+      val config = ConfigFactory.empty()
+      implicit val configs: Configs[Int] = Configs.failure(s)
+      val result = Configs[Result[Int]].get(config, "value")
+      result.exists(_ == Configs[Int].get(config, "value"))
+    }
+    Properties.list(
+      p1.toProperties("null value"),
+      p2.toProperties("runtime exception"),
+      p3.toProperties("failure")
+    )
+  }
 
   val either = check[Either[ConfigError, Int]]
 
-  val handleError = {
+  val eitherHandleConfigError = {
     val p1 = forAll {
       val config = ConfigFactory.parseString("value = null")
       val result = Configs[Either[ConfigError, Int]].get(config, "value")
@@ -63,14 +95,5 @@ object ConfigErrorEitherConfigsTest extends Scalaprops with ConfigErrorImplicits
       p3.toProperties("failure")
     )
   }
-
-  implicit def eitherGen[A: Gen]: Gen[Either[ConfigError, A]] =
-    Gen[A].map(Right(_))
-
-  implicit def eitherEqual[A: Equal]: Equal[Either[ConfigError, A]] =
-    Equal[ConfigError \/ A].contramap(\/.fromEither)
-
-  implicit def eitherToConfigValue[A: ToConfigValue]: ToConfigValue[Either[ConfigError, A]] =
-    ToConfigValue[Option[A]].contramap(_.right.toOption)
 
 }

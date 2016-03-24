@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package configs;
+package configs.testutil;
 
 import java.util.Arrays;
 import java.util.List;

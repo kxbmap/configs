@@ -14,13 +14,15 @@
  * limitations under the License.
  */
 
-package configs
+package configs.testutil;
 
-import configs.testutil.instance.error._
-import scalaprops.{Scalaprops, scalazlaws}
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
-object ConfigErrorTest extends Scalaprops {
-
-  val laws = scalazlaws.semigroup.all[ConfigError]
-
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public class Bean1 {
+    private int a1;
 }

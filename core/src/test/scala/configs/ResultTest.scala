@@ -16,12 +16,14 @@
 
 package configs
 
+import configs.testutil.instance.anyVal._
+import configs.testutil.instance.error._
+import configs.testutil.instance.result._
 import scalaprops.Property._
-import scalaprops.{Gen, Scalaprops, scalazlaws}
-import scalaz.std.anyVal._
-import scalaz.{Applicative, Equal, MonadError}
+import scalaprops.{Scalaprops, scalazlaws}
+import scalaz.{Applicative, MonadError}
 
-object ResultTest extends Scalaprops with ResultImplicits {
+object ResultTest extends Scalaprops {
 
   val monadErrorLaw = {
     implicit val instance: MonadError[Result, ConfigError] =
@@ -59,23 +61,5 @@ object ResultTest extends Scalaprops with ResultImplicits {
     forAll { a: Result[Int] =>
       Result.fromEither(a.toEither) == a
     }
-
-}
-
-trait ResultImplicits extends ConfigErrorImplicits {
-
-  implicit def resultGen[A: Gen]: Gen[Result[A]] =
-    Gen.oneOf(
-      Gen[A].map(Result.successful),
-      Gen[ConfigError].map(Result.failure)
-    )
-
-  implicit def resultEqual[A: Equal]: Equal[Result[A]] =
-    Equal.equal((r1, r2) =>
-      (r1, r2) match {
-        case (Result.Success(a1), Result.Success(a2)) => Equal[A].equal(a1, a2)
-        case (Result.Failure(e1), Result.Failure(e2)) => Equal[ConfigError].equal(e1, e2)
-        case _                                        => false
-      })
 
 }

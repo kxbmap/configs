@@ -17,11 +17,11 @@
 package configs
 
 import com.typesafe.config.{ConfigFactory, ConfigValueFactory}
-import configs.util._
+import configs.testutil.fun._
+import configs.testutil.instance.string._
 import scala.collection.JavaConversions._
 import scalaprops.Property.forAll
 import scalaprops.{Properties, Scalaprops}
-import scalaz.std.string._
 
 object ConfigsTest extends Scalaprops {
 

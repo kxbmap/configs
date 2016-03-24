@@ -16,73 +16,55 @@
 
 package configs
 
-import configs.util._
+import configs.testutil.JavaEnum
+import configs.testutil.instance.enum._
+import configs.testutil.instance.io._
+import configs.testutil.instance.net._
+import configs.testutil.instance.string._
+import configs.testutil.instance.symbol._
+import configs.testutil.instance.util._
 import java.io.File
 import java.net.{InetAddress, URI}
-import java.nio.file.{Path, Paths}
+import java.nio.file.Path
 import java.util.{Locale, UUID}
 import scala.reflect.{ClassTag, classTag}
 import scalaprops.Property.forAll
 import scalaprops.{Gen, Properties, Scalaprops}
-import scalaz.Apply
-import scalaz.std.string._
+import scalaz.Equal
 
 object FromStringTest extends Scalaprops {
 
   val fromString = {
-    def to[A: FromString : Gen : ClassTag](tos: A => String = (_: A).toString) =
+    def to[A: Gen : Equal : ClassTag](implicit A: FromString[A]) =
       forAll { (a: A) =>
-        FromString[A].from(tos(a)) == Result.successful(a)
+        A.read(A.show(a)).exists(Equal[A].equal(_, a))
       }.toProperties(s"to ${classTag[A].runtimeClass.getSimpleName}")
 
     Properties.list(
-      to[String](),
-      to[Symbol](_.name),
-      to[Enum.Value](),
-      to[JavaEnum](),
-      to[UUID](),
-      to[Locale](),
-      to[Path](),
-      to[File](),
-      to[InetAddress](_.getHostAddress),
-      to[URI]()
+      to[String],
+      to[Symbol],
+      to[Enum.Value],
+      to[JavaEnum],
+      to[UUID],
+      to[Locale],
+      to[Path],
+      to[File],
+      to[InetAddress],
+      to[URI]
     )
   }
 
   object Enum extends Enumeration {
+
     val Foo, Bar, Baz = Value
-  }
 
-  implicit lazy val enumValueGen: Gen[Enum.Value] = {
-    val vs = Enum.values.toList
-    Gen.elements(vs.head, vs.tail: _*)
-  }
-
-  implicit lazy val uuidGen: Gen[UUID] =
-    Gen[Array[Byte]].map(UUID.nameUUIDFromBytes)
-
-  implicit lazy val localeGen: Gen[Locale] = {
-    val ls = Locale.getAvailableLocales
-    Gen.elements(ls.head, ls.tail: _*)
-  }
-
-  implicit lazy val pathGen: Gen[Path] =
-    Gen.nonEmptyList(Gen.nonEmptyString(Gen.alphaChar)).map(p => Paths.get(p.head, p.tail.toList: _*))
-
-  implicit lazy val fileGen: Gen[File] =
-    pathGen.map(_.toFile)
-
-  implicit lazy val inetAddressGen: Gen[InetAddress] = {
-    val p = Gen.choose(0, 255)
-    Apply[Gen].apply4(p, p, p, p)((a, b, c, d) => s"$a.$b.$c.$d").map(InetAddress.getByName)
-  }
-
-  implicit lazy val uriGen: Gen[URI] = {
-    val str = Gen.nonEmptyString(Gen.alphaChar)
-    val opt = Gen.option(str)
-    Apply[Gen].apply3(opt, str, opt) {
-      (scheme, ssp, fragment) => new URI(scheme.orNull, ssp, fragment.orNull)
+    implicit lazy val valueGen: Gen[Value] = {
+      val vs = values.toList
+      Gen.elements(vs.head, vs.tail: _*)
     }
+
+    implicit lazy val valueEqual: Equal[Value] =
+      Equal.equalA[Value]
   }
 
 }

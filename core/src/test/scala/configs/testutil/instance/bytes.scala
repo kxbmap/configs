@@ -14,13 +14,16 @@
  * limitations under the License.
  */
 
-package configs
+package configs.testutil.instance
 
-import configs.testutil.instance.error._
-import scalaprops.{Scalaprops, scalazlaws}
+import configs.Bytes
+import scalaprops.Gen
+import scalaz.Equal
 
-object ConfigErrorTest extends Scalaprops {
+object bytes {
 
-  val laws = scalazlaws.semigroup.all[ConfigError]
+  implicit lazy val bytesGen: Gen[Bytes] = Gen[Long].map(Bytes.apply)
+
+  implicit lazy val bytesEqual: Equal[Bytes] = Equal.equalA[Bytes]
 
 }

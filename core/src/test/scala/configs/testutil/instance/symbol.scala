@@ -14,13 +14,17 @@
  * limitations under the License.
  */
 
-package configs
+package configs.testutil.instance
 
-import configs.testutil.instance.error._
-import scalaprops.{Scalaprops, scalazlaws}
+import scalaprops.Gen
+import scalaz.Order
 
-object ConfigErrorTest extends Scalaprops {
+object symbol {
 
-  val laws = scalazlaws.semigroup.all[ConfigError]
+  implicit lazy val symbolGen: Gen[Symbol] =
+    string.stringGen.map(Symbol.apply)
+
+  implicit lazy val symbolOrder: Order[Symbol] =
+    string.stringOrder.contramap(_.name)
 
 }

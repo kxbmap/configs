@@ -16,37 +16,32 @@
 
 package configs.instance
 
-import configs.Configs
-import configs.util._
+import configs.testutil.fun._
+import configs.testutil.instance.math._
+import configs.{Configs, ToConfig}
 import java.{math => jm}
 import scalaprops.Property.forAll
 import scalaprops.Scalaprops
-import scalaz.Equal
-import scalaz.std.java.math.bigInteger._
-import scalaz.std.math.bigDecimal._
-import scalaz.std.math.bigInt._
 import scalaz.syntax.equal._
 
-object BigNumberConfigsTest extends Scalaprops {
+object BigNumberTypesTest extends Scalaprops {
 
   val bigInt = check[BigInt]
 
   val bigIntFromDecimal = forAll { d: BigDecimal =>
-    Configs[BigInt].extractValue(d.toConfigValue).exists(_ === d.toBigInt())
+    Configs[BigInt].extractValue(ToConfig[BigDecimal].toValue(d))
+      .exists(_ === d.toBigInt())
   }
 
   val bigInteger = check[jm.BigInteger]
 
   val bigIntegerFromDecimal = forAll { d: jm.BigDecimal =>
-    Configs[jm.BigInteger].extractValue(d.toConfigValue).exists(_ === d.toBigInteger)
+    Configs[jm.BigInteger].extractValue(ToConfig[BigDecimal].toValue(d))
+      .exists(_ === d.toBigInteger)
   }
 
   val bigDecimal = check[BigDecimal]
 
   val javaBigDecimal = check[jm.BigDecimal]
-
-
-  implicit lazy val javaBigDecimalEqual: Equal[jm.BigDecimal] =
-    Equal.equalA[jm.BigDecimal]
 
 }

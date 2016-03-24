@@ -14,22 +14,14 @@
  * limitations under the License.
  */
 
-package configs.instance
+package configs.testutil
 
-import configs.util._
-import java.{time => jt}
-import scalaprops.{Gen, Scalaprops}
-import scalaz.Equal
+import scalaprops.Gen
 
-object JavaTimeConfigsTest extends Scalaprops {
+object gen {
 
-  val javaDuration = check[jt.Duration]
-
-
-  implicit lazy val javaDurationGen: Gen[jt.Duration] =
-    Gen.nonNegativeLong.map(jt.Duration.ofNanos)
-
-  implicit lazy val javaDurationEqual: Equal[jt.Duration] =
-    Equal.equalA[jt.Duration]
+  implicit class GenOps[A](private val g: Gen[A]) extends AnyVal {
+    def as[B >: A]: Gen[B] = g.asInstanceOf[Gen[B]]
+  }
 
 }

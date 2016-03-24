@@ -14,13 +14,26 @@
  * limitations under the License.
  */
 
-package configs
+package configs.testutil.instance
 
-import configs.testutil.instance.error._
-import scalaprops.{Scalaprops, scalazlaws}
+import java.util.{Locale, UUID}
+import scalaprops.Gen
+import scalaz.Equal
 
-object ConfigErrorTest extends Scalaprops {
+object util {
 
-  val laws = scalazlaws.semigroup.all[ConfigError]
+  implicit lazy val uuidGen: Gen[UUID] =
+    Gen[Array[Byte]].map(UUID.nameUUIDFromBytes)
+
+  implicit lazy val uuidEqual: Equal[UUID] =
+    Equal.equalA[UUID]
+
+  implicit lazy val localeGen: Gen[Locale] = {
+    val ls = Locale.getAvailableLocales
+    Gen.elements(ls.head, ls.tail: _*)
+  }
+
+  implicit lazy val localeEqual: Equal[Locale] =
+    Equal.equalA[Locale]
 
 }

@@ -16,11 +16,11 @@
 
 package configs.macros
 
+import configs.testutil.instance.string._
 import java.util.Locale
 import scalaprops.Property.forAllG
 import scalaprops.{Gen, Properties, Scalaprops}
 import scalaz.NonEmptyList
-import scalaz.std.string._
 import scalaz.syntax.apply._
 
 object UtilTest extends Scalaprops with Util {

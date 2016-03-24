@@ -14,17 +14,16 @@
  * limitations under the License.
  */
 
-package configs
+package configs.syntax
 
 import com.typesafe.config.{ConfigFactory, ConfigValueFactory}
-import configs.util._
+import configs.testutil.instance.string._
+import configs.{Result, ToConfig}
 import scala.collection.convert.decorateAsJava._
 import scalaprops.Property.forAll
 import scalaprops.Scalaprops
 
 object ConfigOpsTest extends Scalaprops {
-
-  import configs.syntax._
 
   val extract = forAll { m: Map[String, String] =>
     val config = ConfigValueFactory.fromMap(m.asJava).toConfig
@@ -37,7 +36,7 @@ object ConfigOpsTest extends Scalaprops {
   }
 
   val getOrElse = forAll { (n: Option[Int], m: Int) =>
-    val config = n.toConfigValue.atKey("path")
+    val config = ToConfig[Option[Int]].toValue(n).atKey("path")
     config.getOrElse[Int]("path", m) == Result.successful(n.getOrElse(m))
   }
 

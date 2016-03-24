@@ -22,13 +22,14 @@ class FromStringMacro(val c: blackbox.Context) {
 
   import c.universe._
 
-  def enumValueFromString[A: WeakTypeTag]: Tree = {
+  def enumValueFromString[A <: Enumeration : WeakTypeTag]: Tree = {
     val A = weakTypeOf[A].termSymbol.asModule
     q"""
       _root_.configs.FromString.fromOption[$A.Value](
         s => $A.values.find(_.toString == s),
         s => _root_.configs.ConfigError(
-          s"$$s is not a valid value for $${${A.fullName}} (valid values: $${$A.values.mkString(", ")})"))
+          s"$$s is not a valid value for $${${A.fullName}} (valid values: $${$A.values.mkString(", ")})"),
+        _.toString)
      """
   }
 

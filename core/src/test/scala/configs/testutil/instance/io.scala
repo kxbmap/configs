@@ -14,15 +14,25 @@
  * limitations under the License.
  */
 
-package configs;
+package configs.testutil.instance
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import java.io.File
+import java.nio.file.{Path, Paths}
+import scalaprops.Gen
+import scalaz.Equal
 
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
-public class Bean1 {
-    private int a1;
+object io {
+
+  implicit lazy val pathGen: Gen[Path] =
+    Gen.nonEmptyList(Gen.nonEmptyString(Gen.alphaChar)).map(p => Paths.get(p.head, p.tail.toList: _*))
+  
+  implicit lazy val pathEqual: Equal[Path] =
+    Equal.equalA[Path]
+
+  implicit lazy val fileGen: Gen[File] =
+    pathGen.map(_.toFile)
+
+  implicit lazy val fileEqual: Equal[File] =
+    Equal.equalA[File]
+
 }

@@ -17,15 +17,16 @@
 package configs
 
 import com.typesafe.config.ConfigFactory
-import configs.util._
+import configs.testutil.fun._
+import configs.testutil.instance.anyVal._
+import configs.testutil.instance.string._
+import configs.testutil.instance.tuple._
+import configs.testutil.{Bean1, Bean22, Bean484}
 import scala.beans.BeanProperty
 import scala.collection.convert.decorateAsScala._
 import scalaprops.Property.forAll
-import scalaprops.{Properties, Gen, Scalaprops}
+import scalaprops.{Gen, Properties, Scalaprops}
 import scalaz.Equal
-import scalaz.std.anyVal._
-import scalaz.std.tuple._
-import scalaz.std.string._
 import scalaz.syntax.equal._
 
 object DeriveBeanConfigsTest extends Scalaprops {
@@ -40,9 +41,9 @@ object DeriveBeanConfigsTest extends Scalaprops {
     implicit val equal: Equal[Bean1] =
       Equal.equalA[Bean1]
 
-    implicit val tcv: ToConfigValue[Bean1] =
-      ToConfigValue.fromMap(b => Map(
-        "a1" -> b.getA1.toConfigValue
+    implicit val tc: ToConfig[Bean1] =
+      ToConfig.by(b => Map(
+        "a1" -> b.getA1
       ))
 
     check[Bean1]
@@ -62,10 +63,10 @@ object DeriveBeanConfigsTest extends Scalaprops {
     implicit val equal: Equal[Bean22] =
       Equal.equalA[Bean22]
 
-    implicit val tcv: ToConfigValue[Bean22] =
-      ToConfigValue.fromMap(
+    implicit val tc: ToConfig[Bean22] =
+      ToConfig.by(
         _.values().asScala.zipWithIndex.map {
-          case (n, i) => s"a${i + 1}" -> n.toConfigValue
+          case (n, i) => s"a${i + 1}" -> n.intValue()
         }.toMap)
 
     check[Bean22]
@@ -82,10 +83,10 @@ object DeriveBeanConfigsTest extends Scalaprops {
     implicit val equal: Equal[Bean484] =
       Equal.equalA[Bean484]
 
-    implicit val tcv: ToConfigValue[Bean484] =
-      ToConfigValue.fromMap(
+    implicit val tc: ToConfig[Bean484] =
+      ToConfig.by(
         _.values().asScala.zipWithIndex.map {
-          case (n, i) => s"a${i + 1}" -> n.toConfigValue
+          case (n, i) => s"a${i + 1}" -> n.intValue()
         }.toMap)
 
     check[Bean484]

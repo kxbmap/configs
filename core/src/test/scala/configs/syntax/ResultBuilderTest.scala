@@ -14,15 +14,15 @@
  * limitations under the License.
  */
 
-package configs
+package configs.syntax
 
+import configs.Result
+import configs.testutil.instance.result._
+import configs.testutil.instance.string._
 import scalaprops.Property.{forAll, forAllG}
 import scalaprops.{Gen, Properties, Scalaprops}
-import scalaz.std.string._
 
-object ResultBuilderTest extends Scalaprops with ResultImplicits {
-
-  import configs.syntax._
+object ResultBuilderTest extends Scalaprops {
 
   val builder2 = Properties.list(
     forAll { (a: Result[Int], b: Result[Int], fn: (Int, Int) => Int) =>

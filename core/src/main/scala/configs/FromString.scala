@@ -24,14 +24,17 @@ import java.{lang => jl}
 import scala.reflect.ClassTag
 
 trait FromString[A] {
+  self =>
 
-  def from(s: String): Result[A]
+  def read(string: String): Result[A]
 
-  def map[B](f: A => B): FromString[B] =
-    from(_).map(f)
+  def show(value: A): String
 
-  def flatMap[B](f: A => FromString[B]): FromString[B] =
-    a => from(a).flatMap(f(_).from(a))
+  def xmap[B](f: A => B, g: B => A): FromString[B] =
+    new FromString[B] {
+      def read(string: String): Result[B] = self.read(string).map(f)
+      def show(value: B): String = self.show(g(value))
+    }
 }
 
 object FromString extends FromStringInstances {
@@ -39,27 +42,31 @@ object FromString extends FromStringInstances {
   def apply[A](implicit A: FromString[A]): FromString[A] = A
 
 
-  def from[A](f: String => Result[A]): FromString[A] =
-    a => Result.Try(f(a)).flatten
-
-  def fromTry[A](f: String => A): FromString[A] =
-    a => Result.Try(f(a))
-
-  def fromOption[A](f: String => Option[A], err: String => ConfigError): FromString[A] =
-    from { s =>
-      f(s).fold(Result.failure[A](err(s)))(Result.successful)
+  def from[A](f: String => Result[A], g: A => String): FromString[A] =
+    new FromString[A] {
+      def read(string: String): Result[A] = Result.Try(f(string)).flatten
+      def show(value: A): String = g(value)
     }
+
+  def fromTry[A](f: String => A, g: A => String): FromString[A] =
+    from(s => Result.successful(f(s)), g)
+
+  def fromOption[A](f: String => Option[A], err: String => ConfigError, g: A => String): FromString[A] =
+    from(s => f(s).fold(Result.failure[A](err(s)))(Result.successful), g)
 
 }
 
 
 sealed abstract class FromStringInstances {
 
-  implicit val stringFromString: FromString[String] =
-    Result.successful(_)
+  implicit lazy val stringFromString: FromString[String] =
+    new FromString[String] {
+      def read(string: String): Result[String] = Result.successful(string)
+      def show(value: String): String = value
+    }
 
   implicit lazy val symbolFromString: FromString[Symbol] =
-    FromString.fromTry(Symbol.apply)
+    FromString.fromTry(Symbol.apply, _.name)
 
   implicit def enumValueFromString[A <: Enumeration]: FromString[A#Value] =
     macro macros.FromStringMacro.enumValueFromString[A]
@@ -69,27 +76,29 @@ sealed abstract class FromStringInstances {
     val enums = clazz.getEnumConstants
     FromString.fromOption(
       s => enums.find(_.name() == s),
-      s => ConfigError(s"$s is not a valid value for ${clazz.getName} (valid values: ${enums.mkString(", ")})"))
+      s => ConfigError(s"$s is not a valid value for ${clazz.getName} (valid values: ${enums.mkString(", ")})"),
+      _.name())
   }
 
   implicit lazy val uuidFromString: FromString[UUID] =
-    FromString.fromTry(UUID.fromString)
+    FromString.fromTry(UUID.fromString, _.toString)
 
   implicit lazy val localeFromString: FromString[Locale] =
     FromString.fromOption(
       s => Locale.getAvailableLocales.find(_.toString == s),
-      s => ConfigError(s"$s is not an available locale"))
+      s => ConfigError(s"$s is not an available locale"),
+      _.toString)
 
   implicit lazy val pathFromString: FromString[Path] =
-    FromString.fromTry(Paths.get(_))
+    FromString.fromTry(Paths.get(_), _.toString)
 
   implicit lazy val fileFromString: FromString[File] =
-    FromString.fromTry(new File(_))
+    FromString.fromTry(new File(_), _.getPath)
 
   implicit lazy val inetAddressFromString: FromString[InetAddress] =
-    FromString.fromTry(InetAddress.getByName)
+    FromString.fromTry(InetAddress.getByName, _.getHostAddress)
 
   implicit lazy val uriFromString: FromString[URI] =
-    FromString.fromTry(new URI(_))
+    FromString.fromTry(new URI(_), _.toString)
 
 }

@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-package configs
+package configs.testutil.instance
 
-import configs.testutil.instance.error._
-import scalaprops.{Scalaprops, scalazlaws}
+import scalaz.Equal
 
-object ConfigErrorTest extends Scalaprops {
+object enum {
 
-  val laws = scalazlaws.semigroup.all[ConfigError]
+  implicit def enumEqual[A <: Enum[A]]: Equal[A] =
+    Equal.equalA[A]
 
 }

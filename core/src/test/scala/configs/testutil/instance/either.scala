@@ -14,13 +14,26 @@
  * limitations under the License.
  */
 
-package configs
+package configs.testutil.instance
 
-import configs.testutil.instance.error._
-import scalaprops.{Scalaprops, scalazlaws}
+import configs.ToConfig
+import scalaprops.Gen
+import scalaz.Equal
 
-object ConfigErrorTest extends Scalaprops {
+object either {
 
-  val laws = scalazlaws.semigroup.all[ConfigError]
+  object right {
+
+    implicit def rightGen[A, B: Gen]: Gen[Either[A, B]] =
+      Gen[B].map(Right(_))
+
+    implicit def rightEqual[A, B: Equal]: Equal[Either[A, B]] = {
+      Equal.equalBy(_.right.get)
+    }
+
+    implicit def rightToConfig[A, B: ToConfig]: ToConfig[Either[A, B]] =
+      ToConfig.by(_.right.get)
+
+  }
 
 }
