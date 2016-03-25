@@ -41,6 +41,9 @@ private[macros] abstract class MacroUtil {
   def tOption(arg: Type): Type =
     appliedType(typeOf[Option[_]].typeConstructor, arg)
 
+  def tOption(arg: Tree): Tree =
+    tq"_root_.scala.Option[$arg]"
+
   def tTupleN(args: Seq[Type]): Tree =
     tq"_root_.scala.${TypeName(s"Tuple${args.length}")}[..$args]"
 

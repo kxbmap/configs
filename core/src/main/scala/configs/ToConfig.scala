@@ -44,12 +44,27 @@ object ToConfig extends ToConfigInstances {
   @inline
   def apply[A](implicit A: ToConfig[A]): ToConfig[A] = A
 
+
+  def derive[A]: ToConfig[A] =
+    macro macros.ToConfigMacro.derive[A]
+
+  def from[A](f: A => ConfigValue): ToConfig[A] =
+    f(_)
+
   def by[A, B](f: A => B)(implicit B: ToConfig[B]): ToConfig[A] =
     B.contramap(f)
 
 }
 
-sealed abstract class ToConfigInstances {
+
+sealed abstract class ToConfigInstances0 {
+
+  implicit def autoDeriveToConfig[A]: ToConfig[A] =
+    macro macros.ToConfigMacro.derive[A]
+
+}
+
+sealed abstract class ToConfigInstances extends ToConfigInstances0 {
 
   private[this] val any: ToConfig[Any] = ConfigValueFactory.fromAnyRef
   def fromAnyRef[A]: ToConfig[A] = any.asInstanceOf[ToConfig[A]]

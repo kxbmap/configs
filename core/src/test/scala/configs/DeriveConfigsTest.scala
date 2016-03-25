@@ -37,9 +37,6 @@ object DeriveConfigsTest extends Scalaprops {
 
     implicit lazy val equal: Equal[CC0] =
       Equal.equalA[CC0]
-
-    implicit lazy val tc: ToConfig[CC0] =
-      _ => ConfigFactory.empty().root()
   }
 
   val caseClass0 = check[CC0]
@@ -53,11 +50,6 @@ object DeriveConfigsTest extends Scalaprops {
 
     implicit lazy val equal: Equal[CC1] =
       Equal.equalA[CC1]
-
-    implicit lazy val tc: ToConfig[CC1] =
-      ToConfig.by {
-        case CC1(a1) => Map("a1" -> a1)
-      }
   }
 
   val caseClass1 = check[CC1]
@@ -75,12 +67,6 @@ object DeriveConfigsTest extends Scalaprops {
 
     implicit lazy val equal: Equal[CC22] =
       Equal.equalA[CC22]
-
-    implicit lazy val tc: ToConfig[CC22] =
-      ToConfig.by(
-        _.productIterator.zipWithIndex.map {
-          case (a, i) => s"a${i + 1}" -> a.asInstanceOf[Int]
-        }.toMap)
   }
 
   val caseClass22 = check[CC22]
@@ -102,12 +88,6 @@ object DeriveConfigsTest extends Scalaprops {
 
     implicit lazy val equal: Equal[CC23] =
       Equal.equalA[CC23]
-
-    implicit lazy val tc: ToConfig[CC23] =
-      ToConfig.by(
-        _.productIterator.zipWithIndex.map {
-          case (a, i) => s"a${i + 1}" -> a.asInstanceOf[Int]
-        }.toMap)
   }
 
   val caseClass23 = check[CC23]
@@ -279,10 +259,6 @@ object DeriveConfigsTest extends Scalaprops {
     val p1 = {
       implicit val gen: Gen[Default1] =
         Gen[Int].map(Default1.apply)
-      implicit val tc: ToConfig[Default1] =
-        ToConfig.by {
-          case Default1(a1) => Map("a1" -> a1)
-        }
       check[Default1]
     }
     val p2 = {
@@ -621,7 +597,6 @@ object DeriveConfigsTest extends Scalaprops {
     case class LocalCC(a1: Int)
     implicit val gen: Gen[LocalCC] = Gen[Int].map(LocalCC)
     implicit val equal: Equal[LocalCC] = Equal.equalA[LocalCC]
-    implicit val tc: ToConfig[LocalCC] = ToConfig.by(cc => Map("a1" -> cc.a1))
     check[LocalCC]
   }
 
