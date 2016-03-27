@@ -169,19 +169,24 @@ sealed abstract class ConfigsInstances extends ConfigsInstances0 {
     optionConfigs[Double].map(_.fold(ju.OptionalDouble.empty())(ju.OptionalDouble.of))
 
 
+  implicit def resultConfigs[A](implicit A: Configs[A]): Configs[Result[A]] =
+    (c, p) => Result.successful(A.get(c, p))
+
+  @deprecated("Use configs.Result instead", "0.4.1")
   implicit def tryConfigs[A](implicit A: Configs[A]): Configs[Try[A]] =
     A.get(_, _).map(Success(_)).handle {
-      case e => Failure(e.throwable)
+      case e => Failure(e.head.throwable)
     }
 
+  @deprecated("Use configs.Result instead", "0.4.1")
   implicit def throwableEitherConfigs[E <: Throwable, A](implicit E: ClassTag[E], A: Configs[A]): Configs[Either[E, A]] =
     A.get(_, _).map(Right(_)).handle {
-      case e if E.runtimeClass.isAssignableFrom(e.throwable.getClass) =>
-        Left(e.throwable.asInstanceOf[E])
+      case e if E.runtimeClass.isAssignableFrom(e.head.throwable.getClass) =>
+        Left(e.head.throwable.asInstanceOf[E])
     }
 
-  implicit def configErrorEitherConfigs[A](implicit A: Configs[A]): Configs[Either[ConfigError, A]] =
-    (c, p) => Result.successful(A.get(c, p).fold(Left(_), Right(_)))
+  implicit def configErrorEitherConfigs[A: Configs]: Configs[Either[ConfigError, A]] =
+    resultConfigs[A].map(_.toEither)
 
 
   implicit def convertFromStringConfigs[A](implicit A: FromString[A]): Configs[A] =
