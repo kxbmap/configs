@@ -27,6 +27,7 @@ import scalaz.std.anyVal._
 import scalaz.std.option._
 import scalaz.std.string._
 
+@deprecated("", "0.4.1")
 object TryConfigsTest extends Scalaprops {
 
   val `try` = check[Try[Int]]

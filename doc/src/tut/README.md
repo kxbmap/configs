@@ -148,8 +148,8 @@ There are a number of built-in `Configs` instances:
   * `Option[A]`
   * `java.util.`{`Optional[A]`, `OptionalLong`, `OptionalInt`, `OptionalDouble`}
 * Error types
+  * `configs.Result[A]`
   * `Either[ConfigError, A]`
-  * `Either[E <: Throwable, A]`, `Try[A]`
 * case classes
 * classes that have public constructors
 * ADTs (sealed trait + classes/objects). See [ADTs support](#adts-support)
