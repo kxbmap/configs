@@ -172,19 +172,6 @@ sealed abstract class ConfigsInstances extends ConfigsInstances0 {
   implicit def resultConfigs[A](implicit A: Configs[A]): Configs[Result[A]] =
     (c, p) => Result.successful(A.get(c, p))
 
-  @deprecated("Use configs.Result instead", "0.4.1")
-  implicit def tryConfigs[A](implicit A: Configs[A]): Configs[Try[A]] =
-    A.get(_, _).map(Success(_)).handle {
-      case e => Failure(e.head.throwable)
-    }
-
-  @deprecated("Use configs.Result instead", "0.4.1")
-  implicit def throwableEitherConfigs[E <: Throwable, A](implicit E: ClassTag[E], A: Configs[A]): Configs[Either[E, A]] =
-    A.get(_, _).map(Right(_)).handle {
-      case e if E.runtimeClass.isAssignableFrom(e.head.throwable.getClass) =>
-        Left(e.head.throwable.asInstanceOf[E])
-    }
-
   implicit def configErrorEitherConfigs[A: Configs]: Configs[Either[ConfigError, A]] =
     resultConfigs[A].map(_.toEither)
 
