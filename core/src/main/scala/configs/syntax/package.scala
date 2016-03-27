@@ -16,7 +16,8 @@
 
 package configs
 
-import com.typesafe.config.Config
+import com.typesafe.config.{Config, ConfigObject}
+import scala.collection.convert.decorateAsScala._
 
 package object syntax {
 
@@ -30,6 +31,25 @@ package object syntax {
 
     def getOrElse[A](path: String, default: => A)(implicit A: Configs[Option[A]]): Result[A] =
       get(path)(A).map(_.getOrElse(default))
+
+  }
+
+  implicit class ConfigObjectOps(private val self: ConfigObject) extends AnyVal {
+
+    def +[A, B](kv: (A, B))(implicit A: FromString[A], B: ToConfig[B]): ConfigObject =
+      self.withValue(A.show(kv._1), B.toValue(kv._2))
+
+    def -[A](key: A)(implicit A: FromString[A]): ConfigObject =
+      self.withoutKey(A.show(key))
+
+    def ++[A: FromString, B: ToConfig](kvs: Seq[(A, B)]): ConfigObject =
+      kvs.foldLeft(self)(_ + _)
+
+    def ++[A: FromString, B: ToConfig](kvs: Map[A, B]): ConfigObject =
+      kvs.foldLeft(self)(_ + _)
+
+    def ++(obj: ConfigObject): ConfigObject =
+      ++(obj.asScala.toMap)
 
   }
 
