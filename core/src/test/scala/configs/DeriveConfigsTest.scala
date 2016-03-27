@@ -16,7 +16,9 @@
 
 package configs
 
-import com.typesafe.config.{ConfigFactory, ConfigValue}
+import com.typesafe.config.ConfigFactory
+import configs.syntax._
+import configs.syntax.create._
 import configs.testutil.fun._
 import configs.testutil.instance.anyVal._
 import configs.testutil.instance.string._
@@ -106,12 +108,11 @@ object DeriveConfigsTest extends Scalaprops {
     implicit lazy val equal: Equal[SubApply] =
       Equal.equalA[SubApply]
 
-    implicit lazy val tc: ToConfig[SubApply] =
-      ToConfig.by(sa =>
-        Map(
-          "s1" -> sa.a1.toString,
-          "s2" -> sa.a2.toString
-        ))
+    implicit lazy val tc: ToConfig[SubApply] = sa =>
+      configObject(
+        "s1" -> sa.a1.toString,
+        "s2" -> sa.a2.toString
+      )
   }
 
   val subApply = {
@@ -145,13 +146,12 @@ object DeriveConfigsTest extends Scalaprops {
     implicit lazy val equal: Equal[PlainClass] =
       Equal.equalBy(p => (p.a1, p.a2, p.a3))
 
-    implicit lazy val tc: ToConfig[PlainClass] =
-      ToConfig.by(p =>
-        Map(
-          "a1" -> p.a1,
-          "a2" -> p.a2,
-          "a3" -> p.a3
-        ))
+    implicit lazy val tc: ToConfig[PlainClass] = p =>
+      configObject(
+        "a1" -> p.a1,
+        "a2" -> p.a2,
+        "a3" -> p.a3
+      )
   }
 
   val plainClass = {
@@ -192,7 +192,7 @@ object DeriveConfigsTest extends Scalaprops {
   object Sealed {
     // SI-7046
     implicit lazy val configs: Configs[Sealed] =
-      Configs.derive[Sealed]
+    Configs.derive[Sealed]
 
     implicit lazy val gen: Gen[Sealed] =
       Gen.oneOf(
@@ -214,29 +214,26 @@ object DeriveConfigsTest extends Scalaprops {
         case _: NoArgClass => ("NA", 0)
       }
 
-    implicit lazy val tc: ToConfig[Sealed] =
-      ToConfig.by { s =>
-        val S = ToConfig[String]
-        val N = ToConfig[Int]
-        val m = Map("type" -> S.toValue(s.getClass.getSimpleName.stripSuffix("$")))
-        s match {
-          case SealedCase(a1) => m + ("a1" -> N.toValue(a1))
-          case p: SealedPlain => m + ("a1" -> N.toValue(p.a1))
-          case SealedCaseObject => m
-          case SealedObject => m
-          case SealedSealedClass(a1) => m + ("a1" -> N.toValue(a1))
-          case s: SealedConcrete => m + ("a1" -> N.toValue(s.a1))
-          case _: NoArgClass => m
-        }
+    implicit lazy val tc: ToConfig[Sealed] = s => {
+      val m = configObject("type" -> s.getClass.getSimpleName.stripSuffix("$"))
+      s match {
+        case SealedCase(a1) => m + ("a1" -> a1)
+        case p: SealedPlain => m + ("a1" -> p.a1)
+        case SealedCaseObject => m
+        case SealedObject => m
+        case SealedSealedClass(a1) => m + ("a1" -> a1)
+        case s: SealedConcrete => m + ("a1" -> s.a1)
+        case _: NoArgClass => m
       }
+    }
   }
 
   val sealedClass = {
     val p1 = check[Sealed]
     val p2 = {
       implicit val moduleAsStringTCV: ToConfig[Sealed] = {
-        case SealedCaseObject => ToConfig[String].toValue("SealedCaseObject")
-        case SealedObject => ToConfig[String].toValue("SealedObject")
+        case SealedCaseObject => configValue("SealedCaseObject")
+        case SealedObject => configValue("SealedObject")
         case s => Sealed.tc.toValue(s)
       }
       check[Sealed]
@@ -257,15 +254,12 @@ object DeriveConfigsTest extends Scalaprops {
 
   val default1 = {
     val p1 = {
-      implicit val gen: Gen[Default1] =
-        Gen[Int].map(Default1.apply)
+      implicit val gen: Gen[Default1] = Gen[Int].map(Default1.apply)
       check[Default1]
     }
     val p2 = {
-      implicit val gen: Gen[Default1] =
-        Gen.elements(Default1())
-      implicit val tc: ToConfig[Default1] =
-        _ => ConfigFactory.empty().root()
+      implicit val gen: Gen[Default1] = Gen.elements(Default1())
+      implicit val tc: ToConfig[Default1] = _ => configObject()
       check[Default1]
     }
     Properties.list(
@@ -315,19 +309,14 @@ object DeriveConfigsTest extends Scalaprops {
         Gen[(Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int)].map {
           case (a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15, a16, a17, a18, a19, a20, a21, a22) =>
             new Default22(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10)(a11, a12, a13, a14, a15)(a16, a17, a18, a19, a20, a21, a22)
-          }
-      implicit val tc: ToConfig[Default22] =
-        ToConfig.by(d => Map(
-          "a1" -> d.a1, "a2" -> d.a2, "a3" -> d.a3,
-          "a4" -> d.a4, "a5" -> d.a5, "a6" -> d.a6,
-          "a7" -> d.a7, "a8" -> d.a8, "a9" -> d.a9,
-          "a10" -> d.a10,
-          "a11" -> d.a11, "a12" -> d.a12, "a13" -> d.a13,
-          "a14" -> d.a14, "a15" -> d.a15,
-          "a16" -> d.a16, "a17" -> d.a17, "a18" -> d.a18,
-          "a19" -> d.a19, "a20" -> d.a20, "a21" -> d.a21,
-          "a22" -> d.a22
-        ))
+        }
+      implicit val tc: ToConfig[Default22] = d =>
+        configObject(
+          "a1" -> d.a1, "a2" -> d.a2, "a3" -> d.a3, "a4" -> d.a4, "a5" -> d.a5, "a6" -> d.a6,
+          "a7" -> d.a7, "a8" -> d.a8, "a9" -> d.a9, "a10" -> d.a10, "a11" -> d.a11, "a12" -> d.a12,
+          "a13" -> d.a13, "a14" -> d.a14, "a15" -> d.a15, "a16" -> d.a16, "a17" -> d.a17, "a18" -> d.a18,
+          "a19" -> d.a19, "a20" -> d.a20, "a21" -> d.a21, "a22" -> d.a22
+        )
       check[Default22]
     }
     val p2 = {
@@ -336,14 +325,11 @@ object DeriveConfigsTest extends Scalaprops {
           case (a1, a2, a3, a4, a5, a6, a7, a11, a14, a17, a19, a20) =>
             new Default22(a1, a2, a3, a4, a5, a6, a7)(a11 = a11, a14 = a14)(a17 = a17, a19 = a19, a20 = a20)
         }
-      implicit val tc: ToConfig[Default22] =
-        ToConfig.by(d => Map(
-          "a1" -> d.a1, "a2" -> d.a2, "a3" -> d.a3,
-          "a4" -> d.a4, "a5" -> d.a5, "a6" -> d.a6,
-          "a7" -> d.a7,
-          "a11" -> d.a11, "a14" -> d.a14,
-          "a17" -> d.a17, "a19" -> d.a19, "a20" -> d.a20
-        ))
+      implicit val tc: ToConfig[Default22] = d =>
+        configObject(
+          "a1" -> d.a1, "a2" -> d.a2, "a3" -> d.a3, "a4" -> d.a4, "a5" -> d.a5, "a6" -> d.a6,
+          "a7" -> d.a7, "a11" -> d.a11, "a14" -> d.a14, "a17" -> d.a17, "a19" -> d.a19, "a20" -> d.a20
+        )
       check[Default22]
     }
     Properties.list(
@@ -397,19 +383,13 @@ object DeriveConfigsTest extends Scalaprops {
           case ((a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12), (a13, a14, a15, a16, a17, a18, a19, a20, a21, a22, a23)) =>
             new Default23(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10)(a11, a12, a13, a14, a15)(a16, a17, a18, a19, a20, a21, a22)(a23)
         }
-      implicit val tc: ToConfig[Default23] =
-        ToConfig.by(d => Map(
-          "a1" -> d.a1, "a2" -> d.a2, "a3" -> d.a3,
-          "a4" -> d.a4, "a5" -> d.a5, "a6" -> d.a6,
-          "a7" -> d.a7, "a8" -> d.a8, "a9" -> d.a9,
-          "a10" -> d.a10,
-          "a11" -> d.a11, "a12" -> d.a12, "a13" -> d.a13,
-          "a14" -> d.a14, "a15" -> d.a15,
-          "a16" -> d.a16, "a17" -> d.a17, "a18" -> d.a18,
-          "a19" -> d.a19, "a20" -> d.a20, "a21" -> d.a21,
-          "a22" -> d.a22,
-          "a23" -> d.a23
-        ))
+      implicit val tc: ToConfig[Default23] = d =>
+        configObject(
+          "a1" -> d.a1, "a2" -> d.a2, "a3" -> d.a3, "a4" -> d.a4, "a5" -> d.a5, "a6" -> d.a6,
+          "a7" -> d.a7, "a8" -> d.a8, "a9" -> d.a9, "a10" -> d.a10, "a11" -> d.a11, "a12" -> d.a12,
+          "a13" -> d.a13, "a14" -> d.a14, "a15" -> d.a15, "a16" -> d.a16, "a17" -> d.a17, "a18" -> d.a18,
+          "a19" -> d.a19, "a20" -> d.a20, "a21" -> d.a21, "a22" -> d.a22, "a23" -> d.a23
+        )
       check[Default23]
     }
     val p2 = {
@@ -418,14 +398,11 @@ object DeriveConfigsTest extends Scalaprops {
           case (a1, a2, a3, a4, a5, a6, a7, a11, a14, a17, a19, a20) =>
             new Default23(a1, a2, a3, a4, a5, a6, a7)(a11 = a11, a14 = a14)(a17 = a17, a19 = a19, a20 = a20)()
         }
-      implicit val tc: ToConfig[Default23] =
-        ToConfig.by(d => Map(
-          "a1" -> d.a1, "a2" -> d.a2, "a3" -> d.a3,
-          "a4" -> d.a4, "a5" -> d.a5, "a6" -> d.a6,
-          "a7" -> d.a7,
-          "a11" -> d.a11, "a14" -> d.a14,
-          "a17" -> d.a17, "a19" -> d.a19, "a20" -> d.a20
-        ))
+      implicit val tc: ToConfig[Default23] = d =>
+        configObject(
+          "a1" -> d.a1, "a2" -> d.a2, "a3" -> d.a3, "a4" -> d.a4, "a5" -> d.a5, "a6" -> d.a6,
+          "a7" -> d.a7, "a11" -> d.a11, "a14" -> d.a14, "a17" -> d.a17, "a19" -> d.a19, "a20" -> d.a20
+        )
       check[Default23]
     }
     Properties.list(
@@ -478,13 +455,12 @@ object DeriveConfigsTest extends Scalaprops {
       Equal.equalA[Recursive]
 
     implicit lazy val tc: ToConfig[Recursive] = {
-      case RNil => ToConfig[String].toValue("RNil")
-      case RCons(h, t) =>
-        ToConfig[Map[String, ConfigValue]].toValue(Map(
-          "type" -> ToConfig[String].toValue("RCons"),
-          "head" -> ToConfig[Int].toValue(h),
-          "tail" -> tc.toValue(t)
-        ))
+      case RNil => configValue("RNil")
+      case RCons(h, t) => configObject(
+        "type" -> "RCons",
+        "head" -> h,
+        "tail" -> t
+      )
     }
   }
 
@@ -505,11 +481,10 @@ object DeriveConfigsTest extends Scalaprops {
     implicit lazy val equal: Equal[RecursiveOpt] =
       Equal.equalA[RecursiveOpt]
 
-    implicit lazy val tc: ToConfig[RecursiveOpt] =
-      ToConfig.by {
-        case RecursiveOpt(Some(r)) => Map("value" -> tc.toValue(r))
-        case RecursiveOpt(None) => Map.empty[String, ConfigValue]
-      }
+    implicit lazy val tc: ToConfig[RecursiveOpt] = {
+      case RecursiveOpt(Some(r)) => configObject("value" -> r)
+      case RecursiveOpt(None) => configObject()
+    }
   }
 
   val recursiveOption = check[RecursiveOpt]
@@ -524,11 +499,11 @@ object DeriveConfigsTest extends Scalaprops {
     implicit lazy val equal: Equal[ImplicitParam] =
       Equal.equalBy(i => (i.a1, i.a2))
 
-    implicit lazy val tc: ToConfig[ImplicitParam] =
-      ToConfig.by(i => Map(
-        "a1" -> ToConfig[Int].toValue(i.a1),
-        "a2" -> ToConfig[Long].toValue(i.a2)
-      ))
+    implicit lazy val tc: ToConfig[ImplicitParam] = i =>
+      configObject(
+        "a1" -> i.a1,
+        "a2" -> i.a2
+      )
   }
 
   val implicitParam = {
@@ -569,19 +544,15 @@ object DeriveConfigsTest extends Scalaprops {
       Equal.equalBy(h =>
         (h.normalParam, h.paramWithDefault, h.implicitParam, h.implicitParamWithDefault))
 
-    implicit lazy val tc: ToConfig[HyphenSeparated] =
-      ToConfig.by { h =>
-        val N = ToConfig[Int]
-        val L = ToConfig[Long]
-        Map(
-          "normal-param" -> N.toValue(h.normalParam),
-          "param-with-default" -> N.toValue(h.paramWithDefault),
-          "duplicatedName" -> N.toValue(h.duplicatedName),
-          "duplicated-name" -> N.toValue(h.`duplicated-name`),
-          "implicit-param" -> N.toValue(h.implicitParam),
-          "implicit-param-with-default" -> L.toValue(h.implicitParamWithDefault)
-        )
-      }
+    implicit lazy val tc: ToConfig[HyphenSeparated] = h =>
+      configObject(
+        "normal-param" -> h.normalParam,
+        "param-with-default" -> h.paramWithDefault,
+        "duplicatedName" -> h.duplicatedName,
+        "duplicated-name" -> h.`duplicated-name`,
+        "implicit-param" -> h.implicitParam,
+        "implicit-param-with-default" -> h.implicitParamWithDefault
+      )
   }
 
   val hyphenSeparatedPath = {
