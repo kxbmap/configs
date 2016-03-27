@@ -57,8 +57,7 @@ sealed abstract class Result[+A] extends Product with Serializable {
 
   def exists(f: A => Boolean): Boolean
 
-  final def forall(f: A => Boolean): Boolean =
-    !exists(f)
+  def forall(f: A => Boolean): Boolean
 
   def foreach(f: A => Unit): Unit
 
@@ -100,7 +99,7 @@ object Result {
       ifSuccess(value)
 
     override def map[B](f: A => B): Result[B] =
-      Success(f(value))
+      Try(f(value))
 
     override def flatMap[B](f: A => Result[B]): Result[B] =
       try
@@ -114,7 +113,7 @@ object Result {
 
     override def ap[B](f: Result[A => B]): Result[B] =
       f match {
-        case Success(f0) => Success(f0(value))
+        case Success(f0) => Try(f0(value))
         case fa@Failure(_) => fa
       }
 
@@ -137,6 +136,9 @@ object Result {
       this
 
     override def exists(f: A => Boolean): Boolean =
+      f(value)
+
+    def forall(f: A => Boolean): Boolean =
       f(value)
 
     override def foreach(f: A => Unit): Unit =
@@ -207,6 +209,9 @@ object Result {
 
     override def exists(f: Nothing => Boolean): Boolean =
       false
+
+    def forall(f: (Nothing) => Boolean): Boolean =
+      true
 
     override def foreach(f: Nothing => Unit): Unit =
       ()
