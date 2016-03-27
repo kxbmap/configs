@@ -224,7 +224,7 @@ class ConfigsMacro(val c: blackbox.Context) extends MacroUtil with Util {
         val inst =
           if (cs.isModuleClass)
             q"$Configs.successful[${ctx.target}](${cs.module})"
-          else if (cs.isCaseClass)
+          else if (cs.isCaseClass && classSym.companion.isModule)
             caseClassConfigs(cs.toType, cs.companion.asModule)
           else
             plainClassConfigs(cs.toType)
