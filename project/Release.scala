@@ -33,7 +33,7 @@ object Release extends AutoPlugin {
     updateReadme <<= updateReadmeTask,
     releaseCrossBuild := true,
     releasePublishArtifactsAction := publishSigned.value,
-    releaseVersionBump := Bump.Minor,
+    releaseVersionBump := Bump.Bugfix,
     releaseProcess := Seq(
       checkSnapshotDependencies,
       inquireVersions,
