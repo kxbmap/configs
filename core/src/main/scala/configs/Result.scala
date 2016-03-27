@@ -157,7 +157,7 @@ object Result {
   final case class Failure(error: ConfigError) extends Result[Nothing] {
 
     override def value: Nothing =
-      valueOrThrow(_.throwable)
+      valueOrThrow(_.configException)
 
     override def isSuccess: Boolean = false
 

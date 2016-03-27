@@ -34,6 +34,22 @@ final case class ConfigError(head: ConfigError.Entry, tail: Vector[ConfigError.E
 
   def throwable: Throwable =
     head.throwable
+
+  def configException: ConfigException = {
+    val msg =
+      if (tail.isEmpty) head.messageWithPath
+      else s"${head.messageWithPath} (and suppressed ${tail.size} error(s))"
+    configException(msg)
+  }
+
+  def configException(message: String): ConfigException =
+    suppressBy(new ConfigException.Generic(message))
+
+  def suppressBy[E <: Throwable](exception: E): E = {
+    entries.foreach(e => exception.addSuppressed(e.throwable))
+    exception
+  }
+
 }
 
 object ConfigError {
