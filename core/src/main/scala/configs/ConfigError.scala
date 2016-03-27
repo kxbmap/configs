@@ -32,6 +32,7 @@ final case class ConfigError(head: ConfigError.Entry, tail: Vector[ConfigError.E
   def withPath(path: String): ConfigError =
     ConfigError(head.pushPath(path), tail.map(_.pushPath(path)))
 
+  @deprecated("Use configException or head.throwable instead", "0.4.1")
   def throwable: Throwable =
     head.throwable
 
