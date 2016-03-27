@@ -169,6 +169,9 @@ sealed abstract class ConfigsInstances extends ConfigsInstances0 {
     optionConfigs[Double].map(_.fold(ju.OptionalDouble.empty())(ju.OptionalDouble.of))
 
 
+  implicit def resultConfigs[A](implicit A: Configs[A]): Configs[Result[A]] =
+    (c, p) => Result.successful(A.get(c, p))
+
   implicit def tryConfigs[A](implicit A: Configs[A]): Configs[Try[A]] =
     A.get(_, _).map(Success(_)).handle {
       case e => Failure(e.head.throwable)
@@ -180,8 +183,8 @@ sealed abstract class ConfigsInstances extends ConfigsInstances0 {
         Left(e.head.throwable.asInstanceOf[E])
     }
 
-  implicit def configErrorEitherConfigs[A](implicit A: Configs[A]): Configs[Either[ConfigError, A]] =
-    (c, p) => Result.successful(A.get(c, p).fold(Left(_), Right(_)))
+  implicit def configErrorEitherConfigs[A: Configs]: Configs[Either[ConfigError, A]] =
+    resultConfigs[A].map(_.toEither)
 
 
   implicit def convertFromStringConfigs[A](implicit A: FromString[A]): Configs[A] =
