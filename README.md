@@ -13,7 +13,7 @@ Usage
 Add the following line to your build file:
 
 ```scala
-libraryDependencies += "com.github.kxbmap" %% "configs" % "0.4.0"
+libraryDependencies += "com.github.kxbmap" %% "configs" % "0.4.1"
 ```
 
 configs version 0.4+ only support Java 8. If you need to Java 7, please check [0.3.x](https://github.com/kxbmap/configs/tree/v0.3.x-java7).
@@ -164,8 +164,8 @@ There are a number of built-in `Configs` instances:
   * `Option[A]`
   * `java.util.`{`Optional[A]`, `OptionalLong`, `OptionalInt`, `OptionalDouble`}
 * Error types
+  * `configs.Result[A]`
   * `Either[ConfigError, A]`
-  * `Either[E <: Throwable, A]`, `Try[A]`
 * case classes
 * classes that have public constructors
 * ADTs (sealed trait + classes/objects). See [ADTs support](#adts-support)
