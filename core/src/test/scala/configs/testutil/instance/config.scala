@@ -18,9 +18,11 @@ package configs.testutil.instance
 
 import com.typesafe.config.{Config, ConfigList, ConfigMemorySize, ConfigObject, ConfigValue, ConfigValueFactory}
 import configs.testutil.gen._
+import configs.testutil.instance.anyVal._
+import configs.testutil.instance.collection._
 import configs.testutil.instance.string._
-import java.{util => ju}
-import scala.collection.convert.decorateAsJava._
+import java.{lang => jl, util => ju}
+import scala.collection.convert.decorateAll._
 import scalaprops.Gen
 import scalaz.{Equal, Need}
 
@@ -28,19 +30,27 @@ object config {
 
 
   implicit lazy val configEqual: Equal[Config] =
-    Equal.equalA[Config]
+    Equal.equalBy(_.root())
 
   implicit lazy val configGen: Gen[Config] =
     configObjectGen.map(_.toConfig)
 
   implicit lazy val configValueEqual: Equal[ConfigValue] =
-    Equal.equalA[ConfigValue]
+    Equal.equal {
+      case (a: ConfigObject, b: ConfigObject) => Equal[ConfigObject].equal(a, b)
+      case (a: ConfigList, b: ConfigList) => Equal[ConfigList].equal(a, b)
+      case (a, b) => a.valueType() == b.valueType() && (
+        (a.unwrapped(), b.unwrapped()) match {
+          case (d1: jl.Double, d2: jl.Double) => Equal[jl.Double].equal(d1, d2)
+          case (n1, n2) => n1 == n2
+        })
+    }
 
   implicit lazy val configListEqual: Equal[ConfigList] =
-    Equal.equalA[ConfigList]
+    Equal.equalBy(_.asScala.toList)
 
   implicit lazy val configObjectEqual: Equal[ConfigObject] =
-    Equal.equalA[ConfigObject]
+    Equal.equalBy(_.asScala)
 
   private[this] def configValue[A: Gen]: Gen[ConfigValue] =
     Gen[A].map(ConfigValueFactory.fromAnyRef)

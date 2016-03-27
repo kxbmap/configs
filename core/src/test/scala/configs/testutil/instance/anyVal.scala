@@ -26,11 +26,19 @@ object anyVal {
   implicit lazy val shortOrder: Order[Short] = std.anyVal.shortInstance
   implicit lazy val intOrder: Order[Int] = std.anyVal.intInstance
   implicit lazy val longOrder: Order[Long] = std.anyVal.longInstance
-  implicit lazy val doubleOrder: Order[Double] = Order.order {
-    (a, b) => if (a.isNaN && b.isNaN) Ordering.EQ else std.anyVal.doubleInstance.order(a, b)
+  implicit lazy val doubleOrder: Order[Double] = Order.order { (a, b) =>
+    jl.Double.compare(a, b) match {
+      case -1 if a != b => Ordering.LT
+      case 1 if a != b => Ordering.GT
+      case _ => Ordering.EQ
+    }
   }
-  implicit lazy val floatOrder: Order[Float] = Order.order {
-    (a, b) => if (a.isNaN && b.isNaN) Ordering.EQ else std.anyVal.floatInstance.order(a, b)
+  implicit lazy val floatOrder: Order[Float] = Order.order { (a, b) =>
+    jl.Float.compare(a, b) match {
+      case -1 if a != b => Ordering.LT
+      case 1 if a != b => Ordering.GT
+      case _ => Ordering.EQ
+    }
   }
   implicit lazy val charOrder: Order[Char] = std.anyVal.char
   implicit lazy val booleanOrder: Order[Boolean] = std.anyVal.booleanInstance
