@@ -43,6 +43,8 @@ sealed abstract class Result[+A] extends Product with Serializable {
 
   def valueOrElse[B >: A](default: => B): B
 
+  def valueOrThrow(e: ConfigError => Throwable): A
+
   def handleWith[B >: A](pf: PartialFunction[ConfigError, Result[B]]): Result[B]
 
   final def handle[B >: A](pf: PartialFunction[ConfigError, B]): Result[B] =
@@ -125,6 +127,9 @@ object Result {
     override def valueOrElse[B >: A](default: => B): B =
       value
 
+    override def valueOrThrow(e: ConfigError => Throwable): A =
+      value
+
     override def handleWith[B >: A](pf: PartialFunction[ConfigError, Result[B]]): Result[B] =
       this
 
@@ -152,7 +157,7 @@ object Result {
   final case class Failure(error: ConfigError) extends Result[Nothing] {
 
     override def value: Nothing =
-      throw error.throwable
+      valueOrThrow(_.throwable)
 
     override def isSuccess: Boolean = false
 
@@ -182,6 +187,9 @@ object Result {
 
     override def valueOrElse[B >: Nothing](default: => B): B =
       default
+
+    override def valueOrThrow(e: ConfigError => Throwable): Nothing =
+      throw e(error)
 
     override def handleWith[B >: Nothing](pf: PartialFunction[ConfigError, Result[B]]): Result[B] =
       try
