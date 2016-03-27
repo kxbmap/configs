@@ -25,6 +25,7 @@ import scalaz.std.anyVal._
 import scalaz.std.string._
 import scalaz.{Equal, \/}
 
+@deprecated("", "0.4.2")
 object ConfigErrorEitherConfigsTest extends Scalaprops with ConfigErrorImplicits {
 
   val either = check[Either[ConfigError, Int]]

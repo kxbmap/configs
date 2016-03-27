@@ -189,6 +189,7 @@ sealed abstract class ConfigsInstances extends ConfigsInstances0 {
         Left(e.head.throwable.asInstanceOf[E])
     }
 
+  @deprecated("Use configs.Result instead", "0.4.2")
   implicit def configErrorEitherConfigs[A: Configs]: Configs[Either[ConfigError, A]] =
     resultConfigs[A].map(_.toEither)
 
