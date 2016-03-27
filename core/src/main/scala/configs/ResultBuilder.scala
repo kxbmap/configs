@@ -14,13 +14,11 @@
  * limitations under the License.
  */
 
-package configs.syntax
+package configs
 
-import configs.Result
+object ResultBuilder {
 
-object ResultAp {
-
-  final class Builder2[A, B] private[syntax](a: Result[A], b: Result[B]) {
+  final class Builder2[A, B] private[configs](a: Result[A], b: Result[B]) {
 
     def ~[X](x: Result[X]): Builder3[A, B, X] =
       new Builder3(a, b, x)
@@ -32,7 +30,7 @@ object ResultAp {
       apply(Tuple2.apply)
   }
 
-  final class Builder3[A, B, C] private[ResultAp](a: Result[A], b: Result[B], c: Result[C]) {
+  final class Builder3[A, B, C] private[configs](a: Result[A], b: Result[B], c: Result[C]) {
 
     def ~[X](x: Result[X]): Builder4[A, B, C, X] =
       new Builder4(a, b, c, x)
@@ -44,7 +42,7 @@ object ResultAp {
       apply(Tuple3.apply)
   }
 
-  final class Builder4[A, B, C, D] private[ResultAp](a: Result[A], b: Result[B], c: Result[C], d: Result[D]) {
+  final class Builder4[A, B, C, D] private[configs](a: Result[A], b: Result[B], c: Result[C], d: Result[D]) {
 
     def ~[X](x: Result[X]): Builder5[A, B, C, D, X] =
       new Builder5(a, b, c, d, x)
@@ -56,7 +54,7 @@ object ResultAp {
       apply(Tuple4.apply)
   }
 
-  final class Builder5[A, B, C, D, E] private[ResultAp](
+  final class Builder5[A, B, C, D, E] private[configs](
       a: Result[A], b: Result[B], c: Result[C], d: Result[D], e: Result[E]) {
 
     def ~[X](x: Result[X]): Builder6[A, B, C, D, E, X] =
@@ -69,7 +67,7 @@ object ResultAp {
       apply(Tuple5.apply)
   }
 
-  final class Builder6[A, B, C, D, E, F] private[ResultAp](
+  final class Builder6[A, B, C, D, E, F] private[configs](
       a: Result[A], b: Result[B], c: Result[C], d: Result[D], e: Result[E], f: Result[F]) {
 
     def ~[X](x: Result[X]): Builder7[A, B, C, D, E, F, X] =
@@ -82,7 +80,7 @@ object ResultAp {
       apply(Tuple6.apply)
   }
 
-  final class Builder7[A, B, C, D, E, F, G] private[ResultAp](
+  final class Builder7[A, B, C, D, E, F, G] private[configs](
       a: Result[A], b: Result[B], c: Result[C], d: Result[D], e: Result[E], f: Result[F], g: Result[G]) {
 
     def ~[X](x: Result[X]): Builder8[A, B, C, D, E, F, G, X] =
@@ -95,7 +93,7 @@ object ResultAp {
       apply(Tuple7.apply)
   }
 
-  final class Builder8[A, B, C, D, E, F, G, H] private[ResultAp](
+  final class Builder8[A, B, C, D, E, F, G, H] private[configs](
       a: Result[A], b: Result[B], c: Result[C], d: Result[D], e: Result[E], f: Result[F], g: Result[G], h: Result[H]) {
 
     def ~[X](x: Result[X]): Builder9[A, B, C, D, E, F, G, H, X] =
@@ -108,7 +106,7 @@ object ResultAp {
       apply(Tuple8.apply)
   }
 
-  final class Builder9[A, B, C, D, E, F, G, H, I] private[ResultAp](
+  final class Builder9[A, B, C, D, E, F, G, H, I] private[configs](
       a: Result[A], b: Result[B], c: Result[C], d: Result[D], e: Result[E], f: Result[F], g: Result[G], h: Result[H],
       i: Result[I]) {
 
@@ -122,7 +120,7 @@ object ResultAp {
       apply(Tuple9.apply)
   }
 
-  final class Builder10[A, B, C, D, E, F, G, H, I, J] private[ResultAp](
+  final class Builder10[A, B, C, D, E, F, G, H, I, J] private[configs](
       a: Result[A], b: Result[B], c: Result[C], d: Result[D], e: Result[E], f: Result[F], g: Result[G], h: Result[H],
       i: Result[I], j: Result[J]) {
 
@@ -136,7 +134,7 @@ object ResultAp {
       apply(Tuple10.apply)
   }
 
-  final class Builder11[A, B, C, D, E, F, G, H, I, J, K] private[ResultAp](
+  final class Builder11[A, B, C, D, E, F, G, H, I, J, K] private[configs](
       a: Result[A], b: Result[B], c: Result[C], d: Result[D], e: Result[E], f: Result[F], g: Result[G], h: Result[H],
       i: Result[I], j: Result[J], k: Result[K]) {
 
@@ -150,7 +148,7 @@ object ResultAp {
       apply(Tuple11.apply)
   }
 
-  final class Builder12[A, B, C, D, E, F, G, H, I, J, K, L] private[ResultAp](
+  final class Builder12[A, B, C, D, E, F, G, H, I, J, K, L] private[configs](
       a: Result[A], b: Result[B], c: Result[C], d: Result[D], e: Result[E], f: Result[F], g: Result[G], h: Result[H],
       i: Result[I], j: Result[J], k: Result[K], l: Result[L]) {
 
@@ -164,7 +162,7 @@ object ResultAp {
       apply(Tuple12.apply)
   }
 
-  final class Builder13[A, B, C, D, E, F, G, H, I, J, K, L, M] private[ResultAp](
+  final class Builder13[A, B, C, D, E, F, G, H, I, J, K, L, M] private[configs](
       a: Result[A], b: Result[B], c: Result[C], d: Result[D], e: Result[E], f: Result[F], g: Result[G], h: Result[H],
       i: Result[I], j: Result[J], k: Result[K], l: Result[L], m: Result[M]) {
 
@@ -178,7 +176,7 @@ object ResultAp {
       apply(Tuple13.apply)
   }
 
-  final class Builder14[A, B, C, D, E, F, G, H, I, J, K, L, M, N] private[ResultAp](
+  final class Builder14[A, B, C, D, E, F, G, H, I, J, K, L, M, N] private[configs](
       a: Result[A], b: Result[B], c: Result[C], d: Result[D], e: Result[E], f: Result[F], g: Result[G], h: Result[H],
       i: Result[I], j: Result[J], k: Result[K], l: Result[L], m: Result[M], n: Result[N]) {
 
@@ -192,7 +190,7 @@ object ResultAp {
       apply(Tuple14.apply)
   }
 
-  final class Builder15[A, B, C, D, E, F, G, H, I, J, K, L, M, N, O] private[ResultAp](
+  final class Builder15[A, B, C, D, E, F, G, H, I, J, K, L, M, N, O] private[configs](
       a: Result[A], b: Result[B], c: Result[C], d: Result[D], e: Result[E], f: Result[F], g: Result[G], h: Result[H],
       i: Result[I], j: Result[J], k: Result[K], l: Result[L], m: Result[M], n: Result[N], o: Result[O]) {
 
@@ -206,7 +204,7 @@ object ResultAp {
       apply(Tuple15.apply)
   }
 
-  final class Builder16[A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P] private[ResultAp](
+  final class Builder16[A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P] private[configs](
       a: Result[A], b: Result[B], c: Result[C], d: Result[D], e: Result[E], f: Result[F], g: Result[G], h: Result[H],
       i: Result[I], j: Result[J], k: Result[K], l: Result[L], m: Result[M], n: Result[N], o: Result[O], p: Result[P]) {
 
@@ -220,7 +218,7 @@ object ResultAp {
       apply(Tuple16.apply)
   }
 
-  final class Builder17[A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q] private[ResultAp](
+  final class Builder17[A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q] private[configs](
       a: Result[A], b: Result[B], c: Result[C], d: Result[D], e: Result[E], f: Result[F], g: Result[G], h: Result[H],
       i: Result[I], j: Result[J], k: Result[K], l: Result[L], m: Result[M], n: Result[N], o: Result[O], p: Result[P],
       q: Result[Q]) {
@@ -235,7 +233,7 @@ object ResultAp {
       apply(Tuple17.apply)
   }
 
-  final class Builder18[A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R] private[ResultAp](
+  final class Builder18[A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R] private[configs](
       a: Result[A], b: Result[B], c: Result[C], d: Result[D], e: Result[E], f: Result[F], g: Result[G], h: Result[H],
       i: Result[I], j: Result[J], k: Result[K], l: Result[L], m: Result[M], n: Result[N], o: Result[O], p: Result[P],
       q: Result[Q], r: Result[R]) {
@@ -250,7 +248,7 @@ object ResultAp {
       apply(Tuple18.apply)
   }
 
-  final class Builder19[A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S] private[ResultAp](
+  final class Builder19[A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S] private[configs](
       a: Result[A], b: Result[B], c: Result[C], d: Result[D], e: Result[E], f: Result[F], g: Result[G], h: Result[H],
       i: Result[I], j: Result[J], k: Result[K], l: Result[L], m: Result[M], n: Result[N], o: Result[O], p: Result[P],
       q: Result[Q], r: Result[R], s: Result[S]) {
@@ -265,7 +263,7 @@ object ResultAp {
       apply(Tuple19.apply)
   }
 
-  final class Builder20[A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T] private[ResultAp](
+  final class Builder20[A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T] private[configs](
       a: Result[A], b: Result[B], c: Result[C], d: Result[D], e: Result[E], f: Result[F], g: Result[G], h: Result[H],
       i: Result[I], j: Result[J], k: Result[K], l: Result[L], m: Result[M], n: Result[N], o: Result[O], p: Result[P],
       q: Result[Q], r: Result[R], s: Result[S], t: Result[T]) {
@@ -280,7 +278,7 @@ object ResultAp {
       apply(Tuple20.apply)
   }
 
-  final class Builder21[A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U] private[ResultAp](
+  final class Builder21[A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U] private[configs](
       a: Result[A], b: Result[B], c: Result[C], d: Result[D], e: Result[E], f: Result[F], g: Result[G], h: Result[H],
       i: Result[I], j: Result[J], k: Result[K], l: Result[L], m: Result[M], n: Result[N], o: Result[O], p: Result[P],
       q: Result[Q], r: Result[R], s: Result[S], t: Result[T], u: Result[U]) {
@@ -295,7 +293,7 @@ object ResultAp {
       apply(Tuple21.apply)
   }
 
-  final class Builder22[A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V] private[ResultAp](
+  final class Builder22[A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V] private[configs](
       a: Result[A], b: Result[B], c: Result[C], d: Result[D], e: Result[E], f: Result[F], g: Result[G], h: Result[H],
       i: Result[I], j: Result[J], k: Result[K], l: Result[L], m: Result[M], n: Result[N], o: Result[O], p: Result[P],
       q: Result[Q], r: Result[R], s: Result[S], t: Result[T], u: Result[U], v: Result[V]) {

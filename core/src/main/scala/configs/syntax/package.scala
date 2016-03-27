@@ -35,8 +35,8 @@ package object syntax {
 
   implicit class ResultOps[A](private val self: Result[A]) extends AnyVal {
 
-    def ~[X](x: Result[X]): ResultAp.Builder2[A, X] =
-      new ResultAp.Builder2(self, x)
+    def ~[X](x: Result[X]): ResultBuilder.Builder2[A, X] =
+      new ResultBuilder.Builder2(self, x)
 
   }
 
