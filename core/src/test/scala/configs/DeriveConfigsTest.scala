@@ -116,8 +116,9 @@ object DeriveConfigsTest extends Scalaprops {
   }
 
   val subApply = {
-    val p1 = check[SubApply]
-    val p2 =
+    val p1 = check[SubApply]("sub apply")
+    val p2 = Properties.single(
+      "synthetic first",
       forAll { (a1: Int, a2: Int, s1: Int, s2: Int) =>
         val c = ConfigFactory.parseString(
           s"""a1 = $a1
@@ -126,11 +127,8 @@ object DeriveConfigsTest extends Scalaprops {
              |s2 = $s2
            """.stripMargin)
         Configs[SubApply].extract(c).exists(_ === SubApply(a1, a2))
-      }
-    Properties.list(
-      p1.toProperties("sub apply"),
-      p2.toProperties("synthetic first")
-    )
+      })
+    p1 x p2
   }
 
 
@@ -155,19 +153,17 @@ object DeriveConfigsTest extends Scalaprops {
   }
 
   val plainClass = {
-    val p1 = check[PlainClass]
-    val p2 =
+    val p1 = check[PlainClass]("plain class")
+    val p2 = Properties.single(
+      "sub constructor",
       forAll { (a1: Int, a2: Int) =>
         val c = ConfigFactory.parseString(
           s"""a1 = $a1
              |a2 = $a2
            """.stripMargin)
         Configs[PlainClass].extract(c).exists(_ === new PlainClass(a1, a2, 42))
-      }
-    Properties.list(
-      p1.toProperties("plain class"),
-      p2.toProperties("sub constructor")
-    )
+      })
+    p1 x p2
   }
 
 
@@ -229,19 +225,16 @@ object DeriveConfigsTest extends Scalaprops {
   }
 
   val sealedClass = {
-    val p1 = check[Sealed]
+    val p1 = check[Sealed]("sealed class")
     val p2 = {
       implicit val moduleAsStringTCV: ToConfig[Sealed] = {
         case SealedCaseObject => configValue("SealedCaseObject")
         case SealedObject => configValue("SealedObject")
         case s => Sealed.tc.toValue(s)
       }
-      check[Sealed]
+      check[Sealed]("module as string")
     }
-    Properties.list(
-      p1.toProperties("sealed class"),
-      p2.toProperties("module as string")
-    )
+    p1 x p2
   }
 
 
@@ -255,17 +248,14 @@ object DeriveConfigsTest extends Scalaprops {
   val default1 = {
     val p1 = {
       implicit val gen: Gen[Default1] = Gen[Int].map(Default1.apply)
-      check[Default1]
+      check[Default1]("w/o default")
     }
     val p2 = {
       implicit val gen: Gen[Default1] = Gen.elements(Default1())
       implicit val tc: ToConfig[Default1] = _ => configObject()
-      check[Default1]
+      check[Default1]("w/ default")
     }
-    Properties.list(
-      p1.toProperties("w/o default"),
-      p2.toProperties("w/ default")
-    )
+    p1 x p2
   }
 
 
@@ -317,7 +307,7 @@ object DeriveConfigsTest extends Scalaprops {
           "a13" -> d.a13, "a14" -> d.a14, "a15" -> d.a15, "a16" -> d.a16, "a17" -> d.a17, "a18" -> d.a18,
           "a19" -> d.a19, "a20" -> d.a20, "a21" -> d.a21, "a22" -> d.a22
         )
-      check[Default22]
+      check[Default22]("w/o defaults")
     }
     val p2 = {
       implicit val gen: Gen[Default22] =
@@ -330,12 +320,9 @@ object DeriveConfigsTest extends Scalaprops {
           "a1" -> d.a1, "a2" -> d.a2, "a3" -> d.a3, "a4" -> d.a4, "a5" -> d.a5, "a6" -> d.a6,
           "a7" -> d.a7, "a11" -> d.a11, "a14" -> d.a14, "a17" -> d.a17, "a19" -> d.a19, "a20" -> d.a20
         )
-      check[Default22]
+      check[Default22]("w/ defaults")
     }
-    Properties.list(
-      p1.toProperties("w/o defaults"),
-      p2.toProperties("w/ defaults")
-    )
+    p1 x p2
   }
 
 
@@ -390,7 +377,7 @@ object DeriveConfigsTest extends Scalaprops {
           "a13" -> d.a13, "a14" -> d.a14, "a15" -> d.a15, "a16" -> d.a16, "a17" -> d.a17, "a18" -> d.a18,
           "a19" -> d.a19, "a20" -> d.a20, "a21" -> d.a21, "a22" -> d.a22, "a23" -> d.a23
         )
-      check[Default23]
+      check[Default23]("w/o defaults")
     }
     val p2 = {
       implicit val gen: Gen[Default23] =
@@ -403,12 +390,9 @@ object DeriveConfigsTest extends Scalaprops {
           "a1" -> d.a1, "a2" -> d.a2, "a3" -> d.a3, "a4" -> d.a4, "a5" -> d.a5, "a6" -> d.a6,
           "a7" -> d.a7, "a11" -> d.a11, "a14" -> d.a14, "a17" -> d.a17, "a19" -> d.a19, "a20" -> d.a20
         )
-      check[Default23]
+      check[Default23]("w/ defaults")
     }
-    Properties.list(
-      p1.toProperties("w/o defaults"),
-      p2.toProperties("w/ defaults")
-    )
+    p1 x p2
   }
 
 
@@ -420,18 +404,17 @@ object DeriveConfigsTest extends Scalaprops {
   }
 
   val optionDefault = {
-    val p1 = forAll {
-      val config = ConfigFactory.empty()
-      Configs[OptionDefault].extract(config).exists(_ == OptionDefault(Some(42)))
-    }
-    val p2 = forAll {
-      val config = ConfigFactory.parseString("opt = null")
-      Configs[OptionDefault].extract(config).exists(_ == OptionDefault(None))
-    }
-    Properties.list(
-      p1.toProperties("missing"),
-      p2.toProperties("null")
-    )
+    val p1 =
+      Properties.single("missing", forAll {
+        val config = ConfigFactory.empty()
+        Configs[OptionDefault].extract(config).exists(_ == OptionDefault(Some(42)))
+      })
+    val p2 =
+      Properties.single("null", forAll {
+        val config = ConfigFactory.parseString("opt = null")
+        Configs[OptionDefault].extract(config).exists(_ == OptionDefault(None))
+      })
+    p1 x p2
   }
 
 
@@ -507,27 +490,25 @@ object DeriveConfigsTest extends Scalaprops {
   }
 
   val implicitParam = {
-    val p1 =
+    val p1 = Properties.single(
+      "implicit parameters",
       forAll { (a1: Int, a2: Long) =>
         implicit val i1: Int = a1
         implicit val i2: Long = a2
         val c = ConfigFactory.empty()
         Configs[ImplicitParam].extract(c).exists(_ === new ImplicitParam()(a1, a2))
-      }
-    val p2 =
+      })
+    val p2 = Properties.single(
+      "implicit with default",
       forAll { implicit a1: Int =>
         val c = ConfigFactory.empty()
         Configs[ImplicitParam].extract(c).exists(_ === new ImplicitParam()(a1, 2L))
-      }
+      })
     val p3 = {
       implicit def a1: Int = sys.error("implicit")
-      check[ImplicitParam]
+      check[ImplicitParam]("w/o implicits")
     }
-    Properties.list(
-      p1.toProperties("implicit parameters"),
-      p2.toProperties("implicit with default"),
-      p3.toProperties("w/o implicits")
-    )
+    p1 x p2 x p3
   }
 
 

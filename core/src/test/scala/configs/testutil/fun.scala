@@ -17,9 +17,11 @@
 package configs.testutil
 
 import com.typesafe.config.{ConfigFactory, ConfigUtil}
-import configs.{Configs, ToConfig}
+import configs.testutil.instance.string._
+import configs.{Configs, Result, ToConfig}
+import scalaprops.Or.Empty
 import scalaprops.Property.forAll
-import scalaprops.{Gen, Properties, Property}
+import scalaprops.{:-:, Gen, Or, Properties}
 import scalaz.Equal
 
 object fun {
@@ -30,15 +32,21 @@ object fun {
     println(s"${Console.RED}xxx${Console.RESET} $x")
   }
 
-  def check[A: Configs : ToConfig : Gen : Equal]: Property =
-    checkExcept[A](_ => false)
+  def check[A: CheckParam : Configs : ToConfig : Gen : Equal]: Properties[Unit :-: String :-: Empty] =
+    Properties.list(
+      encodeDecode[A],
+      pushPath[A]
+    )
 
-  def check[A: Configs : ToConfig : Gen : Equal](id: String): Properties[String] =
-    check[A].toProperties(id)
+  def check[A: CheckParam : Configs : ToConfig : Gen : Equal](id: String): Properties[String :-: String :-: Empty] =
+    check[A].mapId {
+      case Or.L(_) => Or.L(id)
+      case Or.R(r) => Or.R(r)
+    }
 
-  def checkExcept[A: Configs : ToConfig : Gen : Equal](except: A => Boolean): Property =
-    forAll { value: A =>
-      if (except(value)) true
+  private def encodeDecode[A: CheckParam : Configs : ToConfig : Gen : Equal]: Properties[String] =
+    Properties.single("encode/decode", forAll { value: A =>
+      if (CheckParam[A].exceptEncodeDecode(value)) true
       else {
         val path = "path"
         val encoded = ToConfig[A].toValueOption(value)
@@ -47,12 +55,47 @@ object fun {
         val result = decoded.exists(Equal[A].equal(_, value))
         if (!result) {
           println()
-          xxx(s"value  : $value")
           xxx(s"encoded: ${encoded.getOrElse("<missing>")}")
           xxx(s"decoded: ${decoded.valueOr(e => s"<failure>: $e")}")
         }
         result
       }
-    }
+    })
+
+  private def pushPath[A: CheckParam : Configs]: Properties[String] =
+    Properties.single("push path", forAll {
+      val c1 = ConfigFactory.empty()
+      val c2 = ConfigFactory.parseString("path = 42")
+      val c3 = ConfigFactory.parseString("path = []")
+      val result = Result.tuple3(
+        Configs[A].get(c1, "path"),
+        Configs[A].get(c2, "path"),
+        Configs[A].get(c3, "path")
+      )
+      if (CheckParam[A].checkPushPath)
+        result.failed.exists {
+          _.entries.map(_.paths).forall(_ == List("path"))
+        }
+      else result.isSuccess
+    })
+
+
+  implicit class PropertiesOps[A](private val self: Properties[A]) extends AnyVal {
+    def x[B](that: Properties[B]): Properties[Unit :-: A :-: B :-: Or.Empty] =
+      self.product(that)
+  }
+
+  abstract class CheckParam[A] {
+    def exceptEncodeDecode(a: A): Boolean = false
+    def checkPushPath: Boolean = true
+  }
+
+  object CheckParam {
+
+    def apply[A](implicit A: CheckParam[A]): CheckParam[A] = A
+
+    implicit def default[A]: CheckParam[A] = new CheckParam[A] {}
+
+  }
 
 }

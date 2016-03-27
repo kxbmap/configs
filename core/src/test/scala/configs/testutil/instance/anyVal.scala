@@ -22,6 +22,8 @@ import scalaz.{Order, Ordering, std}
 
 object anyVal {
 
+  implicit lazy val unitOrder: Order[Unit] = std.anyVal.unitInstance
+
   implicit lazy val byteOrder: Order[Byte] = std.anyVal.byteInstance
   implicit lazy val shortOrder: Order[Short] = std.anyVal.shortInstance
   implicit lazy val intOrder: Order[Int] = std.anyVal.intInstance

@@ -28,6 +28,11 @@ import scalaprops.{Properties, Scalaprops}
 
 object ErrorTypesTest extends Scalaprops {
 
+  implicit def resultCheckParam[A]: CheckParam[Result[A]] =
+    new CheckParam[Result[A]] {
+      override def checkPushPath: Boolean = false
+    }
+
   val result = check[Result[Int]]
 
   val resultHandleConfigError = {
@@ -58,6 +63,12 @@ object ErrorTypesTest extends Scalaprops {
       p3.toProperties("failure")
     )
   }
+
+
+  implicit def eitherCheckParam[A]: CheckParam[Either[ConfigError, A]] =
+    new CheckParam[Either[ConfigError, A]] {
+      override def checkPushPath: Boolean = false
+    }
 
   val either = check[Either[ConfigError, Int]]
 

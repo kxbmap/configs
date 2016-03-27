@@ -24,7 +24,7 @@ import configs.testutil.instance.symbol._
 import java.{lang => jl, util => ju}
 import scala.collection.immutable.TreeMap
 import scala.collection.mutable
-import scalaprops.{Properties, Scalaprops}
+import scalaprops.Scalaprops
 
 object CollectionTypesTest extends Scalaprops {
 
@@ -36,24 +36,21 @@ object CollectionTypesTest extends Scalaprops {
 
   val javaSet = check[ju.Set[Int]]
 
-  val javaMap = Properties.list(
-    check[ju.Map[String, Int]]("string map"),
-    check[ju.Map[Symbol, Int]]("symbol map")
-  )
+  val javaMap =
+    check[ju.Map[String, Int]]("string map") x
+      check[ju.Map[Symbol, Int]]("symbol map")
 
-  val fromJList = Properties.list(
-    check[List[Int]]("list"),
-    check[Vector[Int]]("vector"),
-    check[Stream[Int]]("stream"),
-    check[Array[Int]]("array"),
-    check[Set[Int]]("set")
-  )
+  val fromJList =
+    check[List[Int]]("list") x
+      check[Vector[Int]]("vector") x
+      check[Stream[Int]]("stream") x
+      check[Array[Int]]("array") x
+      check[Set[Int]]("set")
 
-  val fromJMap = Properties.list(
-    check[Map[String, Int]]("map"),
-    check[TreeMap[String, Int]]("tree map"),
-    check[mutable.Map[String, Int]]("mutable map")
-  )
+  val fromJMap =
+    check[Map[String, Int]]("map") x
+      check[TreeMap[String, Int]]("tree map") x
+      check[mutable.Map[String, Int]]("mutable map")
 
   val javaProperties = check[ju.Properties]
 

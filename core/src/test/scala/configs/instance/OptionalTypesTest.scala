@@ -32,7 +32,15 @@ object OptionalTypesTest extends Scalaprops {
 
   val option2 = check[Option[Option[Int]]]
 
-  val option3 = checkExcept[Option[Option[Option[Int]]]](_.contains(None))
+  type O3[A] = Option[Option[Option[A]]]
+
+  implicit def option3CheckParam[A]: CheckParam[O3[A]] =
+    new CheckParam[O3[A]] {
+      override def exceptEncodeDecode(a: O3[A]): Boolean = a.contains(None)
+    }
+
+  val option3 = check[O3[Int]]
+
 
   val missing = forAll { p: String =>
     val config = ConfigFactory.empty()
