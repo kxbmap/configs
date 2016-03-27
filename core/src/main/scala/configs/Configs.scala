@@ -176,6 +176,7 @@ sealed abstract class ConfigsInstances extends ConfigsInstances0 {
   implicit def resultConfigs[A](implicit A: Configs[A]): Configs[Result[A]] =
     (c, p) => Result.successful(A.get(c, p))
 
+  @deprecated("Use configs.Result instead", "0.4.2")
   implicit def configErrorEitherConfigs[A: Configs]: Configs[Either[ConfigError, A]] =
     resultConfigs[A].map(_.toEither)
 
