@@ -51,7 +51,11 @@ trait Configs[A] {
         self.get(config, path).withPath(path)
 
       override def withPath: Configs[A] = this
+      override def withoutPath: Configs[A] = self
     }
+
+  def withoutPath: Configs[A] =
+    this
 
   def as[B >: A]: Configs[B] =
     this.asInstanceOf[Configs[B]]
@@ -148,13 +152,13 @@ sealed abstract class ConfigsInstances extends ConfigsInstances0 {
 
 
   implicit def optionConfigs[A](implicit A: Configs[A]): Configs[Option[A]] =
-    (c, p) =>
+    Configs.from { (c, p) =>
       if (c.hasPathOrNull(p))
         A.get(c, p).map(Some(_)).handle {
           case ConfigError(ConfigError.NullValue(_, `p` :: Nil), es) if es.isEmpty => None
         }
-      else
-        Result.successful(None)
+      else Result.successful(None)
+    }.withoutPath
 
   implicit def javaOptionalConfigs[A: Configs]: Configs[ju.Optional[A]] =
     optionConfigs[A].map(_.fold(ju.Optional.empty[A]())(ju.Optional.of))
