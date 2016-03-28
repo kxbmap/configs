@@ -16,13 +16,14 @@
 
 package configs.syntax
 
-import com.typesafe.config.ConfigObject
 import com.typesafe.config.ConfigValueFactory.fromAnyRef
+import com.typesafe.config.{ConfigFactory, ConfigObject}
 import configs.testutil.instance.config._
 import configs.testutil.instance.symbol._
 import scala.collection.convert.decorateAll._
 import scalaprops.Property.forAll
 import scalaprops.Scalaprops
+import scalaz.Monoid
 import scalaz.syntax.equal._
 
 object ConfigObjectOpsTest extends Scalaprops {
@@ -65,5 +66,10 @@ object ConfigObjectOpsTest extends Scalaprops {
       case (k, v) => result.get(k) === v
     }
   }
+
+  implicit lazy val configObjectMonoid: Monoid[ConfigObject] =
+    Monoid.instance(_ ++ _, ConfigFactory.empty().root())
+
+  val `empty/++ monoid` = scalaprops.scalazlaws.monoid.all[ConfigObject]
 
 }
