@@ -16,18 +16,17 @@
 
 package configs.syntax
 
-import com.typesafe.config.{ConfigFactory, ConfigValueFactory}
+import com.typesafe.config.ConfigFactory
 import configs.testutil.instance.string._
-import configs.{Result, ToConfig}
-import scala.collection.convert.decorateAsJava._
+import configs.{ConfigObject, Result, ToConfig}
 import scalaprops.Property.forAll
 import scalaprops.Scalaprops
 
 object ConfigOpsTest extends Scalaprops {
 
-  val extract = forAll { m: Map[String, String] =>
-    val config = ConfigValueFactory.fromMap(m.asJava).toConfig
-    config.extract[Map[String, String]] == Result.successful(m)
+  val extract = forAll { m: Map[String, Int] =>
+    val config = ConfigObject.from(m).toConfig
+    config.extract[Map[String, Int]] == Result.successful(m)
   }
 
   val get = forAll { n: Int =>

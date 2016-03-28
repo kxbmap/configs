@@ -27,8 +27,6 @@ class ToConfigMacro(val c: blackbox.Context) extends MacroUtil with Util {
   }
 
   val ToConfig = q"_root_.configs.ToConfig"
-  val ConfigFactory = q"_root_.com.typesafe.config.ConfigFactory"
-  val tConfigValue = tq"_root_.com.typesafe.config.ConfigValue"
   val ImmSeq = q"_root_.scala.collection.immutable.Seq"
 
   case class CaseClass(tpe: Type, accessors: List[CaseAccessor])
@@ -65,9 +63,9 @@ class ToConfigMacro(val c: blackbox.Context) extends MacroUtil with Util {
     val seq = q"$ImmSeq[($tString, ${tOption(tConfigValue)})](..$kvs)"
     q"""
       $ToConfig.from { $v: ${cc.tpe} =>
-        $seq.foldLeft($ConfigFactory.empty()) {
+        $seq.foldLeft(_root_.configs.ConfigObject.empty) {
           case (c, (k, v)) => v.foldLeft(c)(_.withValue(k, _))
-        }.root()
+        }
       }
      """
   }

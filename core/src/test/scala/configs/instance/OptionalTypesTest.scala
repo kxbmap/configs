@@ -18,11 +18,11 @@ package configs.instance
 
 import com.typesafe.config.ConfigFactory
 import configs.ConfigUtil.{quoteString => q}
-import configs.Configs
 import configs.testutil.fun._
 import configs.testutil.instance.anyVal._
 import configs.testutil.instance.option._
 import configs.testutil.instance.string._
+import configs.{Config, Configs}
 import java.{util => ju}
 import scalaprops.Property.forAll
 import scalaprops.{Properties, Scalaprops}
@@ -44,15 +44,13 @@ object OptionalTypesTest extends Scalaprops {
 
 
   val missing = forAll { p: String =>
-    val config = ConfigFactory.empty()
-    Configs[Option[Int]].get(config, q(p)).exists(_.isEmpty)
+    Configs[Option[Int]].get(Config.empty, q(p)).exists(_.isEmpty)
   }
 
   val nestedOption = {
     val OO = Configs[Option[Option[Int]]]
     val p1 = forAll { p: String =>
-      val config = ConfigFactory.empty()
-      OO.get(config, q(p)).exists(_.isEmpty)
+      OO.get(Config.empty, q(p)).exists(_.isEmpty)
     }
     val p2 = forAll { p: String =>
       val config = ConfigFactory.parseString(s"${q(p)} = null")

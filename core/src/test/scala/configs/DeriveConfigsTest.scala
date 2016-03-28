@@ -406,8 +406,7 @@ object DeriveConfigsTest extends Scalaprops {
   val optionDefault = {
     val p1 =
       Properties.single("missing", forAll {
-        val config = ConfigFactory.empty()
-        Configs[OptionDefault].extract(config).exists(_ == OptionDefault(Some(42)))
+        Configs[OptionDefault].extract(Config.empty).exists(_ == OptionDefault(Some(42)))
       })
     val p2 =
       Properties.single("null", forAll {
@@ -495,14 +494,12 @@ object DeriveConfigsTest extends Scalaprops {
       forAll { (a1: Int, a2: Long) =>
         implicit val i1: Int = a1
         implicit val i2: Long = a2
-        val c = ConfigFactory.empty()
-        Configs[ImplicitParam].extract(c).exists(_ === new ImplicitParam()(a1, a2))
+        Configs[ImplicitParam].extract(Config.empty).exists(_ === new ImplicitParam()(a1, a2))
       })
     val p2 = Properties.single(
       "implicit with default",
       forAll { implicit a1: Int =>
-        val c = ConfigFactory.empty()
-        Configs[ImplicitParam].extract(c).exists(_ === new ImplicitParam()(a1, 2L))
+        Configs[ImplicitParam].extract(Config.empty).exists(_ === new ImplicitParam()(a1, 2L))
       })
     val p3 = {
       implicit def a1: Int = sys.error("implicit")

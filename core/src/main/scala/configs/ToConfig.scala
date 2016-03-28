@@ -16,9 +16,9 @@
 
 package configs
 
-import com.typesafe.config.{Config, ConfigList, ConfigMemorySize, ConfigObject, ConfigValue, ConfigValueFactory}
 import java.{lang => jl, math => jm, time => jt, util => ju}
-import scala.collection.convert.decorateAll._
+import scala.collection.breakOut
+import scala.collection.convert.decorateAsScala._
 import scala.concurrent.duration._
 
 trait ToConfig[A] {
@@ -66,26 +66,26 @@ sealed abstract class ToConfigInstances0 {
 
 sealed abstract class ToConfigInstances extends ToConfigInstances0 {
 
-  private[this] val any: ToConfig[Any] = ConfigValueFactory.fromAnyRef
-  def fromAnyRef[A]: ToConfig[A] = any.asInstanceOf[ToConfig[A]]
+  private[this] val any: ToConfig[Any] = ConfigValue.from
+  def fromAny[A]: ToConfig[A] = any.asInstanceOf[ToConfig[A]]
 
-  implicit val longToConfig: ToConfig[Long] = fromAnyRef[Long]
-  implicit val intToConfig: ToConfig[Int] = fromAnyRef[Int]
-  implicit val shortToConfig: ToConfig[Short] = fromAnyRef[Short]
-  implicit val byteToConfig: ToConfig[Byte] = fromAnyRef[Byte]
-  implicit val doubleToConfig: ToConfig[Double] = fromAnyRef[Double]
-  implicit val floatToConfig: ToConfig[Float] = fromAnyRef[Float]
-  implicit val booleanToConfig: ToConfig[Boolean] = fromAnyRef[Boolean]
+  implicit val longToConfig: ToConfig[Long] = fromAny[Long]
+  implicit val intToConfig: ToConfig[Int] = fromAny[Int]
+  implicit val shortToConfig: ToConfig[Short] = fromAny[Short]
+  implicit val byteToConfig: ToConfig[Byte] = fromAny[Byte]
+  implicit val doubleToConfig: ToConfig[Double] = fromAny[Double]
+  implicit val floatToConfig: ToConfig[Float] = fromAny[Float]
+  implicit val booleanToConfig: ToConfig[Boolean] = fromAny[Boolean]
 
-  implicit val javaLongToConfig: ToConfig[jl.Long] = fromAnyRef[jl.Long]
-  implicit val javaIntegerToConfig: ToConfig[jl.Integer] = fromAnyRef[jl.Integer]
-  implicit val javaShortToConfig: ToConfig[jl.Short] = fromAnyRef[jl.Short]
-  implicit val javaByteToConfig: ToConfig[jl.Byte] = fromAnyRef[jl.Byte]
-  implicit val javaDoubleToConfig: ToConfig[jl.Double] = fromAnyRef[jl.Double]
-  implicit val javaFloatToConfig: ToConfig[jl.Float] = fromAnyRef[jl.Float]
-  implicit val javaBooleanToConfig: ToConfig[jl.Boolean] = fromAnyRef[jl.Boolean]
+  implicit val javaLongToConfig: ToConfig[jl.Long] = fromAny[jl.Long]
+  implicit val javaIntegerToConfig: ToConfig[jl.Integer] = fromAny[jl.Integer]
+  implicit val javaShortToConfig: ToConfig[jl.Short] = fromAny[jl.Short]
+  implicit val javaByteToConfig: ToConfig[jl.Byte] = fromAny[jl.Byte]
+  implicit val javaDoubleToConfig: ToConfig[jl.Double] = fromAny[jl.Double]
+  implicit val javaFloatToConfig: ToConfig[jl.Float] = fromAny[jl.Float]
+  implicit val javaBooleanToConfig: ToConfig[jl.Boolean] = fromAny[jl.Boolean]
 
-  implicit val stringToConfig: ToConfig[String] = fromAnyRef[String]
+  implicit val stringToConfig: ToConfig[String] = fromAny[String]
 
   implicit lazy val charToConfig: ToConfig[Char] = ToConfig.by(String.valueOf)
   implicit lazy val javaCharacterToConfig: ToConfig[jl.Character] = ToConfig.by(_.toString)
@@ -149,11 +149,11 @@ sealed abstract class ToConfigInstances extends ToConfigInstances0 {
   implicit lazy val configObjectToConfig: ToConfig[ConfigObject] = v => v
 
   implicit val configMemorySizeToConfig: ToConfig[ConfigMemorySize] =
-    fromAnyRef[ConfigMemorySize]
+    fromAny[ConfigMemorySize]
 
 
   implicit def iterableToConfig[F[X] <: Iterable[X], A](implicit A: ToConfig[A]): ToConfig[F[A]] =
-    xs => ConfigValueFactory.fromIterable(xs.map(A.toValue).asJava)
+    xs => ConfigList.from(xs.map(A.toValue)(breakOut))
 
   implicit def charIterableToConfig[F[X] <: Iterable[X]]: ToConfig[F[Char]] =
     ToConfig.by(cs => new String(cs.toArray))
@@ -169,7 +169,7 @@ sealed abstract class ToConfigInstances extends ToConfigInstances0 {
 
 
   implicit def mapToConfig[M[X, Y] <: collection.Map[X, Y], A, B](implicit A: FromString[A], B: ToConfig[B]): ToConfig[M[A, B]] =
-    m => ConfigValueFactory.fromMap(m.map(t => (A.show(t._1), B.toValue(t._2))).asJava)
+    m => ConfigObject.from(m.map(t => (A.show(t._1), B.toValue(t._2)))(breakOut))
 
   implicit def javaMapToConfig[M[X, Y] <: ju.Map[X, Y], A, B](implicit A: FromString[A], B: ToConfig[B]): ToConfig[M[A, B]] =
     ToConfig.by(_.asScala)
@@ -181,7 +181,7 @@ sealed abstract class ToConfigInstances extends ToConfigInstances0 {
   implicit def optionToConfig[A](implicit A: ToConfig[A]): ToConfig[Option[A]] =
     new ToConfig[Option[A]] {
       def toValue(a: Option[A]): ConfigValue =
-        a.fold(ConfigValueFactory.fromAnyRef(null))(A.toValue)
+        a.fold(ConfigValue.Null)(A.toValue)
 
       override def toValueOption(a: Option[A]): Option[ConfigValue] =
         a.map(A.toValue)

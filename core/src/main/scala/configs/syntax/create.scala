@@ -16,9 +16,8 @@
 
 package configs.syntax
 
-import com.typesafe.config.{Config, ConfigList, ConfigObject, ConfigValue, ConfigValueFactory}
-import configs.{ConfigKeyValue, FromString, ToConfig}
-import scala.collection.convert.decorateAsJava._
+import configs.{Config, ConfigKeyValue, ConfigList, ConfigObject, ConfigValue, FromString, ToConfig}
+import scala.collection.breakOut
 
 object create {
 
@@ -26,10 +25,10 @@ object create {
     A.toValue(a)
 
   def configList[A](as: A*)(implicit A: ToConfig[A]): ConfigList =
-    ConfigValueFactory.fromIterable(as.map(A.toValue).asJava)
+    ConfigList.from(as.map(A.toValue))
 
   def configObject(kvs: ConfigKeyValue*): ConfigObject =
-    ConfigValueFactory.fromMap(kvs.map(_.tuple).toMap.asJava)
+    ConfigObject.from(kvs.map(_.tuple)(breakOut))
 
   def config(kvs: ConfigKeyValue*): Config =
     configObject(kvs: _*).toConfig

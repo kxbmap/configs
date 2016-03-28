@@ -16,7 +16,6 @@
 
 package configs
 
-import com.typesafe.config.{Config, ConfigObject}
 import scala.collection.convert.decorateAsScala._
 
 package object syntax {

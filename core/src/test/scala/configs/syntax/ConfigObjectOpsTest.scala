@@ -16,11 +16,10 @@
 
 package configs.syntax
 
-import com.typesafe.config.ConfigValueFactory.fromAnyRef
-import com.typesafe.config.{ConfigFactory, ConfigObject}
 import configs.testutil.instance.config._
 import configs.testutil.instance.symbol._
-import scala.collection.convert.decorateAll._
+import configs.{ConfigObject, ConfigValue}
+import scala.collection.convert.decorateAsScala._
 import scalaprops.Property.forAll
 import scalaprops.Scalaprops
 import scalaz.Monoid
@@ -30,7 +29,7 @@ object ConfigObjectOpsTest extends Scalaprops {
 
   val + = forAll { (co: ConfigObject, k: Symbol, v: Int) =>
     val result = co + (k -> v)
-    result.get(k.name) === fromAnyRef(v)
+    result.get(k.name) === ConfigValue.from(v)
   }
 
   val - = forAll { (co: ConfigObject, d: Symbol) =>
@@ -46,7 +45,7 @@ object ConfigObjectOpsTest extends Scalaprops {
       val dup = co.asScala.keys.take(dupSize).map(Symbol(_) -> 42).toSeq
       val result = co ++ kvs ++ dup
       (kvs ++ dup).groupBy(_._1).forall {
-        case (k, vs) => result.get(k.name) === fromAnyRef(vs.last._2)
+        case (k, vs) => result.get(k.name) === ConfigValue.from(vs.last._2)
         case _ => true
       }
     }
@@ -56,7 +55,7 @@ object ConfigObjectOpsTest extends Scalaprops {
       val dup = co.asScala.keys.take(dupSize).map(Symbol(_) -> 42).toMap
       val result = co ++ kvs ++ dup
       (kvs ++ dup).forall {
-        case (k, v) => result.get(k.name) === fromAnyRef(v)
+        case (k, v) => result.get(k.name) === ConfigValue.from(v)
       }
     }
 
@@ -68,7 +67,7 @@ object ConfigObjectOpsTest extends Scalaprops {
   }
 
   implicit lazy val configObjectMonoid: Monoid[ConfigObject] =
-    Monoid.instance(_ ++ _, ConfigFactory.empty().root())
+    Monoid.instance(_ ++ _, ConfigObject.empty)
 
   val `empty/++ monoid` = scalaprops.scalazlaws.monoid.all[ConfigObject]
 

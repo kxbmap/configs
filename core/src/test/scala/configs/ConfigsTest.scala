@@ -16,7 +16,7 @@
 
 package configs
 
-import com.typesafe.config.{ConfigFactory, ConfigValueFactory}
+import com.typesafe.config.ConfigFactory
 import configs.ConfigUtil.{quoteString => q}
 import configs.testutil.instance.string._
 import scala.collection.JavaConversions._
@@ -40,7 +40,7 @@ object ConfigsTest extends Scalaprops {
   }
 
   val extractConfigValue = forAll { v: Int =>
-    val cv = ConfigValueFactory.fromAnyRef(v)
+    val cv = ConfigValue.from(v)
     val configs: Configs[Int] = Configs.fromTry(_.getInt(_))
     configs.extractValue(cv).exists(_ == v)
   }
@@ -70,7 +70,7 @@ object ConfigsTest extends Scalaprops {
   }
 
   val orElse = {
-    val config = ConfigFactory.empty()
+    val config = Config.empty
     val fail: Configs[Int] = Configs.failure("failure")
     val p1 = forAll { (v1: Int, v2: Int) =>
       val succ1: Configs[Int] = Configs.successful(v1)
@@ -108,9 +108,8 @@ object ConfigsTest extends Scalaprops {
 
   val handleException = forAll {
     val re = new RuntimeException()
-    val config = ConfigFactory.empty()
     val configs = Configs.fromTry((_, _) => throw re)
-    configs.extract(config).failed.exists {
+    configs.extract(Config.empty).failed.exists {
       case ConfigError(ConfigError.Exceptional(e, _), t) if t.isEmpty => e eq re
       case _ => false
     }

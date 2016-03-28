@@ -17,7 +17,8 @@
 package configs
 
 import com.typesafe.config.{ConfigUtil => TypesafeConfigUtil}
-import scala.collection.convert.decorateAll._
+import scala.collection.convert.decorateAsJava._
+import scala.collection.convert.decorateAsScala._
 
 object ConfigUtil {
 

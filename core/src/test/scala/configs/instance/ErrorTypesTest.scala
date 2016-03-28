@@ -21,7 +21,7 @@ import configs.testutil.fun._
 import configs.testutil.instance.anyVal._
 import configs.testutil.instance.result.success._
 import configs.testutil.instance.string._
-import configs.{ConfigError, Configs, Result}
+import configs.{Config, ConfigError, Configs, Result}
 import scalaprops.Property.forAll
 import scalaprops.{Properties, Scalaprops}
 
@@ -44,14 +44,14 @@ object ErrorTypesTest extends Scalaprops {
       }
     })
     val p2 = Properties.single("runtime exception", forAll {
-      val config = ConfigFactory.empty()
+      val config = Config.empty
       val e = new RuntimeException
       implicit val configs: Configs[Int] = Configs.fromTry((_, _) => throw e)
       val result = Configs[Result[Int]].get(config, "value")
       result.exists(_ == Configs[Int].get(config, "value"))
     })
     val p3 = Properties.single("failure", forAll { s: String =>
-      val config = ConfigFactory.empty()
+      val config = Config.empty
       implicit val configs: Configs[Int] = Configs.failure(s)
       val result = Configs[Result[Int]].get(config, "value")
       result.exists(_ == Configs[Int].get(config, "value"))

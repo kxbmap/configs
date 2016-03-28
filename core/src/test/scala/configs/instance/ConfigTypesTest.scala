@@ -16,11 +16,11 @@
 
 package configs.instance
 
-import com.typesafe.config.{Config, ConfigList, ConfigMemorySize, ConfigObject, ConfigValue}
 import configs.testutil.fun._
 import configs.testutil.instance.collection._
 import configs.testutil.instance.config._
 import configs.testutil.instance.string._
+import configs.{Config, ConfigList, ConfigMemorySize, ConfigObject, ConfigValue}
 import java.{util => ju}
 import scalaprops.Scalaprops
 

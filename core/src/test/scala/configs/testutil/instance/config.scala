@@ -16,13 +16,13 @@
 
 package configs.testutil.instance
 
-import com.typesafe.config.{Config, ConfigList, ConfigMemorySize, ConfigObject, ConfigValue, ConfigValueFactory}
 import configs.testutil.gen._
 import configs.testutil.instance.anyVal._
 import configs.testutil.instance.collection._
 import configs.testutil.instance.string._
+import configs.{Config, ConfigList, ConfigMemorySize, ConfigObject, ConfigValue}
 import java.{lang => jl, util => ju}
-import scala.collection.convert.decorateAll._
+import scala.collection.convert.decorateAsScala._
 import scalaprops.Gen
 import scalaz.{Equal, Need}
 
@@ -48,13 +48,13 @@ object config {
     }
 
   private[this] def configValue[A: Gen]: Gen[ConfigValue] =
-    Gen[A].map(ConfigValueFactory.fromAnyRef)
+    Gen[A].map(ConfigValue.from)
 
   implicit lazy val configValueGen: Gen[ConfigValue] =
     Gen.lazyFrequency(
       40 -> Need(configValue[String]),
       40 -> Need(configValue[jl.Number]),
-      10 -> Need(configValue[Boolean]),
+      10 -> Need(Gen.elements(ConfigValue.True, ConfigValue.False)),
       5 -> Need(configListGen.as[ConfigValue]),
       5 -> Need(configObjectGen.as[ConfigValue])
     ).mapSize(_ / 2)
@@ -64,7 +64,7 @@ object config {
     Equal.equalBy(_.asScala.toList)
 
   implicit lazy val configListGen: Gen[ConfigList] =
-    Gen.list(configValueGen).map(_.asJava).map(ConfigValueFactory.fromIterable)
+    Gen.list(configValueGen).map(ConfigList.from)
 
   implicit lazy val configValueJListGen: Gen[ju.List[ConfigValue]] =
     configListGen.as[ju.List[ConfigValue]]
@@ -74,7 +74,7 @@ object config {
     Equal.equalBy(_.asScala)
 
   implicit lazy val configObjectGen: Gen[ConfigObject] =
-    Gen.mapGen(Gen[String], configValueGen).map(_.asJava).map(ConfigValueFactory.fromMap)
+    Gen.mapGen(Gen[String], configValueGen).map(ConfigObject.from)
 
   implicit lazy val configValueJavaMapGen: Gen[ju.Map[String, ConfigValue]] =
     configObjectGen.as[ju.Map[String, ConfigValue]]
@@ -84,6 +84,6 @@ object config {
     Equal.equalA[ConfigMemorySize]
 
   implicit lazy val configMemorySizeGen: Gen[ConfigMemorySize] =
-    Gen.nonNegativeLong.map(ConfigMemorySize.ofBytes)
+    Gen.nonNegativeLong.map(ConfigMemorySize.apply)
 
 }

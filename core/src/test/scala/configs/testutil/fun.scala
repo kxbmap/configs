@@ -18,7 +18,7 @@ package configs.testutil
 
 import com.typesafe.config.ConfigFactory
 import configs.testutil.instance.string._
-import configs.{Configs, Result, ToConfig}
+import configs.{Config, Configs, Result, ToConfig}
 import scalaprops.Or.Empty
 import scalaprops.Property.forAll
 import scalaprops.{:-:, Gen, Or, Properties}
@@ -48,7 +48,7 @@ object fun {
       else {
         val path = "path"
         val encoded = ToConfig[A].toValueOption(value)
-        val config = encoded.foldLeft(ConfigFactory.empty())(_.withValue(path, _))
+        val config = encoded.foldLeft(Config.empty)(_.withValue(path, _))
         val decoded = Configs[A].get(config, path)
         val result = decoded.exists(Equal[A].equal(_, value))
         if (!result) {
@@ -62,7 +62,7 @@ object fun {
 
   private def pushPath[A: CheckParam : Configs]: Properties[String] =
     Properties.single("push path", forAll {
-      val c1 = ConfigFactory.empty()
+      val c1 = Config.empty
       val c2 = ConfigFactory.parseString("path = 42")
       val c3 = ConfigFactory.parseString("path = []")
       val result = Result.tuple3(

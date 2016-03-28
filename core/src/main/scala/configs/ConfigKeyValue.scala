@@ -16,8 +16,6 @@
 
 package configs
 
-import com.typesafe.config.ConfigValue
-
 case class ConfigKeyValue(key: String, value: ConfigValue) {
 
   def tuple: (String, ConfigValue) = (key, value)

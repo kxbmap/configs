@@ -25,7 +25,10 @@ private[macros] abstract class MacroUtil {
   import c.universe._
 
   lazy val tConfig =
-    tq"_root_.com.typesafe.config.Config"
+    tq"_root_.configs.Config"
+
+  lazy val tConfigValue =
+    tq"_root_.configs.ConfigValue"
 
   lazy val ConfigException =
     q"_root_.com.typesafe.config.ConfigException"

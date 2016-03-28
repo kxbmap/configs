@@ -17,9 +17,8 @@
 package configs.testutil.instance
 
 import com.typesafe.config.ConfigException
-import com.typesafe.config.ConfigFactory.empty
-import configs.ConfigError
 import configs.testutil.instance.string._
+import configs.{Config, ConfigError}
 import scala.util.control.NoStackTrace
 import scalaprops.{Cogen, CogenState, Gen}
 import scalaz.{Equal, NonEmptyList, Semigroup}
@@ -33,7 +32,7 @@ object error {
     Equal.equalA[ConfigError]
 
 
-  private case class N(n: Int) extends ConfigException.Null(empty.origin(), "p", null) with NoStackTrace
+  private case class N(n: Int) extends ConfigException.Null(Config.empty.origin(), "p", null) with NoStackTrace
 
   private case class E(n: Int) extends RuntimeException(n.toString) with NoStackTrace
 
