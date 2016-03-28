@@ -69,6 +69,6 @@ object ConfigObjectOpsTest extends Scalaprops {
   implicit lazy val configObjectMonoid: Monoid[ConfigObject] =
     Monoid.instance(_ ++ _, ConfigObject.empty)
 
-  val `empty/++ monoid` = scalaprops.scalazlaws.monoid.all[ConfigObject]
+  val `++/empty monoid` = scalaprops.scalazlaws.monoid.all[ConfigObject]
 
 }

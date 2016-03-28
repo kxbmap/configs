@@ -52,13 +52,13 @@ object config {
 
   implicit lazy val configValueGen: Gen[ConfigValue] =
     Gen.lazyFrequency(
+      8 -> Need(configObjectGen.as[ConfigValue]),
+      5 -> Need(configListGen.as[ConfigValue]),
       50 -> Need(configValue[jl.Number]),
       30 -> Need(configValue[String]),
-      7 -> Need(Gen.elements(ConfigValue.True, ConfigValue.False)),
-      5 -> Need(configListGen.as[ConfigValue]),
-      5 -> Need(configObjectGen.as[ConfigValue]),
-      3 -> Need(Gen.elements(ConfigValue.Null))
-    ).mapSize(_ / 2)
+      5 -> Need(Gen.elements(ConfigValue.True, ConfigValue.False)),
+      2 -> Need(Gen.elements(ConfigValue.Null))
+    ).mapSize(s => (s + 1) / 2)
 
 
   implicit lazy val configListEqual: Equal[ConfigList] =

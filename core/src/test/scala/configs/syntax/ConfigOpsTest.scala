@@ -17,10 +17,14 @@
 package configs.syntax
 
 import com.typesafe.config.ConfigFactory
+import configs.testutil.instance.config._
 import configs.testutil.instance.string._
-import configs.{ConfigObject, Result, ToConfig}
+import configs.{Config, ConfigObject, Result, ToConfig}
+import scala.collection.convert.decorateAsScala._
 import scalaprops.Property.forAll
 import scalaprops.Scalaprops
+import scalaz.Monoid
+import scalaz.syntax.equal._
 
 object ConfigOpsTest extends Scalaprops {
 
@@ -38,5 +42,17 @@ object ConfigOpsTest extends Scalaprops {
     val config = ToConfig[Option[Int]].toValue(n).atKey("path")
     config.getOrElse[Int]("path", m) == Result.successful(n.getOrElse(m))
   }
+
+  val ++ = forAll { (c1: Config, c2: Config) =>
+    val result = c1 ++ c2
+    c2.entrySet().asScala.forall { e =>
+      result.getValue(e.getKey) === e.getValue
+    }
+  }
+
+  implicit lazy val configMonoid: Monoid[Config] =
+    Monoid.instance(_ ++ _, Config.empty)
+
+  val `++/empty monoid` = scalaprops.scalazlaws.monoid.all[Config]
 
 }

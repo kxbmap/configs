@@ -31,6 +31,9 @@ package object syntax {
     def getOrElse[A](path: String, default: => A)(implicit A: Configs[Option[A]]): Result[A] =
       get(path)(A).map(_.getOrElse(default))
 
+    def ++(that: Config): Config =
+      that.withFallback(self)
+
   }
 
   implicit class ConfigObjectOps(private val self: ConfigObject) extends AnyVal {
