@@ -19,7 +19,6 @@ package configs.instance
 import com.typesafe.config.ConfigFactory
 import configs.testutil.fun._
 import configs.testutil.instance.anyVal._
-import configs.testutil.instance.either.right._
 import configs.testutil.instance.result.success._
 import configs.testutil.instance.string._
 import configs.{ConfigError, Configs, Result}
@@ -36,75 +35,28 @@ object ErrorTypesTest extends Scalaprops {
   val result = check[Result[Int]]
 
   val resultHandleConfigError = {
-    val p1 = forAll {
+    val p1 = Properties.single("null value", forAll {
       val config = ConfigFactory.parseString("value = null")
       val result = Configs[Result[Int]].get(config, "value")
       result.exists {
         case Result.Failure(ConfigError(_: ConfigError.NullValue, _)) => true
         case _ => false
       }
-    }
-    val p2 = forAll {
+    })
+    val p2 = Properties.single("runtime exception", forAll {
       val config = ConfigFactory.empty()
       val e = new RuntimeException
       implicit val configs: Configs[Int] = Configs.fromTry((_, _) => throw e)
       val result = Configs[Result[Int]].get(config, "value")
       result.exists(_ == Configs[Int].get(config, "value"))
-    }
-    val p3 = forAll { s: String =>
+    })
+    val p3 = Properties.single("failure", forAll { s: String =>
       val config = ConfigFactory.empty()
       implicit val configs: Configs[Int] = Configs.failure(s)
       val result = Configs[Result[Int]].get(config, "value")
       result.exists(_ == Configs[Int].get(config, "value"))
-    }
-    Properties.list(
-      p1.toProperties("null value"),
-      p2.toProperties("runtime exception"),
-      p3.toProperties("failure")
-    )
-  }
-
-
-  implicit def eitherCheckParam[A]: CheckParam[Either[ConfigError, A]] =
-    new CheckParam[Either[ConfigError, A]] {
-      override def checkPushPath: Boolean = false
-    }
-
-  val either = check[Either[ConfigError, Int]]
-
-  val eitherHandleConfigError = {
-    val p1 = forAll {
-      val config = ConfigFactory.parseString("value = null")
-      val result = Configs[Either[ConfigError, Int]].get(config, "value")
-      result.exists {
-        case Left(ConfigError(_: ConfigError.NullValue, _)) => true
-        case _ => false
-      }
-    }
-    val p2 = forAll {
-      val config = ConfigFactory.empty()
-      val e = new RuntimeException
-      implicit val configs: Configs[Int] = Configs.fromTry((_, _) => throw e)
-      val result = Configs[Either[ConfigError, Int]].get(config, "value")
-      result.exists {
-        case Left(ConfigError(ConfigError.Exceptional(`e`, _), _)) => true
-        case _ => false
-      }
-    }
-    val p3 = forAll { s: String =>
-      val config = ConfigFactory.empty()
-      implicit val configs: Configs[Int] = Configs.failure(s)
-      val result = Configs[Either[ConfigError, Int]].get(config, "value")
-      result.exists {
-        case Left(ConfigError(ConfigError.Generic(m, _), _)) => m == s
-        case _ => false
-      }
-    }
-    Properties.list(
-      p1.toProperties("null value"),
-      p2.toProperties("runtime exception"),
-      p3.toProperties("failure")
-    )
+    })
+    Properties.list(p1, p2, p3)
   }
 
 }

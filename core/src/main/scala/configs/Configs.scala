@@ -22,8 +22,6 @@ import java.{lang => jl, math => jm, time => jt, util => ju}
 import scala.collection.convert.decorateAll._
 import scala.collection.generic.CanBuildFrom
 import scala.concurrent.duration.{Duration, FiniteDuration}
-import scala.reflect.ClassTag
-import scala.util.{Failure, Success, Try}
 
 trait Configs[A] {
   self =>
@@ -175,10 +173,6 @@ sealed abstract class ConfigsInstances extends ConfigsInstances0 {
 
   implicit def resultConfigs[A](implicit A: Configs[A]): Configs[Result[A]] =
     (c, p) => Result.successful(A.get(c, p))
-
-  @deprecated("Use configs.Result instead", "0.4.2")
-  implicit def configErrorEitherConfigs[A: Configs]: Configs[Either[ConfigError, A]] =
-    resultConfigs[A].map(_.toEither)
 
 
   implicit def readStringConfigs[A](implicit A: FromString[A]): Configs[A] =
