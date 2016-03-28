@@ -17,6 +17,7 @@
 package configs.instance
 
 import com.typesafe.config.ConfigFactory
+import configs.ConfigUtil.{quoteString => q}
 import configs.Configs
 import configs.testutil.fun._
 import configs.testutil.instance.anyVal._

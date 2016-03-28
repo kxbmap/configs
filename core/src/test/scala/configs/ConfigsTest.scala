@@ -17,7 +17,7 @@
 package configs
 
 import com.typesafe.config.{ConfigFactory, ConfigValueFactory}
-import configs.testutil.fun._
+import configs.ConfigUtil.{quoteString => q}
 import configs.testutil.instance.string._
 import scala.collection.JavaConversions._
 import scalaprops.Property.forAll

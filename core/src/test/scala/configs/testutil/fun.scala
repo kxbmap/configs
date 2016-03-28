@@ -16,7 +16,7 @@
 
 package configs.testutil
 
-import com.typesafe.config.{ConfigFactory, ConfigUtil}
+import com.typesafe.config.ConfigFactory
 import configs.testutil.instance.string._
 import configs.{Configs, Result, ToConfig}
 import scalaprops.Or.Empty
@@ -25,8 +25,6 @@ import scalaprops.{:-:, Gen, Or, Properties}
 import scalaz.Equal
 
 object fun {
-
-  val q: String => String = ConfigUtil.quoteString
 
   private def xxx(x: Any): Unit = {
     println(s"${Console.RED}xxx${Console.RESET} $x")
