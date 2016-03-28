@@ -35,6 +35,7 @@ object config {
   implicit lazy val configGen: Gen[Config] =
     configObjectGen.map(_.toConfig)
 
+
   implicit lazy val configValueEqual: Equal[ConfigValue] =
     Equal.equal {
       case (a: ConfigObject, b: ConfigObject) => Equal[ConfigObject].equal(a, b)
@@ -46,45 +47,37 @@ object config {
         })
     }
 
-  implicit lazy val configListEqual: Equal[ConfigList] =
-    Equal.equalBy(_.asScala.toList)
-
-  implicit lazy val configObjectEqual: Equal[ConfigObject] =
-    Equal.equalBy(_.asScala)
-
   private[this] def configValue[A: Gen]: Gen[ConfigValue] =
     Gen[A].map(ConfigValueFactory.fromAnyRef)
 
-  private[this] val configNumberGen: Gen[ConfigValue] =
-    Gen.oneOf(
-      configValue[Byte],
-      configValue[Short],
-      configValue[Int],
-      configValue[Long],
-      configValue[Float],
-      configValue[Double]
-    )
+  implicit lazy val configValueGen: Gen[ConfigValue] =
+    Gen.lazyFrequency(
+      40 -> Need(configValue[String]),
+      40 -> Need(configValue[jl.Number]),
+      10 -> Need(configValue[Boolean]),
+      5 -> Need(configListGen.as[ConfigValue]),
+      5 -> Need(configObjectGen.as[ConfigValue])
+    ).mapSize(_ / 2)
+
+
+  implicit lazy val configListEqual: Equal[ConfigList] =
+    Equal.equalBy(_.asScala.toList)
 
   implicit lazy val configListGen: Gen[ConfigList] =
     Gen.list(configValueGen).map(_.asJava).map(ConfigValueFactory.fromIterable)
 
   implicit lazy val configValueJListGen: Gen[ju.List[ConfigValue]] =
-    Gen[ConfigList].as[ju.List[ConfigValue]]
+    configListGen.as[ju.List[ConfigValue]]
+
+
+  implicit lazy val configObjectEqual: Equal[ConfigObject] =
+    Equal.equalBy(_.asScala)
 
   implicit lazy val configObjectGen: Gen[ConfigObject] =
     Gen.mapGen(Gen[String], configValueGen).map(_.asJava).map(ConfigValueFactory.fromMap)
 
   implicit lazy val configValueJavaMapGen: Gen[ju.Map[String, ConfigValue]] =
-    Gen[ConfigObject].as[ju.Map[String, ConfigValue]]
-
-  implicit lazy val configValueGen: Gen[ConfigValue] =
-    Gen.lazyFrequency(
-      40 -> Need(configValue[String]),
-      40 -> Need(configNumberGen),
-      10 -> Need(configValue[Boolean]),
-      5 -> Need(configListGen.as[ConfigValue]),
-      5 -> Need(configObjectGen.as[ConfigValue])
-    ).mapSize(_ / 2)
+    configObjectGen.as[ju.Map[String, ConfigValue]]
 
 
   implicit lazy val configMemorySizeEqual: Equal[ConfigMemorySize] =
