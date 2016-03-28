@@ -16,6 +16,7 @@
 
 package configs.instance
 
+import com.typesafe.config.ConfigValueType
 import configs.testutil.fun._
 import configs.testutil.instance.collection._
 import configs.testutil.instance.config._
@@ -28,7 +29,13 @@ object ConfigTypesTest extends Scalaprops {
 
   val config = check[Config]
 
-  val configValue = check[ConfigValue]
+  val configValue = {
+    implicit val param: CheckParam[ConfigValue] = new CheckParam[ConfigValue] {
+      override def exceptEncodeDecode(a: ConfigValue): Boolean =
+        a.valueType() == ConfigValueType.NULL
+    }
+    check[ConfigValue]
+  }
 
   val configValueJList = check[ju.List[ConfigValue]]
 
