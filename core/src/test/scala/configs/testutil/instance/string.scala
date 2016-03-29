@@ -26,29 +26,50 @@ object string {
   implicit lazy val stringOrder: Order[String] =
     scalaz.std.string.stringInstance
 
-  implicit lazy val stringGen: Gen[String] = {
+  lazy val unicodeStringGen: Gen[String] = {
     import jl.{Character => C}
     val g = {
-      val cp = (C.MIN_CODE_POINT to C.MAX_CODE_POINT).filter(C.isDefined)
-      Gen.elements(cp.head, cp.tail: _*)
+      val cps = (C.MIN_CODE_POINT to C.MAX_CODE_POINT).filter { cp =>
+        !(C.isBmpCodePoint(cp) && C.isSurrogate(cp.toChar)) && C.isDefined(cp)
+      }
+      Gen.elements(cps.head, cps.tail: _*)
     }
     Gen.sized { size =>
       Gen.sequenceNArray(size, g).map { cps =>
         @tailrec
-        def toChars(i: Int, j: Int, arr: Array[Char]): Array[Char] =
-          if (i < cps.length) {
+        def chars(i: Int, j: Int, arr: Array[Char]): Array[Char] =
+          if (i >= cps.length) arr
+          else {
             val cs = C.toChars(cps(i))
             System.arraycopy(cs, 0, arr, j, cs.length)
-            toChars(i + 1, j + cs.length, arr)
-          } else {
-            require(j == arr.length)
-            arr
+            chars(i + 1, j + cs.length, arr)
           }
-        val cc = cps.foldLeft(0)(_ + C.charCount(_))
-        new String(toChars(0, 0, new Array(cc)))
+        val length = cps.foldLeft(0)(_ + C.charCount(_))
+        new String(chars(0, 0, new Array(length)))
       }
     }
   }
+
+  lazy val notInUnquoteChar: Gen[Char] = {
+    val s = "$\"{}[]:=,+#`^?!@*&\\".toSeq
+    Gen.elements(s.head, s.tail: _*)
+  }
+
+  implicit lazy val stringGen: Gen[String] =
+    Gen.frequency(
+      50 -> unicodeStringGen,
+      25 -> Gen.asciiString,
+      20 -> Gen.alphaNumString,
+      2 -> Gen.genString(notInUnquoteChar),
+      3 -> Gen.elements(
+        "//", "foo//", "//foo", "foo//bar", // comment
+        ".", ".foo", "foo.", "foo.bar", // period
+        "\n", "\r", "\r\n", "foo\nbar", "foo\rbar", // CRLF
+        "\u0020", "\u0020foo", "foo\u0020", "foo\u0020bar", // SPACE
+        "\u00a0", "\u00a0foo", "foo\u00a0", "foo\u00a0bar", // NO-BREAK SPACE
+        "\ufeff", "\ufefffoo", "foo\ufeff", "foo\ufeffbar" // BOM
+      )
+    )
 
   implicit lazy val charArrayGen: Gen[Array[Char]] =
     stringGen.map(_.toCharArray)
