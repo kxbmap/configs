@@ -23,7 +23,7 @@ import scalaprops.Property.forAll
 import scalaprops.{Properties, Scalaprops}
 import scalaz.syntax.std.boolean._
 
-object ConfigMemorySizeOpsTest extends Scalaprops {
+object EnrichConfigMemorySizeTest extends Scalaprops {
 
   val + = forAll { (a: ConfigMemorySize, b: ConfigMemorySize) =>
     (a.value + b.value >= 0L) --> {

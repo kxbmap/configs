@@ -20,7 +20,7 @@ import scala.collection.convert.decorateAsScala._
 
 package object syntax {
 
-  implicit class ConfigOps(private val self: Config) extends AnyVal {
+  implicit class EnrichConfig(private val self: Config) extends AnyVal {
 
     def extract[A](implicit A: Configs[A]): Result[A] =
       A.extract(self)
@@ -36,7 +36,7 @@ package object syntax {
 
   }
 
-  implicit class ConfigListOps(private val self: ConfigList) extends AnyVal {
+  implicit class EnrichConfigList(private val self: ConfigList) extends AnyVal {
 
     def :+[A](value: A)(implicit A: ToConfig[A]): ConfigList =
       ConfigList.from(self.asScala :+ value)
@@ -52,7 +52,7 @@ package object syntax {
 
   }
 
-  implicit class ConfigObjectOps(private val self: ConfigObject) extends AnyVal {
+  implicit class EnrichConfigObject(private val self: ConfigObject) extends AnyVal {
 
     def +[A, B](kv: (A, B))(implicit A: FromString[A], B: ToConfig[B]): ConfigObject =
       self.withValue(A.show(kv._1), B.toValue(kv._2))
@@ -74,7 +74,7 @@ package object syntax {
   implicit lazy val configMemorySizeOrdering: Ordering[ConfigMemorySize] =
     Ordering.by(_.toBytes)
 
-  implicit class ConfigMemorySizeOps(private val self: ConfigMemorySize) extends AnyVal {
+  implicit class EnrichConfigMemorySize(private val self: ConfigMemorySize) extends AnyVal {
 
     def value: Long = self.toBytes
 
@@ -125,7 +125,7 @@ package object syntax {
 
   }
 
-  implicit class ResultOps[A](private val self: Result[A]) extends AnyVal {
+  implicit class EnrichResult[A](private val self: Result[A]) extends AnyVal {
 
     def ~[X](x: Result[X]): ResultBuilder.Builder2[A, X] =
       new ResultBuilder.Builder2(self, x)

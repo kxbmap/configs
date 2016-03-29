@@ -20,7 +20,7 @@ import scalaprops.Gen
 
 object gen {
 
-  implicit class GenOps[A](private val g: Gen[A]) extends AnyVal {
+  implicit class EnrichGen[A](private val g: Gen[A]) extends AnyVal {
     def as[B >: A]: Gen[B] = g.asInstanceOf[Gen[B]]
   }
 
