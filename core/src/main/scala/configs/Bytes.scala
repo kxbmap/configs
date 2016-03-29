@@ -24,15 +24,36 @@ final case class Bytes(value: Long) extends Ordered[Bytes] {
 
   def -(rhs: Bytes): Bytes = Bytes(value - rhs.value)
 
+  def *(rhs: Int): Bytes = Bytes(value * rhs)
+
+  def *(rhs: Long): Bytes = Bytes(value * rhs)
+
   def *(rhs: Double): Bytes = Bytes((value * rhs).toLong)
+
+  def /(rhs: Int): Bytes = Bytes(value / rhs)
+
+  def /(rhs: Long): Bytes = Bytes(value / rhs)
 
   def /(rhs: Double): Bytes = Bytes((value / rhs).toLong)
 
-  def /(rhs: Bytes): Double = value / rhs.value.toDouble
+  def /(rhs: Bytes): Double = value.toDouble / rhs.value
 
   def unary_+ : Bytes = this
 
   def unary_- : Bytes = Bytes(-value)
+
+  def <<(rhs: Int): Bytes = Bytes(value << rhs)
+
+  def <<(rhs: Long): Bytes = Bytes(value << rhs)
+
+  def >>(rhs: Int): Bytes = Bytes(value >> rhs)
+
+  def >>(rhs: Long): Bytes = Bytes(value >> rhs)
+
+  def >>>(rhs: Int): Bytes = Bytes(value >>> rhs)
+
+  def >>>(rhs: Long): Bytes = Bytes(value >>> rhs)
+
 }
 
 object Bytes {

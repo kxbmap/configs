@@ -21,6 +21,8 @@ import configs.testutil.instance.bytes._
 import configs.testutil.instance.string._
 import scalaprops.Property.forAll
 import scalaprops.{Properties, Scalaprops}
+import scalaz.Monoid
+import scalaz.syntax.std.boolean._
 
 
 object BytesTest extends Scalaprops {
@@ -43,33 +45,38 @@ object BytesTest extends Scalaprops {
     l - r == Bytes(l.value - r.value)
   }
 
-  val multiply = {
-    val bxd = forAll { (l: Bytes, r: Double) =>
+  val multiply = Properties.properties("by")(
+    "int" -> forAll { (l: Bytes, r: Int) =>
+      l * r == Bytes(l.value * r)
+    },
+    "long" -> forAll { (l: Bytes, r: Long) =>
+      l * r == Bytes(l.value * r)
+    },
+    "double" -> forAll { (l: Bytes, r: Double) =>
       l * r == Bytes((l.value * r).toLong)
-    }
-    val dxb = forAll { (l: Double, r: Bytes) =>
-      l * r == Bytes((l * r.value).toLong)
-    }
-    Properties.list(
-      bxd.toProperties("Bytes * Double"),
-      dxb.toProperties("Double * Bytes")
-    )
-  }
+    }) x
+    Properties.properties("to")(
+      "double" -> forAll { (l: Double, r: Bytes) =>
+        l * r == Bytes((l * r.value).toLong)
+      })
 
-  val divide = {
-    val bdd = forAll { (l: Bytes, r: Double) =>
+  val divide = Properties.properties("by")(
+    "int" -> forAll { (l: Bytes, r: Int) =>
+      (r != 0L) --> {
+        l / r == Bytes(l.value / r)
+      }
+    },
+    "long" -> forAll { (l: Bytes, r: Long) =>
+      (r != 0L) --> {
+        l / r == Bytes(l.value / r)
+      }
+    },
+    "double" -> forAll { (l: Bytes, r: Double) =>
       l / r == Bytes((l.value / r).toLong)
-    }
-    val bdb = forAll { (l: Bytes, r: Bytes) =>
-      val result = l / r
-      val expected = l.value.toDouble / r.value.toDouble
-      if (result.isNaN) expected.isNaN else result == expected
-    }
-    Properties.list(
-      bdd.toProperties("Bytes / Double"),
-      bdb.toProperties("Bytes / Bytes")
-    )
-  }
+    },
+    "bytes" -> forAll { (l: Bytes, r: Bytes) =>
+      l / r == l.value.toDouble / r.value.toDouble
+    })
 
   val unary_- = forAll { b: Bytes =>
     -b == Bytes(-b.value)
@@ -77,6 +84,35 @@ object BytesTest extends Scalaprops {
 
   val unary_+ = forAll { b: Bytes =>
     +b == b
+  }
+
+  val `<<` = Properties.properties("by")(
+    "int" -> forAll { (a: Bytes, b: Int) =>
+      (a << b) == Bytes(a.value << b)
+    },
+    "long" -> forAll { (a: Bytes, b: Long) =>
+      (a << b) == Bytes(a.value << b)
+    })
+
+  val `>>` = Properties.properties("by")(
+    "int" -> forAll { (a: Bytes, b: Int) =>
+      (a >> b) == Bytes(a.value >> b)
+    },
+    "long" -> forAll { (a: Bytes, b: Long) =>
+      (a >> b) == Bytes(a.value >> b)
+    })
+
+  val `>>>` = Properties.properties("by")(
+    "int" -> forAll { (a: Bytes, b: Int) =>
+      (a >>> b) == Bytes(a.value >>> b)
+    },
+    "long" -> forAll { (a: Bytes, b: Long) =>
+      (a >>> b) == Bytes(a.value >>> b)
+    })
+
+  val `+/0 monoid` = {
+    implicit val m: Monoid[Bytes] = Monoid.instance(_ + _, Bytes(0))
+    scalaprops.scalazlaws.monoid.all[Bytes]
   }
 
 }
