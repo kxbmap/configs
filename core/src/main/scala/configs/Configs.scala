@@ -135,8 +135,7 @@ sealed abstract class ConfigsInstances extends ConfigsInstances0 {
     Configs.fromConfig { c =>
       Result.sequence(
         c.root().asScala.keysIterator.map { k =>
-          val q = k.isEmpty || !k.forall(c => c.isLetterOrDigit || c == '_' || c == '-')
-          val p = if (q) ConfigUtil.quoteString(k) else k
+          val p = ConfigUtil.joinPath(k)
           Result.tuple2(A.read(k).withPath(p), B.get(c, p))
         })
         .map(_.toMap.asJava)
