@@ -9,8 +9,7 @@ lazy val core = project
     scalapropsWithScalazlaws,
     compileOrder in Test := CompileOrder.JavaThenScala,
     initialCommands :=
-      """import com.typesafe.config._
-        |import ConfigFactory._
+      """import com.typesafe.config.ConfigFactory._
         |import configs._
         |import configs.syntax._
         |""".stripMargin
