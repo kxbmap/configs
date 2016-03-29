@@ -39,10 +39,10 @@ package object syntax {
   implicit class EnrichConfigList(private val self: ConfigList) extends AnyVal {
 
     def :+[A](value: A)(implicit A: ToConfig[A]): ConfigList =
-      ConfigList.from(self.asScala :+ value)
+      ConfigList.from(self.asScala :+ A.toValue(value))
 
     def +:[A](value: A)(implicit A: ToConfig[A]): ConfigList =
-      ConfigList.from(value +: self.asScala)
+      ConfigList.from(A.toValue(value) +: self.asScala)
 
     def ++[A](values: Seq[A])(implicit A: ToConfig[A]): ConfigList =
       ConfigList.from(self.asScala ++ values.map(A.toValue))
