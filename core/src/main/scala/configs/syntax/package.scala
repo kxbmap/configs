@@ -36,6 +36,22 @@ package object syntax {
 
   }
 
+  implicit class ConfigListOps(private val self: ConfigList) extends AnyVal {
+
+    def :+[A](value: A)(implicit A: ToConfig[A]): ConfigList =
+      ConfigList.from(self.asScala :+ value)
+
+    def +:[A](value: A)(implicit A: ToConfig[A]): ConfigList =
+      ConfigList.from(value +: self.asScala)
+
+    def ++[A](values: Seq[A])(implicit A: ToConfig[A]): ConfigList =
+      ConfigList.from(self.asScala ++ values.map(A.toValue))
+
+    def ++(list: ConfigList): ConfigList =
+      ConfigList.from(self.asScala ++ list.asScala)
+
+  }
+
   implicit class ConfigObjectOps(private val self: ConfigObject) extends AnyVal {
 
     def +[A, B](kv: (A, B))(implicit A: FromString[A], B: ToConfig[B]): ConfigObject =

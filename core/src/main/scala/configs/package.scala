@@ -68,6 +68,7 @@ package configs {
 
     def from(seq: Seq[Any], originDescription: String): ConfigList =
       ConfigValueFactory.fromIterable(seq.asInstanceOf[Seq[AnyRef]].asJava, originDescription)
+
   }
 
   object ConfigObject {
