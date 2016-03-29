@@ -55,6 +55,60 @@ package object syntax {
 
   }
 
+  implicit lazy val configMemorySizeOrdering: Ordering[ConfigMemorySize] =
+    Ordering.by(_.toBytes)
+
+  implicit class ConfigMemorySizeOps(private val self: ConfigMemorySize) extends AnyVal {
+
+    def value: Long = self.toBytes
+
+    def +(rhs: ConfigMemorySize): ConfigMemorySize =
+      ConfigMemorySize(self.toBytes + rhs.toBytes)
+
+    def -(rhs: ConfigMemorySize): ConfigMemorySize =
+      ConfigMemorySize(self.toBytes - rhs.toBytes)
+
+    def *(rhs: Int): ConfigMemorySize =
+      ConfigMemorySize(self.toBytes * rhs)
+
+    def *(rhs: Long): ConfigMemorySize =
+      ConfigMemorySize(self.toBytes * rhs)
+
+    def *(rhs: Double): ConfigMemorySize =
+      ConfigMemorySize((self.toBytes * rhs).toLong)
+
+    def /(rhs: Int): ConfigMemorySize =
+      ConfigMemorySize(self.toBytes / rhs)
+
+    def /(rhs: Long): ConfigMemorySize =
+      ConfigMemorySize(self.toBytes / rhs)
+
+    def /(rhs: Double): ConfigMemorySize =
+      ConfigMemorySize((self.toBytes / rhs).toLong)
+
+    def /(rhs: ConfigMemorySize): Double =
+      self.toBytes.toDouble / rhs.toBytes
+
+    def <<(rhs: Int): ConfigMemorySize =
+      ConfigMemorySize(self.toBytes << rhs)
+
+    def <<(rhs: Long): ConfigMemorySize =
+      ConfigMemorySize(self.toBytes << rhs)
+
+    def >>(rhs: Int): ConfigMemorySize =
+      ConfigMemorySize(self.toBytes >> rhs)
+
+    def >>(rhs: Long): ConfigMemorySize =
+      ConfigMemorySize(self.toBytes >> rhs)
+
+    def >>>(rhs: Int): ConfigMemorySize =
+      ConfigMemorySize(self.toBytes >>> rhs)
+
+    def >>>(rhs: Long): ConfigMemorySize =
+      ConfigMemorySize(self.toBytes >>> rhs)
+
+  }
+
   implicit class ResultOps[A](private val self: Result[A]) extends AnyVal {
 
     def ~[X](x: Result[X]): ResultBuilder.Builder2[A, X] =
