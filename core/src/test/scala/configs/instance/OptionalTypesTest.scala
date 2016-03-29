@@ -17,14 +17,13 @@
 package configs.instance
 
 import com.typesafe.config.ConfigFactory
-import configs.ConfigUtil.{quoteString => q}
 import configs.testutil.fun._
 import configs.testutil.instance.anyVal._
 import configs.testutil.instance.option._
 import configs.testutil.instance.string._
 import configs.{Config, Configs}
 import java.{util => ju}
-import scalaprops.Property.forAll
+import scalaprops.Property.forAllG
 import scalaprops.{Properties, Scalaprops}
 
 object OptionalTypesTest extends Scalaprops {
@@ -43,18 +42,18 @@ object OptionalTypesTest extends Scalaprops {
   val option3 = check[O3[Int]]
 
 
-  val missing = forAll { p: String =>
-    Configs[Option[Int]].get(Config.empty, q(p)).exists(_.isEmpty)
+  val missing = forAllG(pathStringGen) { p =>
+    Configs[Option[Int]].get(Config.empty, p).exists(_.isEmpty)
   }
 
   val nestedOption = {
     val OO = Configs[Option[Option[Int]]]
-    val p1 = forAll { p: String =>
-      OO.get(Config.empty, q(p)).exists(_.isEmpty)
+    val p1 = forAllG(pathStringGen) { p =>
+      OO.get(Config.empty, p).exists(_.isEmpty)
     }
-    val p2 = forAll { p: String =>
-      val config = ConfigFactory.parseString(s"${q(p)} = null")
-      OO.get(config, q(p)).exists(_.contains(None))
+    val p2 = forAllG(pathStringGen) { p =>
+      val config = ConfigFactory.parseString(s"$p = null")
+      OO.get(config, p).exists(_.contains(None))
     }
     Properties.list(
       p1.toProperties("missing"),

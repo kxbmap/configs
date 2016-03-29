@@ -16,6 +16,7 @@
 
 package configs.testutil.instance
 
+import configs.ConfigUtil
 import java.{lang => jl}
 import scala.annotation.tailrec
 import scalaprops.Gen
@@ -70,6 +71,11 @@ object string {
         "\ufeff", "\ufefffoo", "foo\ufeff", "foo\ufeffbar" // BOM
       )
     )
+
+  lazy val pathStringGen: Gen[String] =
+    Gen.nonEmptyList(stringGen).map { ks =>
+      ConfigUtil.joinPath(ks.list.toList)
+    }
 
   implicit lazy val charArrayGen: Gen[Array[Char]] =
     stringGen.map(_.toCharArray)

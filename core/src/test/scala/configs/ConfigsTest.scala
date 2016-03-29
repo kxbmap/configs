@@ -20,15 +20,15 @@ import com.typesafe.config.ConfigFactory
 import configs.ConfigUtil.{quoteString => q}
 import configs.testutil.instance.string._
 import scala.collection.JavaConversions._
-import scalaprops.Property.forAll
-import scalaprops.{Properties, Scalaprops}
+import scalaprops.Property.{forAll, forAllG}
+import scalaprops.{Gen, Properties, Scalaprops}
 
 object ConfigsTest extends Scalaprops {
 
-  val get = forAll { (p: String, v: Int) =>
-    val config = ConfigFactory.parseString(s"${q(p)} = $v")
+  val get = forAllG(pathStringGen, Gen[Int]) { (p, v) =>
+    val config = ConfigFactory.parseString(s"$p = $v")
     val configs: Configs[Int] = Configs.fromTry(_.getInt(_))
-    configs.get(config, q(p)).exists(_ == v)
+    configs.get(config, p).exists(_ == v)
   }
 
   val extractConfig = forAll { (p: String, v: Int) =>
@@ -98,9 +98,9 @@ object ConfigsTest extends Scalaprops {
     )
   }
 
-  val handleNullValue = forAll { p: String =>
-    val config = ConfigFactory.parseString(s"${q(p)} = null")
-    val configs = Configs.fromConfigTry(_.getInt(q(p)))
+  val handleNullValue = forAllG(pathStringGen) { p =>
+    val config = ConfigFactory.parseString(s"$p = null")
+    val configs = Configs.fromConfigTry(_.getInt(p))
     configs.extract(config).failed.exists {
       case ConfigError(_: ConfigError.NullValue, t) if t.isEmpty => true
     }
@@ -117,16 +117,16 @@ object ConfigsTest extends Scalaprops {
 
   val withPath = {
     val int: Configs[Int] = (c, p) => Result.Try(c.getInt(p))
-    def config(p: String) = ConfigFactory.parseString(s"${q(p)} = not a number")
-    val p1 = forAll { s: String =>
+    def config(p: String) = ConfigFactory.parseString(s"$p = not a number")
+    val p1 = forAllG(pathStringGen) { p =>
       val wp = int.withPath
-      val result = wp.get(config(s), q(s))
-      result.failed.exists(_.head.paths == List(q(s)))
+      val result = wp.get(config(p), p)
+      result.failed.exists(_.head.paths == List(p))
     }
-    val p2 = forAll { s: String =>
+    val p2 = forAllG(pathStringGen) { p =>
       val wp = int.withPath.withPath
-      val result = wp.get(config(s), q(s))
-      result.failed.exists(_.head.paths == List(q(s)))
+      val result = wp.get(config(p), p)
+      result.failed.exists(_.head.paths == List(p))
     }
     Properties.list(
       p1.toProperties("once"),
