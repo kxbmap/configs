@@ -58,6 +58,11 @@ final case class Bytes(value: Long) extends Ordered[Bytes] {
 
 object Bytes {
 
+  final val Zero = Bytes(0)
+
+  final val MinValue = Bytes(Long.MinValue)
+  final val MaxValue = Bytes(Long.MaxValue)
+
   implicit lazy val bytesConfigs: Configs[Bytes] =
     Configs.fromTry(_.getBytes(_)).map(Bytes(_))
 

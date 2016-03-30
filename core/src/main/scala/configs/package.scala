@@ -85,7 +85,10 @@ package configs {
 
   object ConfigMemorySize {
 
-    val Zero: ConfigMemorySize = ConfigMemorySize(0L)
+    final val Zero = ConfigMemorySize(0L)
+
+    final val MinValue = Zero
+    final val MaxValue = ConfigMemorySize(Long.MaxValue)
 
     def apply(bytes: Long): ConfigMemorySize =
       com.typesafe.config.ConfigMemorySize.ofBytes(bytes)

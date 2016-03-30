@@ -111,7 +111,7 @@ object BytesTest extends Scalaprops {
     })
 
   val `+/0 monoid` = {
-    implicit val m: Monoid[Bytes] = Monoid.instance(_ + _, Bytes(0))
+    implicit val m: Monoid[Bytes] = Monoid.instance(_ + _, Bytes.Zero)
     scalaprops.scalazlaws.monoid.all[Bytes]
   }
 
