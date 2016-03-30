@@ -339,7 +339,7 @@ sealed abstract class ConfigsInstances extends ConfigsInstances0 {
     configObjectConfigs.as[ju.Map[String, ConfigValue]]
 
 
-  implicit lazy val configMemorySizeConfigs: Configs[ConfigMemorySize] =
+  implicit lazy val memorySizeConfigs: Configs[MemorySize] =
     Configs.fromTry(_.getMemorySize(_))
 
 

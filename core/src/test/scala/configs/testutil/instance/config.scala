@@ -20,14 +20,13 @@ import configs.testutil.gen._
 import configs.testutil.instance.anyVal._
 import configs.testutil.instance.collection._
 import configs.testutil.instance.string._
-import configs.{Config, ConfigList, ConfigMemorySize, ConfigObject, ConfigValue}
+import configs.{Config, ConfigList, ConfigObject, ConfigValue, MemorySize}
 import java.{lang => jl, util => ju}
 import scala.collection.convert.decorateAsScala._
 import scalaprops.Gen
 import scalaz.{Equal, Need}
 
 object config {
-
 
   implicit lazy val configEqual: Equal[Config] =
     Equal.equalBy(_.root())
@@ -81,10 +80,10 @@ object config {
     configObjectGen.as[ju.Map[String, ConfigValue]]
 
 
-  implicit lazy val configMemorySizeEqual: Equal[ConfigMemorySize] =
-    Equal.equalA[ConfigMemorySize]
+  implicit lazy val memorySizeEqual: Equal[MemorySize] =
+    Equal.equalA[MemorySize]
 
-  implicit lazy val configMemorySizeGen: Gen[ConfigMemorySize] =
-    Gen.nonNegativeLong.map(ConfigMemorySize.apply)
+  implicit lazy val memorySizeGen: Gen[MemorySize] =
+    Gen.nonNegativeLong.map(MemorySize.apply)
 
 }

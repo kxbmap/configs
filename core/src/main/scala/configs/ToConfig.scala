@@ -148,8 +148,8 @@ sealed abstract class ToConfigInstances extends ToConfigInstances0 {
   implicit lazy val configListToConfig: ToConfig[ConfigList] = v => v
   implicit lazy val configObjectToConfig: ToConfig[ConfigObject] = v => v
 
-  implicit val configMemorySizeToConfig: ToConfig[ConfigMemorySize] =
-    fromAny[ConfigMemorySize]
+  implicit val memorySizeToConfig: ToConfig[MemorySize] =
+    fromAny[MemorySize]
 
 
   implicit def iterableToConfig[F[X] <: Iterable[X], A](implicit A: ToConfig[A]): ToConfig[F[A]] =
