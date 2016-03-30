@@ -16,10 +16,10 @@
 
 package configs.syntax
 
-import configs.MemorySize
 import configs.testutil.instance.anyVal._
 import configs.testutil.instance.config._
 import configs.testutil.instance.string._
+import configs.{Bytes, MemorySize}
 import scalaprops.Property.{forAll, forAllG}
 import scalaprops.{Gen, Properties, Property, Scalaprops}
 import scalaz.syntax.std.boolean._
@@ -243,5 +243,9 @@ object EnrichMemorySizeTest extends Scalaprops {
     "long" -> forAllWith(Gen[Long]) { (a, b) =>
       (a >>> b) == MemorySize(a.value >>> b)
     })
+
+  val asBytes = forAll { m: MemorySize =>
+    m.asBytes == Bytes(m.value)
+  }
 
 }

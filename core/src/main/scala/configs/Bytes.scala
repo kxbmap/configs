@@ -54,6 +54,9 @@ final case class Bytes(value: Long) extends Ordered[Bytes] {
 
   def >>>(rhs: Long): Bytes = Bytes(value >>> rhs)
 
+  def asMemorySize: Option[MemorySize] =
+    if (value >= 0) Some(MemorySize(value)) else None
+
 }
 
 object Bytes {

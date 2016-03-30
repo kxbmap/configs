@@ -110,6 +110,16 @@ object BytesTest extends Scalaprops {
       (a >>> b) == Bytes(a.value >>> b)
     })
 
+  val asMemorySize = forAll { b: Bytes =>
+    try {
+      val m = MemorySize(b.value)
+      b.asMemorySize.contains(m)
+    } catch {
+      case _: IllegalArgumentException =>
+        b.asMemorySize.isEmpty
+    }
+  }
+
   val `+/0 monoid` = {
     implicit val m: Monoid[Bytes] = Monoid.instance(_ + _, Bytes.Zero)
     scalaprops.scalazlaws.monoid.all[Bytes]

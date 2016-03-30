@@ -185,6 +185,8 @@ package object syntax {
     def >>>(rhs: Long): MemorySize =
       MemorySize(self.toBytes >>> rhs)
 
+    def asBytes: Bytes = Bytes(self.toBytes)
+
   }
 
   implicit class EnrichResult[A](private val self: Result[A]) extends AnyVal {
