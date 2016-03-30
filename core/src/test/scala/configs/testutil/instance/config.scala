@@ -16,7 +16,6 @@
 
 package configs.testutil.instance
 
-import configs.testutil.gen._
 import configs.testutil.instance.anyVal._
 import configs.testutil.instance.collection._
 import configs.testutil.instance.string._
@@ -51,8 +50,8 @@ object config {
 
   implicit lazy val configValueGen: Gen[ConfigValue] =
     Gen.lazyFrequency(
-      8 -> Need(configObjectGen.as[ConfigValue]),
-      5 -> Need(configListGen.as[ConfigValue]),
+      8 -> Need(configObjectGen.widen[ConfigValue]),
+      5 -> Need(configListGen.widen[ConfigValue]),
       50 -> Need(configValue[jl.Number]),
       30 -> Need(configValue[String]),
       5 -> Need(Gen.elements(ConfigValue.True, ConfigValue.False)),
@@ -67,7 +66,7 @@ object config {
     Gen.list(configValueGen).map(ConfigList.from)
 
   implicit lazy val configValueJListGen: Gen[ju.List[ConfigValue]] =
-    configListGen.as[ju.List[ConfigValue]]
+    configListGen.widen[ju.List[ConfigValue]]
 
 
   implicit lazy val configObjectEqual: Equal[ConfigObject] =
@@ -77,7 +76,7 @@ object config {
     Gen.mapGen(Gen[String], configValueGen).map(ConfigObject.from)
 
   implicit lazy val configValueJavaMapGen: Gen[ju.Map[String, ConfigValue]] =
-    configObjectGen.as[ju.Map[String, ConfigValue]]
+    configObjectGen.widen[ju.Map[String, ConfigValue]]
 
 
   implicit lazy val memorySizeEqual: Equal[MemorySize] =

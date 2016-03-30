@@ -16,7 +16,6 @@
 
 package configs.testutil.instance
 
-import configs.testutil.gen._
 import java.{time => jt}
 import scala.concurrent.duration.{Duration, FiniteDuration}
 import scalaprops.{Choose, Gen}
@@ -36,7 +35,7 @@ object duration {
       5 -> Gen.value(Duration.Inf),
       5 -> Gen.value(Duration.MinusInf),
       5 -> Gen.value(Duration.Undefined),
-      85 -> finiteDurationGen.as[Duration]
+      85 -> finiteDurationGen.widen[Duration]
     )
 
   implicit lazy val durationEqual: Equal[Duration] =

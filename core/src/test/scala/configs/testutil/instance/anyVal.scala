@@ -16,7 +16,6 @@
 
 package configs.testutil.instance
 
-import configs.testutil.gen._
 import java.{lang => jl}
 import scalaprops.Gen
 import scalaz.{Order, Ordering, std}
@@ -57,12 +56,12 @@ object anyVal {
 
   implicit lazy val javaNumberGen: Gen[jl.Number] =
     Gen.oneOf(
-      Gen[jl.Byte].as[jl.Number],
-      Gen[jl.Short].as[jl.Number],
-      Gen[jl.Integer].as[jl.Number],
-      Gen[jl.Long].as[jl.Number],
-      Gen[jl.Float].as[jl.Number],
-      Gen[jl.Double].as[jl.Number]
+      Gen[jl.Byte].widen[jl.Number],
+      Gen[jl.Short].widen[jl.Number],
+      Gen[jl.Integer].widen[jl.Number],
+      Gen[jl.Long].widen[jl.Number],
+      Gen[jl.Float].widen[jl.Number],
+      Gen[jl.Double].widen[jl.Number]
     )
 
   lazy val positiveFiniteDoubleGen: Gen[Double] =
