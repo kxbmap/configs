@@ -31,22 +31,22 @@ object string {
     import jl.{Character => C}
     val g = {
       val cps = (C.MIN_CODE_POINT to C.MAX_CODE_POINT).filter { cp =>
-        !(C.isBmpCodePoint(cp) && C.isSurrogate(cp.toChar)) && C.isDefined(cp)
+        (cp > C.MAX_SURROGATE || cp < C.MIN_SURROGATE) && C.isDefined(cp)
       }
       Gen.elements(cps.head, cps.tail: _*)
     }
     Gen.sized { size =>
       Gen.sequenceNArray(size, g).map { cps =>
+        val buf = new Array[Char](2)
         @tailrec
-        def chars(i: Int, j: Int, arr: Array[Char]): Array[Char] =
-          if (i >= cps.length) arr
+        def toString(i: Int, p: Int, acc: Array[Char]): String =
+          if (i >= cps.length) new String(acc)
           else {
-            val cs = C.toChars(cps(i))
-            System.arraycopy(cs, 0, arr, j, cs.length)
-            chars(i + 1, j + cs.length, arr)
+            val n = C.toChars(cps(i), buf, 0)
+            System.arraycopy(buf, 0, acc, p, n)
+            toString(i + 1, p + n, acc)
           }
-        val length = cps.foldLeft(0)(_ + C.charCount(_))
-        new String(chars(0, 0, new Array(length)))
+        toString(0, 0, new Array(cps.foldLeft(0)(_ + C.charCount(_))))
       }
     }
   }
