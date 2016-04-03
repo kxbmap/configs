@@ -29,7 +29,7 @@ final case class ConfigError(head: ConfigError.Entry, tail: Vector[ConfigError.E
   def +(that: ConfigError): ConfigError =
     copy(tail = tail ++ that.entries)
 
-  def withPath(path: String): ConfigError =
+  def pushPath(path: String): ConfigError =
     ConfigError(head.pushPath(path), tail.map(_.pushPath(path)))
 
   def configException: ConfigException = {

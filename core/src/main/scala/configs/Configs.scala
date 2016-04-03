@@ -47,7 +47,7 @@ trait Configs[A] {
   def withPath: Configs[A] =
     new Configs[A] {
       override def get(config: Config, path: String): Result[A] =
-        self.get(config, path).withPath(path)
+        self.get(config, path).pushPath(path)
 
       override def withPath: Configs[A] = this
       override def withoutPath: Configs[A] = self
@@ -136,7 +136,7 @@ sealed abstract class ConfigsInstances extends ConfigsInstances0 {
       Result.sequence(
         c.root().asScala.keysIterator.map { k =>
           val p = ConfigUtil.joinPath(k)
-          Result.tuple2(A.read(k).withPath(p), B.get(c, p))
+          Result.tuple2(A.read(k).pushPath(p), B.get(c, p))
         })
         .map(_.toMap.asJava)
     }
