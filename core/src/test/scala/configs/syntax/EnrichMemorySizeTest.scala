@@ -85,7 +85,7 @@ object EnrichMemorySizeTest extends Scalaprops {
           case e: IllegalArgumentException => e.getMessage.contains(b.toString)
         }
       },
-      "non-neg double" -> forAllWith(nonNegativeFiniteDoubleGen) { (a, b) =>
+      "non-neg double" -> forAllWith(Gen.nonNegativeFiniteDouble) { (a, b) =>
         if (a.value * b <= Long.MaxValue) {
           a * b == MemorySize((a.value * b).toLong)
         } else try {
@@ -95,7 +95,7 @@ object EnrichMemorySizeTest extends Scalaprops {
           case _: ArithmeticException => true
         }
       },
-      "negative double" -> forAllWith(negativeFiniteDoubleGen) { (a, b) =>
+      "negative double" -> forAllWith(Gen.negativeFiniteDouble) { (a, b) =>
         if (a.value == 0L || java.lang.Double.compare(b, -0d) == 0) {
           a * b == MemorySize.Zero
         } else try {
@@ -166,7 +166,7 @@ object EnrichMemorySizeTest extends Scalaprops {
         case _: ArithmeticException => true
       }
     },
-    "positive double" -> forAllWith(positiveFiniteDoubleGen) { (a, b) =>
+    "positive double" -> forAllWith(Gen.positiveFiniteDouble) { (a, b) =>
       if (a.value / b <= Long.MaxValue) {
         a / b == MemorySize((a.value / b).toLong)
       } else try {
@@ -176,7 +176,7 @@ object EnrichMemorySizeTest extends Scalaprops {
         case _: ArithmeticException => true
       }
     },
-    "negative double" -> forAllWith(negativeFiniteDoubleGen) { (a, b) =>
+    "negative double" -> forAllWith(Gen.negativeFiniteDouble) { (a, b) =>
       if (a.value == 0L) {
         a / b == MemorySize.Zero
       } else try {

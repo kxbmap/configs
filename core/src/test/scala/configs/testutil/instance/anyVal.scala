@@ -64,15 +64,6 @@ object anyVal {
       Gen[jl.Double].widen[jl.Number]
     )
 
-  lazy val positiveFiniteDoubleGen: Gen[Double] =
-    Gen.chooseLong(1L, 0x7fefffffffffffffL).map(jl.Double.longBitsToDouble)
-
-  lazy val nonNegativeFiniteDoubleGen: Gen[Double] =
-    Gen.chooseLong(0L, 0x7fefffffffffffffL).map(jl.Double.longBitsToDouble)
-
-  lazy val negativeFiniteDoubleGen: Gen[Double] =
-    Gen.chooseLong(0x8000000000000000L, 0xffefffffffffffffL).map(jl.Double.longBitsToDouble)
-
   lazy val infiniteDoubleGen: Gen[Double] =
     Gen.elements(Double.PositiveInfinity, Double.NegativeInfinity)
 
