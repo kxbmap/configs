@@ -3,7 +3,9 @@ import sbt._
 
 object Publish extends AutoPlugin {
 
-  override def trigger = allRequirements
+  override def trigger: PluginTrigger = allRequirements
+
+  override def requires: Plugins = Common
 
   object autoImport {
     val disablePublishSettings: Seq[Setting[_]] = Seq(
@@ -15,6 +17,8 @@ object Publish extends AutoPlugin {
   }
 
   override lazy val projectSettings: Seq[Setting[_]] = Seq(
+    description := "Scala wrapper for Typesafe config",
+    organization := "com.github.kxbmap",
     publishMavenStyle := true,
     publishTo := {
       if (isSnapshot.value)

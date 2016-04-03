@@ -1,9 +1,9 @@
 import sbt.Keys._
 import sbt._
 
-object IndyLambda extends AutoPlugin {
+object Java8Options extends AutoPlugin {
 
-  override def trigger = allRequirements
+  override def trigger: PluginTrigger = allRequirements
 
   override def requires: Plugins = Dependencies
 

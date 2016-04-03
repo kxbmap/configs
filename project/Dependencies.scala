@@ -4,7 +4,19 @@ import scalaprops.ScalapropsPlugin.autoImport._
 
 object Dependencies extends AutoPlugin {
 
-  override def trigger = allRequirements
+  override def trigger: PluginTrigger = allRequirements
+
+  override def requires: Plugins = Common
+
+  override lazy val projectSettings: Seq[Setting[_]] = {
+    import autoImport._
+    Seq(
+      configVersion := "1.3.0",
+      lombokVersion := "1.16.8",
+      scalapropsVersion := "0.3.0",
+      scalaJava8CompatVersion := "0.7.0"
+    )
+  }
 
   object autoImport {
 
@@ -36,14 +48,5 @@ object Dependencies extends AutoPlugin {
     }
 
   }
-
-  import autoImport._
-
-  override lazy val projectSettings: Seq[Setting[_]] = Seq(
-    configVersion := "1.3.0",
-    lombokVersion := "1.16.8",
-    scalapropsVersion := "0.3.0",
-    scalaJava8CompatVersion := "0.7.0"
-  )
 
 }
