@@ -35,7 +35,7 @@ object DeriveConfigsTest extends Scalaprops {
 
   object CC0 {
     implicit lazy val gen: Gen[CC0] =
-      Gen.elements(CC0())
+      Gen.value(CC0())
 
     implicit lazy val equal: Equal[CC0] =
       Equal.equalA[CC0]
@@ -251,7 +251,7 @@ object DeriveConfigsTest extends Scalaprops {
       check[Default1]("w/o default")
     }
     val p2 = {
-      implicit val gen: Gen[Default1] = Gen.elements(Default1())
+      implicit val gen: Gen[Default1] = Gen.value(Default1())
       implicit val tc: ToConfig[Default1] = _ => configObject()
       check[Default1]("w/ default")
     }
@@ -430,7 +430,7 @@ object DeriveConfigsTest extends Scalaprops {
     implicit lazy val gen: Gen[Recursive] =
       Gen.oneOfLazy(
         Need(Apply[Gen].apply2(Gen[Int], Gen[Recursive])(RCons)),
-        Need(Gen.elements(RNil))
+        Need(Gen.value(RNil))
       )
 
     implicit lazy val equal: Equal[Recursive] =

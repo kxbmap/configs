@@ -55,7 +55,7 @@ object config {
       50 -> Need(configValue[jl.Number]),
       30 -> Need(configValue[String]),
       5 -> Need(Gen.elements(ConfigValue.True, ConfigValue.False)),
-      2 -> Need(Gen.elements(ConfigValue.Null))
+      2 -> Need(Gen.value(ConfigValue.Null))
     ).mapSize(s => (s + 1) / 2)
 
 
