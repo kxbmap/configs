@@ -406,12 +406,12 @@ object DeriveConfigsTest extends Scalaprops {
   val optionDefault = {
     val p1 =
       Properties.single("missing", forAll {
-        Configs[OptionDefault].extract(Config.empty).exists(_ == OptionDefault(Some(42)))
+        Configs[OptionDefault].extract(Config.empty).contains(OptionDefault(Some(42)))
       })
     val p2 =
       Properties.single("null", forAll {
         val config = ConfigFactory.parseString("opt = null")
-        Configs[OptionDefault].extract(config).exists(_ == OptionDefault(None))
+        Configs[OptionDefault].extract(config).contains(OptionDefault(None))
       })
     p1 x p2
   }

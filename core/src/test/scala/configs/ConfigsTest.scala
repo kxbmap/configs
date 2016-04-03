@@ -28,7 +28,7 @@ object ConfigsTest extends Scalaprops {
   val get = forAllG(pathStringGen, Gen[Int]) { (p, v) =>
     val config = ConfigFactory.parseString(s"$p = $v")
     val configs: Configs[Int] = Configs.fromTry(_.getInt(_))
-    configs.get(config, p).exists(_ == v)
+    configs.get(config, p).contains(v)
   }
 
   val extractConfig = forAll { (p: String, v: Int) =>
@@ -36,19 +36,19 @@ object ConfigsTest extends Scalaprops {
     val configs: Configs[Map[String, Int]] = Configs.fromTry {
       _.getConfig(_).root().mapValues(_.unwrapped().asInstanceOf[Int]).toMap
     }
-    configs.extract(config).exists(_ == Map(p -> v))
+    configs.extract(config).contains(Map(p -> v))
   }
 
   val extractConfigValue = forAll { v: Int =>
     val cv = ConfigValue.from(v)
     val configs: Configs[Int] = Configs.fromTry(_.getInt(_))
-    configs.extractValue(cv).exists(_ == v)
+    configs.extractValue(cv).contains(v)
   }
 
   val map = forAll { (v: Int, f: Int => String) =>
     val config = ConfigFactory.parseString(s"v = $v")
     val configs: Configs[Int] = Configs.fromTry(_.getInt(_))
-    configs.map(f).get(config, "v").exists(_ == f(v))
+    configs.map(f).get(config, "v").contains(f(v))
   }
 
   val flatMap = {
@@ -65,7 +65,7 @@ object ConfigsTest extends Scalaprops {
            |b = ${q(b)}
            |c = $c
            |""".stripMargin)
-      configs.extract(config).exists(_ == Foo(a, b, c))
+      configs.extract(config).contains(Foo(a, b, c))
     }
   }
 
@@ -75,15 +75,15 @@ object ConfigsTest extends Scalaprops {
     val p1 = forAll { (v1: Int, v2: Int) =>
       val succ1: Configs[Int] = Configs.successful(v1)
       val succ2: Configs[Int] = Configs.successful(v2)
-      succ1.orElse(succ2).get(config, "dummy").exists(_ == v1)
+      succ1.orElse(succ2).get(config, "dummy").contains(v1)
     }
     val p2 = forAll { (v: Int) =>
       val succ: Configs[Int] = Configs.successful(v)
-      succ.orElse(fail).get(config, "dummy").exists(_ == v)
+      succ.orElse(fail).get(config, "dummy").contains(v)
     }
     val p3 = forAll { (v: Int) =>
       val succ: Configs[Int] = Configs.successful(v)
-      fail.orElse(succ).get(config, "dummy").exists(_ == v)
+      fail.orElse(succ).get(config, "dummy").contains(v)
     }
     val p4 = forAll {
       fail.orElse(fail).get(config, "dummy").failed.exists(
@@ -103,6 +103,7 @@ object ConfigsTest extends Scalaprops {
     val configs = Configs.fromConfigTry(_.getInt(p))
     configs.extract(config).failed.exists {
       case ConfigError(_: ConfigError.NullValue, t) if t.isEmpty => true
+      case _ => false
     }
   }
 

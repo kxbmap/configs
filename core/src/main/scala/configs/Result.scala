@@ -55,6 +55,8 @@ sealed abstract class Result[+A] extends Product with Serializable {
   final def withPath(path: String): Result[A] =
     mapError(_.withPath(path))
 
+  def contains[A1 >: A](value: A1): Boolean
+
   def exists(f: A => Boolean): Boolean
 
   def forall(f: A => Boolean): Boolean
@@ -135,10 +137,13 @@ object Result {
     override def mapError(f: ConfigError => ConfigError): Result[A] =
       this
 
+    override def contains[A1 >: A](value: A1): Boolean =
+      this.value == value
+
     override def exists(f: A => Boolean): Boolean =
       f(value)
 
-    def forall(f: A => Boolean): Boolean =
+    override def forall(f: A => Boolean): Boolean =
       f(value)
 
     override def foreach(f: A => Unit): Unit =
@@ -207,10 +212,13 @@ object Result {
         case e: Throwable => fromThrowable(e)
       }
 
+    override def contains[A1 >: Nothing](value: A1): Boolean =
+      false
+
     override def exists(f: Nothing => Boolean): Boolean =
       false
 
-    def forall(f: (Nothing) => Boolean): Boolean =
+    override def forall(f: Nothing => Boolean): Boolean =
       true
 
     override def foreach(f: Nothing => Unit): Unit =

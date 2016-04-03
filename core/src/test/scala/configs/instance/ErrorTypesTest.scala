@@ -48,13 +48,13 @@ object ErrorTypesTest extends Scalaprops {
       val e = new RuntimeException
       implicit val configs: Configs[Int] = Configs.fromTry((_, _) => throw e)
       val result = Configs[Result[Int]].get(config, "value")
-      result.exists(_ == Configs[Int].get(config, "value"))
+      result.contains(Configs[Int].get(config, "value"))
     })
     val p3 = Properties.single("failure", forAll { s: String =>
       val config = Config.empty
       implicit val configs: Configs[Int] = Configs.failure(s)
       val result = Configs[Result[Int]].get(config, "value")
-      result.exists(_ == Configs[Int].get(config, "value"))
+      result.contains(Configs[Int].get(config, "value"))
     })
     Properties.list(p1, p2, p3)
   }

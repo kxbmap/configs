@@ -22,22 +22,19 @@ import configs.{Configs, ToConfig}
 import java.{math => jm}
 import scalaprops.Property.forAll
 import scalaprops.Scalaprops
-import scalaz.syntax.equal._
 
 object BigNumberTypesTest extends Scalaprops {
 
   val bigInt = check[BigInt]
 
   val bigIntFromDecimal = forAll { d: BigDecimal =>
-    Configs[BigInt].extractValue(ToConfig[BigDecimal].toValue(d))
-      .exists(_ === d.toBigInt())
+    Configs[BigInt].extractValue(ToConfig[BigDecimal].toValue(d)).contains(d.toBigInt())
   }
 
   val bigInteger = check[jm.BigInteger]
 
   val bigIntegerFromDecimal = forAll { d: jm.BigDecimal =>
-    Configs[jm.BigInteger].extractValue(ToConfig[BigDecimal].toValue(d))
-      .exists(_ === d.toBigInteger)
+    Configs[jm.BigInteger].extractValue(ToConfig[BigDecimal].toValue(d)).contains(d.toBigInteger)
   }
 
   val bigDecimal = check[BigDecimal]
