@@ -7,8 +7,6 @@ object Java8Options extends AutoPlugin {
 
   override def requires: Plugins = Dependencies
 
-  import Dependencies.autoImport._
-
   override lazy val projectSettings: Seq[Setting[_]] = Seq(
     scalacOptions ++= seq(scalaVersion.value)(
       "-target:jvm-1.8",
@@ -16,7 +14,7 @@ object Java8Options extends AutoPlugin {
       "-Ydelambdafy:method"
     ),
     libraryDependencies ++= seq(scalaVersion.value)(
-      dependencies.scalaJava8Compat.value
+      Dependencies.scalaJava8Compat
     )
   )
 

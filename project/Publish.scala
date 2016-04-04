@@ -7,15 +7,6 @@ object Publish extends AutoPlugin {
 
   override def requires: Plugins = Common
 
-  object autoImport {
-    val disablePublishSettings: Seq[Setting[_]] = Seq(
-      publishArtifact := false,
-      publish := {},
-      publishLocal := {},
-      publishM2 := {}
-    )
-  }
-
   override lazy val projectSettings: Seq[Setting[_]] = Seq(
     description := "Scala wrapper for Typesafe config",
     organization := "com.github.kxbmap",
@@ -39,6 +30,18 @@ object Publish extends AutoPlugin {
     developers := List(
       Developer("kxbmap", "Tsukasa Kitachi", "kxbmap@gmail.com", url("https://github.com/kxbmap"))
     )
+  )
+
+}
+
+object Unpublished extends AutoPlugin {
+
+  override def requires: Plugins = plugins.IvyPlugin
+
+  override lazy val projectSettings: Seq[Setting[_]] = Seq(
+    publishArtifact := false,
+    publish := {},
+    publishLocal := {}
   )
 
 }

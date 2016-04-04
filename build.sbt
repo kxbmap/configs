@@ -1,11 +1,11 @@
 name := "configs-root"
 
-disablePublishSettings
+enablePlugins(Unpublished)
 
 lazy val core = project
   .settings(
     name := "configs",
-    dependencies.core,
+    Dependencies.core,
     scalapropsWithScalazlaws,
     compileOrder in Test := CompileOrder.JavaThenScala,
     initialCommands :=
@@ -16,11 +16,11 @@ lazy val core = project
   )
 
 lazy val doc = project
+  .enablePlugins(Unpublished)
   .settings(
     name := "configs-doc",
-    dependencies.doc,
+    Dependencies.doc,
     tutSettings,
-    tutSourceDirectory := sourceDirectory.value / "tut",
-    disablePublishSettings
+    tutSourceDirectory := sourceDirectory.value / "tut"
   )
   .dependsOn(core % "test")
