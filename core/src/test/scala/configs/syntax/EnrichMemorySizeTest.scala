@@ -177,7 +177,7 @@ object EnrichMemorySizeTest extends Scalaprops {
       }
     },
     "negative double" -> forAllWith(Gen.negativeFiniteDouble) { (a, b) =>
-      if (a.value == 0L) {
+      if (a.value == 0L && b != -0.0d) {
         a / b == MemorySize.Zero
       } else try {
         a / b
@@ -203,7 +203,7 @@ object EnrichMemorySizeTest extends Scalaprops {
       }
     },
     "MemorySize" -> forAllWith(Gen[MemorySize]) { (a, b) =>
-      a / b == a.value.toDouble / b.value.toDouble
+      (a / b).compare(a.value.toDouble / b.value.toDouble) == 0
     })
 
   val `<<` = Properties.properties("by")(
