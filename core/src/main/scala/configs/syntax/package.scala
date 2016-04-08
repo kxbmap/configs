@@ -68,7 +68,7 @@ package object syntax {
       kvs.foldLeft(self)(_ + _)
 
     def ++(obj: ConfigObject): ConfigObject =
-      ++(obj.asScala.toMap)
+      obj.asScala.foldLeft(self)(_ + _)
 
   }
 
