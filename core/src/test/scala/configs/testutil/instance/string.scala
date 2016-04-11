@@ -37,16 +37,14 @@ object string {
     }
     Gen.sized { size =>
       Gen.sequenceNArray(size, g).map { cps =>
-        val buf = new Array[Char](2)
         @tailrec
-        def toString(i: Int, p: Int, acc: Array[Char]): String =
-          if (i >= cps.length) new String(acc)
+        def toString(i: Int, arr: Array[Char], pos: Int): String =
+          if (i >= cps.length) new String(arr)
           else {
-            val n = C.toChars(cps(i), buf, 0)
-            System.arraycopy(buf, 0, acc, p, n)
-            toString(i + 1, p + n, acc)
+            val n = C.toChars(cps(i), arr, pos)
+            toString(i + 1, arr, pos + n)
           }
-        toString(0, 0, new Array(cps.foldLeft(0)(_ + C.charCount(_))))
+        toString(0, new Array(cps.foldLeft(0)(_ + C.charCount(_))), 0)
       }
     }
   }
