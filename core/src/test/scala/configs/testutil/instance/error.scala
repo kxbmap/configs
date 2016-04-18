@@ -26,7 +26,9 @@ import scalaz.{Equal, NonEmptyList, Semigroup}
 object error {
 
   implicit lazy val configErrorSemigroup: Semigroup[ConfigError] =
-    _ + _
+    new Semigroup[ConfigError] {
+      def append(e1: ConfigError, e2: => ConfigError): ConfigError = e1 + e2
+    }
 
   implicit lazy val configErrorEqual: Equal[ConfigError] =
     Equal.equalA[ConfigError]
