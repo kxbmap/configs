@@ -43,7 +43,10 @@ object Dependencies extends AutoPlugin {
     configVersion := "1.3.0",
     lombokVersion := "1.16.8",
     scalapropsVersion := "0.3.1",
-    scalaJava8CompatVersion := "0.7.0"
+    scalaJava8CompatVersion := (scalaVersion.value match {
+      case "2.12.0-M4" => "0.8.0-RC1"
+      case _ => "0.7.0"
+    })
   )
 
 }
