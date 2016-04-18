@@ -13,7 +13,7 @@ cache:
     - $HOME/.sbt/boot
 
 script:
-  - sbt ++$TRAVIS_SCALA_VERSION test doc/tut
+  - sbt ++$TRAVIS_SCALA_VERSION core/test
 
   # Tricks to avoid unnecessary cache updates
   - find $HOME/.sbt -name "*.lock" -delete
