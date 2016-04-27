@@ -75,7 +75,7 @@ object BytesTest extends Scalaprops {
       l / r == Bytes((l.value / r).toLong)
     },
     "bytes" -> forAll { (l: Bytes, r: Bytes) =>
-      l / r == l.value.toDouble / r.value.toDouble
+      (l / r).compare(l.value.toDouble / r.value.toDouble) == 0
     })
 
   val unary_- = forAll { b: Bytes =>
