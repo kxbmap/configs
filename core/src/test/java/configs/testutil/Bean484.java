@@ -30,7 +30,7 @@ import lombok.experimental.FieldDefaults;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class Bean484 {
 
-    private static List<Field> FIELDS =
+    private static final List<Field> FIELDS =
         Arrays.stream(Bean484.class.getDeclaredFields())
             .filter(f -> f.getName().startsWith("a"))
             .sorted(Comparator.comparing(f -> Integer.parseInt(f.getName().substring(1))))

@@ -17,9 +17,12 @@
 package configs.macros
 
 import java.util.Locale
-import scala.annotation.tailrec
 
 private[macros] trait Util {
+
+  final val MaxApplySize = 22
+  final val MaxTupleSize = 22
+  final val MaxSize = MaxApplySize * MaxTupleSize
 
   def toLower(s: String): String =
     s.toLowerCase(Locale.ROOT)
@@ -27,8 +30,13 @@ private[macros] trait Util {
   def toLowerHyphenCase(s: String): String =
     toLower(words(s).mkString("-"))
 
+  def toLowerCamel(s: String): String = {
+    val w :: ws = words(s)
+    (toLower(w) :: ws).mkString
+  }
+
   def words(s: String): List[String] = {
-    @tailrec
+    @annotation.tailrec
     def loop(s: String, acc: List[String]): List[String] =
       if (s.isEmpty) acc.reverse
       else {
@@ -48,45 +56,11 @@ private[macros] trait Util {
     s.split("[_-]+").flatMap(loop(_, Nil)).toList
   }
 
-  val MaxApplyN = 22
-  val MaxTupleN = 22
-
   def grouping[A](xs: List[A]): List[List[A]] = {
     val n = xs.length
-    val t = (n + MaxTupleN - 1) / MaxTupleN
+    val t = (n + MaxTupleSize - 1) / MaxTupleSize
     val g = (n + t - 1) / t
     xs.grouped(g).toList
   }
-
-  def length(xss: Seq[Seq[_]]): Int =
-    xss.foldLeft(0)(_ + _.length)
-
-  def zipWithPos[A](xss: List[List[A]]): List[List[(A, Int)]] =
-    xss.zip(xss.scanLeft(1)(_ + _.length)).map {
-      case (xs, s) => xs.iterator.zip(Iterator.from(s)).toList
-    }
-
-  def fitShape[A](xs: List[A], shape: List[List[_]]): List[List[A]] = {
-    @tailrec
-    def loop(xs: List[A], shape: List[List[_]], acc: List[List[A]]): List[List[A]] =
-      shape match {
-        case Nil => acc.reverse
-        case s :: ss =>
-          val (h, t) = xs.splitAt(s.length)
-          loop(t, ss, h :: acc)
-      }
-    loop(xs, shape, Nil)
-  }
-
-  def fitZip[A, B](xs: List[A], yss: List[List[B]]): List[List[(A, B)]] = {
-    val xss = fitShape(xs, yss)
-    xss.zip(yss).map(t => t._1.zip(t._2))
-  }
-
-  def validateHyphenName(name: String, hyphen: String, names: Seq[String], hyphens: Seq[String]): Option[String] =
-    if (name != hyphen && !names.contains(hyphen) && hyphens.count(_ == hyphen) == 1)
-      Some(hyphen)
-    else
-      None
 
 }

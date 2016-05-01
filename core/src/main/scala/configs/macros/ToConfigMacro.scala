@@ -16,56 +16,103 @@
 
 package configs.macros
 
+import configs.{ConfigValue, ToConfig}
 import scala.reflect.macros.blackbox
 
-class ToConfigMacro(val c: blackbox.Context) extends MacroUtil with Util {
+class ToConfigMacro(val c: blackbox.Context)
+  extends MacroBase with Construct with ToConfigMacroImpl {
 
   import c.universe._
 
-  def derive[A: WeakTypeTag]: Tree = {
-    asCaseClass[A].map(caseClassInstance).getOrElse(abort("not a case class"))
+  def derive[A: WeakTypeTag]: Tree =
+    deriveImpl(construct[A])
+
+}
+
+private[macros] trait ToConfigMacroImpl {
+  this: MacroBase =>
+
+  import c.universe._
+
+  protected def deriveImpl(target: Target): Tree = {
+    implicit val cache = new ToConfigCache()
+    defineInstance(target) {
+      case SealedClass(t, ss) => sealedClass(t, ss)
+      case CaseClass(t, _, as) => caseClass(t, as)
+      case JavaBeans(t, _, ps) => javaBeans(t, ps)
+    }
   }
 
-  val ToConfig = q"_root_.configs.ToConfig"
-  val ImmSeq = q"_root_.scala.collection.immutable.Seq"
 
-  case class CaseClass(tpe: Type, accessors: List[CaseAccessor])
+  private val qToConfig = q"_root_.configs.ToConfig"
 
-  case class CaseAccessor(method: MethodSymbol, result: Type, key: String)
+  private def tToConfig(arg: Type): Type =
+    appliedType(typeOf[ToConfig[_]].typeConstructor, arg)
 
-  def isCaseClass(sym: Symbol): Boolean =
-    sym.isClass && {
-      val cs = sym.asClass
-      cs.isCaseClass && !cs.isAbstract
+  private class ToConfigCache extends InstanceCache {
+    def instanceType(t: Type): Type = tToConfig(t)
+    def instance(tpe: Type): Tree = q"$qToConfig[$tpe]"
+  }
+
+
+  private def sealedClass(tpe: Type, subs: List[SealedMember])(implicit cache: ToConfigCache): Tree = {
+    subs.map(_.tpe).foreach(cache.putEmpty)
+    from(tpe) { o =>
+      val str = cache.get(typeOf[String])
+      val cases = subs.map {
+        case CaseClass(t, _, as) =>
+          val cc = cache.replace(t, fromKeyValues(t) { o =>
+            val tkv = (TypeKey, q"$str.toValueOption(${decodedName(t)})")
+            tkv :: caseAccessors(o, as)
+          })
+          cq"x: $t => $cc.toValue(x)"
+        case CaseObject(t, m) =>
+          val co = cache.replace(t, q"$str.contramap[$t](_ => ${decodedName(t)})")
+          cq"x: $t => $co.toValue(x)"
+      }
+      q"$o match { case ..$cases }"
+    }
+  }
+
+  private def caseClass(tpe: Type, accessors: List[Accessor])(implicit cache: ToConfigCache): Tree =
+    fromKeyValues(tpe)(caseAccessors(_, accessors))
+
+  private def caseAccessors(
+      o: TermName, accessors: List[Accessor])(implicit cache: ToConfigCache): List[(String, Tree)] =
+    accessors.map { a =>
+      val k = toLowerHyphenCase(a.name)
+      val v = q"${cache.get(a.tpe)}.toValueOption($o.${a.method})"
+      (k, v)
     }
 
-  def asCaseClass[A: WeakTypeTag]: Option[CaseClass] =
-    PartialFunction.condOpt(symbolOf[A]) {
-      case sym if isCaseClass(sym) =>
-        val tpe = weakTypeOf[A]
-        val accessors = tpe.decls.sorted.collect {
-          case m: MethodSymbol if m.isCaseAccessor =>
-            m.infoIn(tpe) match {
-              case NullaryMethodType(result) =>
-                val key = toLowerHyphenCase(nameOf(m))
-                CaseAccessor(m, result, key)
-              case _ => abort("bug or broken")
-            }
+  private def javaBeans(tpe: Type, props: List[Property])(implicit cache: ToConfigCache): Tree =
+    fromKeyValues(tpe)(o => props.map {
+      case Property(n, t, g, _) =>
+        val k = toLowerHyphenCase(n)
+        val v =
+          if (t <:< typeOf[AnyVal])
+            q"${cache.get(t)}.toValueOption($o.$g)"
+          else
+            q"_root_.scala.Option($o.$g).flatMap(${cache.get(t)}.toValueOption)"
+        (k, v)
+    })
+
+  private def fromKeyValues(tpe: Type)(kvs: TermName => List[(String, Tree)]): Tree =
+    from(tpe) { o =>
+      val t = tqTuple(Seq(typeOf[String], tOption(typeOf[ConfigValue])))
+      val s = q"_root_.scala.Seq[$t](..${kvs(o)})"
+      q"""
+        $s.foldLeft(_root_.configs.ConfigObject.empty) {
+          case (co, (k, v)) => v.foldLeft(co)(_.withValue(k, _))
         }
-        CaseClass(tpe, accessors)
+       """
     }
 
-  def caseClassInstance(cc: CaseClass): Tree = {
-    val v = freshName("v")
-    val kvs = cc.accessors.map { a =>
-      q"(${a.key}, $ToConfig[${a.result}].toValueOption($v.${a.method}))"
-    }
-    val seq = q"$ImmSeq[($tString, ${tOption(tConfigValue)})](..$kvs)"
+  private def from(tpe: Type)(body: TermName => Tree): Tree = {
+    val o = TermName("o")
     q"""
-      $ToConfig.from { $v: ${cc.tpe} =>
-        $seq.foldLeft(_root_.configs.ConfigObject.empty) {
-          case (c, (k, v)) => v.foldLeft(c)(_.withValue(k, _))
-        }
+      $qToConfig.from { $o: $tpe =>
+        ${body(o)}
       }
      """
   }

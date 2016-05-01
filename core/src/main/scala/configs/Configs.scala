@@ -44,6 +44,9 @@ trait Configs[A] {
   def orElse[B >: A](fallback: Configs[B]): Configs[B] =
     (c, p) => get(c, p).orElse(fallback.get(c, p))
 
+  def transform[B](fail: ConfigError => Configs[B], succ: A => Configs[B]): Configs[B] =
+    (c, p) => get(c, p).fold(fail, succ).get(c, p)
+
   def withPath: Configs[A] =
     new Configs[A] {
       override def get(config: Config, path: String): Result[A] =
@@ -70,11 +73,12 @@ object Configs extends ConfigsInstances {
   def derive[A]: Configs[A] =
     macro macros.ConfigsMacro.derive[A]
 
+  @deprecated("Use derive[A] or auto derivation", "0.5.0")
   def deriveBean[A]: Configs[A] =
-    macro macros.BeanConfigsMacro.deriveBean[A]
+    macro macros.ConfigsMacro.derive[A]
 
   def deriveBeanWith[A](newInstance: => A): Configs[A] =
-    macro macros.BeanConfigsMacro.deriveBeanWith[A]
+    macro macros.ConfigsMacro.deriveBeanWith[A]
 
 
   def from[A](f: (Config, String) => Result[A]): Configs[A] =

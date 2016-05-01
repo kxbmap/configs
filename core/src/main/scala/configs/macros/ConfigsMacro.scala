@@ -16,341 +16,255 @@
 
 package configs.macros
 
-import scala.collection.mutable
+import configs.Configs
 import scala.reflect.macros.blackbox
-import scala.util.DynamicVariable
 
-class ConfigsMacro(val c: blackbox.Context) extends MacroUtil with Util {
+class ConfigsMacro(val c: blackbox.Context)
+  extends MacroBase with Construct with ConfigsMacroImpl {
 
   import c.universe._
 
-  def derive[A: WeakTypeTag]: Tree = {
-    implicit val ctx = new DerivationContext(weakTypeOf[A])
-    ctx.derive(classConfigs)
+  def derive[A: WeakTypeTag]: Tree =
+    deriveImpl(construct[A])
+
+  def deriveBeanWith[A: WeakTypeTag](newInstance: Tree): Tree =
+    deriveBeanWithImpl(constructBeans[A](newInstance))
+
+}
+
+private[macros] trait ConfigsMacroImpl {
+  this: MacroBase =>
+
+  import c.universe._
+
+  protected def deriveImpl(target: Target): Tree = {
+    implicit val cache = new ConfigsCache()
+    defineInstance(target) {
+      case SealedClass(t, ss) => sealedClass(t, ss)
+      case CaseClass(t, ps, _) => caseClass(t, ps)
+      case JavaBeans(t, p, ps) => javaBeans(t, p, ps)
+    }
+  }
+
+  protected def deriveBeanWithImpl(beans: JavaBeans): Tree = {
+    implicit val cache = new ConfigsCache()
+    defineInstance(beans) {
+      case JavaBeans(t, p, ps) => javaBeans(t, p, ps)
+    }
   }
 
 
-  private class DerivationContext(val target: Type) {
+  private val qConfigs = q"_root_.configs.Configs"
 
-    private val self = freshName("s")
-    private val config = freshName("c")
+  private def tConfigs(arg: Type): Type =
+    appliedType(typeOf[Configs[_]].typeConstructor, arg)
 
-    private type State = mutable.Buffer[(Type, TermName, Tree)]
-    private val State = mutable.Buffer
-    private val state = new DynamicVariable[State](State.empty)
+  private val qResult = q"_root_.configs.Result"
 
-    private def newState: State = State((target, self, EmptyTree))
+  private def resultApply(args: Seq[Tree]): Tree =
+    q"$qResult.${TermName(s"apply${args.length}")}(..$args)"
 
-    private def configs(tpe: Type): TermName = {
-      val s = state.value
-      s.find(_._1 =:= tpe).map(_._2).getOrElse {
-        val c = freshName("c")
-        s += ((tpe, c, q"$Configs[$tpe]"))
-        c
-      }
-    }
+  private def resultTuple(args: Seq[Tree]): Tree =
+    q"$qResult.${TermName(s"tuple${args.length}")}(..$args)"
 
-    def derive(instance: Tree): Tree =
-      q"""
-        lazy val $self: ${tConfigs(target)} = $instance
-        $self
-       """
-
-    def makeMethodConfigs(body: => Tree): Tree =
-      state.withValue(newState) {
-        val b = body
-        val vals = state.value.collect {
-          case (_, n, t) if t.nonEmpty => q"val $n = $t"
-        }
-        q"""
-          $Configs.fromConfig[$target] { $config: $tConfig =>
-            ..$vals
-            $b
-          }
-         """
-      }
-
-    def makeResult(tpe: Type, name: String): Tree =
-      q"${configs(tpe)}.get($config, $name)"
+  private class ConfigsCache extends InstanceCache {
+    def instanceType(t: Type): Type = tConfigs(t)
+    def instance(tpe: Type): Tree = q"$qConfigs[$tpe]"
+    def getOpt(tpe: Type): TermName =
+      getOrElseUpdate(tOption(tpe), q"$qConfigs.optionConfigs(${get(tpe)})")
   }
 
 
-  private case class Param(sym: Symbol, method: Method, pos: Int, hyphenName: Option[String]) {
-    val name = nameOf(sym)
-    val term = sym.asTerm
-    val tpe = sym.info
-    val vType =
-      if (term.isParamWithDefault || term.isImplicit)
-        tOption(tpe)
-      else tpe
-
-    def result()(implicit ctx: DerivationContext): Tree =
-      hyphenName.fold(ctx.makeResult(vType, name)) { h =>
-        val r1 = ctx.makeResult(tOption(tpe), name)
-        val r2 = ctx.makeResult(vType, h)
-        if (term.isParamWithDefault || term.isImplicit)
-          q"$r1.flatMap(o => if (o.isEmpty) $r2 else $Result.successful(o))"
-        else
-          q"$r1.flatMap(_.fold($r2)($Result.successful))"
-      }
-
-    def param(name: TermName): Tree =
-      q"$name: $vType"
-
-    def value(v: Tree): List[List[TermName]] => Tree =
-      dmArgs => {
-        def implicitError: Tree = abort(s"could not find implicit value for parameter $show")
-        def valueOr(tree: Tree): Tree = q"$v.getOrElse($tree)"
-        def valueOrDefault(m: Method): Tree = valueOr(m.applyTerms(dmArgs))
-        implicitValue
-          .fold(defaultMethod.fold(v)(valueOrDefault)) {
-            case EmptyTree => defaultMethod.fold(implicitError)(valueOrDefault)
-            case implicits => valueOr(implicits)
-          }
-      }
-
-    def show: String = {
-      val d = if (term.isParamWithDefault) " = <default>" else ""
-      s"${nameOf(sym)}: ${nameOf(tpe)}$d"
+  private def sealedClass(tpe: Type, subs: List[SealedMember])(implicit cache: ConfigsCache): Tree = {
+    subs.map(_.tpe).foreach(cache.putEmpty)
+    val cos = subs.collect {
+      case CaseObject(t, m) =>
+        val c = cache.replace(t, q"$qConfigs.successful($m)")
+        cq"${decodedName(t)} => $c.as[$tpe]"
     }
-
-    private def defaultMethod: Option[Method] =
-      if (term.isParamWithDefault) method.defaultMethod(pos) else None
-
-    private def implicitValue: Option[Tree] =
-      if (term.isImplicit) Some(c.inferImplicitValue(tpe)) else None
-  }
-
-
-  private sealed abstract class Method {
-    def method: MethodSymbol
-
-    def companion: Option[ModuleSymbol]
-
-    def applyTrees(args: Seq[Seq[Tree]]): Tree
-
-    def applyTerms(args: Seq[Seq[TermName]]): Tree =
-      applyTrees(args.map(_.map(Ident.apply)))
-
-    lazy val paramLists: List[List[Param]] = {
-      val parts = zipWithPos(method.paramLists).map(_.map {
-        case sp@(s, _) =>
-          val n = nameOf(s)
-          val h = toLowerHyphenCase(n)
-          (n, h, sp)
-      })
-      val (ns, hs) = {
-        val (nss, hss, _) = parts.map(_.unzip3).unzip3
-        (nss.flatten, hss.flatten)
-      }
-      parts.map(_.map {
-        case (n, h, (s, p)) => Param(s, this, p, validateHyphenName(n, h, ns, hs))
-      })
-    }
-
-    def defaultMethod(pos: Int): Option[Method] =
-      defaultMethods.get(pos)
-
-    private lazy val defaultMethods: Map[Int, Method] =
-      companion match {
-        case None => Map.empty
-        case Some(cmp) =>
-          val prefix = s"${method.name.encodedName}$$default$$"
-          cmp.info.decls.collect {
-            case m: MethodSymbol if encodedNameOf(m).startsWith(prefix) =>
-              encodedNameOf(m).drop(prefix.length).toInt -> ModuleMethod(cmp, m)
-          }(collection.breakOut)
-      }
-  }
-
-  private case class ModuleMethod(module: ModuleSymbol, method: MethodSymbol) extends Method {
-
-    lazy val companion: Option[ModuleSymbol] =
-      Some(module)
-
-    def applyTrees(args: Seq[Seq[Tree]]): Tree =
-      q"$module.$method(...$args)"
-  }
-
-  private case class Constructor(tpe: Type, method: MethodSymbol) extends Method {
-
-    lazy val companion: Option[ModuleSymbol] =
-      tpe.typeSymbol.companion match {
-        case NoSymbol => None
-        case s => Some(s.asModule)
-      }
-
-    def applyTrees(args: Seq[Seq[Tree]]): Tree =
-      q"new $tpe(...$args)"
-  }
-
-
-  private def classConfigs(implicit ctx: DerivationContext): Tree =
-    ctx.target.typeSymbol match {
-      case typeSym if typeSym.isClass =>
-        val classSym = typeSym.asClass
-        if (classSym.isAbstract) {
-          if (classSym.isSealed)
-            sealedClassConfigs(classSym)
-          else
-            abort(s"${ctx.target} is abstract but not sealed")
-        } else {
-          if (classSym.isCaseClass && classSym.companion.isModule)
-            caseClassConfigs(ctx.target, classSym.companion.asModule)
-          else
-            plainClassConfigs(ctx.target)
-        }
-
-      case _ => abort(s"${ctx.target} is not a class")
-    }
-
-  private def sealedClassConfigs(classSym: ClassSymbol)(implicit ctx: DerivationContext): Tree = {
-    val knownSubclasses = {
-      def go(cs: ClassSymbol): List[ClassSymbol] =
-        if (cs.isSealed) {
-          val subs = cs.knownDirectSubclasses.toList.map(_.asClass).flatMap(go)
-          if (cs.isAbstract) subs else cs :: subs
-        }
-        else if (!cs.isAbstract) List(cs)
-        else Nil
-      go(classSym)
-    }
-    if (knownSubclasses.isEmpty)
-      abort(s"${ctx.target} has no known sub classes")
-
-    val typeInst = {
-      val key = "type"
-      val types = knownSubclasses.map { cs =>
-        val inst =
-          if (cs.isModuleClass)
-            q"$Configs.successful[${ctx.target}](${cs.module})"
-          else if (cs.isCaseClass && classSym.companion.isModule)
-            caseClassConfigs(cs.toType, cs.companion.asModule)
-          else
-            plainClassConfigs(cs.toType)
-        cq"${nameOf(cs)} => $inst"
-      }
-      q"""
-        $Configs.get[$tString]($key).flatMap[${ctx.target}] {
-          case ..$types
-          case s => $Configs.failure("unknown type: " + s)
-        }
-       """
-    }
-    val moduleInst =
-      PartialFunction.condOpt(knownSubclasses.collect {
-        case cs if cs.isModuleClass => cq"${nameOf(cs)} => ${cs.module}"
-      }) {
-        case ms if ms.nonEmpty =>
+    val obj = {
+      val (ccs, ccq) = subs.collect {
+        case CaseClass(t, ps, _) =>
+          val c = cache.replace(t, caseClass(t, ps))
+          val cc = q"$c.as[$tpe]"
+          (cc, cq"${decodedName(t)} => $cc")
+      }.unzip
+      val cases = cos ++ ccq :+ cq"""s => $qConfigs.failure("unknown type: " + s)"""
+      ccs match {
+        case Nil =>
           q"""
-            $Configs[$tString].map[${ctx.target}] {
-              case ..$ms
-              case s => throw new $ConfigException.Generic("unknown module: " + s)
+            $qConfigs.get[${typeOf[String]}]($TypeKey).flatMap[$tpe] {
+              case ..$cases
+            }
+           """
+        case x :: xs =>
+          val folded = xs.foldLeft(x)((l, r) => q"$l.orElse($r)")
+          q"""
+            $qConfigs.get[${tOption(typeOf[String])}]($TypeKey).flatMap[$tpe] {
+              _.fold($folded) {
+                case ..$cases
+              }
             }
            """
       }
-    moduleInst.fold(typeInst)(m => q"$m.orElse($typeInst)")
-  }
-
-  private def caseClassConfigs(tpe: Type, module: ModuleSymbol)(implicit ctx: DerivationContext): Tree = {
-    val applies = module.info.decls.sorted
-      .collect {
-        case m: MethodSymbol
-          if m.isPublic && m.returnType =:= tpe && nameOf(m) == "apply" =>
-          ModuleMethod(module, m)
-      }
-      // synthetic first
-      .sortBy(!_.method.isSynthetic)
-
-    if (applies.isEmpty)
-      abort(s"$tpe has no available apply methods")
-    else
-      applies.map(methodConfigs).reduceLeft((l, r) => q"$l.orElse($r)")
-  }
-
-  private def plainClassConfigs(tpe: Type)(implicit ctx: DerivationContext): Tree = {
-    val ctors = tpe.decls.sorted.collect {
-      case m: MethodSymbol if m.isConstructor && m.isPublic =>
-        Constructor(tpe, m)
     }
-    if (ctors.isEmpty)
-      abort(s"$tpe has no public constructor")
-    else
-      ctors.map(methodConfigs).reduceLeft((l, r) => q"$l.orElse($r)")
-  }
-
-  private def methodConfigs(method: Method)(implicit ctx: DerivationContext): Tree = {
-    val paramLists = method.paramLists
-
-    def noArgMethod: Tree = {
-      val args = paramLists.map(_.map(_ => abort(s"bug or broken: $method")))
-      q"""$Result.successful(${method.applyTrees(args)})"""
-    }
-
-    def oneArgMethod: Tree = {
-      val a = freshName("a")
-      val (result, param) = paramLists.flatten match {
-        case p :: Nil => (p.result(), p.param(a))
-        case _ => abort(s"bug or broken: $method")
-      }
-      val args = paramLists.map(_.map(_.value(Ident(a))(Nil)))
-      q"""$result.map(($param) => ${method.applyTrees(args)})"""
-    }
-
-    def smallMethod: Tree = {
-      val (results, params, values) =
-        paramLists.map(_.map { p =>
-          val a = freshName("a")
-          (p.result(), p.param(a), freshName("v") -> p.value(Ident(a)))
-        }.unzip3).unzip3
-      q"""
-        ${resultApplyN(results.flatten)} { ..${params.flatten} =>
-          ${applyValues(values)}
-        }
-       """
-    }
-
-    def largeMethod: Tree = {
-      val (results, params, values) =
-        grouping(paramLists.flatten).map { ps =>
-          val tpl = resultTupleN(ps.map(_.result()))
-          val tplTpe = tTupleN(ps.map(_.vType))
-          val a = freshName("a")
-          val vs = ps.zipWithIndex.map {
-            case (p, i) => freshName("v") -> p.value(q"$a.${TermName(s"_${i + 1}")}")
-          }
-          (tpl, q"$a: $tplTpe", vs)
-        }.unzip3
-      q"""
-        ${resultApplyN(results)} { ..$params =>
-          ${applyValues(fitShape(values.flatten, paramLists))}
-        }
-       """
-    }
-
-    def applyValues(values: List[List[(TermName, (List[List[TermName]] => Tree))]]): Tree = {
-      val args = values.map(_.map(_._1))
-      val dmArgs = args.map(_.length).zip(args.inits.toList.reverse).flatMap {
-        case (n, xs) => List.fill(n)(xs)
-      }
-      val vals = fitZip(dmArgs, values).flatMap(_.map {
-        case (ds, (v, f)) => q"val $v = ${f(ds)}"
+    q"""
+      ${cache.get(typeOf[String])}.transform(_ => $obj, {
+        case ..$cos
+        case s => $qConfigs.failure("unknown module: " + s)
       })
+     """
+  }
+
+  private def caseClass(tpe: Type, params: List[Param])(implicit cache: ConfigsCache): Tree = {
+    val config = freshName("c")
+
+    def get(p: Param): Tree = {
+      val c = if (p.hasDefault) cache.getOpt(p.tpe) else cache.get(p.tpe)
+      q"$c.get($config, ${toLowerHyphenCase(p.name)})"
+    }
+
+    def aType(p: Param): Type =
+      if (p.hasDefault) tOption(p.tpe) else p.tpe
+
+    def value(p: Param, a: Tree): Tree =
+      p.default.fold(a) {
+        case ModuleMethod(mod, mth) => q"$a.getOrElse($mod.$mth)"
+      }
+
+    def noArg: Tree = q"$qResult.successful(new $tpe())"
+
+    def single(p: Param): Tree = {
+      val a = freshName("a")
       q"""
-        ..$vals
-        ${method.applyTerms(args)}
+        ${get(p)}.map { ($a: ${aType(p)}) =>
+          new $tpe(${value(p, Ident(a))})
+        }
        """
     }
 
-    ctx.makeMethodConfigs {
-      length(paramLists) match {
-        case 0 => noArgMethod
-        case 1 => oneArgMethod
-        case n if n <= MaxApplyN => smallMethod
-        case n if n <= MaxTupleN * MaxApplyN => largeMethod
-        case _ => abort("too large param lists")
+    def small: Tree = {
+      val (gs, ps, vs) = params.map { p =>
+        val a = freshName("a")
+        (get(p), q"$a: ${aType(p)}", value(p, Ident(a)))
+      }.unzip3
+      q"""
+        ${resultApply(gs)} { ..$ps =>
+          new $tpe(..$vs)
+        }
+       """
+    }
+
+    def large: Tree = {
+      val (gs, ps, vs) = grouping(params).map { ps =>
+        val a = freshName("a")
+        val at = tqTuple(ps.map(aType))
+        val gs = resultTuple(ps.map(get))
+        val vs = ps.zipWithIndex.map {
+          case (p, i) => value(p, tupleAt(a, i))
+        }
+        (gs, q"$a: $at", vs)
+      }.unzip3
+      q"""
+        ${resultApply(gs)} { ..$ps =>
+          new $tpe(..${vs.flatten})
+        }
+       """
+    }
+
+    fromConfig(tpe, config) {
+      params match {
+        case Nil => noArg
+        case p :: Nil => single(p)
+        case ps if ps.lengthCompare(MaxApplySize) <= 0 => small
+        case _ => large
       }
     }
   }
+
+  private def javaBeans(
+      tpe: Type, provider: InstanceProvider, props: List[Property])(implicit cache: ConfigsCache): Tree = {
+    val bean = freshName("b")
+    val config = freshName("c")
+
+    def block(setOps: List[Tree]): Tree =
+      q"""
+        val $bean = ${newInstance(provider)}
+        ..$setOps
+        $bean
+       """
+
+    def getOpt(p: Property): Tree =
+      q"${cache.getOpt(p.tpe)}.get($config, ${toLowerHyphenCase(p.name)})"
+
+    def setOpt(p: Property, opt: Tree): Tree =
+      q"$opt.foreach($bean.${p.setter})"
+
+    def single(p: Property): Tree = {
+      val a = freshName("a")
+      val at = tOption(p.tpe)
+      q"""
+        ${getOpt(p)}.map { $a: $at =>
+          ${block(setOpt(p, Ident(a)) :: Nil)}
+        }
+       """
+    }
+
+    def small: Tree = {
+      val (gets, sets, params) = props.map { p =>
+        val a = freshName("a")
+        val at = tOption(p.tpe)
+        (getOpt(p), setOpt(p, Ident(a)), q"$a: $at")
+      }.unzip3
+      q"""
+        ${resultApply(gets)} { ..$params =>
+          ${block(sets)}
+        }
+       """
+    }
+
+    def large: Tree = {
+      val (gets, sets, params) = grouping(props).map { ps =>
+        val a = freshName("a")
+        val at = tqTuple(ps.map(p => tOption(p.tpe)))
+        val gs = resultTuple(ps.map(getOpt))
+        val ss = ps.zipWithIndex.map {
+          case (p, i) => setOpt(p, tupleAt(a, i))
+        }
+        (gs, ss, q"$a: $at")
+      }.unzip3
+      q"""
+        ${resultApply(gets)} { ..$params =>
+          ${block(sets.flatten)}
+        }
+       """
+    }
+
+    fromConfig(tpe, config) {
+      props match {
+        case p :: Nil => single(p)
+        case ps if ps.lengthCompare(MaxApplySize) <= 0 => small
+        case _ => large
+      }
+    }
+  }
+
+  private def newInstance(provider: InstanceProvider): Tree =
+    provider match {
+      case Constructor(t) => q"new $t()"
+      case NewInstance(t, n) =>
+        q"""
+          val n: $t = ${c.untypecheck(n)}
+          _root_.scala.Predef.require(n != null, "newInstance should not be null")
+          n
+         """
+    }
+
+  private def fromConfig(tpe: Type, config: TermName)(body: => Tree): Tree =
+    q"""
+      $qConfigs.fromConfig[$tpe] { $config: _root_.configs.Config =>
+        $body
+      }
+     """
 
 }

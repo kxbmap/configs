@@ -22,38 +22,27 @@ import configs.testutil.instance.anyVal._
 import configs.testutil.instance.string._
 import configs.testutil.instance.tuple._
 import configs.testutil.{Bean1, Bean22, Bean484}
+import java.util.Objects
 import scala.beans.BeanProperty
-import scala.collection.convert.decorateAsScala._
 import scalaprops.Property.forAll
 import scalaprops.{Gen, Properties, Scalaprops}
-import scalaz.Equal
 import scalaz.syntax.equal._
+import scalaz.{Equal, Need}
 
 object DeriveBeanConfigsTest extends Scalaprops {
 
   val bean1 = {
-    implicit val configs: Configs[Bean1] =
-      Configs.deriveBean[Bean1]
-
     implicit val gen: Gen[Bean1] =
       Gen[Int].map(new Bean1(_))
 
     implicit val equal: Equal[Bean1] =
       Equal.equalA[Bean1]
 
-    implicit val tc: ToConfig[Bean1] =
-      ToConfig.by(b => Map(
-        "a1" -> b.getA1
-      ))
-
     check[Bean1]
   }
 
 
   val bean22 = {
-    implicit val configs: Configs[Bean22] =
-      Configs.deriveBean[Bean22]
-
     implicit val gen: Gen[Bean22] =
       Gen[(Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int)].map {
         case (a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15, a16, a17, a18, a19, a20, a21, a22) =>
@@ -63,31 +52,16 @@ object DeriveBeanConfigsTest extends Scalaprops {
     implicit val equal: Equal[Bean22] =
       Equal.equalA[Bean22]
 
-    implicit val tc: ToConfig[Bean22] =
-      ToConfig.by(
-        _.values().asScala.zipWithIndex.map {
-          case (n, i) => s"a${i + 1}" -> n.intValue()
-        }.toMap)
-
     check[Bean22]
   }
 
 
   val bean484 = {
-    implicit val configs: Configs[Bean484] =
-      Configs.deriveBean[Bean484]
-
     implicit val gen: Gen[Bean484] =
       Gen.sequenceNArray(484, Gen[Int]).map(Bean484.fromArray)
 
     implicit val equal: Equal[Bean484] =
       Equal.equalA[Bean484]
-
-    implicit val tc: ToConfig[Bean484] =
-      ToConfig.by(
-        _.values().asScala.zipWithIndex.map {
-          case (n, i) => s"a${i + 1}" -> n.intValue()
-        }.toMap)
 
     check[Bean484]
   }
@@ -95,7 +69,9 @@ object DeriveBeanConfigsTest extends Scalaprops {
 
   class MyBean(
       @BeanProperty var a1: Int,
-      @BeanProperty var a2: Int)
+      @BeanProperty var a2: Int) {
+    def this() = this(0, 0)
+  }
 
   object MyBean {
     implicit val equal: Equal[MyBean] =
@@ -122,5 +98,31 @@ object DeriveBeanConfigsTest extends Scalaprops {
       p2.toProperties("return different instances")
     )
   }
+
+
+  class RecursiveBean(
+      @BeanProperty var value: Int,
+      @BeanProperty var next: RecursiveBean) {
+    def this() = this(0, null)
+
+    override def equals(obj: Any): Boolean = obj match {
+      case b: RecursiveBean => value == b.value && Objects.equals(next, b.next)
+      case _ => false
+    }
+  }
+
+  object RecursiveBean {
+    implicit val equal: Equal[RecursiveBean] =
+      Equal.equalA[RecursiveBean]
+
+    implicit lazy val gen: Gen[RecursiveBean] =
+      Gen.oneOfLazy(
+        Need(Gen[(Int, Option[RecursiveBean])].map {
+          case (n, b) => new RecursiveBean(n, b.orNull)
+        })
+      )
+  }
+
+  val recursive = check[RecursiveBean]
 
 }
