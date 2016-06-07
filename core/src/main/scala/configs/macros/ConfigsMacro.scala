@@ -70,8 +70,7 @@ private[macros] trait ConfigsMacroImpl {
   private class ConfigsCache extends InstanceCache {
     def instanceType(t: Type): Type = tConfigs(t)
     def instance(tpe: Type): Tree = q"$qConfigs[$tpe]"
-    def getOpt(tpe: Type): TermName =
-      getOrElseUpdate(tOption(tpe), q"$qConfigs.optionConfigs(${get(tpe)})")
+    def optInstance(inst: TermName): Tree = q"$qConfigs.optionConfigs($inst)"
   }
 
 
@@ -253,11 +252,7 @@ private[macros] trait ConfigsMacroImpl {
     provider match {
       case Constructor(t) => q"new $t()"
       case NewInstance(t, n) =>
-        q"""
-          val n: $t = ${c.untypecheck(n)}
-          _root_.scala.Predef.require(n != null, "newInstance should not be null")
-          n
-         """
+        q"""_root_.java.util.Objects.requireNonNull(${c.untypecheck(n)}, "newInstance must not be null")"""
     }
 
   private def fromConfig(tpe: Type, config: TermName)(body: => Tree): Tree =

@@ -44,10 +44,10 @@ object fun {
 
   private def encodeDecode[A: CheckParam : Configs : ToConfig : Gen : Equal]: Properties[String] =
     Properties.single("encode/decode", forAll { value: A =>
-      if (CheckParam[A].exceptEncodeDecode(value)) true
-      else {
+      CheckParam[A].exceptEncodeDecode(value) || {
         val path = "path"
-        val encoded = ToConfig[A].toValueOption(value)
+        val m = ToConfig[A].append(Map.empty, path, value)
+        val encoded = m.get(path)
         val config = encoded.foldLeft(Config.empty)(_.withValue(path, _))
         val decoded = Configs[A].get(config, path)
         val result = decoded.exists(Equal[A].equal(_, value))

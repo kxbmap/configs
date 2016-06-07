@@ -52,6 +52,7 @@ private[macros] trait ToConfigMacroImpl {
   private class ToConfigCache extends InstanceCache {
     def instanceType(t: Type): Type = tToConfig(t)
     def instance(tpe: Type): Tree = q"$qToConfig[$tpe]"
+    def optInstance(inst: TermName): Tree = q"$qToConfig.optionToConfig($inst)"
   }
 
 
@@ -62,12 +63,12 @@ private[macros] trait ToConfigMacroImpl {
       val cases = subs.map {
         case CaseClass(t, _, as) =>
           val cc = cache.replace(t, fromKeyValues(t) { o =>
-            val tkv = (TypeKey, q"$str.toValueOption(${decodedName(t)})")
-            tkv :: caseAccessors(o, as)
+            val tkv = (TypeKey, q"$str.toValue(${decodedName(t)})")
+            (tkv :: Nil, caseAccessors(o, as))
           })
           cq"x: $t => $cc.toValue(x)"
         case CaseObject(t, m) =>
-          val co = cache.replace(t, q"$str.contramap[$t](_ => ${decodedName(t)})")
+          val co = cache.replace(t, q"$str.contramap[$t](_.toString)")
           cq"x: $t => $co.toValue(x)"
       }
       q"$o match { case ..$cases }"
@@ -75,37 +76,44 @@ private[macros] trait ToConfigMacroImpl {
   }
 
   private def caseClass(tpe: Type, accessors: List[Accessor])(implicit cache: ToConfigCache): Tree =
-    fromKeyValues(tpe)(caseAccessors(_, accessors))
+    fromKeyValues(tpe)(o => (Nil, caseAccessors(o, accessors)))
 
-  private def caseAccessors(
-      o: TermName, accessors: List[Accessor])(implicit cache: ToConfigCache): List[(String, Tree)] =
+  private def caseAccessors(o: TermName, accessors: List[Accessor])(implicit cache: ToConfigCache): List[Append] =
     accessors.map { a =>
       val k = toLowerHyphenCase(a.name)
-      val v = q"${cache.get(a.tpe)}.toValueOption($o.${a.method})"
-      (k, v)
+      val v = q"$o.${a.method}"
+      Append(cache.get(a.tpe), k, v)
     }
 
   private def javaBeans(tpe: Type, props: List[Property])(implicit cache: ToConfigCache): Tree =
-    fromKeyValues(tpe)(o => props.map {
-      case Property(n, t, g, _) =>
-        val k = toLowerHyphenCase(n)
-        val v =
-          if (t <:< typeOf[AnyVal])
-            q"${cache.get(t)}.toValueOption($o.$g)"
-          else
-            q"_root_.scala.Option($o.$g).flatMap(${cache.get(t)}.toValueOption)"
-        (k, v)
-    })
+    fromKeyValues(tpe) { o =>
+      val (vals, refs) = props.partition(_.tpe <:< typeOf[AnyVal])
+      val kvs = vals.map {
+        case Property(n, t, g, _) =>
+          val k = toLowerHyphenCase(n)
+          val v = q"${cache.get(t)}.toValue($o.$g)"
+          (k, v)
+      }
+      val appends = refs.map {
+        case Property(n, t, g, _) =>
+          val k = toLowerHyphenCase(n)
+          val v = q"_root_.scala.Option($o.$g)"
+          Append(cache.getOpt(t), k, v)
+      }
+      (kvs, appends)
+    }
 
-  private def fromKeyValues(tpe: Type)(kvs: TermName => List[(String, Tree)]): Tree =
+
+  private case class Append(tc: TermName, key: String, value: Tree)
+
+  private def fromKeyValues(tpe: Type)(f: TermName => (List[(String, Tree)], List[Append]))(implicit cache: ToConfigCache): Tree =
     from(tpe) { o =>
-      val t = tqTuple(Seq(typeOf[String], tOption(typeOf[ConfigValue])))
-      val s = q"_root_.scala.Seq[$t](..${kvs(o)})"
-      q"""
-        $s.foldLeft(_root_.configs.ConfigObject.empty) {
-          case (co, (k, v)) => v.foldLeft(co)(_.withValue(k, _))
-        }
-       """
+      val (kvs, appends) = f(o)
+      val m0 = q"_root_.scala.collection.immutable.Map[${typeOf[String]}, ${typeOf[ConfigValue]}](..$kvs)"
+      val m = appends.foldLeft(m0) {
+        case (q, Append(tc, k, v)) => q"$tc.append($q, $k, $v)"
+      }
+      q"_root_.configs.ConfigObject.from($m)"
     }
 
   private def from(tpe: Type)(body: TermName => Tree): Tree = {

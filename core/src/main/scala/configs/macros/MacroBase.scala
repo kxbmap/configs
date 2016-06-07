@@ -35,6 +35,9 @@ private[macros] abstract class MacroBase extends Util {
   def tOption(arg: Type): Type =
     appliedType(typeOf[Option[_]].typeConstructor, arg)
 
+  def tMap(k: Type, v: Type): Type =
+    appliedType(typeOf[Map[_, _]].typeConstructor, k, v)
+
 
   def decodedName(s: Symbol): String = s.name.decodedName.toString
 
@@ -175,7 +178,11 @@ private[macros] abstract class MacroBase extends Util {
 
     def instance(tpe: Type): Tree
 
+    def optInstance(inst: TermName): Tree
+
     def get(tpe: Type): TermName = getOrElseUpdate(tpe, instance(tpe))
+
+    def getOpt(tpe: Type): TermName = getOrElseUpdate(tOption(tpe), optInstance(get(tpe)))
 
     def putEmpty(tpe: Type): TermName = {
       val n = freshName("t")

@@ -26,15 +26,15 @@ trait ToConfig[A] {
 
   def toValue(a: A): ConfigValue
 
-  def toValueOption(a: A): Option[ConfigValue] =
-    Some(toValue(a))
+  def append(map: Map[String, ConfigValue], key: String, a: A): Map[String, ConfigValue] =
+    map.updated(key, toValue(a))
 
   def contramap[B](f: B => A): ToConfig[B] =
     new ToConfig[B] {
       def toValue(a: B): ConfigValue =
         self.toValue(f(a))
-      override def toValueOption(a: B): Option[ConfigValue] =
-        self.toValueOption(f(a))
+      override def append(map: Map[String, ConfigValue], key: String, a: B): Map[String, ConfigValue] =
+        self.append(map, key, f(a))
     }
 
 }
@@ -183,8 +183,8 @@ sealed abstract class ToConfigInstances extends ToConfigInstances0 {
       def toValue(a: Option[A]): ConfigValue =
         a.fold(ConfigValue.Null)(A.toValue)
 
-      override def toValueOption(a: Option[A]): Option[ConfigValue] =
-        a.map(A.toValue)
+      override def append(map: Map[String, ConfigValue], key: String, a: Option[A]): Map[String, ConfigValue] =
+        a.fold(map)(v => map.updated(key, A.toValue(v)))
     }
 
   implicit def javaOptionalToConfig[A](implicit A: ToConfig[A]): ToConfig[ju.Optional[A]] =
