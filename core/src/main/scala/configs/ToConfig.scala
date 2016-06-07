@@ -18,7 +18,7 @@ package configs
 
 import java.{lang => jl, math => jm, time => jt, util => ju}
 import scala.collection.breakOut
-import scala.collection.convert.decorateAsScala._
+import scala.collection.JavaConverters._
 import scala.concurrent.duration._
 
 trait ToConfig[A] {

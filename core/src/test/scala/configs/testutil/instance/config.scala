@@ -21,7 +21,7 @@ import configs.testutil.instance.collection._
 import configs.testutil.instance.string._
 import configs.{Config, ConfigList, ConfigObject, ConfigValue, MemorySize}
 import java.{lang => jl, util => ju}
-import scala.collection.convert.decorateAsScala._
+import scala.collection.JavaConverters._
 import scalaprops.Gen
 import scalaz.{Equal, Need}
 

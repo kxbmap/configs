@@ -18,7 +18,7 @@ package configs.syntax
 
 import configs.testutil.instance.config._
 import configs.{ConfigList, ConfigValue}
-import scala.collection.convert.decorateAsScala._
+import scala.collection.JavaConverters._
 import scalaprops.Property.forAll
 import scalaprops.Scalaprops
 import scalaz.Monoid

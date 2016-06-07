@@ -17,8 +17,7 @@
 package configs
 
 import com.typesafe.config.{ConfigFactory, ConfigValueFactory}
-import scala.collection.convert.decorateAsJava._
-import scala.collection.convert.decorateAsScala._
+import scala.collection.JavaConverters._
 
 object Config {
 

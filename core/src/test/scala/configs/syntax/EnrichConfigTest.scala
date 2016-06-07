@@ -20,7 +20,7 @@ import com.typesafe.config.ConfigFactory
 import configs.testutil.instance.config._
 import configs.testutil.instance.string._
 import configs.{Config, ConfigObject, Result, ToConfig}
-import scala.collection.convert.decorateAsScala._
+import scala.collection.JavaConverters._
 import scalaprops.Property.forAll
 import scalaprops.Scalaprops
 import scalaz.Monoid

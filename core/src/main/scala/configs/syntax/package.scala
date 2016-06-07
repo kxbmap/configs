@@ -17,7 +17,7 @@
 package configs
 
 import java.lang.Long.{highestOneBit, numberOfTrailingZeros}
-import scala.collection.convert.decorateAsScala._
+import scala.collection.JavaConverters._
 
 package object syntax {
 

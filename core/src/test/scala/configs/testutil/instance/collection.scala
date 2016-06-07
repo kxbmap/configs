@@ -18,8 +18,7 @@ package configs.testutil.instance
 
 import configs.testutil.instance.string._
 import java.{lang => jl, util => ju}
-import scala.collection.convert.decorateAsJava._
-import scala.collection.convert.decorateAsScala._
+import scala.collection.JavaConverters._
 import scala.collection.generic.CanBuildFrom
 import scalaprops.Gen
 import scalaz.{Equal, Order, std}

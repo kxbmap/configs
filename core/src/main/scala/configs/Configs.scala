@@ -19,8 +19,7 @@ package configs
 import com.typesafe.config.ConfigException
 import java.util.concurrent.TimeUnit
 import java.{lang => jl, math => jm, time => jt, util => ju}
-import scala.collection.convert.decorateAsJava._
-import scala.collection.convert.decorateAsScala._
+import scala.collection.JavaConverters._
 import scala.collection.generic.CanBuildFrom
 import scala.concurrent.duration.{Duration, FiniteDuration}
 
