@@ -31,7 +31,14 @@ object Dependencies extends AutoPlugin {
       scalaJava8Compat % "test"
     )
 
-  lazy val doc = Seq(
+  lazy val testutil =
+    libraryDependencies ++= Seq(
+      "com.typesafe" % "config" % configVersion.value,
+      "com.github.scalaprops" %% "scalaprops" % scalapropsVersion.value,
+      "org.projectlombok" % "lombok" % lombokVersion.value
+    )
+
+  lazy val docs = Seq(
     libraryDependencies ++= Seq(
       "org.projectlombok" % "lombok" % lombokVersion.value % "test"
     ),

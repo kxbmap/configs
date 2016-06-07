@@ -3,6 +3,7 @@ name := "configs-root"
 enablePlugins(Unpublished)
 
 lazy val core = project
+  .dependsOn(testutil % "test")
   .settings(
     name := "configs",
     Dependencies.core,
@@ -15,12 +16,21 @@ lazy val core = project
         |""".stripMargin
   )
 
-lazy val doc = project
+lazy val bench = project
+  .dependsOn(core, testutil)
+  .enablePlugins(JmhPlugin, Unpublished)
+
+lazy val testutil = project
   .enablePlugins(Unpublished)
   .settings(
-    name := "configs-doc",
-    Dependencies.doc,
+    Dependencies.testutil
+  )
+
+lazy val docs = project
+  .dependsOn(core % "test")
+  .enablePlugins(Unpublished)
+  .settings(
+    Dependencies.docs,
     tutSettings,
     tutSourceDirectory := sourceDirectory.value / "tut"
   )
-  .dependsOn(core % "test")
