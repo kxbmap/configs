@@ -13,7 +13,7 @@ Usage
 Add the following line to your build file:
 
 ```scala
-libraryDependencies += "com.github.kxbmap" %% "configs" % "0.4.2"
+libraryDependencies += "com.github.kxbmap" %% "configs" % "0.5.0"
 ```
 
 configs version 0.4+ only support Java 8. If you need to Java 7, please check [0.3.x](https://github.com/kxbmap/configs/tree/v0.3.x-java7).
@@ -148,7 +148,6 @@ There are a number of built-in `Configs` instances:
   * `Option[A]`
   * `java.util.`{`Optional[A]`, `OptionalLong`, `OptionalInt`, `OptionalDouble`}
 * case classes
-* classes that have public constructors
 * ADTs (sealed trait + classes/objects). See [ADTs support](#adts-support)
 * Java Beans. See [Java Beans support](#java-beans-support)
 
@@ -170,14 +169,12 @@ You can get an ADT value from config:
 ```tut:silent
 val config = ConfigFactory.parseString("""
   tree = {
-    type = Branch
     value = 42
     left = Leaf
     right {
-      type = Branch
       value = 123
       left = Leaf
-      right = { type = Leaf }
+      right = Leaf
     }
   }
   """)
