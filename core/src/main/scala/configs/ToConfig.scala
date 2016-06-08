@@ -22,7 +22,6 @@ import scala.collection.JavaConverters._
 import scala.concurrent.duration._
 
 trait ToConfig[A] {
-  self =>
 
   def toValue(a: A): ConfigValue
 
@@ -30,12 +29,7 @@ trait ToConfig[A] {
     map.updated(key, toValue(a))
 
   def contramap[B](f: B => A): ToConfig[B] =
-    new ToConfig[B] {
-      def toValue(a: B): ConfigValue =
-        self.toValue(f(a))
-      override def append(map: Map[String, ConfigValue], key: String, a: B): Map[String, ConfigValue] =
-        self.append(map, key, f(a))
-    }
+    b => toValue(f(b))
 
 }
 
