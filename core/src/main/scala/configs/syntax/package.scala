@@ -196,4 +196,11 @@ package object syntax {
 
   }
 
+  implicit class EnrichFromString[A](self: A)(implicit A: FromString[A]) {
+
+    def :=[B](value: B)(implicit B: ToConfig[B]): ConfigKeyValue =
+      ConfigKeyValue(A.show(self), B.toValue(value))
+
+  }
+
 }

@@ -17,7 +17,6 @@
 package configs
 
 import com.typesafe.config.ConfigFactory
-import configs.syntax.create._
 import configs.testutil.fun._
 import configs.testutil.instance.anyVal._
 import configs.testutil.instance.string._
@@ -140,7 +139,7 @@ object DeriveConfigsTest extends Scalaprops {
     }
     val p2 = {
       implicit val gen: Gen[Default1] = Gen.value(Default1())
-      implicit val tc: ToConfig[Default1] = _ => configObject()
+      implicit val tc: ToConfig[Default1] = _ => ConfigObject.empty
       check[Default1]("w/ default")
     }
     p1 x p2

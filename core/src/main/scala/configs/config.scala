@@ -18,13 +18,14 @@ package configs
 
 import com.typesafe.config.{ConfigFactory, ConfigValueFactory}
 import scala.collection.JavaConverters._
+import scala.collection.breakOut
 
 object Config {
 
   def empty: Config = ConfigFactory.empty()
 
-  def apply(configObject: ConfigObject): Config =
-    configObject.toConfig
+  def apply(kvs: ConfigKeyValue*): Config =
+    ConfigObject(kvs: _*).toConfig
 
   def unapply(config: Config): Option[ConfigObject] =
     Some(config.root())
@@ -36,6 +37,9 @@ object ConfigValue {
   final val Null = from(null)
   final val True = from(true)
   final val False = from(false)
+
+  def apply[A](a: A)(implicit A: ToConfig[A]): ConfigValue =
+    A.toValue(a)
 
   def from(any: Any): ConfigValue =
     ConfigValueFactory.fromAnyRef(any)
@@ -49,6 +53,9 @@ object ConfigList {
 
   def empty: ConfigList = from(Nil)
 
+  def apply[A](as: A*)(implicit A: ToConfig[A]): ConfigList =
+    from(as.map(A.toValue))
+
   def from(seq: Seq[Any]): ConfigList =
     ConfigValueFactory.fromIterable(seq.asInstanceOf[Seq[AnyRef]].asJava)
 
@@ -60,6 +67,9 @@ object ConfigList {
 object ConfigObject {
 
   def empty: ConfigObject = from(Map.empty)
+
+  def apply(kvs: ConfigKeyValue*): ConfigObject =
+    from(kvs.map(_.tuple)(breakOut))
 
   def from(map: Map[String, Any]): ConfigObject =
     ConfigValueFactory.fromMap(map.asInstanceOf[Map[String, AnyRef]].asJava)
