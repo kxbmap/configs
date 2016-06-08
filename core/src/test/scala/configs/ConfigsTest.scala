@@ -116,23 +116,4 @@ object ConfigsTest extends Scalaprops {
     }
   }
 
-  val withPath = {
-    val int: Configs[Int] = (c, p) => Result.Try(c.getInt(p))
-    def config(p: String) = ConfigFactory.parseString(s"$p = not a number")
-    val p1 = forAllG(pathStringGen) { p =>
-      val wp = int.withPath
-      val result = wp.get(config(p), p)
-      result.failed.exists(_.head.paths == List(p))
-    }
-    val p2 = forAllG(pathStringGen) { p =>
-      val wp = int.withPath.withPath
-      val result = wp.get(config(p), p)
-      result.failed.exists(_.head.paths == List(p))
-    }
-    Properties.list(
-      p1.toProperties("once"),
-      p2.toProperties("twice")
-    )
-  }
-
 }

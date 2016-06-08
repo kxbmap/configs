@@ -24,9 +24,11 @@ import scala.collection.generic.CanBuildFrom
 import scala.concurrent.duration.{Duration, FiniteDuration}
 
 trait Configs[A] {
-  self =>
 
-  def get(config: Config, path: String): Result[A]
+  protected def get0(config: Config, path: String): Result[A]
+
+  def get(config: Config, path: String): Result[A] =
+    get0(config, path).pushPath(path)
 
   def extract(config: Config, key: String = "extract"): Result[A] =
     get(config.atKey(key), key)
@@ -35,28 +37,16 @@ trait Configs[A] {
     get(value.atKey(key), key)
 
   def map[B](f: A => B): Configs[B] =
-    get(_, _).map(f)
+    get0(_, _).map(f)
 
   def flatMap[B](f: A => Configs[B]): Configs[B] =
-    (c, p) => get(c, p).flatMap(f(_).get(c, p))
+    (c, p) => get0(c, p).flatMap(f(_).get0(c, p))
 
   def orElse[B >: A](fallback: Configs[B]): Configs[B] =
-    (c, p) => get(c, p).orElse(fallback.get(c, p))
+    (c, p) => get0(c, p).orElse(fallback.get0(c, p))
 
   def transform[B](fail: ConfigError => Configs[B], succ: A => Configs[B]): Configs[B] =
-    (c, p) => get(c, p).fold(fail, succ).get(c, p)
-
-  def withPath: Configs[A] =
-    new Configs[A] {
-      override def get(config: Config, path: String): Result[A] =
-        self.get(config, path).pushPath(path)
-
-      override def withPath: Configs[A] = this
-      override def withoutPath: Configs[A] = self
-    }
-
-  def withoutPath: Configs[A] =
-    this
+    (c, p) => get0(c, p).fold(fail, succ).get0(c, p)
 
   def as[B >: A]: Configs[B] =
     this.asInstanceOf[Configs[B]]
@@ -81,28 +71,25 @@ object Configs extends ConfigsInstances {
 
 
   def from[A](f: (Config, String) => Result[A]): Configs[A] =
-    withPath((c, p) => Result.Try(f(c, p)).flatten)
+    (c, p) => Result.Try(f(c, p)).flatten
 
   def fromConfig[A](f: Config => Result[A]): Configs[A] =
     from((c, p) => f(c.getConfig(p)))
 
   def fromTry[A](f: (Config, String) => A): Configs[A] =
-    withPath((c, p) => Result.Try(f(c, p)))
+    (c, p) => Result.Try(f(c, p))
 
   def fromConfigTry[A](f: Config => A): Configs[A] =
     fromTry((c, p) => f(c.getConfig(p)))
 
   def successful[A](a: A): Configs[A] =
-    withPath((_, _) => Result.successful(a))
+    (_, _) => Result.successful(a)
 
   def failure[A](msg: String): Configs[A] =
-    withPath((_, _) => Result.failure(ConfigError(msg)))
+    (_, _) => Result.failure(ConfigError(msg))
 
   def get[A](path: String)(implicit A: Configs[A]): Configs[A] =
     from((c, p) => A.get(c.getConfig(p), path))
-
-  def withPath[A](configs: Configs[A]): Configs[A] =
-    configs.withPath
 
 }
 
@@ -157,9 +144,10 @@ sealed abstract class ConfigsInstances extends ConfigsInstances0 {
       if (c.hasPathOrNull(p))
         A.get(c, p).map(Some(_)).handle {
           case ConfigError(ConfigError.NullValue(_, `p` :: Nil), es) if es.isEmpty => None
-        }
-      else Result.successful(None)
-    }.withoutPath
+        }.popPath
+      else
+        Result.successful(None)
+    }
 
   implicit def javaOptionalConfigs[A: Configs]: Configs[ju.Optional[A]] =
     optionConfigs[A].map(_.fold(ju.Optional.empty[A]())(ju.Optional.of))
@@ -301,8 +289,8 @@ sealed abstract class ConfigsInstances extends ConfigsInstances0 {
 
 
   implicit lazy val configConfigs: Configs[Config] =
-    Configs.withPath(new Configs[Config] {
-      def get(config: Config, path: String): Result[Config] =
+    new Configs[Config] {
+      protected def get0(config: Config, path: String): Result[Config] =
         Result.Try(config.getConfig(path))
 
       override def extract(config: Config, key: String): Result[Config] =
@@ -313,12 +301,12 @@ sealed abstract class ConfigsInstances extends ConfigsInstances0 {
           case co: ConfigObject => Result.successful(co.toConfig)
           case _ => super.extractValue(value)
         }
-    })
+    }
 
 
   implicit lazy val configValueConfigs: Configs[ConfigValue] =
-    Configs.withPath(new Configs[ConfigValue] {
-      def get(config: Config, path: String): Result[ConfigValue] =
+    new Configs[ConfigValue] {
+      protected def get0(config: Config, path: String): Result[ConfigValue] =
         Result.Try(config.getValue(path))
 
       override def extract(config: Config, key: String): Result[ConfigValue] =
@@ -326,7 +314,7 @@ sealed abstract class ConfigsInstances extends ConfigsInstances0 {
 
       override def extractValue(value: ConfigValue, key: String): Result[ConfigValue] =
         Result.successful(value)
-    })
+    }
 
   implicit lazy val configListConfigs: Configs[ConfigList] =
     Configs.fromTry(_.getList(_))

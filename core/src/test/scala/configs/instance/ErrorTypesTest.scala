@@ -39,7 +39,7 @@ object ErrorTypesTest extends Scalaprops {
       val config = ConfigFactory.parseString("value = null")
       val result = Configs[Result[Int]].get(config, "value")
       result.exists {
-        case Result.Failure(ConfigError(_: ConfigError.NullValue, _)) => true
+        case Result.Failure(ConfigError(ConfigError.NullValue(_, "value" :: Nil), _)) => true
         case _ => false
       }
     })

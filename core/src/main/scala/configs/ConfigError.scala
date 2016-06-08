@@ -32,6 +32,9 @@ final case class ConfigError(head: ConfigError.Entry, tail: Vector[ConfigError.E
   def pushPath(path: String): ConfigError =
     ConfigError(head.pushPath(path), tail.map(_.pushPath(path)))
 
+  def popPath: ConfigError =
+    ConfigError(head.popPath, tail.map(_.popPath))
+
   def configException: ConfigException = {
     val msg =
       if (tail.isEmpty) head.messageWithPath
@@ -72,6 +75,8 @@ object ConfigError {
 
     def pushPath(path: String): Entry
 
+    def popPath: Entry
+
     def throwable: Throwable
   }
 
@@ -82,6 +87,11 @@ object ConfigError {
 
     def pushPath(path: String): Entry =
       copy(paths = path :: paths)
+
+    def popPath: Entry = paths match {
+      case Nil => this
+      case _ :: ps => copy(paths = ps)
+    }
   }
 
   final case class Exceptional(throwable: Throwable, paths: List[String] = Nil) extends Entry {
@@ -91,12 +101,22 @@ object ConfigError {
 
     def pushPath(path: String): Entry =
       copy(paths = path :: paths)
+
+    def popPath: Entry = paths match {
+      case Nil => this
+      case _ :: ps => copy(paths = ps)
+    }
   }
 
   final case class Generic(message: String, paths: List[String] = Nil) extends Entry {
 
     def pushPath(path: String): Entry =
       copy(paths = path :: paths)
+
+    def popPath: Entry = paths match {
+      case Nil => this
+      case _ :: ps => copy(paths = ps)
+    }
 
     def throwable: Throwable =
       new ConfigException.Generic(message)
