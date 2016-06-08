@@ -78,6 +78,8 @@ object ConfigError {
     def popPath: Entry
 
     def throwable: Throwable
+
+    override def toString: String = messageWithPath
   }
 
   final case class NullValue(throwable: ConfigException.Null, paths: List[String] = Nil) extends Entry {
