@@ -19,7 +19,7 @@ package configs.syntax
 import com.typesafe.config.ConfigFactory
 import configs.testutil.instance.config._
 import configs.testutil.instance.string._
-import configs.{Config, ConfigObject, Result, ToConfig}
+import configs.{Config, ConfigObject, ConfigOrigin, Result, ToConfig}
 import scala.collection.JavaConverters._
 import scalaprops.Property.forAll
 import scalaprops.Scalaprops
@@ -41,6 +41,11 @@ object EnrichConfigTest extends Scalaprops {
   val getOrElse = forAll { (n: Option[Int], m: Int) =>
     val config = ToConfig[Option[Int]].toValue(n).atKey("path")
     config.getOrElse[Int]("path", m) == Result.successful(n.getOrElse(m))
+  }
+
+  val getWithOrigin = forAll { n: Int =>
+    val config = ConfigFactory.parseString(s"path = $n")
+    config.getWithOrigin[Int]("path") == Result.successful((n, ConfigOrigin.simple("String").withLineNumber(1)))
   }
 
   val ++ = forAll { (c1: Config, c2: Config) =>
