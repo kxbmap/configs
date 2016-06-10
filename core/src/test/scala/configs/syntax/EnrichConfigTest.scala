@@ -19,10 +19,10 @@ package configs.syntax
 import com.typesafe.config.ConfigFactory
 import configs.testutil.instance.config._
 import configs.testutil.instance.string._
-import configs.{Config, ConfigObject, ConfigOrigin, Result, ToConfig}
+import configs.{Config, ConfigObject, ConfigOrigin, ConfigValue, Configs, Result}
 import scala.collection.JavaConverters._
 import scalaprops.Property.forAll
-import scalaprops.Scalaprops
+import scalaprops.{Properties, Scalaprops}
 import scalaz.Monoid
 import scalaz.syntax.equal._
 
@@ -38,9 +38,21 @@ object EnrichConfigTest extends Scalaprops {
     config.get[Int]("path") == Result.successful(n)
   }
 
-  val getOrElse = forAll { (n: Option[Int], m: Int) =>
-    val config = ToConfig[Option[Int]].toValue(n).atKey("path")
-    config.getOrElse[Int]("path", m) == Result.successful(n.getOrElse(m))
+  val getOrElse = {
+    implicit val unused: Configs[Option[Int]] = Configs.successful(Some(42))
+
+    val p1 = Properties.single("get", forAll { (n: Int, d: Int) =>
+      val config = ConfigValue(n).atPath("path")
+      config.getOrElse("path", d) == Result.successful(n)
+    })
+    val p2 = Properties.single("null", forAll { d: Int =>
+      val config = ConfigValue.Null.atPath("path")
+      config.getOrElse("path", d) == Result.successful(d)
+    })
+    val p3 = Properties.single("missing", forAll { d: Int =>
+      Config.empty.getOrElse("path", d) == Result.successful(d)
+    })
+    Properties.list(p1, p2, p3)
   }
 
   val getWithOrigin = forAll { n: Int =>

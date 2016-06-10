@@ -29,8 +29,8 @@ package object syntax {
     def get[A](path: String)(implicit A: Configs[A]): Result[A] =
       A.get(self, path)
 
-    def getOrElse[A](path: String, default: => A)(implicit A: Configs[Option[A]]): Result[A] =
-      get(path)(A).map(_.getOrElse(default))
+    def getOrElse[A: Configs](path: String, default: => A): Result[A] =
+      get[Option[A]](path).map(_.getOrElse(default))
 
     def getWithOrigin[A: Configs](path: String): Result[(A, ConfigOrigin)] =
       get[(A, ConfigOrigin)](path)
