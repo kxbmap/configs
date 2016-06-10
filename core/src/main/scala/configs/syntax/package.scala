@@ -32,6 +32,9 @@ package object syntax {
     def getOrElse[A](path: String, default: => A)(implicit A: Configs[Option[A]]): Result[A] =
       get(path)(A).map(_.getOrElse(default))
 
+    def getWithOrigin[A: Configs](path: String): Result[(A, ConfigOrigin)] =
+      get[(A, ConfigOrigin)](path)
+
     def ++(that: Config): Config =
       that.withFallback(self)
 

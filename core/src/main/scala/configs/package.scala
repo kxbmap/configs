@@ -26,4 +26,6 @@ package object configs {
 
   type MemorySize = com.typesafe.config.ConfigMemorySize
 
+  type ConfigOrigin = com.typesafe.config.ConfigOrigin
+
 }
