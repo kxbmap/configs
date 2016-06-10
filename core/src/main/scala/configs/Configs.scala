@@ -341,4 +341,14 @@ sealed abstract class ConfigsInstances extends ConfigsInstances0 {
       p
     }
 
+  implicit def withOriginConfigs[A](implicit A: Configs[A]): Configs[(A, ConfigOrigin)] =
+    (c, p) => A.get(c, p).flatMap { a =>
+      try
+        Result.successful((a, c.getValue(p).origin()))
+      catch {
+        case e: ConfigException.Null => Result.successful((a, e.origin()))
+        case _: ConfigException.Missing => Result.failure(ConfigError(s"no origin for '$p'"))
+      }
+    }
+
 }
