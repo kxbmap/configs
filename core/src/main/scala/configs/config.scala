@@ -16,7 +16,8 @@
 
 package configs
 
-import com.typesafe.config.{ConfigFactory, ConfigValueFactory}
+import com.typesafe.config.{ConfigFactory, ConfigOriginFactory, ConfigValueFactory}
+import java.net.URL
 import scala.collection.JavaConverters._
 import scala.collection.breakOut
 
@@ -109,5 +110,17 @@ object ConfigUtil {
 
   def splitPath(path: String): List[String] =
     Impl.splitPath(path).asScala.toList
+
+}
+
+object ConfigOrigin {
+
+  def default: ConfigOrigin = ConfigOriginFactory.newSimple()
+
+  def simple(description: String): ConfigOrigin = ConfigOriginFactory.newSimple(description)
+
+  def file(filename: String): ConfigOrigin = ConfigOriginFactory.newFile(filename)
+
+  def url(url: URL): ConfigOrigin = ConfigOriginFactory.newURL(url)
 
 }
