@@ -18,7 +18,7 @@ object Dependencies extends AutoPlugin {
   override lazy val projectSettings: Seq[Setting[_]] = Seq(
     configVersion := "1.3.0",
     lombokVersion := "1.16.8",
-    scalapropsVersion := "0.3.1"
+    scalapropsVersion := "0.3.2"
   )
 
   lazy val scalaJava8Compat = "org.scala-lang.modules" %% "scala-java8-compat" % "0.8.0-RC1"
