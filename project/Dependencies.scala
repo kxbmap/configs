@@ -25,14 +25,10 @@ object Dependencies extends AutoPlugin {
         scalaJava8Compat.value % "test"
       )
 
-      val doc = Seq(
+      val doc =
         libraryDependencies ++= Seq(
           "org.projectlombok" % "lombok" % lombokVersion.value % "test"
-        ),
-        dependencyOverrides ++= Set(
-          "org.scala-lang.modules" %% "scala-xml" % "1.0.5"
         )
-      )
     }
 
   }
@@ -41,8 +37,8 @@ object Dependencies extends AutoPlugin {
 
   override lazy val projectSettings: Seq[Setting[_]] = Seq(
     configVersion := "1.3.0",
-    lombokVersion := "1.16.8",
-    scalapropsVersion := "0.3.1",
+    lombokVersion := "1.16.10",
+    scalapropsVersion := "0.3.2",
     scalaJava8CompatVersion := (scalaVersion.value match {
       case "2.12.0-M4" => "0.8.0-RC1"
       case _ => "0.7.0"
