@@ -20,7 +20,8 @@ object Common extends AutoPlugin {
       "-language:implicitConversions",
       "-language:experimental.macros"
     ),
-    updateOptions := updateOptions.value.withCachedResolution(true)
+    updateOptions := updateOptions.value.withCachedResolution(true),
+    incOptions := incOptions.value.withLogRecompileOnMacro(false)
   )
 
 }
