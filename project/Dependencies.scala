@@ -17,7 +17,7 @@ object Dependencies extends AutoPlugin {
 
   override lazy val projectSettings: Seq[Setting[_]] = Seq(
     configVersion := "1.3.0",
-    lombokVersion := "1.16.8",
+    lombokVersion := "1.16.10",
     scalapropsVersion := "0.3.2"
   )
 
@@ -38,13 +38,9 @@ object Dependencies extends AutoPlugin {
       "org.projectlombok" % "lombok" % lombokVersion.value
     )
 
-  lazy val docs = Seq(
+  lazy val docs =
     libraryDependencies ++= Seq(
       "org.projectlombok" % "lombok" % lombokVersion.value % "test"
-    ),
-    dependencyOverrides ++= Set(
-      "org.scala-lang.modules" %% "scala-xml" % "1.0.5"
     )
-  )
 
 }
