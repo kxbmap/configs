@@ -14,7 +14,7 @@ object Java8Options extends AutoPlugin {
       "-Ydelambdafy:method"
     ),
     libraryDependencies ++= seq(scalaVersion.value)(
-      Dependencies.scalaJava8Compat
+      Dependencies.java8Compat.value
     )
   )
 
