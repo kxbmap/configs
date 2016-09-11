@@ -38,10 +38,10 @@ object Dependencies extends AutoPlugin {
   override lazy val projectSettings: Seq[Setting[_]] = Seq(
     configVersion := "1.3.0",
     lombokVersion := "1.16.10",
-    scalapropsVersion := "0.3.2",
+    scalapropsVersion := "0.3.4",
     java8CompatVersion := (CrossVersion.partialVersion(scalaVersion.value) match {
       case Some((2, 11)) => "0.7.0"
-      case _ => "0.8.0-RC3"
+      case _ => "0.8.0-RC5"
     })
   )
 

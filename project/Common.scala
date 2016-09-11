@@ -7,7 +7,7 @@ object Common extends AutoPlugin {
 
   override lazy val projectSettings: Seq[Setting[_]] = Seq(
     scalaVersion := "2.11.8",
-    crossScalaVersions += "2.12.0-M5",
+    crossScalaVersions += "2.12.0-RC1",
     description := "Scala wrapper for Typesafe config",
     organization := "com.github.kxbmap",
     scalacOptions ++= Seq(
