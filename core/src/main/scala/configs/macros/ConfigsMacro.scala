@@ -41,14 +41,20 @@ class ConfigsMacro(val c: blackbox.Context) extends MacroUtil with Util {
 
     private def newState: State = State((target, self, EmptyTree))
 
-    private def configs(tpe: Type): TermName = {
+    private def getOrUpdate(tpe: Type, value: => Tree): TermName = {
       val s = state.value
       s.find(_._1 =:= tpe).map(_._2).getOrElse {
         val c = freshName("c")
-        s += ((tpe, c, q"$Configs[$tpe]"))
+        s += ((tpe, c, value))
         c
       }
     }
+
+    private def configs(tpe: Type): TermName =
+      getOrUpdate(tpe, q"$Configs[$tpe]")
+
+    private def optConfigs(tpe: Type): TermName =
+      getOrUpdate(tOption(tpe), q"$Configs.optionConfigs(${configs(tpe)})")
 
     def derive(instance: Tree): Tree =
       q"""
@@ -70,8 +76,14 @@ class ConfigsMacro(val c: blackbox.Context) extends MacroUtil with Util {
          """
       }
 
+    private def result(instance: TermName, name: String): Tree =
+      q"$instance.get($config, $name)"
+
     def makeResult(tpe: Type, name: String): Tree =
-      q"${configs(tpe)}.get($config, $name)"
+      result(configs(tpe), name)
+
+    def makeOptResult(tpe: Type, name: String): Tree =
+      result(optConfigs(tpe), name)
   }
 
 
@@ -86,7 +98,7 @@ class ConfigsMacro(val c: blackbox.Context) extends MacroUtil with Util {
 
     def result()(implicit ctx: DerivationContext): Tree =
       hyphenName.fold(ctx.makeResult(vType, name)) { h =>
-        val r1 = ctx.makeResult(tOption(tpe), name)
+        val r1 = ctx.makeOptResult(tpe, name)
         val r2 = ctx.makeResult(vType, h)
         if (term.isParamWithDefault || term.isImplicit)
           q"$r1.flatMap(o => if (o.isEmpty) $r2 else $Result.successful(o))"
