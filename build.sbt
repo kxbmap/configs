@@ -19,10 +19,6 @@ lazy val core = project
 lazy val bench = project
   .dependsOn(core, testutil)
   .enablePlugins(JmhPlugin, Unpublished)
-  .settings(
-    // Workaround
-    extrasVersion in Jmh := "0.2.11"
-  )
 
 lazy val testutil = project
   .enablePlugins(Unpublished)
