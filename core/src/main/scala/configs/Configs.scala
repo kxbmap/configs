@@ -299,7 +299,7 @@ sealed abstract class ConfigsInstances extends ConfigsInstances0 {
       override def extractValue(value: ConfigValue, key: String): Result[Config] =
         value match {
           case co: ConfigObject => Result.successful(co.toConfig)
-          case _ => super.extractValue(value)
+          case _ => super.extractValue(value, key)
         }
     }
 
