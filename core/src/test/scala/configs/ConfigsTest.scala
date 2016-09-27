@@ -19,6 +19,7 @@ package configs
 import com.typesafe.config.ConfigFactory
 import configs.ConfigUtil.{quoteString => q}
 import configs.testutil.instance.string._
+import configs.testutil.instance.result._
 import scala.collection.JavaConversions._
 import scalaprops.Property.{forAll, forAllG}
 import scalaprops.{Gen, Properties, Scalaprops}
@@ -49,6 +50,12 @@ object ConfigsTest extends Scalaprops {
     val config = ConfigFactory.parseString(s"v = $v")
     val configs: Configs[Int] = Configs.fromTry(_.getInt(_))
     configs.map(f).get(config, "v").contains(f(v))
+  }
+
+  val rmap = forAll { (v: Int, f: Int => Result[String]) =>
+    val config = ConfigFactory.parseString(s"v = $v")
+    val configs: Configs[Int] = Configs.fromTry(_.getInt(_))
+    configs.rmap(f).get(config, "v") == f(v).pushPath("v")
   }
 
   val flatMap = {

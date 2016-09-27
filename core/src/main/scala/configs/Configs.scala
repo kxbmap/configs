@@ -39,6 +39,9 @@ trait Configs[A] {
   def map[B](f: A => B): Configs[B] =
     get0(_, _).map(f)
 
+  def rmap[B](f: A => Result[B]): Configs[B] =
+    get0(_, _).flatMap(f)
+
   def flatMap[B](f: A => Configs[B]): Configs[B] =
     (c, p) => get0(c, p).flatMap(f(_).get0(c, p))
 
@@ -74,7 +77,7 @@ object Configs extends ConfigsInstances {
     (c, p) => Result.Try(f(c, p)).flatten
 
   def fromConfig[A](f: Config => Result[A]): Configs[A] =
-    from((c, p) => f(c.getConfig(p)))
+    Configs[Config].rmap(f)
 
   def fromTry[A](f: (Config, String) => A): Configs[A] =
     (c, p) => Result.Try(f(c, p))
@@ -89,7 +92,7 @@ object Configs extends ConfigsInstances {
     (_, _) => Result.failure(ConfigError(msg))
 
   def get[A](path: String)(implicit A: Configs[A]): Configs[A] =
-    from((c, p) => A.get(c.getConfig(p), path))
+    fromConfig(A.get(_, path))
 
 }
 
@@ -104,10 +107,10 @@ sealed abstract class ConfigsInstances0 {
 sealed abstract class ConfigsInstances extends ConfigsInstances0 {
 
   implicit def javaListConfigs[A](implicit A: Configs[A]): Configs[ju.List[A]] =
-    Configs.from { (c, p) =>
+    Configs[ConfigList].rmap { xs =>
       Result.sequence(
-        c.getList(p).asScala.zipWithIndex.map {
-          case (v, i) => A.extractValue(v, i.toString)
+        xs.asScala.zipWithIndex.map {
+          case (x, i) => A.extractValue(x, i.toString)
         })
         .map(_.asJava)
     }
@@ -167,7 +170,7 @@ sealed abstract class ConfigsInstances extends ConfigsInstances0 {
 
 
   implicit def readStringConfigs[A](implicit A: FromString[A]): Configs[A] =
-    Configs.from((c, p) => A.read(c.getString(p)))
+    Configs[String].rmap(A.read)
 
 
   private[this] def bigDecimal(expected: String): Configs[BigDecimal] =
