@@ -30,6 +30,7 @@ trait Construct {
       if (a.typeParams.nonEmpty) abort(a, "polymorphic type")
       else if (a.isSealed) sealedClass(a)
       else if (a.isAbstract || a.isModuleClass) err
+      else if (a.isDerivedValueClass) valueClass(a)
       else if (a.isCaseClass) caseClass(a)
       else javaBeans(a).getOrElse(err)
     }
@@ -81,28 +82,31 @@ trait Construct {
     }
   }
 
+  private def defaults(a: ClassSymbol, m: MethodSymbol): Map[Int, ModuleMethod] =
+    a.companion match {
+      case cmp if cmp.isModule =>
+        val mod = cmp.asModule
+        val p = s"${m.name.encodedName}$$default$$"
+        val pn = p.length
+        mod.info.decls.collect {
+          case d: MethodSymbol if d.isSynthetic => (encodedName(d), d)
+        }.collect {
+          case (n, d) if n.startsWith(p) => (n.drop(pn).toInt - 1, ModuleMethod(mod, d))
+        }(collection.breakOut)
+      case _ => Map.empty
+    }
+
   private def caseClass(a: ClassSymbol): CaseClass = {
     val tpe = a.toType
-    lazy val defaults: Map[Int, ModuleMethod] =
-      a.companion match {
-        case cmp if cmp.isModule =>
-          val mod = cmp.asModule
-          val p = s"${TermName("<init>").encodedName}$$default$$"
-          val pn = p.length
-          mod.info.decls.collect {
-            case m: MethodSymbol if m.isSynthetic => (encodedName(m), m)
-          }.collect {
-            case (n, m) if n.startsWith(p) => (n.drop(pn).toInt - 1, ModuleMethod(mod, m))
-          }(collection.breakOut)
-        case _ => Map.empty
-      }
     val params =
       tpe.decls.collectFirst {
         case m: MethodSymbol if m.isPrimaryConstructor =>
-          if (m.paramLists.lengthCompare(1) <= 0)
+          if (m.paramLists.lengthCompare(1) <= 0) {
+            val ds = defaults(a, m)
             m.paramLists.flatten.zipWithIndex.map {
-              case (s, i) => Param(s, defaults.get(i))
+              case (s, i) => Param(s, ds.get(i))
             }
+          }
           else abort(a, "primary constructor has multi param list")
       }.getOrElse(abort(a, "bug?"))
     val accessors =
@@ -110,6 +114,23 @@ trait Construct {
         case m: MethodSymbol if m.isCaseAccessor => Accessor(m)
       }
     CaseClass(tpe, params, accessors)
+  }
+
+  private def valueClass(a: ClassSymbol): ValueClass = {
+    val tpe = a.toType
+    val param =
+      tpe.decls.collectFirst {
+        case m: MethodSymbol if m.isPrimaryConstructor =>
+          m.paramLists match {
+            case (s :: Nil) :: Nil => Param(s, defaults(a, m).get(0))
+            case _ => abort(a, "multi params value class")
+          }
+      }.getOrElse(abort(a, "no primary constructor"))
+    val accessor =
+      tpe.decls.collectFirst {
+        case m: MethodSymbol if m.isParamAccessor => Accessor(m)
+      }.getOrElse(abort(a, "no param accessor"))
+    ValueClass(tpe, param, accessor)
   }
 
   private def javaBeans(a: ClassSymbol): Option[JavaBeans] = {

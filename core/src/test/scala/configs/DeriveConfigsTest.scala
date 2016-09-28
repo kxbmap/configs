@@ -233,4 +233,17 @@ object DeriveConfigsTest extends Scalaprops {
     check[LocalCC]
   }
 
+
+  class ValueClass(val value: Int) extends AnyVal
+
+  object ValueClass {
+    implicit val equal: Equal[ValueClass] =
+      Equal.equalBy(_.value)
+
+    implicit val gen: Gen[ValueClass] =
+      Gen[Int].map(new ValueClass(_))
+  }
+
+  val valueClass = check[ValueClass]
+
 }

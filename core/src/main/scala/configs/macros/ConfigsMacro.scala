@@ -42,6 +42,7 @@ private[macros] trait ConfigsMacroImpl {
     defineInstance(target) {
       case SealedClass(t, ss) => sealedClass(t, ss)
       case CaseClass(t, ps, _) => caseClass(t, ps)
+      case ValueClass(t, p, _) => valueClass(t, p)
       case JavaBeans(t, p, ps) => javaBeans(t, p, ps)
     }
   }
@@ -181,6 +182,9 @@ private[macros] trait ConfigsMacroImpl {
     }
   }
 
+  private def valueClass(tpe: Type, param: Param)(implicit cache: ConfigsCache): Tree =
+    q"${cache.get(param.tpe)}.map(new $tpe(_))"
+
   private def javaBeans(
       tpe: Type, provider: InstanceProvider, props: List[Property])(implicit cache: ConfigsCache): Tree = {
     val bean = freshName("b")
@@ -251,7 +255,7 @@ private[macros] trait ConfigsMacroImpl {
   private def newInstance(provider: InstanceProvider): Tree =
     provider match {
       case Constructor(t) => q"new $t()"
-      case NewInstance(t, n) =>
+      case NewInstance(_, n) =>
         q"""_root_.java.util.Objects.requireNonNull(${c.untypecheck(n)}, "newInstance must not be null")"""
     }
 

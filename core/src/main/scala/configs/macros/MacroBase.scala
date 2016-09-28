@@ -81,6 +81,8 @@ private[macros] abstract class MacroBase extends Util {
 
   case class CaseObject(tpe: Type, module: ModuleSymbol) extends SealedMember
 
+  case class ValueClass(tpe: Type, param: Param, accessor: Accessor) extends Target
+
   case class JavaBeans(tpe: Type, provider: InstanceProvider, properties: List[Property]) extends Target
 
 

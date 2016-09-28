@@ -39,6 +39,7 @@ private[macros] trait ToConfigMacroImpl {
     defineInstance(target) {
       case SealedClass(t, ss) => sealedClass(t, ss)
       case CaseClass(t, _, as) => caseClass(t, as)
+      case ValueClass(t, _, a) => valueClass(t, a)
       case JavaBeans(t, _, ps) => javaBeans(t, ps)
     }
   }
@@ -67,7 +68,7 @@ private[macros] trait ToConfigMacroImpl {
             (tkv :: Nil, caseAccessors(o, as))
           })
           cq"x: $t => $cc.toValue(x)"
-        case CaseObject(t, m) =>
+        case CaseObject(t, _) =>
           val co = cache.replace(t, q"$str.contramap[$t](_.toString)")
           cq"x: $t => $co.toValue(x)"
       }
@@ -84,6 +85,9 @@ private[macros] trait ToConfigMacroImpl {
       val v = q"$o.${a.method}"
       Append(cache.get(a.tpe), k, v)
     }
+
+  private def valueClass(tpe: Type, accessor: Accessor)(implicit cache: ToConfigCache): Tree =
+    q"${cache.get(accessor.tpe)}.contramap(_.${accessor.method})"
 
   private def javaBeans(tpe: Type, props: List[Property])(implicit cache: ToConfigCache): Tree =
     fromKeyValues(tpe) { o =>
