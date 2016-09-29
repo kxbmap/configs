@@ -17,7 +17,6 @@
 package configs
 
 import configs.testutil.JavaEnum
-import configs.testutil.instance.enum._
 import configs.testutil.instance.io._
 import configs.testutil.instance.net._
 import configs.testutil.instance.string._
@@ -30,27 +29,26 @@ import java.util.{Locale, UUID}
 import scala.reflect.{ClassTag, classTag}
 import scalaprops.Property.forAll
 import scalaprops.{Gen, Properties, Scalaprops}
-import scalaz.Equal
 
-object FromStringTest extends Scalaprops {
+object StringConverterTest extends Scalaprops {
 
-  val fromString = {
-    def to[A: Gen : Equal : ClassTag](implicit A: FromString[A]) =
+  val roundtrip = {
+    def roundtrip[A: Gen : ClassTag](implicit A: StringConverter[A]) =
       forAll { (a: A) =>
-        A.read(A.show(a)).exists(Equal[A].equal(_, a))
-      }.toProperties(s"to ${classTag[A].runtimeClass.getSimpleName}")
+        A.from(A.to(a)) == Result.successful(a)
+      }.toProperties(classTag[A].runtimeClass.getName)
 
     Properties.list(
-      to[String],
-      to[Symbol],
-      to[Enum.Value],
-      to[JavaEnum],
-      to[UUID],
-      to[Locale],
-      to[Path],
-      to[File],
-      to[InetAddress],
-      to[URI]
+      roundtrip[String],
+      roundtrip[Symbol],
+      roundtrip[Enum.Value],
+      roundtrip[JavaEnum],
+      roundtrip[UUID],
+      roundtrip[Locale],
+      roundtrip[Path],
+      roundtrip[File],
+      roundtrip[InetAddress],
+      roundtrip[URI]
     )
   }
 
@@ -62,9 +60,6 @@ object FromStringTest extends Scalaprops {
       val vs = values.toList
       Gen.elements(vs.head, vs.tail: _*)
     }
-
-    implicit lazy val valueEqual: Equal[Value] =
-      Equal.equalA[Value]
   }
 
 }

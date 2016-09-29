@@ -58,16 +58,16 @@ package object syntax {
 
   implicit class EnrichConfigObject(private val self: ConfigObject) extends AnyVal {
 
-    def +[A, B](kv: (A, B))(implicit A: FromString[A], B: ToConfig[B]): ConfigObject =
-      self.withValue(A.show(kv._1), B.toValue(kv._2))
+    def +[A, B](kv: (A, B))(implicit A: StringConverter[A], B: ToConfig[B]): ConfigObject =
+      self.withValue(A.to(kv._1), B.toValue(kv._2))
 
-    def -[A](key: A)(implicit A: FromString[A]): ConfigObject =
-      self.withoutKey(A.show(key))
+    def -[A](key: A)(implicit A: StringConverter[A]): ConfigObject =
+      self.withoutKey(A.to(key))
 
-    def ++[A: FromString, B: ToConfig](kvs: Seq[(A, B)]): ConfigObject =
+    def ++[A: StringConverter, B: ToConfig](kvs: Seq[(A, B)]): ConfigObject =
       kvs.foldLeft(self)(_ + _)
 
-    def ++[A: FromString, B: ToConfig](kvs: Map[A, B]): ConfigObject =
+    def ++[A: StringConverter, B: ToConfig](kvs: Map[A, B]): ConfigObject =
       kvs.foldLeft(self)(_ + _)
 
     def ++(obj: ConfigObject): ConfigObject =
@@ -199,10 +199,10 @@ package object syntax {
 
   }
 
-  implicit class EnrichFromString[A](self: A)(implicit A: FromString[A]) {
+  implicit class EnrichStringConverter[A](self: A)(implicit A: StringConverter[A]) {
 
     def :=[B](value: B)(implicit B: ToConfig[B]): ConfigKeyValue =
-      ConfigKeyValue(A.show(self), B.toValue(value))
+      ConfigKeyValue(A.to(self), B.toValue(value))
 
   }
 

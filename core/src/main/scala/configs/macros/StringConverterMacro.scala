@@ -18,17 +18,19 @@ package configs.macros
 
 import scala.reflect.macros.blackbox
 
-class FromStringMacro(val c: blackbox.Context) {
+class StringConverterMacro(val c: blackbox.Context) {
 
   import c.universe._
 
-  def enumValueFromString[A <: Enumeration : WeakTypeTag]: Tree = {
+  def enumValueStringConverter[A <: Enumeration : WeakTypeTag]: Tree = {
     val A = weakTypeOf[A].termSymbol.asModule
     q"""
-      _root_.configs.FromString.fromOption[$A.Value](
-        s => $A.values.find(_.toString == s),
-        s => _root_.configs.ConfigError(
-          s"$$s is not a valid value for $${${A.fullName}} (valid values: $${$A.values.mkString(", ")})"),
+      val m = $A.values.map(a => (a.toString, a)).toMap
+      _root_.configs.StringConverter.from(
+        s => _root_.configs.Result.fromOption(m.get(s)) {
+          _root_.configs.ConfigError(
+            s"$$s is not a valid value for $${${A.fullName}} (valid values: $${$A.values.mkString(", ")})")
+        },
         _.toString)
      """
   }

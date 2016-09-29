@@ -151,7 +151,7 @@ There are a number of built-in `Configs` instances:
 * ADTs (sealed trait + classes/objects). See [ADTs support](#adts-support)
 * Java Beans. See [Java Beans support](#java-beans-support)
 
-In this list, `A` means any type that is `Configs` instance. And `S` means any type that is `FromString` instance.
+In this list, `A` means any type that is `Configs` instance. And `S` means any type that is `StringConverter` instance.
 
 
 ### ADTs support

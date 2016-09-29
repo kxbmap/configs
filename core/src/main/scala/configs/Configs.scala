@@ -124,12 +124,12 @@ sealed abstract class ConfigsInstances extends ConfigsInstances0 {
   implicit def javaSetConfigs[A](implicit C: Configs[ju.List[A]]): Configs[ju.Set[A]] =
     C.map(_.asScala.toSet.asJava)
 
-  implicit def javaMapConfigs[A, B](implicit A: FromString[A], B: Configs[B]): Configs[ju.Map[A, B]] =
+  implicit def javaMapConfigs[A, B](implicit A: StringConverter[A], B: Configs[B]): Configs[ju.Map[A, B]] =
     Configs.fromConfig { c =>
       Result.sequence(
         c.root().asScala.keysIterator.map { k =>
           val p = ConfigUtil.joinPath(k)
-          Result.tuple2(A.read(k).pushPath(p), B.get(c, p))
+          Result.tuple2(A.from(k).pushPath(p), B.get(c, p))
         })
         .map(_.toMap.asJava)
     }
@@ -169,8 +169,8 @@ sealed abstract class ConfigsInstances extends ConfigsInstances0 {
     (c, p) => Result.successful(A.get(c, p))
 
 
-  implicit def readStringConfigs[A](implicit A: FromString[A]): Configs[A] =
-    Configs[String].rmap(A.read)
+  implicit def readStringConfigs[A](implicit A: StringConverter[A]): Configs[A] =
+    Configs[String].rmap(A.from)
 
 
   private[this] def bigDecimal(expected: String): Configs[BigDecimal] =

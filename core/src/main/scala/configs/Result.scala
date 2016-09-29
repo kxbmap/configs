@@ -89,6 +89,9 @@ object Result {
   def failure[A](e: ConfigError): Result[A] =
     Failure(e)
 
+  def fromOption[A](option: Option[A])(err: => ConfigError): Result[A] =
+    option.fold(failure[A](err))(successful)
+
   def fromEither[A](either: Either[ConfigError, A]): Result[A] =
     either.fold(Failure, Success(_))
 

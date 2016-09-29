@@ -90,8 +90,8 @@ sealed abstract class ToConfigInstances extends ToConfigInstances0 {
   implicit lazy val javaBigDecimalToConfig: ToConfig[jm.BigDecimal] = ToConfig.by(_.toString)
 
 
-  implicit def showStringToConfig[A](implicit A: FromString[A]): ToConfig[A] =
-    ToConfig.by(A.show)
+  implicit def showStringToConfig[A](implicit A: StringConverter[A]): ToConfig[A] =
+    ToConfig.by(A.to)
 
 
   private[this] def durationString(length: Long, unit: TimeUnit): String = {
@@ -162,10 +162,10 @@ sealed abstract class ToConfigInstances extends ToConfigInstances0 {
     A.contramap(_.asScala)
 
 
-  implicit def mapToConfig[M[X, Y] <: collection.Map[X, Y], A, B](implicit A: FromString[A], B: ToConfig[B]): ToConfig[M[A, B]] =
-    m => ConfigObject.from(m.map(t => (A.show(t._1), B.toValue(t._2)))(breakOut))
+  implicit def mapToConfig[M[X, Y] <: collection.Map[X, Y], A, B](implicit A: StringConverter[A], B: ToConfig[B]): ToConfig[M[A, B]] =
+    m => ConfigObject.from(m.map(t => (A.to(t._1), B.toValue(t._2)))(breakOut))
 
-  implicit def javaMapToConfig[M[X, Y] <: ju.Map[X, Y], A, B](implicit A: FromString[A], B: ToConfig[B]): ToConfig[M[A, B]] =
+  implicit def javaMapToConfig[M[X, Y] <: ju.Map[X, Y], A: StringConverter, B: ToConfig]: ToConfig[M[A, B]] =
     ToConfig.by(_.asScala)
 
   implicit lazy val javaPropertiesToConfig: ToConfig[ju.Properties] =
