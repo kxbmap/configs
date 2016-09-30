@@ -18,52 +18,52 @@ package configs
 
 import com.typesafe.config.ConfigFactory
 import configs.ConfigUtil.{quoteString => q}
-import configs.testutil.instance.string._
 import configs.testutil.instance.result._
+import configs.testutil.instance.string._
 import scala.collection.JavaConversions._
 import scalaprops.Property.{forAll, forAllG}
 import scalaprops.{Gen, Properties, Scalaprops}
 
-object ConfigsTest extends Scalaprops {
+object ConfigReaderTest extends Scalaprops {
 
   val get = forAllG(pathStringGen, Gen[Int]) { (p, v) =>
     val config = ConfigFactory.parseString(s"$p = $v")
-    val configs: Configs[Int] = Configs.fromTry(_.getInt(_))
-    configs.get(config, p).contains(v)
+    val reader: ConfigReader[Int] = ConfigReader.fromTry(_.getInt(_))
+    reader.read(config, p).contains(v)
   }
 
   val extractConfig = forAll { (p: String, v: Int) =>
     val config = ConfigFactory.parseString(s"${q(p)} = $v")
-    val configs: Configs[Map[String, Int]] = Configs.fromTry {
+    val reader: ConfigReader[Map[String, Int]] = ConfigReader.fromTry {
       _.getConfig(_).root().mapValues(_.unwrapped().asInstanceOf[Int]).toMap
     }
-    configs.extract(config).contains(Map(p -> v))
+    reader.extract(config).contains(Map(p -> v))
   }
 
   val extractConfigValue = forAll { v: Int =>
     val cv = ConfigValue.from(v)
-    val configs: Configs[Int] = Configs.fromTry(_.getInt(_))
-    configs.extractValue(cv).contains(v)
+    val reader: ConfigReader[Int] = ConfigReader.fromTry(_.getInt(_))
+    reader.extractValue(cv).contains(v)
   }
 
   val map = forAll { (v: Int, f: Int => String) =>
     val config = ConfigFactory.parseString(s"v = $v")
-    val configs: Configs[Int] = Configs.fromTry(_.getInt(_))
-    configs.map(f).get(config, "v").contains(f(v))
+    val reader: ConfigReader[Int] = ConfigReader.fromTry(_.getInt(_))
+    reader.map(f).read(config, "v").contains(f(v))
   }
 
   val rmap = forAll { (v: Int, f: Int => Result[String]) =>
     val config = ConfigFactory.parseString(s"v = $v")
-    val configs: Configs[Int] = Configs.fromTry(_.getInt(_))
-    configs.rmap(f).get(config, "v") == f(v).pushPath("v")
+    val reader: ConfigReader[Int] = ConfigReader.fromTry(_.getInt(_))
+    reader.rmap(f).read(config, "v") == f(v).pushPath("v")
   }
 
   val flatMap = {
     case class Foo(a: Int, b: String, c: Boolean)
-    val configs = for {
-      a <- Configs.get[Int]("a")
-      b <- Configs.get[String]("b")
-      c <- Configs.get[Boolean]("c")
+    val reader = for {
+      a <- ConfigReader.get[Int]("a")
+      b <- ConfigReader.get[String]("b")
+      c <- ConfigReader.get[Boolean]("c")
     } yield Foo(a, b, c)
 
     forAll { (a: Int, b: String, c: Boolean) =>
@@ -72,28 +72,28 @@ object ConfigsTest extends Scalaprops {
            |b = ${q(b)}
            |c = $c
            |""".stripMargin)
-      configs.extract(config).contains(Foo(a, b, c))
+      reader.extract(config).contains(Foo(a, b, c))
     }
   }
 
   val orElse = {
     val config = Config.empty
-    val fail: Configs[Int] = Configs.failure("failure")
+    val fail: ConfigReader[Int] = ConfigReader.failure("failure")
     val p1 = forAll { (v1: Int, v2: Int) =>
-      val succ1: Configs[Int] = Configs.successful(v1)
-      val succ2: Configs[Int] = Configs.successful(v2)
-      succ1.orElse(succ2).get(config, "dummy").contains(v1)
+      val succ1: ConfigReader[Int] = ConfigReader.successful(v1)
+      val succ2: ConfigReader[Int] = ConfigReader.successful(v2)
+      succ1.orElse(succ2).read(config, "dummy").contains(v1)
     }
     val p2 = forAll { (v: Int) =>
-      val succ: Configs[Int] = Configs.successful(v)
-      succ.orElse(fail).get(config, "dummy").contains(v)
+      val succ: ConfigReader[Int] = ConfigReader.successful(v)
+      succ.orElse(fail).read(config, "dummy").contains(v)
     }
     val p3 = forAll { (v: Int) =>
-      val succ: Configs[Int] = Configs.successful(v)
-      fail.orElse(succ).get(config, "dummy").contains(v)
+      val succ: ConfigReader[Int] = ConfigReader.successful(v)
+      fail.orElse(succ).read(config, "dummy").contains(v)
     }
     val p4 = forAll {
-      fail.orElse(fail).get(config, "dummy").failed.exists(
+      fail.orElse(fail).read(config, "dummy").failed.exists(
         _.messages == Seq("[dummy] failure")
       )
     }
@@ -107,8 +107,8 @@ object ConfigsTest extends Scalaprops {
 
   val handleNullValue = forAllG(pathStringGen) { p =>
     val config = ConfigFactory.parseString(s"$p = null")
-    val configs = Configs.fromConfigTry(_.getInt(p))
-    configs.extract(config).failed.exists {
+    val reader = ConfigReader.fromConfigTry(_.getInt(p))
+    reader.extract(config).failed.exists {
       case ConfigError(_: ConfigError.NullValue, t) if t.isEmpty => true
       case _ => false
     }
@@ -116,8 +116,8 @@ object ConfigsTest extends Scalaprops {
 
   val handleException = forAll {
     val re = new RuntimeException()
-    val configs = Configs.fromTry((_, _) => throw re)
-    configs.extract(Config.empty).failed.exists {
+    val reader = ConfigReader.fromTry((_, _) => throw re)
+    reader.extract(Config.empty).failed.exists {
       case ConfigError(ConfigError.Exceptional(e, _), t) if t.isEmpty => e eq re
       case _ => false
     }

@@ -23,7 +23,7 @@ Quick Start
 
 ```tut:silent
 import com.typesafe.config.ConfigFactory
-import configs.Configs
+import configs.ConfigReader
 ```
 
 Result type of get a value from config is `configs.Result`.
@@ -33,11 +33,11 @@ If get successfully, returns `configs.Result.Success`, if not `configs.Result.Fa
 val config = ConfigFactory.parseString("foo = 42")
 ```
 ```tut
-val result = Configs[Int].get(config, "foo")
+val result = ConfigReader[Int].read(config, "foo")
 
 result.valueOrElse(0)
 
-val result = Configs[Int].get(config, "missing")
+val result = ConfigReader[Int].read(config, "missing")
 
 result.valueOrElse(0)
 ```
@@ -115,9 +115,9 @@ Supported types
 ---------------
 
 configs can get many type values from config.
-It is provided by type class `Configs`.
+It is provided by type class `ConfigReader`.
 
-There are a number of built-in `Configs` instances:
+There are a number of built-in `ConfigReader` instances:
 
 * Primitive/Wrapper types
   * `Long`, `Int`, `Short`, `Byte`, `Double`, `Float`, `Char`, `Boolean`
@@ -151,7 +151,7 @@ There are a number of built-in `Configs` instances:
 * ADTs (sealed trait + classes/objects). See [ADTs support](#adts-support)
 * Java Beans. See [Java Beans support](#java-beans-support)
 
-In this list, `A` means any type that is `Configs` instance. And `S` means any type that is `StringConverter` instance.
+In this list, `A` means any type that is `ConfigReader` instance. And `S` means any type that is `StringConverter` instance.
 
 
 ### ADTs support
@@ -198,11 +198,11 @@ public class MyBean {
 }
 ```
 
-Then you define `Configs` instance using `deriveBean` macro:
+Then you define `ConfigReader` instance using `deriveBean` macro:
 
 ```tut:silent
-implicit val myBeanConfigs: Configs[MyBean] =
-  Configs.deriveBean[MyBean]
+implicit val myBeanConfigReader: ConfigReader[MyBean] =
+  ConfigReader.deriveBean[MyBean]
 ```
 
 And then you can get Java Beans value:

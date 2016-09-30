@@ -17,7 +17,7 @@
 package configs.instance
 
 import com.typesafe.config.ConfigFactory
-import configs.Configs
+import configs.ConfigReader
 import configs.testutil.fun._
 import configs.testutil.instance.anyVal._
 import configs.testutil.instance.collection._
@@ -71,7 +71,7 @@ object BasicTypesTest extends Scalaprops {
   val string = check[String]
 
 
-  def integralError[A](minM1: BigInt, maxP1: BigInt)(implicit A: Configs[A]) = {
+  def integralError[A](minM1: BigInt, maxP1: BigInt)(implicit A: ConfigReader[A]) = {
     val big = "9999999999999999999"
     val config = ConfigFactory.parseString(
       s"""nan = NaN
@@ -82,7 +82,7 @@ object BasicTypesTest extends Scalaprops {
           |""".stripMargin)
     def p(id: String)(path: String, msg: String): Properties[String] =
       forAll {
-        val a = A.get(config, path)
+        val a = A.read(config, path)
         val result = a.failed.map(_.head).exists { e =>
           e.paths == List(path) && e.message.contains(msg)
         }

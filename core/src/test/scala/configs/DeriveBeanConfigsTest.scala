@@ -79,7 +79,7 @@ object DeriveBeanConfigsTest extends Scalaprops {
   }
 
   val withNewInstance = {
-    val C = Configs.deriveBeanWith(new MyBean(1, 42))
+    val C = ConfigReader.deriveBeanWith(new MyBean(1, 42))
     val p1 =
       forAll { (a1: Int) =>
         val config = ConfigFactory.parseString(s"a1 = $a1")

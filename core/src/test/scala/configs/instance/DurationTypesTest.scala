@@ -18,9 +18,9 @@ package configs.instance
 
 import configs.testutil.fun._
 import configs.testutil.instance.duration._
+import java.{time => jt}
 import scala.concurrent.duration.{Duration, FiniteDuration}
 import scalaprops.Scalaprops
-import java.{time => jt}
 
 object DurationTypesTest extends Scalaprops {
 

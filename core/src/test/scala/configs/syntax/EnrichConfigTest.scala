@@ -19,7 +19,7 @@ package configs.syntax
 import com.typesafe.config.ConfigFactory
 import configs.testutil.instance.config._
 import configs.testutil.instance.string._
-import configs.{Config, ConfigObject, ConfigOrigin, ConfigValue, Configs, Result}
+import configs.{Config, ConfigObject, ConfigOrigin, ConfigReader, ConfigValue, Result}
 import scala.collection.JavaConverters._
 import scalaprops.Property.forAll
 import scalaprops.{Properties, Scalaprops}
@@ -39,7 +39,7 @@ object EnrichConfigTest extends Scalaprops {
   }
 
   val getOrElse = {
-    implicit val unused: Configs[Option[Int]] = Configs.successful(Some(42))
+    implicit val unused: ConfigReader[Option[Int]] = ConfigReader.successful(Some(42))
 
     val p1 = Properties.single("get", forAll { (n: Int, d: Int) =>
       val config = ConfigValue(n).atPath("path")

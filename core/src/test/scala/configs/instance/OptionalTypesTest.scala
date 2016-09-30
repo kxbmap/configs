@@ -21,7 +21,7 @@ import configs.testutil.fun._
 import configs.testutil.instance.anyVal._
 import configs.testutil.instance.option._
 import configs.testutil.instance.string._
-import configs.{Config, Configs}
+import configs.{Config, ConfigReader}
 import java.{util => ju}
 import scalaprops.Property.forAllG
 import scalaprops.{Properties, Scalaprops}
@@ -43,17 +43,17 @@ object OptionalTypesTest extends Scalaprops {
 
 
   val missing = forAllG(pathStringGen) { p =>
-    Configs[Option[Int]].get(Config.empty, p).exists(_.isEmpty)
+    ConfigReader[Option[Int]].read(Config.empty, p).exists(_.isEmpty)
   }
 
   val nestedOption = {
-    val OO = Configs[Option[Option[Int]]]
+    val OO = ConfigReader[Option[Option[Int]]]
     val p1 = forAllG(pathStringGen) { p =>
-      OO.get(Config.empty, p).exists(_.isEmpty)
+      OO.read(Config.empty, p).exists(_.isEmpty)
     }
     val p2 = forAllG(pathStringGen) { p =>
       val config = ConfigFactory.parseString(s"$p = null")
-      OO.get(config, p).exists(_.contains(None))
+      OO.read(config, p).exists(_.contains(None))
     }
     Properties.list(
       p1.toProperties("missing"),

@@ -18,7 +18,7 @@ package configs.instance
 
 import configs.testutil.fun._
 import configs.testutil.instance.math._
-import configs.{Configs, ConfigWriter}
+import configs.{ConfigReader, ConfigWriter}
 import java.{math => jm}
 import scalaprops.Property.forAll
 import scalaprops.Scalaprops
@@ -28,13 +28,13 @@ object BigNumberTypesTest extends Scalaprops {
   val bigInt = check[BigInt]
 
   val bigIntFromDecimal = forAll { d: BigDecimal =>
-    Configs[BigInt].extractValue(ConfigWriter[BigDecimal].write(d)).contains(d.toBigInt())
+    ConfigReader[BigInt].extractValue(ConfigWriter[BigDecimal].write(d)).contains(d.toBigInt())
   }
 
   val bigInteger = check[jm.BigInteger]
 
   val bigIntegerFromDecimal = forAll { d: jm.BigDecimal =>
-    Configs[jm.BigInteger].extractValue(ConfigWriter[BigDecimal].write(d)).contains(d.toBigInteger)
+    ConfigReader[jm.BigInteger].extractValue(ConfigWriter[BigDecimal].write(d)).contains(d.toBigInteger)
   }
 
   val bigDecimal = check[BigDecimal]

@@ -104,7 +104,7 @@ object DeriveConfigsTest extends Scalaprops {
 
   object Sealed {
     // SI-7046
-    implicit lazy val configs: Configs[Sealed] = Configs.derive[Sealed]
+    implicit lazy val reader: ConfigReader[Sealed] = ConfigReader.derive[Sealed]
     implicit lazy val writer: ConfigWriter[Sealed] = ConfigWriter.derive[Sealed]
 
     implicit lazy val gen: Gen[Sealed] =
@@ -156,12 +156,12 @@ object DeriveConfigsTest extends Scalaprops {
   val optionDefault = {
     val p1 =
       Properties.single("missing", forAll {
-        Configs[OptionDefault].extract(Config.empty).contains(OptionDefault(Some(42)))
+        ConfigReader[OptionDefault].extract(Config.empty).contains(OptionDefault(Some(42)))
       })
     val p2 =
       Properties.single("null", forAll {
         val config = ConfigFactory.parseString("opt = null")
-        Configs[OptionDefault].extract(config).contains(OptionDefault(None))
+        ConfigReader[OptionDefault].extract(config).contains(OptionDefault(None))
       })
     p1 x p2
   }
@@ -174,7 +174,7 @@ object DeriveConfigsTest extends Scalaprops {
   case object RNil extends Recursive
 
   object Recursive {
-    implicit lazy val configs: Configs[Recursive] = Configs.derive[Recursive]
+    implicit lazy val reader: ConfigReader[Recursive] = ConfigReader.derive[Recursive]
     implicit lazy val writer: ConfigWriter[Recursive] = ConfigWriter.derive[Recursive]
 
     implicit lazy val gen: Gen[Recursive] =
@@ -193,8 +193,8 @@ object DeriveConfigsTest extends Scalaprops {
   case class RecursiveOpt(value: Option[RecursiveOpt])
 
   object RecursiveOpt {
-    implicit lazy val configs: Configs[RecursiveOpt] =
-      Configs.derive[RecursiveOpt]
+    implicit lazy val reader: ConfigReader[RecursiveOpt] =
+      ConfigReader.derive[RecursiveOpt]
 
     implicit lazy val writer: ConfigWriter[RecursiveOpt] =
       ConfigWriter.derive[RecursiveOpt]

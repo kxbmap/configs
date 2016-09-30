@@ -21,7 +21,7 @@ import configs.testutil.fun._
 import configs.testutil.instance.anyVal._
 import configs.testutil.instance.result.success._
 import configs.testutil.instance.string._
-import configs.{Config, ConfigError, Configs, Result}
+import configs.{Config, ConfigError, ConfigReader, Result}
 import scalaprops.Property.forAll
 import scalaprops.{Properties, Scalaprops}
 
@@ -37,7 +37,7 @@ object ErrorTypesTest extends Scalaprops {
   val resultHandleConfigError = {
     val p1 = Properties.single("null value", forAll {
       val config = ConfigFactory.parseString("value = null")
-      val result = Configs[Result[Int]].get(config, "value")
+      val result = ConfigReader[Result[Int]].read(config, "value")
       result.exists {
         case Result.Failure(ConfigError(ConfigError.NullValue(_, "value" :: Nil), _)) => true
         case _ => false
@@ -46,15 +46,15 @@ object ErrorTypesTest extends Scalaprops {
     val p2 = Properties.single("runtime exception", forAll {
       val config = Config.empty
       val e = new RuntimeException
-      implicit val configs: Configs[Int] = Configs.fromTry((_, _) => throw e)
-      val result = Configs[Result[Int]].get(config, "value")
-      result.contains(Configs[Int].get(config, "value"))
+      implicit val reader: ConfigReader[Int] = ConfigReader.fromTry((_, _) => throw e)
+      val result = ConfigReader[Result[Int]].read(config, "value")
+      result.contains(ConfigReader[Int].read(config, "value"))
     })
     val p3 = Properties.single("failure", forAll { s: String =>
       val config = Config.empty
-      implicit val configs: Configs[Int] = Configs.failure(s)
-      val result = Configs[Result[Int]].get(config, "value")
-      result.contains(Configs[Int].get(config, "value"))
+      implicit val reader: ConfigReader[Int] = ConfigReader.failure(s)
+      val result = ConfigReader[Result[Int]].read(config, "value")
+      result.contains(ConfigReader[Int].read(config, "value"))
     })
     Properties.list(p1, p2, p3)
   }

@@ -18,7 +18,7 @@ package configs.testutil
 
 import com.typesafe.config.ConfigFactory
 import configs.testutil.instance.string._
-import configs.{Config, Configs, Result, ConfigWriter}
+import configs.{Config, ConfigReader, ConfigWriter, Result}
 import scalaprops.Or.Empty
 import scalaprops.Property.forAll
 import scalaprops.{:-:, Gen, Or, Properties}
@@ -30,26 +30,26 @@ object fun {
     println(s"${Console.RED}xxx${Console.RESET} $x")
   }
 
-  def check[A: CheckParam : Configs : ConfigWriter : Gen : Equal]: Properties[Unit :-: String :-: Empty] =
+  def check[A: CheckParam : ConfigReader : ConfigWriter : Gen : Equal]: Properties[Unit :-: String :-: Empty] =
     Properties.list(
       encodeDecode[A],
       pushPath[A]
     )
 
-  def check[A: CheckParam : Configs : ConfigWriter : Gen : Equal](id: String): Properties[String :-: String :-: Empty] =
+  def check[A: CheckParam : ConfigReader : ConfigWriter : Gen : Equal](id: String): Properties[String :-: String :-: Empty] =
     check[A].mapId {
       case Or.L(_) => Or.L(id)
       case Or.R(r) => Or.R(r)
     }
 
-  private def encodeDecode[A: CheckParam : Configs : ConfigWriter : Gen : Equal]: Properties[String] =
+  private def encodeDecode[A: CheckParam : ConfigReader : ConfigWriter : Gen : Equal]: Properties[String] =
     Properties.single("encode/decode", forAll { value: A =>
       CheckParam[A].exceptEncodeDecode(value) || {
         val path = "path"
         val m = ConfigWriter[A].append(Map.empty, path, value)
         val encoded = m.get(path)
         val config = encoded.foldLeft(Config.empty)(_.withValue(path, _))
-        val decoded = Configs[A].get(config, path)
+        val decoded = ConfigReader[A].read(config, path)
         val result = decoded.exists(Equal[A].equal(_, value))
         if (!result) {
           println()
@@ -60,15 +60,15 @@ object fun {
       }
     })
 
-  private def pushPath[A: CheckParam : Configs]: Properties[String] =
+  private def pushPath[A: CheckParam : ConfigReader]: Properties[String] =
     Properties.single("push path", forAll {
       val c1 = Config.empty
       val c2 = ConfigFactory.parseString("path = 42")
       val c3 = ConfigFactory.parseString("path = []")
       val result = Result.tuple3(
-        Configs[A].get(c1, "path"),
-        Configs[A].get(c2, "path"),
-        Configs[A].get(c3, "path")
+        ConfigReader[A].read(c1, "path"),
+        ConfigReader[A].read(c2, "path"),
+        ConfigReader[A].read(c3, "path")
       )
       if (CheckParam[A].checkPushPath)
         result.failed.exists {

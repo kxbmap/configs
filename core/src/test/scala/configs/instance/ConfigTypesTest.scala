@@ -21,7 +21,7 @@ import configs.testutil.fun._
 import configs.testutil.instance.collection._
 import configs.testutil.instance.config._
 import configs.testutil.instance.string._
-import configs.{Config, ConfigList, ConfigObject, ConfigValue, Configs, MemorySize}
+import configs.{Config, ConfigList, ConfigObject, ConfigReader, ConfigValue, MemorySize}
 import java.{util => ju}
 import scalaprops.Property.forAll
 import scalaprops.Scalaprops
@@ -30,7 +30,7 @@ object ConfigTypesTest extends Scalaprops {
 
   val config = check[Config] x
     forAll { key: String =>
-      Configs[Config].extractValue(ConfigValue.Null, key).failed.exists {
+      ConfigReader[Config].extractValue(ConfigValue.Null, key).failed.exists {
         _.head.paths == List(key)
       }
     }.toProperties("use extractValue key")

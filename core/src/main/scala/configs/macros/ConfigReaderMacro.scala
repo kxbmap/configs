@@ -16,11 +16,11 @@
 
 package configs.macros
 
-import configs.Configs
+import configs.ConfigReader
 import scala.reflect.macros.blackbox
 
-class ConfigsMacro(val c: blackbox.Context)
-  extends MacroBase with Construct with ConfigsMacroImpl {
+class ConfigReaderMacro(val c: blackbox.Context)
+  extends MacroBase with Construct with ConfigReaderMacroImpl {
 
   import c.universe._
 
@@ -32,13 +32,13 @@ class ConfigsMacro(val c: blackbox.Context)
 
 }
 
-private[macros] trait ConfigsMacroImpl {
+private[macros] trait ConfigReaderMacroImpl {
   this: MacroBase =>
 
   import c.universe._
 
   protected def deriveImpl(target: Target): Tree = {
-    implicit val cache = new ConfigsCache()
+    implicit val cache = new ConfigReaderCache()
     defineInstance(target) {
       case SealedClass(t, ss) => sealedClass(t, ss)
       case CaseClass(t, ps, _) => caseClass(t, ps)
@@ -48,17 +48,17 @@ private[macros] trait ConfigsMacroImpl {
   }
 
   protected def deriveBeanWithImpl(beans: JavaBeans): Tree = {
-    implicit val cache = new ConfigsCache()
+    implicit val cache = new ConfigReaderCache()
     defineInstance(beans) {
       case JavaBeans(t, p, ps) => javaBeans(t, p, ps)
     }
   }
 
 
-  private val qConfigs = q"_root_.configs.Configs"
+  private val qConfigReader = q"_root_.configs.ConfigReader"
 
-  private def tConfigs(arg: Type): Type =
-    appliedType(typeOf[Configs[_]].typeConstructor, arg)
+  private def tConfigReader(arg: Type): Type =
+    appliedType(typeOf[ConfigReader[_]].typeConstructor, arg)
 
   private val qResult = q"_root_.configs.Result"
 
@@ -68,18 +68,18 @@ private[macros] trait ConfigsMacroImpl {
   private def resultTuple(args: Seq[Tree]): Tree =
     q"$qResult.${TermName(s"tuple${args.length}")}(..$args)"
 
-  private class ConfigsCache extends InstanceCache {
-    def instanceType(t: Type): Type = tConfigs(t)
-    def instance(tpe: Type): Tree = q"$qConfigs[$tpe]"
-    def optInstance(inst: TermName): Tree = q"$qConfigs.optionConfigs($inst)"
+  private class ConfigReaderCache extends InstanceCache {
+    def instanceType(t: Type): Type = tConfigReader(t)
+    def instance(tpe: Type): Tree = q"$qConfigReader[$tpe]"
+    def optInstance(inst: TermName): Tree = q"$qConfigReader.optionConfigReader($inst)"
   }
 
 
-  private def sealedClass(tpe: Type, subs: List[SealedMember])(implicit cache: ConfigsCache): Tree = {
+  private def sealedClass(tpe: Type, subs: List[SealedMember])(implicit cache: ConfigReaderCache): Tree = {
     subs.map(_.tpe).foreach(cache.putEmpty)
     val cos = subs.collect {
       case CaseObject(t, m) =>
-        val c = cache.replace(t, q"$qConfigs.successful($m)")
+        val c = cache.replace(t, q"$qConfigReader.successful($m)")
         cq"${decodedName(t)} => $c.as[$tpe]"
     }
     val obj = {
@@ -89,18 +89,18 @@ private[macros] trait ConfigsMacroImpl {
           val cc = q"$c.as[$tpe]"
           (cc, cq"${decodedName(t)} => $cc")
       }.unzip
-      val cases = cos ++ ccq :+ cq"""s => $qConfigs.failure("unknown type: " + s)"""
+      val cases = cos ++ ccq :+ cq"""s => $qConfigReader.failure("unknown type: " + s)"""
       ccs match {
         case Nil =>
           q"""
-            $qConfigs.get[${typeOf[String]}]($TypeKey).flatMap[$tpe] {
+            $qConfigReader.get[${typeOf[String]}]($TypeKey).flatMap[$tpe] {
               case ..$cases
             }
            """
         case x :: xs =>
           val folded = xs.foldLeft(x)((l, r) => q"$l.orElse($r)")
           q"""
-            $qConfigs.get[${tOption(typeOf[String])}]($TypeKey).flatMap[$tpe] {
+            $qConfigReader.get[${tOption(typeOf[String])}]($TypeKey).flatMap[$tpe] {
               _.fold($folded) {
                 case ..$cases
               }
@@ -111,17 +111,17 @@ private[macros] trait ConfigsMacroImpl {
     q"""
       ${cache.get(typeOf[String])}.transform(_ => $obj, {
         case ..$cos
-        case s => $qConfigs.failure("unknown module: " + s)
+        case s => $qConfigReader.failure("unknown module: " + s)
       })
      """
   }
 
-  private def caseClass(tpe: Type, params: List[Param])(implicit cache: ConfigsCache): Tree = {
+  private def caseClass(tpe: Type, params: List[Param])(implicit cache: ConfigReaderCache): Tree = {
     val config = freshName("c")
 
-    def get(p: Param): Tree = {
+    def read(p: Param): Tree = {
       val c = if (p.hasDefault) cache.getOpt(p.tpe) else cache.get(p.tpe)
-      q"$c.get($config, ${toLowerHyphenCase(p.name)})"
+      q"$c.read($config, ${toLowerHyphenCase(p.name)})"
     }
 
     def aType(p: Param): Type =
@@ -137,7 +137,7 @@ private[macros] trait ConfigsMacroImpl {
     def single(p: Param): Tree = {
       val a = freshName("a")
       q"""
-        ${get(p)}.map { ($a: ${aType(p)}) =>
+        ${read(p)}.map { ($a: ${aType(p)}) =>
           new $tpe(${value(p, Ident(a))})
         }
        """
@@ -146,7 +146,7 @@ private[macros] trait ConfigsMacroImpl {
     def small: Tree = {
       val (gs, ps, vs) = params.map { p =>
         val a = freshName("a")
-        (get(p), q"$a: ${aType(p)}", value(p, Ident(a)))
+        (read(p), q"$a: ${aType(p)}", value(p, Ident(a)))
       }.unzip3
       q"""
         ${resultApply(gs)} { ..$ps =>
@@ -159,7 +159,7 @@ private[macros] trait ConfigsMacroImpl {
       val (gs, ps, vs) = grouping(params).map { ps =>
         val a = freshName("a")
         val at = tqTuple(ps.map(aType))
-        val gs = resultTuple(ps.map(get))
+        val gs = resultTuple(ps.map(read))
         val vs = ps.zipWithIndex.map {
           case (p, i) => value(p, tupleAt(a, i))
         }
@@ -182,11 +182,11 @@ private[macros] trait ConfigsMacroImpl {
     }
   }
 
-  private def valueClass(tpe: Type, param: Param)(implicit cache: ConfigsCache): Tree =
+  private def valueClass(tpe: Type, param: Param)(implicit cache: ConfigReaderCache): Tree =
     q"${cache.get(param.tpe)}.map(new $tpe(_))"
 
   private def javaBeans(
-      tpe: Type, provider: InstanceProvider, props: List[Property])(implicit cache: ConfigsCache): Tree = {
+      tpe: Type, provider: InstanceProvider, props: List[Property])(implicit cache: ConfigReaderCache): Tree = {
     val bean = freshName("b")
     val config = freshName("c")
 
@@ -197,8 +197,8 @@ private[macros] trait ConfigsMacroImpl {
         $bean
        """
 
-    def getOpt(p: Property): Tree =
-      q"${cache.getOpt(p.tpe)}.get($config, ${toLowerHyphenCase(p.name)})"
+    def readOpt(p: Property): Tree =
+      q"${cache.getOpt(p.tpe)}.read($config, ${toLowerHyphenCase(p.name)})"
 
     def setOpt(p: Property, opt: Tree): Tree =
       q"$opt.foreach($bean.${p.setter})"
@@ -207,7 +207,7 @@ private[macros] trait ConfigsMacroImpl {
       val a = freshName("a")
       val at = tOption(p.tpe)
       q"""
-        ${getOpt(p)}.map { $a: $at =>
+        ${readOpt(p)}.map { $a: $at =>
           ${block(setOpt(p, Ident(a)) :: Nil)}
         }
        """
@@ -217,7 +217,7 @@ private[macros] trait ConfigsMacroImpl {
       val (gets, sets, params) = props.map { p =>
         val a = freshName("a")
         val at = tOption(p.tpe)
-        (getOpt(p), setOpt(p, Ident(a)), q"$a: $at")
+        (readOpt(p), setOpt(p, Ident(a)), q"$a: $at")
       }.unzip3
       q"""
         ${resultApply(gets)} { ..$params =>
@@ -230,7 +230,7 @@ private[macros] trait ConfigsMacroImpl {
       val (gets, sets, params) = grouping(props).map { ps =>
         val a = freshName("a")
         val at = tqTuple(ps.map(p => tOption(p.tpe)))
-        val gs = resultTuple(ps.map(getOpt))
+        val gs = resultTuple(ps.map(readOpt))
         val ss = ps.zipWithIndex.map {
           case (p, i) => setOpt(p, tupleAt(a, i))
         }
@@ -261,7 +261,7 @@ private[macros] trait ConfigsMacroImpl {
 
   private def fromConfig(tpe: Type, config: TermName)(body: => Tree): Tree =
     q"""
-      $qConfigs.fromConfig[$tpe] { $config: _root_.configs.Config =>
+      $qConfigReader.fromConfig[$tpe] { $config: _root_.configs.Config =>
         $body
       }
      """

@@ -17,7 +17,7 @@
 package configs.instance
 
 import com.typesafe.config.ConfigFactory
-import configs.{Config, ConfigError, ConfigOrigin, Configs, Result}
+import configs.{Config, ConfigError, ConfigOrigin, ConfigReader, Result}
 import scalaprops.Property.forAll
 import scalaprops.Scalaprops
 
@@ -25,18 +25,18 @@ object WithOriginTest extends Scalaprops {
 
   val value = forAll { n: Int =>
     val config = ConfigFactory.parseString(s"a = $n")
-    Configs[(Int, ConfigOrigin)].get(config, "a") ==
+    ConfigReader[(Int, ConfigOrigin)].read(config, "a") ==
       Result.successful((n, ConfigOrigin.simple("String").withLineNumber(1)))
   }
 
   val `null` = forAll {
     val config = ConfigFactory.parseString("a = null")
-    Configs[(Option[Int], ConfigOrigin)].get(config, "a") ==
+    ConfigReader[(Option[Int], ConfigOrigin)].read(config, "a") ==
       Result.successful((None, ConfigOrigin.simple("String").withLineNumber(1)))
   }
 
   val missing = forAll {
-    Configs[(Option[Int], ConfigOrigin)].get(Config.empty, "a") ==
+    ConfigReader[(Option[Int], ConfigOrigin)].read(Config.empty, "a") ==
       Result.failure(ConfigError("no origin for 'a'").pushPath("a"))
   }
 

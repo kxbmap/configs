@@ -66,8 +66,8 @@ object Bytes {
   final val MinValue = Bytes(Long.MinValue)
   final val MaxValue = Bytes(Long.MaxValue)
 
-  implicit lazy val bytesConfigs: Configs[Bytes] =
-    Configs.fromTry(_.getBytes(_)).map(Bytes(_))
+  implicit lazy val bytesConfigReader: ConfigReader[Bytes] =
+    ConfigReader.fromTry(_.getBytes(_)).map(Bytes(_))
 
   implicit lazy val bytesConfigWriter: ConfigWriter[Bytes] =
     ConfigWriter.by(_.value)

@@ -17,7 +17,7 @@
 package configs.testutil.instance
 
 import configs.testutil.instance.error._
-import configs.{ConfigError, Result, ConfigWriter}
+import configs.{ConfigError, ConfigWriter, Result}
 import scalaprops.Gen
 import scalaz.Equal
 

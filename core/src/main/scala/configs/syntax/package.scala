@@ -23,16 +23,16 @@ package object syntax {
 
   implicit class EnrichConfig(private val self: Config) extends AnyVal {
 
-    def extract[A](implicit A: Configs[A]): Result[A] =
+    def extract[A](implicit A: ConfigReader[A]): Result[A] =
       A.extract(self)
 
-    def get[A](path: String)(implicit A: Configs[A]): Result[A] =
-      A.get(self, path)
+    def get[A](path: String)(implicit A: ConfigReader[A]): Result[A] =
+      A.read(self, path)
 
-    def getOrElse[A: Configs](path: String, default: => A): Result[A] =
+    def getOrElse[A: ConfigReader](path: String, default: => A): Result[A] =
       get[Option[A]](path).map(_.getOrElse(default))
 
-    def getWithOrigin[A: Configs](path: String): Result[(A, ConfigOrigin)] =
+    def getWithOrigin[A: ConfigReader](path: String): Result[(A, ConfigOrigin)] =
       get[(A, ConfigOrigin)](path)
 
     def ++(that: Config): Config =

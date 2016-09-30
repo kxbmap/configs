@@ -19,9 +19,9 @@ package configs.syntax
 import com.typesafe.config.{ConfigFactory, ConfigValueFactory}
 import configs.{Config, ConfigList, ConfigObject, ConfigValue}
 import java.net.InetAddress
-import scalaprops.Scalaprops
-import scalaprops.Property.forAll
 import scala.collection.JavaConverters._
+import scalaprops.Property.forAll
+import scalaprops.Scalaprops
 
 object CreateSyntaxTest extends Scalaprops {
 
