@@ -17,7 +17,7 @@
 package configs.testutil.instance
 
 import configs.testutil.instance.error._
-import configs.{ConfigError, Result, ToConfig}
+import configs.{ConfigError, Result, ConfigWriter}
 import scalaprops.Gen
 import scalaz.Equal
 
@@ -46,8 +46,8 @@ object result {
     implicit def successResultEqual[A: Equal]: Equal[Result[A]] =
       Equal.equalBy(_.value)
 
-    implicit def successResultToConfig[A: ToConfig]: ToConfig[Result[A]] =
-      ToConfig.by(_.value)
+    implicit def successResultConfigWriter[A: ConfigWriter]: ConfigWriter[Result[A]] =
+      ConfigWriter.by(_.value)
 
   }
 

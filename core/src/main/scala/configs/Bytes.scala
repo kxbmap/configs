@@ -69,8 +69,8 @@ object Bytes {
   implicit lazy val bytesConfigs: Configs[Bytes] =
     Configs.fromTry(_.getBytes(_)).map(Bytes(_))
 
-  implicit lazy val bytesToConfig: ToConfig[Bytes] =
-    ToConfig.by(_.value)
+  implicit lazy val bytesConfigWriter: ConfigWriter[Bytes] =
+    ConfigWriter.by(_.value)
 
   implicit lazy val bytesOrdering: Ordering[Bytes] =
     Ordering.by(_.value)

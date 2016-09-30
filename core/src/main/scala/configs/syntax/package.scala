@@ -42,14 +42,14 @@ package object syntax {
 
   implicit class EnrichConfigList(private val self: ConfigList) extends AnyVal {
 
-    def :+[A](value: A)(implicit A: ToConfig[A]): ConfigList =
-      ConfigList.from(self.asScala :+ A.toValue(value))
+    def :+[A](value: A)(implicit A: ConfigWriter[A]): ConfigList =
+      ConfigList.from(self.asScala :+ A.write(value))
 
-    def +:[A](value: A)(implicit A: ToConfig[A]): ConfigList =
-      ConfigList.from(A.toValue(value) +: self.asScala)
+    def +:[A](value: A)(implicit A: ConfigWriter[A]): ConfigList =
+      ConfigList.from(A.write(value) +: self.asScala)
 
-    def ++[A](values: Seq[A])(implicit A: ToConfig[A]): ConfigList =
-      ConfigList.from(self.asScala ++ values.map(A.toValue))
+    def ++[A](values: Seq[A])(implicit A: ConfigWriter[A]): ConfigList =
+      ConfigList.from(self.asScala ++ values.map(A.write))
 
     def ++(list: ConfigList): ConfigList =
       ConfigList.from(self.asScala ++ list.asScala)
@@ -58,16 +58,16 @@ package object syntax {
 
   implicit class EnrichConfigObject(private val self: ConfigObject) extends AnyVal {
 
-    def +[A, B](kv: (A, B))(implicit A: StringConverter[A], B: ToConfig[B]): ConfigObject =
-      self.withValue(A.to(kv._1), B.toValue(kv._2))
+    def +[A, B](kv: (A, B))(implicit A: StringConverter[A], B: ConfigWriter[B]): ConfigObject =
+      self.withValue(A.to(kv._1), B.write(kv._2))
 
     def -[A](key: A)(implicit A: StringConverter[A]): ConfigObject =
       self.withoutKey(A.to(key))
 
-    def ++[A: StringConverter, B: ToConfig](kvs: Seq[(A, B)]): ConfigObject =
+    def ++[A: StringConverter, B: ConfigWriter](kvs: Seq[(A, B)]): ConfigObject =
       kvs.foldLeft(self)(_ + _)
 
-    def ++[A: StringConverter, B: ToConfig](kvs: Map[A, B]): ConfigObject =
+    def ++[A: StringConverter, B: ConfigWriter](kvs: Map[A, B]): ConfigObject =
       kvs.foldLeft(self)(_ + _)
 
     def ++(obj: ConfigObject): ConfigObject =
@@ -201,8 +201,8 @@ package object syntax {
 
   implicit class EnrichStringConverter[A](self: A)(implicit A: StringConverter[A]) {
 
-    def :=[B](value: B)(implicit B: ToConfig[B]): ConfigKeyValue =
-      ConfigKeyValue(A.to(self), B.toValue(value))
+    def :=[B](value: B)(implicit B: ConfigWriter[B]): ConfigKeyValue =
+      ConfigKeyValue(A.to(self), B.write(value))
 
   }
 

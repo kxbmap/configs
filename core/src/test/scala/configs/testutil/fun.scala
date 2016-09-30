@@ -18,7 +18,7 @@ package configs.testutil
 
 import com.typesafe.config.ConfigFactory
 import configs.testutil.instance.string._
-import configs.{Config, Configs, Result, ToConfig}
+import configs.{Config, Configs, Result, ConfigWriter}
 import scalaprops.Or.Empty
 import scalaprops.Property.forAll
 import scalaprops.{:-:, Gen, Or, Properties}
@@ -30,23 +30,23 @@ object fun {
     println(s"${Console.RED}xxx${Console.RESET} $x")
   }
 
-  def check[A: CheckParam : Configs : ToConfig : Gen : Equal]: Properties[Unit :-: String :-: Empty] =
+  def check[A: CheckParam : Configs : ConfigWriter : Gen : Equal]: Properties[Unit :-: String :-: Empty] =
     Properties.list(
       encodeDecode[A],
       pushPath[A]
     )
 
-  def check[A: CheckParam : Configs : ToConfig : Gen : Equal](id: String): Properties[String :-: String :-: Empty] =
+  def check[A: CheckParam : Configs : ConfigWriter : Gen : Equal](id: String): Properties[String :-: String :-: Empty] =
     check[A].mapId {
       case Or.L(_) => Or.L(id)
       case Or.R(r) => Or.R(r)
     }
 
-  private def encodeDecode[A: CheckParam : Configs : ToConfig : Gen : Equal]: Properties[String] =
+  private def encodeDecode[A: CheckParam : Configs : ConfigWriter : Gen : Equal]: Properties[String] =
     Properties.single("encode/decode", forAll { value: A =>
       CheckParam[A].exceptEncodeDecode(value) || {
         val path = "path"
-        val m = ToConfig[A].append(Map.empty, path, value)
+        val m = ConfigWriter[A].append(Map.empty, path, value)
         val encoded = m.get(path)
         val config = encoded.foldLeft(Config.empty)(_.withValue(path, _))
         val decoded = Configs[A].get(config, path)

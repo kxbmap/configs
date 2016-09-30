@@ -39,8 +39,8 @@ object ConfigValue {
   final val True = from(true)
   final val False = from(false)
 
-  def apply[A](a: A)(implicit A: ToConfig[A]): ConfigValue =
-    A.toValue(a)
+  def apply[A](a: A)(implicit A: ConfigWriter[A]): ConfigValue =
+    A.write(a)
 
   def from(any: Any): ConfigValue =
     ConfigValueFactory.fromAnyRef(any)
@@ -54,8 +54,8 @@ object ConfigList {
 
   def empty: ConfigList = from(Nil)
 
-  def apply[A](as: A*)(implicit A: ToConfig[A]): ConfigList =
-    from(as.map(A.toValue))
+  def apply[A](as: A*)(implicit A: ConfigWriter[A]): ConfigList =
+    from(as.map(A.write))
 
   def from(seq: Seq[Any]): ConfigList =
     ConfigValueFactory.fromIterable(seq.asInstanceOf[Seq[AnyRef]].asJava)

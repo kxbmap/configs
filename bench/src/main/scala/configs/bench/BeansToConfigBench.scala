@@ -16,7 +16,7 @@
 
 package configs.bench
 
-import configs.{ConfigValue, ToConfig}
+import configs.{ConfigValue, ConfigWriter}
 import configs.testutil.Bean484
 import org.openjdk.jmh.annotations.{Benchmark, Scope, Setup, State}
 import scala.collection.JavaConverters._
@@ -26,14 +26,14 @@ import scala.util.Random
 class BeansToConfigBench {
 
   private[this] var bean: Bean484 = _
-  private[this] var derivedTC: ToConfig[Bean484] = _
-  private[this] var handwrittenTC: ToConfig[Bean484] = _
+  private[this] var derivedWriter: ConfigWriter[Bean484] = _
+  private[this] var handwrittenWriter: ConfigWriter[Bean484] = _
 
   @Setup
   def prepare(): Unit = {
     bean = Bean484.fromArray(Array.fill(484)(Random.nextInt()))
-    derivedTC = ToConfig.derive[Bean484]
-    handwrittenTC = ToConfig.by(
+    derivedWriter = ConfigWriter.derive[Bean484]
+    handwrittenWriter = ConfigWriter.by(
       _.values().asScala.zipWithIndex.map {
         case (n, i) => s"a${i + 1}" -> n.intValue()
       }.toMap)
@@ -41,12 +41,12 @@ class BeansToConfigBench {
 
   @Benchmark
   def derived(): ConfigValue = {
-    derivedTC.toValue(bean)
+    derivedWriter.write(bean)
   }
 
   @Benchmark
   def handwritten(): ConfigValue = {
-    handwrittenTC.toValue(bean)
+    handwrittenWriter.write(bean)
   }
 
 }

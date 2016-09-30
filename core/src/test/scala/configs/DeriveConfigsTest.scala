@@ -105,7 +105,7 @@ object DeriveConfigsTest extends Scalaprops {
   object Sealed {
     // SI-7046
     implicit lazy val configs: Configs[Sealed] = Configs.derive[Sealed]
-    implicit lazy val tc: ToConfig[Sealed] = ToConfig.derive[Sealed]
+    implicit lazy val writer: ConfigWriter[Sealed] = ConfigWriter.derive[Sealed]
 
     implicit lazy val gen: Gen[Sealed] =
       Gen.oneOf(
@@ -139,7 +139,7 @@ object DeriveConfigsTest extends Scalaprops {
     }
     val p2 = {
       implicit val gen: Gen[Default1] = Gen.value(Default1())
-      implicit val tc: ToConfig[Default1] = _ => ConfigObject.empty
+      implicit val writer: ConfigWriter[Default1] = _ => ConfigObject.empty
       check[Default1]("w/ default")
     }
     p1 x p2
@@ -175,7 +175,7 @@ object DeriveConfigsTest extends Scalaprops {
 
   object Recursive {
     implicit lazy val configs: Configs[Recursive] = Configs.derive[Recursive]
-    implicit lazy val tc: ToConfig[Recursive] = ToConfig.derive[Recursive]
+    implicit lazy val writer: ConfigWriter[Recursive] = ConfigWriter.derive[Recursive]
 
     implicit lazy val gen: Gen[Recursive] =
       Gen.oneOfLazy(
@@ -196,8 +196,8 @@ object DeriveConfigsTest extends Scalaprops {
     implicit lazy val configs: Configs[RecursiveOpt] =
       Configs.derive[RecursiveOpt]
 
-    implicit lazy val tc: ToConfig[RecursiveOpt] =
-      ToConfig.derive[RecursiveOpt]
+    implicit lazy val writer: ConfigWriter[RecursiveOpt] =
+      ConfigWriter.derive[RecursiveOpt]
 
     implicit lazy val gen: Gen[RecursiveOpt] =
       Gen.oneOfLazy(
