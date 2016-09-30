@@ -29,7 +29,7 @@ import scalaprops.{Gen, Properties, Scalaprops}
 import scalaz.syntax.equal._
 import scalaz.{Equal, Need}
 
-object DeriveBeanConfigsTest extends Scalaprops {
+object DeriveForBeanTest extends Scalaprops {
 
   val bean1 = {
     implicit val gen: Gen[Bean1] =

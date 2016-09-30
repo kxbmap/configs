@@ -26,7 +26,7 @@ import scalaprops.{Gen, Properties, Scalaprops}
 import scalaz.{Apply, Equal, Need}
 
 
-object DeriveConfigsTest extends Scalaprops {
+object DeriveTest extends Scalaprops {
 
   case class CC0()
 
