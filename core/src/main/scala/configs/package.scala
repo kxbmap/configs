@@ -28,4 +28,17 @@ package object configs {
 
   type ConfigOrigin = com.typesafe.config.ConfigOrigin
 
+
+  @deprecated("use ConfigReader instead", "0.5.0")
+  type Configs[A] = ConfigReader[A]
+
+  @deprecated("use ConfigReader instead", "0.5.0")
+  val Configs = ConfigReader
+
+  @deprecated("use StringConverter instead", "0.5.0")
+  type FromString[A] = StringConverter[A]
+
+  @deprecated("use StringConverter instead", "0.5.0")
+  val FromString = StringConverter
+
 }

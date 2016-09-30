@@ -30,6 +30,10 @@ trait ConfigReader[A] {
   def read(config: Config, path: String): Result[A] =
     read0(config, path).pushPath(path)
 
+  @deprecated("use read instead", "0.5.0")
+  def get(config: Config, path: String): Result[A] =
+    read(config, path)
+
   def extract(config: Config, key: String = "extract"): Result[A] =
     read(config.atKey(key), key)
 
