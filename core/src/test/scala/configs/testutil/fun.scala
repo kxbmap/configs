@@ -20,7 +20,7 @@ import com.typesafe.config.ConfigFactory
 import configs.testutil.instance.string._
 import configs.{Config, ConfigReader, ConfigWriter, Result}
 import scalaprops.Or.Empty
-import scalaprops.Property.forAll
+import scalaprops.Property.{forAll, forAllG}
 import scalaprops.{:-:, Gen, Or, Properties}
 import scalaz.Equal
 
@@ -60,21 +60,21 @@ object fun {
       }
     })
 
-  private def pushPath[A: CheckParam : ConfigReader]: Properties[String] =
-    Properties.single("push path", forAll {
+  private def pushPath[A: CheckParam](implicit reader: ConfigReader[A]): Properties[String] =
+    Properties.single("push path", forAllG(pathStringGen) { path =>
       val c1 = Config.empty
-      val c2 = ConfigFactory.parseString("path = 42")
-      val c3 = ConfigFactory.parseString("path = []")
+      val c2 = ConfigFactory.parseString(s"$path = 42")
+      val c3 = ConfigFactory.parseString(s"$path = []")
       val result = Result.tuple3(
-        ConfigReader[A].read(c1, "path"),
-        ConfigReader[A].read(c2, "path"),
-        ConfigReader[A].read(c3, "path")
+        reader.read(c1, path),
+        reader.read(c2, path),
+        reader.read(c3, path)
       )
       if (CheckParam[A].alwaysSuccess)
         result.isSuccess
       else
         result.failed.exists {
-          _.entries.map(_.paths).forall(_ == List("path"))
+          _.entries.map(_.pathString).forall(_ == path)
         }
     })
 
