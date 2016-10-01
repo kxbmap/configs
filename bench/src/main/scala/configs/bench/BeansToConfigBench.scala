@@ -16,12 +16,16 @@
 
 package configs.bench
 
-import configs.{ConfigValue, ConfigWriter}
 import configs.testutil.Bean484
-import org.openjdk.jmh.annotations.{Benchmark, Scope, Setup, State}
+import configs.{ConfigValue, ConfigWriter}
+import org.openjdk.jmh.annotations.{Benchmark, Fork, Measurement, Scope, Setup, State, Threads, Warmup}
 import scala.collection.JavaConverters._
 import scala.util.Random
 
+@Fork(1)
+@Threads(1)
+@Warmup(iterations = 10)
+@Measurement(iterations = 10)
 @State(Scope.Thread)
 class BeansToConfigBench {
 
