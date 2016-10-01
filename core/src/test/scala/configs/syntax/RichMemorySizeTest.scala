@@ -24,7 +24,7 @@ import scalaprops.Property.{forAll, forAllG}
 import scalaprops.{Gen, Properties, Property, Scalaprops}
 import scalaz.syntax.std.boolean._
 
-object EnrichMemorySizeTest extends Scalaprops {
+object RichMemorySizeTest extends Scalaprops {
 
   private def forAllWith[A](gen: Gen[A])(f: (MemorySize, A) => Boolean): Property =
     forAllG(Gen[MemorySize], gen)(f)

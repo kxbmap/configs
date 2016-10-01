@@ -79,7 +79,7 @@ object fun {
     })
 
 
-  implicit class EnrichProperties[A](private val self: Properties[A]) extends AnyVal {
+  implicit class RichProperties[A](private val self: Properties[A]) extends AnyVal {
     def x[B](that: Properties[B]): Properties[Unit :-: A :-: B :-: Or.Empty] =
       self.product(that)
   }

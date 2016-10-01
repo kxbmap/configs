@@ -21,7 +21,7 @@ import scala.collection.JavaConverters._
 
 package object syntax {
 
-  implicit class EnrichConfig(private val self: Config) extends AnyVal {
+  implicit class RichConfig(private val self: Config) extends AnyVal {
 
     def extract[A](implicit A: ConfigReader[A]): Result[A] =
       A.extract(self)
@@ -40,7 +40,7 @@ package object syntax {
 
   }
 
-  implicit class EnrichConfigList(private val self: ConfigList) extends AnyVal {
+  implicit class RichConfigList(private val self: ConfigList) extends AnyVal {
 
     def :+[A](value: A)(implicit A: ConfigWriter[A]): ConfigList =
       ConfigList.from(self.asScala :+ A.write(value))
@@ -56,7 +56,7 @@ package object syntax {
 
   }
 
-  implicit class EnrichConfigObject(private val self: ConfigObject) extends AnyVal {
+  implicit class RichConfigObject(private val self: ConfigObject) extends AnyVal {
 
     def +[A, B](kv: (A, B))(implicit A: StringConverter[A], B: ConfigWriter[B]): ConfigObject =
       self.withValue(A.to(kv._1), B.write(kv._2))
@@ -79,7 +79,7 @@ package object syntax {
   implicit lazy val memorySizeOrdering: Ordering[MemorySize] =
     Ordering.by(_.toBytes)
 
-  implicit class EnrichMemorySize(private val self: MemorySize) extends AnyVal {
+  implicit class RichMemorySize(private val self: MemorySize) extends AnyVal {
 
     def value: Long = self.toBytes
 
@@ -192,14 +192,14 @@ package object syntax {
 
   }
 
-  implicit class EnrichResult[A](private val self: Result[A]) extends AnyVal {
+  implicit class RichResult[A](private val self: Result[A]) extends AnyVal {
 
     def ~[X](x: Result[X]): ResultBuilder.Builder2[A, X] =
       new ResultBuilder.Builder2(self, x)
 
   }
 
-  implicit class EnrichStringConverter[A](self: A)(implicit A: StringConverter[A]) {
+  implicit class RichStringConverter[A](self: A)(implicit A: StringConverter[A]) {
 
     def :=[B](value: B)(implicit B: ConfigWriter[B]): ConfigKeyValue =
       ConfigKeyValue(A.to(self), B.write(value))

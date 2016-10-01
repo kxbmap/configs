@@ -25,7 +25,7 @@ import scalaprops.Scalaprops
 import scalaz.Monoid
 import scalaz.syntax.equal._
 
-object EnrichConfigObjectTest extends Scalaprops {
+object RichConfigObjectTest extends Scalaprops {
 
   val + = forAll { (co: ConfigObject, k: Symbol, v: Int) =>
     val result = co + (k -> v)

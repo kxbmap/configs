@@ -26,7 +26,7 @@ import scalaprops.{Properties, Scalaprops}
 import scalaz.Monoid
 import scalaz.syntax.equal._
 
-object EnrichConfigTest extends Scalaprops {
+object RichConfigTest extends Scalaprops {
 
   val extract = forAll { m: Map[String, Int] =>
     val config = ConfigObject.from(m).toConfig
