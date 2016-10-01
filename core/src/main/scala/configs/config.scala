@@ -93,6 +93,9 @@ object ConfigMemorySize {
   def unapply(memorySize: ConfigMemorySize): Option[Long] =
     Some(memorySize.toBytes)
 
+  implicit val configMemorySizeOrdering: Ordering[ConfigMemorySize] =
+    Ordering.by(_.toBytes)
+
 }
 
 object ConfigUtil {

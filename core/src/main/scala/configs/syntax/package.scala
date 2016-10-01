@@ -76,9 +76,6 @@ package object syntax {
   }
 
 
-  implicit lazy val configMemorySizeOrdering: Ordering[ConfigMemorySize] =
-    Ordering.by(_.toBytes)
-
   implicit class RichConfigMemorySize(private val self: ConfigMemorySize) extends AnyVal {
 
     def value: Long = self.toBytes
