@@ -80,17 +80,17 @@ object ConfigObject {
 
 }
 
-object MemorySize {
+object ConfigMemorySize {
 
-  final val Zero = MemorySize(0L)
+  final val Zero = ConfigMemorySize(0L)
 
   final val MinValue = Zero
-  final val MaxValue = MemorySize(Long.MaxValue)
+  final val MaxValue = ConfigMemorySize(Long.MaxValue)
 
-  def apply(bytes: Long): MemorySize =
+  def apply(bytes: Long): ConfigMemorySize =
     com.typesafe.config.ConfigMemorySize.ofBytes(bytes)
 
-  def unapply(memorySize: MemorySize): Option[Long] =
+  def unapply(memorySize: ConfigMemorySize): Option[Long] =
     Some(memorySize.toBytes)
 
 }

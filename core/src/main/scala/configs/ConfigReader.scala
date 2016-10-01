@@ -337,7 +337,7 @@ sealed abstract class ConfigReaderInstances extends ConfigReaderInstances0 {
     configObjectConfigReader.as[ju.Map[String, ConfigValue]]
 
 
-  implicit lazy val memorySizeConfigReader: ConfigReader[MemorySize] =
+  implicit lazy val configMemorySizeConfigReader: ConfigReader[ConfigMemorySize] =
     ConfigReader.fromTry(_.getMemorySize(_))
 
 

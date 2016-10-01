@@ -21,7 +21,7 @@ import configs.testutil.fun._
 import configs.testutil.instance.collection._
 import configs.testutil.instance.config._
 import configs.testutil.instance.string._
-import configs.{Config, ConfigList, ConfigObject, ConfigReader, ConfigValue, MemorySize}
+import configs.{Config, ConfigList, ConfigMemorySize, ConfigObject, ConfigReader, ConfigValue}
 import java.{util => ju}
 import scalaprops.Property.forAll
 import scalaprops.Scalaprops
@@ -51,6 +51,6 @@ object ConfigTypesTest extends Scalaprops {
 
   val configObject = check[ConfigObject]
 
-  val memorySize = check[MemorySize]
+  val configMemorySize = check[ConfigMemorySize]
 
 }

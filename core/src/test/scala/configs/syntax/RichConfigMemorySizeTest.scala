@@ -19,19 +19,19 @@ package configs.syntax
 import configs.testutil.instance.anyVal._
 import configs.testutil.instance.config._
 import configs.testutil.instance.string._
-import configs.{Bytes, MemorySize}
+import configs.{Bytes, ConfigMemorySize}
 import scalaprops.Property.{forAll, forAllG}
 import scalaprops.{Gen, Properties, Property, Scalaprops}
 import scalaz.syntax.std.boolean._
 
-object RichMemorySizeTest extends Scalaprops {
+object RichConfigMemorySizeTest extends Scalaprops {
 
-  private def forAllWith[A](gen: Gen[A])(f: (MemorySize, A) => Boolean): Property =
-    forAllG(Gen[MemorySize], gen)(f)
+  private def forAllWith[A](gen: Gen[A])(f: (ConfigMemorySize, A) => Boolean): Property =
+    forAllG(Gen[ConfigMemorySize], gen)(f)
 
-  val + = forAll { (a: MemorySize, b: MemorySize) =>
+  val + = forAll { (a: ConfigMemorySize, b: ConfigMemorySize) =>
     if (a.value + b.value >= 0L) {
-      a + b == MemorySize(a.value + b.value)
+      a + b == ConfigMemorySize(a.value + b.value)
     } else try {
       a + b
       sys.error(s"$a + $b")
@@ -40,14 +40,14 @@ object RichMemorySizeTest extends Scalaprops {
     }
   }
 
-  val - = forAllWith(Gen[MemorySize]) { (a, b) =>
+  val - = forAllWith(Gen[ConfigMemorySize]) { (a, b) =>
     (a.value >= b.value) --> {
-      a - b == MemorySize(a.value - b.value)
+      a - b == ConfigMemorySize(a.value - b.value)
     }
   }
 
   val `*` = {
-    def isExact(x: MemorySize, y: Long): Boolean =
+    def isExact(x: ConfigMemorySize, y: Long): Boolean =
       try {
         Math.multiplyExact(x.value, y)
         true
@@ -57,12 +57,12 @@ object RichMemorySizeTest extends Scalaprops {
     Properties.properties("by")(
       "non-neg int" -> forAllWith(Gen.nonNegativeInt) { (a, b) =>
         isExact(a, b) --> {
-          a * b == MemorySize(a.value * b)
+          a * b == ConfigMemorySize(a.value * b)
         }
       },
       "negative int" -> forAllWith(Gen.negativeInt) { (a, b) =>
         if (a.value == 0L) {
-          a * b == MemorySize.Zero
+          a * b == ConfigMemorySize.Zero
         } else try {
           a * b
           sys.error(s"$a * $b")
@@ -72,12 +72,12 @@ object RichMemorySizeTest extends Scalaprops {
       },
       "non-neg long" -> forAllWith(Gen.nonNegativeLong) { (a, b) =>
         isExact(a, b) --> {
-          a * b == MemorySize(a.value * b)
+          a * b == ConfigMemorySize(a.value * b)
         }
       },
       "negative long" -> forAllWith(Gen.negativeLong) { (a, b) =>
         if (a.value == 0L) {
-          a * b == MemorySize.Zero
+          a * b == ConfigMemorySize.Zero
         } else try {
           a * b
           sys.error(s"$a * $b")
@@ -87,7 +87,7 @@ object RichMemorySizeTest extends Scalaprops {
       },
       "non-neg double" -> forAllWith(Gen.nonNegativeFiniteDouble) { (a, b) =>
         if (a.value * b <= Long.MaxValue) {
-          a * b == MemorySize((a.value * b).toLong)
+          a * b == ConfigMemorySize((a.value * b).toLong)
         } else try {
           a * b
           sys.error(s"$a * $b")
@@ -97,7 +97,7 @@ object RichMemorySizeTest extends Scalaprops {
       },
       "negative double" -> forAllWith(Gen.negativeFiniteDouble) { (a, b) =>
         if (a.value == 0L || java.lang.Double.compare(b, -0d) == 0) {
-          a * b == MemorySize.Zero
+          a * b == ConfigMemorySize.Zero
         } else try {
           a * b
           sys.error(s"$a * $b")
@@ -113,7 +113,7 @@ object RichMemorySizeTest extends Scalaprops {
           case e: IllegalArgumentException => e.getMessage.contains(b.toString)
         }
       },
-      "NaN" -> forAll { a: MemorySize =>
+      "NaN" -> forAll { a: ConfigMemorySize =>
         try {
           a * Double.NaN
           sys.error(s"$a * ${Double.NaN}")
@@ -125,11 +125,11 @@ object RichMemorySizeTest extends Scalaprops {
 
   val `/` = Properties.properties("by")(
     "positive int" -> forAllWith(Gen.positiveInt) { (a, b) =>
-      a / b == MemorySize(a.value / b)
+      a / b == ConfigMemorySize(a.value / b)
     },
     "negative int" -> forAllWith(Gen.negativeInt) { (a, b) =>
       if (a.value == 0L) {
-        a / b == MemorySize.Zero
+        a / b == ConfigMemorySize.Zero
       } else try {
         a / b
         sys.error(s"$a / $b")
@@ -137,7 +137,7 @@ object RichMemorySizeTest extends Scalaprops {
         case e: IllegalArgumentException => e.getMessage.contains(b.toString)
       }
     },
-    "zero int" -> forAll { a: MemorySize =>
+    "zero int" -> forAll { a: ConfigMemorySize =>
       try {
         a / 0
         sys.error(s"$a / 0")
@@ -146,11 +146,11 @@ object RichMemorySizeTest extends Scalaprops {
       }
     },
     "positive long" -> forAllWith(Gen.positiveLong) { (a, b) =>
-      a / b == MemorySize(a.value / b)
+      a / b == ConfigMemorySize(a.value / b)
     },
     "negative long" -> forAllWith(Gen.negativeLong) { (a, b) =>
       if (a.value == 0L) {
-        a / b == MemorySize.Zero
+        a / b == ConfigMemorySize.Zero
       } else try {
         a / b
         sys.error(s"$a / $b")
@@ -158,7 +158,7 @@ object RichMemorySizeTest extends Scalaprops {
         case e: IllegalArgumentException => e.getMessage.contains(b.toString)
       }
     },
-    "zero long" -> forAll { a: MemorySize =>
+    "zero long" -> forAll { a: ConfigMemorySize =>
       try {
         a / 0L
         sys.error(s"$a / 0L")
@@ -168,7 +168,7 @@ object RichMemorySizeTest extends Scalaprops {
     },
     "positive double" -> forAllWith(Gen.positiveFiniteDouble) { (a, b) =>
       if (a.value / b <= Long.MaxValue) {
-        a / b == MemorySize((a.value / b).toLong)
+        a / b == ConfigMemorySize((a.value / b).toLong)
       } else try {
         a / b
         sys.error(s"$a / $b")
@@ -178,7 +178,7 @@ object RichMemorySizeTest extends Scalaprops {
     },
     "negative double" -> forAllWith(Gen.negativeFiniteDouble) { (a, b) =>
       if (a.value == 0L && b != -0.0d) {
-        a / b == MemorySize.Zero
+        a / b == ConfigMemorySize.Zero
       } else try {
         a / b
         sys.error(s"$a / $b")
@@ -194,7 +194,7 @@ object RichMemorySizeTest extends Scalaprops {
         case e: IllegalArgumentException => e.getMessage.contains(b.toString)
       }
     },
-    "NaN" -> forAll { a: MemorySize =>
+    "NaN" -> forAll { a: ConfigMemorySize =>
       try {
         a / Double.NaN
         sys.error(s"$a / ${Double.NaN}")
@@ -202,14 +202,14 @@ object RichMemorySizeTest extends Scalaprops {
         case e: IllegalArgumentException => e.getMessage.contains("NaN")
       }
     },
-    "MemorySize" -> forAllWith(Gen[MemorySize]) { (a, b) =>
+    "ConfigMemorySize" -> forAllWith(Gen[ConfigMemorySize]) { (a, b) =>
       (a / b).compare(a.value.toDouble / b.value.toDouble) == 0
     })
 
   val `<<` = Properties.properties("by")(
     "int" -> forAllWith(Gen[Int]) { (a, b) =>
       if (((a.value << b & 0x7fffffffffffffffL) >> b) == a.value) {
-        (a << b) == MemorySize(a.value << b)
+        (a << b) == ConfigMemorySize(a.value << b)
       } else try {
         a << b
         sys.error(s"$a << $b")
@@ -219,7 +219,7 @@ object RichMemorySizeTest extends Scalaprops {
     },
     "long" -> forAllWith(Gen[Long]) { (a, b) =>
       if (((a.value << b & 0x7fffffffffffffffL) >> b) == a.value) {
-        (a << b) == MemorySize(a.value << b)
+        (a << b) == ConfigMemorySize(a.value << b)
       } else try {
         a << b
         sys.error(s"$a << $b")
@@ -230,21 +230,21 @@ object RichMemorySizeTest extends Scalaprops {
 
   val `>>` = Properties.properties("by")(
     "int" -> forAllWith(Gen[Int]) { (a, b) =>
-      (a >> b) == MemorySize(a.value >> b)
+      (a >> b) == ConfigMemorySize(a.value >> b)
     },
     "long" -> forAllWith(Gen[Long]) { (a, b) =>
-      (a >> b) == MemorySize(a.value >> b)
+      (a >> b) == ConfigMemorySize(a.value >> b)
     })
 
   val `>>>` = Properties.properties("by")(
     "int" -> forAllWith(Gen[Int]) { (a, b) =>
-      (a >>> b) == MemorySize(a.value >>> b)
+      (a >>> b) == ConfigMemorySize(a.value >>> b)
     },
     "long" -> forAllWith(Gen[Long]) { (a, b) =>
-      (a >>> b) == MemorySize(a.value >>> b)
+      (a >>> b) == ConfigMemorySize(a.value >>> b)
     })
 
-  val asBytes = forAll { m: MemorySize =>
+  val asBytes = forAll { m: ConfigMemorySize =>
     m.asBytes == Bytes(m.value)
   }
 

@@ -19,7 +19,7 @@ package configs.testutil.instance
 import configs.testutil.instance.anyVal._
 import configs.testutil.instance.collection._
 import configs.testutil.instance.string._
-import configs.{Config, ConfigList, ConfigObject, ConfigValue, MemorySize}
+import configs.{Config, ConfigList, ConfigMemorySize, ConfigObject, ConfigValue}
 import java.{lang => jl, util => ju}
 import scala.collection.JavaConverters._
 import scalaprops.Gen
@@ -79,10 +79,10 @@ object config {
     configObjectGen.widen[ju.Map[String, ConfigValue]]
 
 
-  implicit lazy val memorySizeEqual: Equal[MemorySize] =
-    Equal.equalA[MemorySize]
+  implicit lazy val configMemorySizeEqual: Equal[ConfigMemorySize] =
+    Equal.equalA[ConfigMemorySize]
 
-  implicit lazy val memorySizeGen: Gen[MemorySize] =
-    Gen.nonNegativeLong.map(MemorySize.apply)
+  implicit lazy val configMemorySizeGen: Gen[ConfigMemorySize] =
+    Gen.nonNegativeLong.map(ConfigMemorySize.apply)
 
 }

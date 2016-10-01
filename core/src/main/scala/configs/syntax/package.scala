@@ -76,117 +76,117 @@ package object syntax {
   }
 
 
-  implicit lazy val memorySizeOrdering: Ordering[MemorySize] =
+  implicit lazy val configMemorySizeOrdering: Ordering[ConfigMemorySize] =
     Ordering.by(_.toBytes)
 
-  implicit class RichMemorySize(private val self: MemorySize) extends AnyVal {
+  implicit class RichConfigMemorySize(private val self: ConfigMemorySize) extends AnyVal {
 
     def value: Long = self.toBytes
 
-    def +(rhs: MemorySize): MemorySize =
+    def +(rhs: ConfigMemorySize): ConfigMemorySize =
       (self.toBytes, rhs.toBytes) match {
         case (0, _) => rhs
         case (_, 0) => self
-        case (a, b) => MemorySize(Math.addExact(a, b))
+        case (a, b) => ConfigMemorySize(Math.addExact(a, b))
       }
 
-    def -(rhs: MemorySize): MemorySize =
+    def -(rhs: ConfigMemorySize): ConfigMemorySize =
       rhs.toBytes match {
         case 0 => self
-        case n => MemorySize(Math.subtractExact(self.toBytes, n))
+        case n => ConfigMemorySize(Math.subtractExact(self.toBytes, n))
       }
 
-    def *(rhs: Int): MemorySize =
+    def *(rhs: Int): ConfigMemorySize =
       (self.toBytes, rhs) match {
         case (_, 1) => self
-        case (0, _) | (_, 0) => MemorySize.Zero
+        case (0, _) | (_, 0) => ConfigMemorySize.Zero
         case (_, b) if b < 0 => throw new IllegalArgumentException(s"multiply by negative number: $b")
-        case (1, b) => MemorySize(b)
-        case (a, b) => MemorySize(Math.multiplyExact(a, b))
+        case (1, b) => ConfigMemorySize(b)
+        case (a, b) => ConfigMemorySize(Math.multiplyExact(a, b))
       }
 
-    def *(rhs: Long): MemorySize =
+    def *(rhs: Long): ConfigMemorySize =
       (self.toBytes, rhs) match {
         case (_, 1) => self
-        case (0, _) | (_, 0) => MemorySize.Zero
+        case (0, _) | (_, 0) => ConfigMemorySize.Zero
         case (_, b) if b < 0L => throw new IllegalArgumentException(s"multiply by negative number: $b")
-        case (1, b) => MemorySize(b)
-        case (a, b) => MemorySize(Math.multiplyExact(a, b))
+        case (1, b) => ConfigMemorySize(b)
+        case (a, b) => ConfigMemorySize(Math.multiplyExact(a, b))
       }
 
-    def *(rhs: Double): MemorySize =
+    def *(rhs: Double): ConfigMemorySize =
       (self.toBytes, rhs) match {
         case (_, 1.0d) => self
         case (_, b) if b.isNaN || b.isInfinity => throw new IllegalArgumentException(s"multiply by $b")
-        case (0, _) => MemorySize.Zero
+        case (0, _) => ConfigMemorySize.Zero
         case (_, b) if Math.signum(b) == -1.0 => throw new IllegalArgumentException(s"multiply by negative number: $b")
         case (a, b) =>
           val r = a * b
           if (r > Long.MaxValue) throw new ArithmeticException("long overflow")
-          MemorySize(r.toLong)
+          ConfigMemorySize(r.toLong)
       }
 
-    def /(rhs: Int): MemorySize =
+    def /(rhs: Int): ConfigMemorySize =
       (self.toBytes, rhs) match {
         case (_, 1) => self
-        case (0, b) if b != 0 => MemorySize.Zero
+        case (0, b) if b != 0 => ConfigMemorySize.Zero
         case (_, b) if b < 0 => throw new IllegalArgumentException(s"divide by negative number: $b")
-        case (a, b) if a < b => MemorySize.Zero
-        case (a, b) => MemorySize(a / b)
+        case (a, b) if a < b => ConfigMemorySize.Zero
+        case (a, b) => ConfigMemorySize(a / b)
       }
 
-    def /(rhs: Long): MemorySize =
+    def /(rhs: Long): ConfigMemorySize =
       (self.toBytes, rhs) match {
         case (_, 1) => self
-        case (0, b) if b != 0 => MemorySize.Zero
+        case (0, b) if b != 0 => ConfigMemorySize.Zero
         case (_, b) if b < 0 => throw new IllegalArgumentException(s"divide by negative number: $b")
-        case (a, b) if a < b => MemorySize.Zero
-        case (a, b) => MemorySize(a / b)
+        case (a, b) if a < b => ConfigMemorySize.Zero
+        case (a, b) => ConfigMemorySize(a / b)
       }
 
-    def /(rhs: Double): MemorySize =
+    def /(rhs: Double): ConfigMemorySize =
       (self.toBytes, rhs) match {
         case (_, 1.0d) => self
         case (_, b) if b.isNaN || b.isInfinity => throw new IllegalArgumentException(s"divide by $b")
-        case (0, b) if b != 0.0 => MemorySize.Zero
+        case (0, b) if b != 0.0 => ConfigMemorySize.Zero
         case (_, b) if java.lang.Double.compare(b, 0.0) == -1 =>
           throw new IllegalArgumentException(s"divide by negative number: $b")
         case (a, b) =>
           val r = a / b
           if (r > Long.MaxValue) throw new ArithmeticException("long overflow")
-          MemorySize(r.toLong)
+          ConfigMemorySize(r.toLong)
       }
 
-    def /(rhs: MemorySize): Double =
+    def /(rhs: ConfigMemorySize): Double =
       self.toBytes.toDouble / rhs.toBytes
 
-    def <<(rhs: Int): MemorySize =
+    def <<(rhs: Int): ConfigMemorySize =
       (self.toBytes, rhs) match {
         case (0, _) | (_, 0) => self
         case (a, b) if (b & 0x3f) + numberOfTrailingZeros(highestOneBit(a)) > 62 =>
           throw new ArithmeticException("long overflow")
-        case (a, b) => MemorySize(a << b)
+        case (a, b) => ConfigMemorySize(a << b)
       }
 
-    def <<(rhs: Long): MemorySize =
+    def <<(rhs: Long): ConfigMemorySize =
       (self.toBytes, rhs) match {
         case (0, _) | (_, 0) => self
         case (a, b) if (b & 0x3f) + numberOfTrailingZeros(highestOneBit(a)) > 62 =>
           throw new ArithmeticException("long overflow")
-        case (a, b) => MemorySize(a << b)
+        case (a, b) => ConfigMemorySize(a << b)
       }
 
-    def >>(rhs: Int): MemorySize =
-      MemorySize(self.toBytes >> rhs)
+    def >>(rhs: Int): ConfigMemorySize =
+      ConfigMemorySize(self.toBytes >> rhs)
 
-    def >>(rhs: Long): MemorySize =
-      MemorySize(self.toBytes >> rhs)
+    def >>(rhs: Long): ConfigMemorySize =
+      ConfigMemorySize(self.toBytes >> rhs)
 
-    def >>>(rhs: Int): MemorySize =
-      MemorySize(self.toBytes >>> rhs)
+    def >>>(rhs: Int): ConfigMemorySize =
+      ConfigMemorySize(self.toBytes >>> rhs)
 
-    def >>>(rhs: Long): MemorySize =
-      MemorySize(self.toBytes >>> rhs)
+    def >>>(rhs: Long): ConfigMemorySize =
+      ConfigMemorySize(self.toBytes >>> rhs)
 
     def asBytes: Bytes = Bytes(self.toBytes)
 

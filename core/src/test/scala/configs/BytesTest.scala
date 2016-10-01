@@ -112,7 +112,7 @@ object BytesTest extends Scalaprops {
 
   val asMemorySize = forAll { b: Bytes =>
     try {
-      val m = MemorySize(b.value)
+      val m = ConfigMemorySize(b.value)
       b.asMemorySize.contains(m)
     } catch {
       case _: IllegalArgumentException =>

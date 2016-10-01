@@ -142,8 +142,8 @@ sealed abstract class ConfigWriterInstances extends ConfigWriterInstances0 {
   implicit lazy val configListConfigWriter: ConfigWriter[ConfigList] = v => v
   implicit lazy val configObjectConfigWriter: ConfigWriter[ConfigObject] = v => v
 
-  implicit val memorySizeConfigWriter: ConfigWriter[MemorySize] =
-    fromAny[MemorySize]
+  implicit val configMemorySizeConfigWriter: ConfigWriter[ConfigMemorySize] =
+    fromAny[ConfigMemorySize]
 
 
   implicit def iterableConfigWriter[F[X] <: Iterable[X], A](implicit A: ConfigWriter[A]): ConfigWriter[F[A]] =
