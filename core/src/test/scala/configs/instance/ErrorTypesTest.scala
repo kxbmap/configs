@@ -29,7 +29,7 @@ object ErrorTypesTest extends Scalaprops {
 
   implicit def resultCheckParam[A]: CheckParam[Result[A]] =
     new CheckParam[Result[A]] {
-      override def checkPushPath: Boolean = false
+      override def alwaysSuccess: Boolean = true
     }
 
   val result = check[Result[Int]]

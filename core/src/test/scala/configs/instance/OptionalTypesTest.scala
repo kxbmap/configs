@@ -36,7 +36,7 @@ object OptionalTypesTest extends Scalaprops {
 
   implicit def option3CheckParam[A]: CheckParam[O3[A]] =
     new CheckParam[O3[A]] {
-      override def exceptEncodeDecode(a: O3[A]): Boolean = a.contains(None)
+      override def exceptRoundtrip(a: O3[A]): Boolean = a.contains(None)
     }
 
   val option3 = check[O3[Int]]

@@ -37,7 +37,7 @@ object ConfigTypesTest extends Scalaprops {
 
   val configValue = {
     implicit val param: CheckParam[ConfigValue] = new CheckParam[ConfigValue] {
-      override def exceptEncodeDecode(a: ConfigValue): Boolean =
+      override def exceptRoundtrip(a: ConfigValue): Boolean =
         a.valueType() == ConfigValueType.NULL
     }
     check[ConfigValue]

@@ -32,7 +32,7 @@ object fun {
 
   def check[A: CheckParam : ConfigReader : ConfigWriter : Gen : Equal]: Properties[Unit :-: String :-: Empty] =
     Properties.list(
-      encodeDecode[A],
+      roundtrip[A],
       pushPath[A]
     )
 
@@ -42,19 +42,19 @@ object fun {
       case Or.R(r) => Or.R(r)
     }
 
-  private def encodeDecode[A: CheckParam : ConfigReader : ConfigWriter : Gen : Equal]: Properties[String] =
-    Properties.single("encode/decode", forAll { value: A =>
-      CheckParam[A].exceptEncodeDecode(value) || {
+  private def roundtrip[A: CheckParam : ConfigReader : ConfigWriter : Gen : Equal]: Properties[String] =
+    Properties.single("roundtrip", forAll { value: A =>
+      CheckParam[A].exceptRoundtrip(value) || {
         val path = "path"
         val m = ConfigWriter[A].append(Map.empty, path, value)
-        val encoded = m.get(path)
-        val config = encoded.foldLeft(Config.empty)(_.withValue(path, _))
-        val decoded = ConfigReader[A].read(config, path)
-        val result = decoded.exists(Equal[A].equal(_, value))
+        val wrote = m.get(path)
+        val config = wrote.foldLeft(Config.empty)(_.withValue(path, _))
+        val read = ConfigReader[A].read(config, path)
+        val result = read.exists(Equal[A].equal(_, value))
         if (!result) {
           println()
-          xxx(s"encoded: ${encoded.getOrElse("<missing>")}")
-          xxx(s"decoded: ${decoded.valueOr(e => s"<failure>: $e")}")
+          xxx(s"wrote: ${wrote.getOrElse("<missing>")}")
+          xxx(s"read : ${read.valueOr(e => s"<failure>: $e")}")
         }
         result
       }
@@ -70,11 +70,12 @@ object fun {
         ConfigReader[A].read(c2, "path"),
         ConfigReader[A].read(c3, "path")
       )
-      if (CheckParam[A].checkPushPath)
+      if (CheckParam[A].alwaysSuccess)
+        result.isSuccess
+      else
         result.failed.exists {
           _.entries.map(_.paths).forall(_ == List("path"))
         }
-      else result.isSuccess
     })
 
 
@@ -84,8 +85,8 @@ object fun {
   }
 
   abstract class CheckParam[A] {
-    def exceptEncodeDecode(a: A): Boolean = false
-    def checkPushPath: Boolean = true
+    def exceptRoundtrip(a: A): Boolean = false
+    def alwaysSuccess: Boolean = false
   }
 
   object CheckParam {
