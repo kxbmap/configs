@@ -70,8 +70,9 @@ object ConfigError {
 
     def paths: List[String]
 
-    final def messageWithPath: String =
-      s"[${paths.mkString(".")}] $message"
+    final def pathString: String = paths.mkString(".")
+
+    final def messageWithPath: String = s"[$pathString] $message"
 
     def pushPath(path: String): Entry
 
