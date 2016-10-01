@@ -82,12 +82,12 @@ object DeriveForBeanTest extends Scalaprops {
     val C = ConfigReader.deriveBeanWith(new MyBean(1, 42))
     val p1 =
       forAll { (a1: Int) =>
-        val config = ConfigFactory.parseString(s"a1 = $a1")
+        val config = ConfigFactory.parseString(s"a-1 = $a1")
         C.extract(config).exists(_ === new MyBean(a1, 42))
       }
     val p2 =
       forAll { (a1: Int, a2: Int) =>
-        val config = ConfigFactory.parseString(s"a1 = $a1, a2 = $a2")
+        val config = ConfigFactory.parseString(s"a-1 = $a1, a-2 = $a2")
         (for {
           a <- C.extract(config)
           b <- C.extract(config)

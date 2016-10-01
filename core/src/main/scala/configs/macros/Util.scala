@@ -40,20 +40,29 @@ private[macros] trait Util {
     def loop(s: String, acc: List[String]): List[String] =
       if (s.isEmpty) acc.reverse
       else {
-        val (us, rs) = s.span(_.isUpper)
-        if (rs.isEmpty) loop(rs, us :: acc)
-        else us.length match {
-          case 0 =>
-            val (ls, rest) = rs.span(!_.isUpper)
-            loop(rest, ls :: acc)
-          case 1 =>
-            val (ls, rest) = rs.span(!_.isUpper)
-            loop(rest, us + ls :: acc)
-          case _ =>
-            loop(us.last +: rs, us.init :: acc)
+        val (upper, t) = s.span(_.isUpper)
+        if (t.isEmpty) (upper :: acc).reverse
+        else {
+          val (digit, rest) = t.span(_.isDigit)
+          if (upper.isEmpty) {
+            if (rest.isEmpty) (digit :: acc).reverse
+            else if (!digit.isEmpty) loop(rest, digit :: acc)
+            else {
+              val (xs, next) = rest.span(c => !c.isUpper && !c.isDigit)
+              loop(next, xs :: acc)
+            }
+          } else {
+            if (rest.isEmpty) (digit :: upper :: acc).reverse
+            else if (!digit.isEmpty) loop(rest, digit :: upper :: acc)
+            else if (upper.length == 1) {
+              val (lower, next) = rest.span(_.isLower)
+              loop(next, upper + lower :: acc)
+            }
+            else loop(upper.last +: rest, upper.init :: acc)
+          }
         }
       }
-    s.split("[_-]+").flatMap(loop(_, Nil)).toList
+    s.split("[_-]+").toList.flatMap(loop(_, Nil))
   }
 
   def grouping[A](xs: List[A]): List[List[A]] = {
