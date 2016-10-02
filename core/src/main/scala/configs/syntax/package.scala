@@ -40,6 +40,13 @@ package object syntax {
 
   }
 
+  implicit class RichConfigWriterInstance[A](private val self: A) extends AnyVal {
+
+    def toConfigValue(implicit A: ConfigWriter[A]): ConfigValue =
+      A.write(self)
+
+  }
+
   implicit class RichConfigValue(private val self: ConfigValue) extends AnyVal {
 
     def withComments(comments: Seq[String]): ConfigValue =
