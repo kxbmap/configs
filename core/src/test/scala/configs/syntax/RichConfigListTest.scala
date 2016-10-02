@@ -17,6 +17,7 @@
 package configs.syntax
 
 import configs.testutil.instance.config._
+import configs.testutil.instance.string._
 import configs.{ConfigList, ConfigValue}
 import scala.collection.JavaConverters._
 import scalaprops.Property.forAll
@@ -53,6 +54,11 @@ object RichConfigListTest extends Scalaprops {
   val `++/empty monoid` = {
     implicit val m: Monoid[ConfigList] = Monoid.instance(_ ++ _, ConfigList.empty)
     scalaprops.scalazlaws.monoid.all[ConfigList]
+  }
+
+  val withComments = forAll { (cl: ConfigList, xs: List[String]) =>
+    val wc: ConfigList = cl.withComments(xs)
+    wc.origin().comments() == xs.asJava
   }
 
 }

@@ -40,6 +40,13 @@ package object syntax {
 
   }
 
+  implicit class RichConfigValue(private val self: ConfigValue) extends AnyVal {
+
+    def withComments(comments: Seq[String]): ConfigValue =
+      self.withOrigin(self.origin().withComments(comments.asJava))
+
+  }
+
   implicit class RichConfigList(private val self: ConfigList) extends AnyVal {
 
     def :+[A](value: A)(implicit A: ConfigWriter[A]): ConfigList =
@@ -53,6 +60,9 @@ package object syntax {
 
     def ++(list: ConfigList): ConfigList =
       ConfigList.from(self.asScala ++ list.asScala)
+
+    def withComments(comments: Seq[String]): ConfigList =
+      self.withOrigin(self.origin().withComments(comments.asJava))
 
   }
 
@@ -72,6 +82,9 @@ package object syntax {
 
     def ++(obj: ConfigObject): ConfigObject =
       obj.asScala.foldLeft(self)(_ + _)
+
+    def withComments(comments: Seq[String]): ConfigObject =
+      self.withOrigin(self.origin().withComments(comments.asJava))
 
   }
 

@@ -17,6 +17,7 @@
 package configs.syntax
 
 import configs.testutil.instance.config._
+import configs.testutil.instance.string._
 import configs.testutil.instance.symbol._
 import configs.{ConfigObject, ConfigValue}
 import scala.collection.JavaConverters._
@@ -64,6 +65,11 @@ object RichConfigObjectTest extends Scalaprops {
     co2.asScala.forall {
       case (k, v) => result.get(k) === v
     }
+  }
+
+  val withComments = forAll { (co: ConfigObject, xs: List[String]) =>
+    val wc: ConfigObject = co.withComments(xs)
+    wc.origin().comments() == xs.asJava
   }
 
   implicit lazy val configObjectMonoid: Monoid[ConfigObject] =
