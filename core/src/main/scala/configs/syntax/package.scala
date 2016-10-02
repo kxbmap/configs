@@ -196,11 +196,4 @@ package object syntax {
 
   }
 
-  implicit class RichStringConverter[A](self: A)(implicit A: StringConverter[A]) {
-
-    def :=[B](value: B)(implicit B: ConfigWriter[B]): ConfigKeyValue =
-      ConfigKeyValue(A.to(self), B.write(value))
-
-  }
-
 }

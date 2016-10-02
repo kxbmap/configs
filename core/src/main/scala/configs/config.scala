@@ -19,14 +19,10 @@ package configs
 import com.typesafe.config.{ConfigFactory, ConfigOriginFactory, ConfigValueFactory}
 import java.net.URL
 import scala.collection.JavaConverters._
-import scala.collection.breakOut
 
 object Config {
 
   def empty: Config = ConfigFactory.empty()
-
-  def apply(kvs: ConfigKeyValue*): Config =
-    ConfigObject(kvs: _*).toConfig
 
   def unapply(config: Config): Option[ConfigObject] =
     Some(config.root())
@@ -38,9 +34,6 @@ object ConfigValue {
   final val Null = from(null)
   final val True = from(true)
   final val False = from(false)
-
-  def apply[A](a: A)(implicit A: ConfigWriter[A]): ConfigValue =
-    A.write(a)
 
   def from(any: Any): ConfigValue =
     ConfigValueFactory.fromAnyRef(any)
@@ -54,14 +47,11 @@ object ConfigList {
 
   def empty: ConfigList = from(Nil)
 
-  def apply[A](as: A*)(implicit A: ConfigWriter[A]): ConfigList =
-    from(as.map(A.write))
-
   def from(seq: Seq[Any]): ConfigList =
-    ConfigValueFactory.fromIterable(seq.asInstanceOf[Seq[AnyRef]].asJava)
+    ConfigValueFactory.fromIterable(seq.asJava)
 
   def from(seq: Seq[Any], originDescription: String): ConfigList =
-    ConfigValueFactory.fromIterable(seq.asInstanceOf[Seq[AnyRef]].asJava, originDescription)
+    ConfigValueFactory.fromIterable(seq.asJava, originDescription)
 
 }
 
@@ -69,14 +59,11 @@ object ConfigObject {
 
   def empty: ConfigObject = from(Map.empty)
 
-  def apply(kvs: ConfigKeyValue*): ConfigObject =
-    from(kvs.map(_.tuple)(breakOut))
-
   def from(map: Map[String, Any]): ConfigObject =
-    ConfigValueFactory.fromMap(map.asInstanceOf[Map[String, AnyRef]].asJava)
+    ConfigValueFactory.fromMap(map.asJava)
 
   def from(map: Map[String, Any], originDescription: String): ConfigObject =
-    ConfigValueFactory.fromMap(map.asInstanceOf[Map[String, AnyRef]].asJava, originDescription)
+    ConfigValueFactory.fromMap(map.asJava, originDescription)
 
 }
 
