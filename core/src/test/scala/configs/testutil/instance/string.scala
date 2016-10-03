@@ -20,11 +20,14 @@ import configs.ConfigUtil
 import java.{lang => jl}
 import scala.annotation.tailrec
 import scalaprops.Gen
-import scalaz.Order
+import scalaz.{Monoid, Order}
 
 object string {
 
   implicit lazy val stringOrder: Order[String] =
+    scalaz.std.string.stringInstance
+
+  implicit lazy val stringMonoid: Monoid[String] =
     scalaz.std.string.stringInstance
 
   lazy val unicodeStringGen: Gen[String] = {
