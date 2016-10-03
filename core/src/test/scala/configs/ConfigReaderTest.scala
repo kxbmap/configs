@@ -20,7 +20,7 @@ import com.typesafe.config.ConfigFactory
 import configs.ConfigUtil.{quoteString => q}
 import configs.testutil.instance.result._
 import configs.testutil.instance.string._
-import scala.collection.JavaConversions._
+import scala.collection.JavaConverters._
 import scalaprops.Property.{forAll, forAllG}
 import scalaprops.{Gen, Properties, Scalaprops}
 
@@ -35,7 +35,7 @@ object ConfigReaderTest extends Scalaprops {
   val extractConfig = forAll { (p: String, v: Int) =>
     val config = ConfigFactory.parseString(s"${q(p)} = $v")
     val reader: ConfigReader[Map[String, Int]] = ConfigReader.fromTry {
-      _.getConfig(_).root().mapValues(_.unwrapped().asInstanceOf[Int]).toMap
+      _.getConfig(_).root().asScala.mapValues(_.unwrapped().asInstanceOf[Int]).toMap
     }
     reader.extract(config).contains(Map(p -> v))
   }
