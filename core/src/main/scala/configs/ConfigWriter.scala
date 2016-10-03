@@ -90,7 +90,7 @@ sealed abstract class ConfigWriterInstances extends ConfigWriterInstances0 {
   implicit lazy val javaBigDecimalConfigWriter: ConfigWriter[jm.BigDecimal] = ConfigWriter.by(_.toString)
 
 
-  implicit def showStringConfigWriter[A](implicit A: StringConverter[A]): ConfigWriter[A] =
+  implicit def toStringConfigWriter[A](implicit A: StringConverter[A]): ConfigWriter[A] =
     ConfigWriter.by(A.to)
 
 

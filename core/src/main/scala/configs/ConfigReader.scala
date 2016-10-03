@@ -173,7 +173,7 @@ sealed abstract class ConfigReaderInstances extends ConfigReaderInstances0 {
     (c, p) => Result.successful(A.read(c, p))
 
 
-  implicit def readStringConfigReader[A](implicit A: StringConverter[A]): ConfigReader[A] =
+  implicit def fromStringConfigReader[A](implicit A: StringConverter[A]): ConfigReader[A] =
     ConfigReader[String].rmap(A.from)
 
 
