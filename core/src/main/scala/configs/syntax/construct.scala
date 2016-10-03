@@ -17,23 +17,16 @@
 package configs.syntax
 
 import configs.{ConfigList, ConfigObject, ConfigValue, ConfigWriter, StringConverter}
+import scala.annotation.compileTimeOnly
 import scala.util.DynamicVariable
 
 object construct {
 
-  private[this] val entries = new DynamicVariable[Map[String, ConfigValue]](null)
-
-  private def build(body: => Unit, f: Map[String, ConfigValue] => ConfigObject): ConfigObject =
-    entries.withValue(Map.empty) {
-      body
-      f(entries.value)
-    }
-
   def %(body: => Unit): ConfigObject =
-    build(body, ConfigObject.from)
+    macro configs.macros.ConstructMacro.configObject
 
   def %#(comments: String*)(body: => Unit): ConfigObject =
-    build(body, ConfigObject.from(_).withComments(comments))
+    macro configs.macros.ConstructMacro.configObjectWithComments
 
 
   def \[A: ConfigWriter](elements: A*): ConfigList =
@@ -45,15 +38,31 @@ object construct {
 
   implicit class ConstructSyntax[A](private val a: A) extends AnyVal {
 
-    def :=[B](b: B)(implicit A: StringConverter[A], B: ConfigWriter[B]): Unit = {
-      entries.value match {
-        case null => throw new IllegalStateException("outside of % block")
-        case kvs => entries.value = B.append(kvs, A.to(a), b)
-      }
-    }
+    @compileTimeOnly("`:=` can only be used within `%` or `%#` block")
+    def :=[B](b: B)(implicit A: StringConverter[A], B: ConfigWriter[B]): Unit =
+      sys.error("stub")
 
     def <#(comments: String*)(implicit A: ConfigWriter[A]): ConfigValue =
       A.write(a).withComments(comments)
+
+  }
+
+  object Impl {
+
+    private[this] val entries = new DynamicVariable[Map[String, ConfigValue]](null)
+
+    def configObject(body: => Unit): ConfigObject =
+      entries.withValue(Map.empty) {
+        body
+        ConfigObject.from(entries.value)
+      }
+
+    def configObjectWithComments(comments: String*)(body: => Unit): ConfigObject =
+      configObject(body).withComments(comments)
+
+    def assign[A, B](a: A, b: B)(implicit A: StringConverter[A], B: ConfigWriter[B]): Unit = {
+      entries.value = B.append(entries.value, A.to(a), b)
+    }
 
   }
 
