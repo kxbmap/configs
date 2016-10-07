@@ -17,6 +17,7 @@
 package configs
 
 import java.{lang => jl, math => jm, time => jt, util => ju}
+import scala.annotation.compileTimeOnly
 import scala.collection.JavaConverters._
 import scala.collection.breakOut
 import scala.concurrent.duration._
@@ -51,10 +52,64 @@ object ConfigWriter extends ConfigWriterInstances {
 }
 
 
-sealed abstract class ConfigWriterInstances0 {
+sealed abstract class ConfigWriterInstances3 {
 
   implicit def autoDeriveConfigWriter[A]: ConfigWriter[A] =
     macro macros.ConfigWriterMacro.derive[A]
+
+}
+
+sealed abstract class ConfigWriterInstances2 extends ConfigWriterInstances3 {
+
+  @compileTimeOnly(
+    "cannot derive for `M[A, B]`: " +
+      "`A` is not a StringConverter instance " +
+      "and `B` is not a ConfigWriter instance")
+  implicit def errorMapConfigWriter2[M[X, Y] <: collection.Map[X, Y], A, B]: ConfigWriter[M[A, B]] =
+    sys.error("compileTimeOnly")
+
+  @compileTimeOnly(
+    "cannot derive for `M[A, B]`: " +
+      "`A` is not a StringConverter instance " +
+      "and `B` is not a ConfigWriter instance")
+  implicit def errorJavaMapConfigWriter2[M[X, Y] <: ju.Map[X, Y], A, B]: ConfigWriter[M[A, B]] =
+    sys.error("compileTimeOnly")
+
+}
+
+sealed abstract class ConfigWriterInstances1 extends ConfigWriterInstances2 {
+
+  @compileTimeOnly("cannot derive for `M[A, B]`: `A` is not a StringConverter instance")
+  implicit def errorMapConfigWriter1[M[X, Y] <: collection.Map[X, Y], A, B: ConfigWriter]: ConfigWriter[M[A, B]] =
+    sys.error("compileTimeOnly")
+
+  @compileTimeOnly("cannot derive for `M[A, B]`: `A` is not a StringConverter instance")
+  implicit def errorJavaMapConfigWriter1[M[X, Y] <: ju.Map[X, Y], A, B: ConfigWriter]: ConfigWriter[M[A, B]] =
+    sys.error("compileTimeOnly")
+
+}
+
+sealed abstract class ConfigWriterInstances0 extends ConfigWriterInstances1 {
+
+  @compileTimeOnly("cannot derive for `F[A]`: `A` is not a ConfigWriter instance")
+  implicit def errorIterableConfigWriter[F[X] <: Iterable[X], A]: ConfigWriter[F[A]] =
+    sys.error("compileTimeOnly")
+
+  @compileTimeOnly("cannot derive for `M[A, B]`: `B` is not a ConfigWriter instance")
+  implicit def errorMapConfigWriter0[M[X, Y] <: collection.Map[X, Y], A: StringConverter, B]: ConfigWriter[M[A, B]] =
+    sys.error("compileTimeOnly")
+
+  @compileTimeOnly("cannot derive for `M[A, B]`: `B` is not a ConfigWriter instance")
+  implicit def errorJavaMapConfigWriter0[M[X, Y] <: ju.Map[X, Y], A: StringConverter, B]: ConfigWriter[M[A, B]] =
+    sys.error("compileTimeOnly")
+
+  @compileTimeOnly("cannot derive for `Option[A]`: `A` is not a ConfigWriter instance")
+  implicit def errorOptionConfigWriter[A]: ConfigWriter[Option[A]] =
+    sys.error("compileTimeOnly")
+
+  @compileTimeOnly("cannot derive for `java.util.Optional[A]`: `A` is not a ConfigWriter instance")
+  implicit def errorJavaOptionalConfigWriter[A]: ConfigWriter[ju.Optional[A]] =
+    sys.error("compileTimeOnly")
 
 }
 
@@ -181,7 +236,7 @@ sealed abstract class ConfigWriterInstances extends ConfigWriterInstances0 {
         a.fold(map)(v => map.updated(key, A.write(v)))
     }
 
-  implicit def javaOptionalConfigWriter[A](implicit A: ConfigWriter[A]): ConfigWriter[ju.Optional[A]] =
+  implicit def javaOptionalConfigWriter[A: ConfigWriter]: ConfigWriter[ju.Optional[A]] =
     ConfigWriter.by(o => if (o.isPresent) Some(o.get) else None)
 
   implicit lazy val javaOptionalIntConfigWriter: ConfigWriter[ju.OptionalInt] =

@@ -19,6 +19,7 @@ package configs
 import com.typesafe.config.ConfigException
 import java.util.concurrent.TimeUnit
 import java.{lang => jl, math => jm, time => jt, util => ju}
+import scala.annotation.compileTimeOnly
 import scala.collection.JavaConverters._
 import scala.collection.generic.CanBuildFrom
 import scala.concurrent.duration.{Duration, FiniteDuration}
@@ -101,10 +102,57 @@ object ConfigReader extends ConfigReaderInstances {
 }
 
 
-sealed abstract class ConfigReaderInstances0 {
+sealed abstract class ConfigReaderInstances3 {
 
   implicit def autoDeriveConfigReader[A]: ConfigReader[A] =
     macro macros.ConfigReaderMacro.derive[A]
+
+}
+
+sealed abstract class ConfigReaderInstances2 extends ConfigReaderInstances3 {
+
+  @compileTimeOnly(
+    "cannot derive for `java.util.Map[A, B]`: " +
+      "`A` is not a StringConverter instance " +
+      "and `B` is not a ConfigReader instance")
+  implicit def errorJavaMapConfigReader2[A, B]: ConfigReader[ju.Map[A, B]] =
+    sys.error("compileTimeOnly")
+
+}
+
+sealed abstract class ConfigReaderInstances1 extends ConfigReaderInstances2 {
+
+  @compileTimeOnly("cannot derive for `java.util.Map[A, B]`: `A` is not a StringConverter instance")
+  implicit def errorJavaMapConfigReader1[A, B: ConfigReader]: ConfigReader[ju.Map[A, B]] =
+    sys.error("compileTimeOnly")
+
+}
+
+sealed abstract class ConfigReaderInstances0 extends ConfigReaderInstances1 {
+
+  @compileTimeOnly("cannot derive for `java.util.List[A]`: `A` is not a ConfigReader instance")
+  implicit def errorJavaListConfigReader[A]: ConfigReader[ju.List[A]] =
+    sys.error("compileTimeOnly")
+
+  @compileTimeOnly("cannot derive for `java.util.Map[A, B]`: `B` is not a ConfigReader instance")
+  implicit def errorJavaMapConfigReader0[A: StringConverter, B]: ConfigReader[ju.Map[A, B]] =
+    sys.error("compileTimeOnly")
+
+  @compileTimeOnly("cannot derive for `Option[A]`: `A` is not a ConfigReader instance")
+  implicit def errorOptionConfigReader[A]: ConfigReader[Option[A]] =
+    sys.error("compileTimeOnly")
+
+  @compileTimeOnly("cannot derive for `java.util.Optional[A]`: `A` is not a ConfigReader instance")
+  implicit def errorJavaOptionalConfigReader[A]: ConfigReader[ju.Optional[A]] =
+    sys.error("compileTimeOnly")
+
+  @compileTimeOnly("cannot derive for `Result[A]`: `A` is not a ConfigReader instance")
+  implicit def errorResultConfigReader[A]: ConfigReader[Result[A]] =
+    sys.error("compileTimeOnly")
+
+  @compileTimeOnly("cannot derive for `(A, ConfigOrigin)`: `A` is not a ConfigReader instance")
+  implicit def errorWithOriginConfigReader[A]: ConfigReader[(A, ConfigOrigin)] =
+    sys.error("compileTimeOnly")
 
 }
 

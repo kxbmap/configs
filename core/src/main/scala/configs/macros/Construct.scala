@@ -22,7 +22,7 @@ trait Construct {
   import c.universe._
 
   private def abort(a: Symbol, msg: String): Nothing =
-    c.abort(c.enclosingPosition, s"cannot derive instance for ${a.fullName}: $msg")
+    c.abort(c.enclosingPosition, s"cannot derive for `${a.fullName}`: $msg")
 
   protected def construct[A: WeakTypeTag]: Target = {
     def forClass(a: ClassSymbol): Target = {
