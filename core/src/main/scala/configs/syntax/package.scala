@@ -32,9 +32,6 @@ package object syntax {
     def getOrElse[A: ConfigReader](path: String, default: => A): Result[A] =
       get[Option[A]](path).map(_.getOrElse(default))
 
-    def getWithOrigin[A: ConfigReader](path: String): Result[(A, ConfigOrigin)] =
-      get[(A, ConfigOrigin)](path)
-
     def ++(that: Config): Config =
       that.withFallback(self)
 

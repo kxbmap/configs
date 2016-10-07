@@ -396,14 +396,4 @@ sealed abstract class ConfigReaderInstances extends ConfigReaderInstances0 {
       p
     }
 
-  implicit def withOriginConfigReader[A](implicit A: ConfigReader[A]): ConfigReader[(A, ConfigOrigin)] =
-    (c, p) => A.read(c, p).flatMap { a =>
-      try
-        Result.successful((a, c.getValue(p).origin()))
-      catch {
-        case e: ConfigException.Null => Result.successful((a, e.origin()))
-        case _: ConfigException.Missing => Result.failure(ConfigError(s"no origin for '$p'"))
-      }
-    }
-
 }

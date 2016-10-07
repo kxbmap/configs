@@ -55,11 +55,6 @@ object RichConfigTest extends Scalaprops {
     Properties.list(p1, p2, p3)
   }
 
-  val getWithOrigin = forAll { n: Int =>
-    val config = ConfigFactory.parseString(s"path = $n")
-    config.getWithOrigin[Int]("path") == Result.successful((n, ConfigOrigin.simple("String").withLineNumber(1)))
-  }
-
   val ++ = forAll { (c1: Config, c2: Config) =>
     val result = c1 ++ c2
     c2.entrySet().asScala.forall { e =>

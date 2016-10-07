@@ -14,10 +14,9 @@
  * limitations under the License.
  */
 
-package configs.instance
+package configs
 
 import com.typesafe.config.ConfigFactory
-import configs.{Config, ConfigError, ConfigOrigin, ConfigReader, Result}
 import scalaprops.Property.forAll
 import scalaprops.Scalaprops
 
@@ -25,19 +24,19 @@ object WithOriginTest extends Scalaprops {
 
   val value = forAll { n: Int =>
     val config = ConfigFactory.parseString(s"a = $n")
-    ConfigReader[(Int, ConfigOrigin)].read(config, "a") ==
-      Result.successful((n, ConfigOrigin.simple("String").withLineNumber(1)))
+    ConfigReader[WithOrigin[Int]].read(config, "a") ==
+      Result.successful(WithOrigin(n, ConfigOrigin.simple("String").withLineNumber(1)))
   }
 
   val `null` = forAll {
     val config = ConfigFactory.parseString("a = null")
-    ConfigReader[(Option[Int], ConfigOrigin)].read(config, "a") ==
-      Result.successful((None, ConfigOrigin.simple("String").withLineNumber(1)))
+    ConfigReader[WithOrigin[Option[Int]]].read(config, "a") ==
+      Result.successful(WithOrigin(None, ConfigOrigin.simple("String").withLineNumber(1)))
   }
 
   val missing = forAll {
-    ConfigReader[(Option[Int], ConfigOrigin)].read(Config.empty, "a") ==
-      Result.failure(ConfigError("no origin for 'a'").pushPath("a"))
+    ConfigReader[WithOrigin[Option[Int]]].read(Config.empty, "a") ==
+      Result.failure(ConfigError("no origin for path 'a', value 'None'").pushPath("a"))
   }
 
 }
