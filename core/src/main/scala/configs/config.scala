@@ -108,7 +108,7 @@ object ConfigUtil {
 
 object ConfigOrigin {
 
-  def default: ConfigOrigin = ConfigOriginFactory.newSimple()
+  def simple: ConfigOrigin = ConfigOriginFactory.newSimple()
 
   def simple(description: String): ConfigOrigin = ConfigOriginFactory.newSimple(description)
 
