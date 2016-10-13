@@ -136,17 +136,27 @@ sealed abstract class ConfigWriterInstances extends ConfigWriterInstances0 {
 
   implicit val stringConfigWriter: ConfigWriter[String] = fromAny[String]
 
-  implicit lazy val charConfigWriter: ConfigWriter[Char] = ConfigWriter.by(String.valueOf)
-  implicit lazy val javaCharacterConfigWriter: ConfigWriter[jl.Character] = ConfigWriter.by(_.toString)
+  implicit val charConfigWriter: ConfigWriter[Char] =
+    stringConfigWriter.contramap(String.valueOf)
 
-  implicit lazy val bigIntConfigWriter: ConfigWriter[BigInt] = ConfigWriter.by(_.toString)
-  implicit lazy val bigDecimalConfigWriter: ConfigWriter[BigDecimal] = ConfigWriter.by(_.toString)
-  implicit lazy val javaBigIntegerConfigWriter: ConfigWriter[jm.BigInteger] = ConfigWriter.by(_.toString)
-  implicit lazy val javaBigDecimalConfigWriter: ConfigWriter[jm.BigDecimal] = ConfigWriter.by(_.toString)
+  implicit val javaCharacterConfigWriter: ConfigWriter[jl.Character] =
+    stringConfigWriter.contramap(_.toString)
+
+  implicit val bigIntConfigWriter: ConfigWriter[BigInt] =
+    stringConfigWriter.contramap(_.toString)
+
+  implicit val bigDecimalConfigWriter: ConfigWriter[BigDecimal] =
+    stringConfigWriter.contramap(_.toString)
+
+  implicit val javaBigIntegerConfigWriter: ConfigWriter[jm.BigInteger] =
+    stringConfigWriter.contramap(_.toString)
+
+  implicit val javaBigDecimalConfigWriter: ConfigWriter[jm.BigDecimal] =
+    stringConfigWriter.contramap(_.toString)
 
 
   implicit def toStringConfigWriter[A](implicit A: StringConverter[A]): ConfigWriter[A] =
-    ConfigWriter.by(A.to)
+    stringConfigWriter.contramap(A.to)
 
 
   private[this] def durationString(length: Long, unit: TimeUnit): String = {
@@ -162,11 +172,11 @@ sealed abstract class ConfigWriterInstances extends ConfigWriterInstances0 {
     s"$length$u"
   }
 
-  implicit lazy val finiteDurationConfigWriter: ConfigWriter[FiniteDuration] =
-    ConfigWriter.by(d => durationString(d.length, d.unit))
+  implicit val finiteDurationConfigWriter: ConfigWriter[FiniteDuration] =
+    stringConfigWriter.contramap(d => durationString(d.length, d.unit))
 
-  implicit lazy val durationConfigWriter: ConfigWriter[Duration] =
-    ConfigWriter.by {
+  implicit val durationConfigWriter: ConfigWriter[Duration] =
+    stringConfigWriter.contramap {
       case d: FiniteDuration => durationString(d.length, d.unit)
       case Duration.Inf => "Infinity"
       case Duration.MinusInf => "-Infinity"
@@ -180,8 +190,8 @@ sealed abstract class ConfigWriterInstances extends ConfigWriterInstances0 {
   private[this] final val NanosPerHours = NanosPerMinutes * 60L
   private[this] final val NanosPerDay = NanosPerHours * 24L
 
-  implicit lazy val javaDurationConfigWriter: ConfigWriter[jt.Duration] =
-    ConfigWriter.by(_.toNanos match {
+  implicit val javaDurationConfigWriter: ConfigWriter[jt.Duration] =
+    stringConfigWriter.contramap(_.toNanos match {
       case ns if ns % NanosPerDay == 0 => durationString(ns / NanosPerDay, DAYS)
       case ns if ns % NanosPerHours == 0 => durationString(ns / NanosPerHours, HOURS)
       case ns if ns % NanosPerMinutes == 0 => durationString(ns / NanosPerMinutes, MINUTES)
@@ -192,10 +202,10 @@ sealed abstract class ConfigWriterInstances extends ConfigWriterInstances0 {
     })
 
 
-  implicit lazy val configConfigWriter: ConfigWriter[Config] = _.root()
-  implicit lazy val configValueConfigWriter: ConfigWriter[ConfigValue] = v => v
-  implicit lazy val configListConfigWriter: ConfigWriter[ConfigList] = v => v
-  implicit lazy val configObjectConfigWriter: ConfigWriter[ConfigObject] = v => v
+  implicit val configConfigWriter: ConfigWriter[Config] = _.root()
+  implicit val configValueConfigWriter: ConfigWriter[ConfigValue] = v => v
+  implicit val configListConfigWriter: ConfigWriter[ConfigList] = v => v
+  implicit val configObjectConfigWriter: ConfigWriter[ConfigObject] = v => v
 
   implicit val configMemorySizeConfigWriter: ConfigWriter[ConfigMemorySize] =
     fromAny[ConfigMemorySize]
@@ -223,8 +233,8 @@ sealed abstract class ConfigWriterInstances extends ConfigWriterInstances0 {
   implicit def javaMapConfigWriter[M[X, Y] <: ju.Map[X, Y], A: StringConverter, B: ConfigWriter]: ConfigWriter[M[A, B]] =
     ConfigWriter.by(_.asScala)
 
-  implicit lazy val javaPropertiesConfigWriter: ConfigWriter[ju.Properties] =
-    ConfigWriter.by(_.asScala)
+  implicit val javaPropertiesConfigWriter: ConfigWriter[ju.Properties] =
+    mapConfigWriter[collection.Map, String, String].contramap(_.asScala)
 
 
   implicit def optionConfigWriter[A](implicit A: ConfigWriter[A]): ConfigWriter[Option[A]] =
@@ -237,15 +247,15 @@ sealed abstract class ConfigWriterInstances extends ConfigWriterInstances0 {
     }
 
   implicit def javaOptionalConfigWriter[A: ConfigWriter]: ConfigWriter[ju.Optional[A]] =
-    ConfigWriter.by(o => if (o.isPresent) Some(o.get) else None)
+    optionConfigWriter[A].contramap(o => if (o.isPresent) Some(o.get) else None)
 
-  implicit lazy val javaOptionalIntConfigWriter: ConfigWriter[ju.OptionalInt] =
-    ConfigWriter.by(o => if (o.isPresent) Some(o.getAsInt) else None)
+  implicit val javaOptionalIntConfigWriter: ConfigWriter[ju.OptionalInt] =
+    optionConfigWriter[Int].contramap(o => if (o.isPresent) Some(o.getAsInt) else None)
 
-  implicit lazy val javaOptionalLongConfigWriter: ConfigWriter[ju.OptionalLong] =
-    ConfigWriter.by(o => if (o.isPresent) Some(o.getAsLong) else None)
+  implicit val javaOptionalLongConfigWriter: ConfigWriter[ju.OptionalLong] =
+    optionConfigWriter[Long].contramap(o => if (o.isPresent) Some(o.getAsLong) else None)
 
-  implicit lazy val javaOptionalDoubleConfigWriter: ConfigWriter[ju.OptionalDouble] =
-    ConfigWriter.by(o => if (o.isPresent) Some(o.getAsDouble) else None)
+  implicit val javaOptionalDoubleConfigWriter: ConfigWriter[ju.OptionalDouble] =
+    optionConfigWriter[Double].contramap(o => if (o.isPresent) Some(o.getAsDouble) else None)
 
 }

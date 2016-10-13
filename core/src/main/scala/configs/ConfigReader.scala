@@ -343,7 +343,7 @@ sealed abstract class ConfigReaderInstances extends ConfigReaderInstances0 {
     })
 
 
-  implicit lazy val configConfigReader: ConfigReader[Config] =
+  implicit val configConfigReader: ConfigReader[Config] =
     new ConfigReader[Config] {
       protected def read0(config: Config, path: String): Result[Config] =
         Result.Try(config.getConfig(path))
@@ -359,7 +359,7 @@ sealed abstract class ConfigReaderInstances extends ConfigReaderInstances0 {
     }
 
 
-  implicit lazy val configValueConfigReader: ConfigReader[ConfigValue] =
+  implicit val configValueConfigReader: ConfigReader[ConfigValue] =
     new ConfigReader[ConfigValue] {
       protected def read0(config: Config, path: String): Result[ConfigValue] =
         Result.Try(config.getValue(path))

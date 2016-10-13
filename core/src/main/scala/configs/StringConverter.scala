@@ -55,21 +55,21 @@ object StringConverter extends StringConverterInstances {
 
 sealed abstract class StringConverterInstances {
 
-  implicit lazy val stringStringConverter: StringConverter[String] =
+  implicit val stringStringConverter: StringConverter[String] =
     new StringConverter[String] {
       def from(string: String): Result[String] = Result.successful(string)
       def to(value: String): String = value
     }
 
-  implicit lazy val symbolStringConverter: StringConverter[Symbol] =
-    StringConverter.fromTry(Symbol.apply, _.name)
+  implicit val symbolStringConverter: StringConverter[Symbol] =
+    stringStringConverter.xmap(Symbol.apply, _.name)
 
   implicit def enumValueStringConverter[A <: Enumeration]: StringConverter[A#Value] =
     macro macros.StringConverterMacro.enumValueStringConverter[A]
 
   implicit def javaEnumStringConverter[A <: jl.Enum[A]](implicit A: ClassTag[A]): StringConverter[A] = {
     val clazz = A.runtimeClass.asInstanceOf[Class[A]]
-    val enums = clazz.getEnumConstants
+    val enums = clazz.getEnumConstants.toSeq
     StringConverter.from(
       s => Result.fromOption(enums.find(_.name() == s)) {
         ConfigError(s"$s is not a valid value for ${clazz.getName} (valid values: ${enums.mkString(", ")})")
@@ -77,8 +77,8 @@ sealed abstract class StringConverterInstances {
       _.name())
   }
 
-  implicit lazy val uuidStringConverter: StringConverter[UUID] =
-    StringConverter.fromTry(UUID.fromString, _.toString)
+  implicit val uuidStringConverter: StringConverter[UUID] =
+    stringStringConverter.xmap(UUID.fromString, _.toString)
 
   implicit lazy val localeStringConverter: StringConverter[Locale] =
     StringConverter.from(
@@ -87,16 +87,16 @@ sealed abstract class StringConverterInstances {
       },
       _.toString)
 
-  implicit lazy val pathStringConverter: StringConverter[Path] =
-    StringConverter.fromTry(Paths.get(_), _.toString)
+  implicit val pathStringConverter: StringConverter[Path] =
+    stringStringConverter.xmap(Paths.get(_), _.toString)
 
-  implicit lazy val fileStringConverter: StringConverter[File] =
-    StringConverter.fromTry(new File(_), _.getPath)
+  implicit val fileStringConverter: StringConverter[File] =
+    stringStringConverter.xmap(new File(_), _.getPath)
 
-  implicit lazy val inetAddressStringConverter: StringConverter[InetAddress] =
-    StringConverter.fromTry(InetAddress.getByName, _.getHostAddress)
+  implicit val inetAddressStringConverter: StringConverter[InetAddress] =
+    stringStringConverter.xmap(InetAddress.getByName, _.getHostAddress)
 
-  implicit lazy val uriStringConverter: StringConverter[URI] =
-    StringConverter.fromTry(new URI(_), _.toString)
+  implicit val uriStringConverter: StringConverter[URI] =
+    stringStringConverter.xmap(new URI(_), _.toString)
 
 }
