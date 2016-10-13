@@ -85,8 +85,7 @@ object ConfigError {
 
   final case class NullValue(throwable: ConfigException.Null, paths: List[String] = Nil) extends Entry {
 
-    def message: String =
-      s"${throwable.getMessage}"
+    def message: String = throwable.getMessage
 
     def pushPath(path: String): Entry =
       copy(paths = path :: paths)
@@ -99,8 +98,7 @@ object ConfigError {
 
   final case class Exceptional(throwable: Throwable, paths: List[String] = Nil) extends Entry {
 
-    def message: String =
-      s"${throwable.getMessage}"
+    def message: String = throwable.getMessage
 
     def pushPath(path: String): Entry =
       copy(paths = path :: paths)
