@@ -25,14 +25,15 @@ import scala.collection.generic.CanBuildFrom
 import scala.concurrent.duration.{Duration, FiniteDuration}
 
 trait ConfigReader[A] {
+  self =>
 
   protected def read0(config: Config, path: String): Result[A]
 
-  def read(config: Config, path: String): Result[A] =
+  final def read(config: Config, path: String): Result[A] =
     read0(config, path).pushPath(path)
 
   @deprecated("use read instead", "0.5.0")
-  def get(config: Config, path: String): Result[A] =
+  final def get(config: Config, path: String): Result[A] =
     read(config, path)
 
   def extract(config: Config, key: String = "extract"): Result[A] =
@@ -41,22 +42,31 @@ trait ConfigReader[A] {
   def extractValue(value: ConfigValue, key: String = "extract"): Result[A] =
     read(value.atKey(key), key)
 
-  def map[B](f: A => B): ConfigReader[B] =
-    read0(_, _).map(f)
+  final def map[B](f: A => B): ConfigReader[B] =
+    flatMap(a => ConfigReader.successful(f(a)))
 
-  def rmap[B](f: A => Result[B]): ConfigReader[B] =
-    read0(_, _).flatMap(f)
+  final def rmap[B](f: A => Result[B]): ConfigReader[B] =
+    flatMap(a => (_, _) => f(a))
 
-  def flatMap[B](f: A => ConfigReader[B]): ConfigReader[B] =
-    (c, p) => read0(c, p).flatMap(f(_).read0(c, p))
+  final def flatMap[B](f: A => ConfigReader[B]): ConfigReader[B] =
+    transform(e => (_, _) => Result.failure(e), f)
 
-  def orElse[B >: A](fallback: ConfigReader[B]): ConfigReader[B] =
-    (c, p) => read0(c, p).orElse(fallback.read0(c, p))
+  final def orElse[B >: A](fallback: ConfigReader[B]): ConfigReader[B] =
+    transform(_ => fallback, ConfigReader.successful)
 
-  def transform[B](fail: ConfigError => ConfigReader[B], succ: A => ConfigReader[B]): ConfigReader[B] =
-    (c, p) => read0(c, p).fold(fail, succ).read0(c, p)
+  final def transform[B](fail: ConfigError => ConfigReader[B], succ: A => ConfigReader[B]): ConfigReader[B] =
+    new ConfigReader[B] {
+      protected def read0(config: Config, path: String): Result[B] =
+        self.read0(config, path).fold(fail, succ).read0(config, path)
 
-  def as[B >: A]: ConfigReader[B] =
+      override def extract(config: Config, key: String): Result[B] =
+        self.extract(config, key).fold(fail, succ).extract(config, key)
+
+      override def extractValue(value: ConfigValue, key: String): Result[B] =
+        self.extractValue(value, key).fold(fail, succ).extractValue(value, key)
+    }
+
+  final def as[B >: A]: ConfigReader[B] =
     this.asInstanceOf[ConfigReader[B]]
 
 }
