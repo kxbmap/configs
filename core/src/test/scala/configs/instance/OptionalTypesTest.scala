@@ -21,14 +21,20 @@ import configs.testutil.fun._
 import configs.testutil.instance.anyVal._
 import configs.testutil.instance.option._
 import configs.testutil.instance.string._
-import configs.{Config, ConfigReader}
+import configs.testutil.instance.config._
+import configs.{Config, ConfigReader, ConfigValue, ConfigWriter}
 import java.{util => ju}
-import scalaprops.Property.forAllG
+import scalaprops.Property.{forAll, forAllG}
 import scalaprops.{Properties, Scalaprops}
 
 object OptionalTypesTest extends Scalaprops {
 
-  val option = check[Option[Int]]
+  val option = check[Option[Int]] x
+    Properties.single(
+      "append None",
+      forAll { (m: Map[String, ConfigValue], p: String) =>
+        ConfigWriter[Option[Int]].append(m, p, None) == m
+      })
 
   val option2 = check[Option[Option[Int]]]
 
@@ -61,12 +67,33 @@ object OptionalTypesTest extends Scalaprops {
     )
   }
 
-  val optional = check[ju.Optional[Int]]
+  val optional = check[ju.Optional[Int]] x
+    check[ju.Optional[ju.Optional[Int]]]("nested") x
+    Properties.single(
+      "append empty",
+      forAll { (m: Map[String, ConfigValue], p: String) =>
+        ConfigWriter[ju.Optional[Int]].append(m, p, ju.Optional.empty()) == m
+      })
 
-  val optionalInt = check[ju.OptionalInt]
+  val optionalInt = check[ju.OptionalInt] x
+    Properties.single(
+      "append empty",
+      forAll { (m: Map[String, ConfigValue], p: String) =>
+        ConfigWriter[ju.OptionalInt].append(m, p, ju.OptionalInt.empty()) == m
+      })
 
-  val optionalLong = check[ju.OptionalLong]
+  val optionalLong = check[ju.OptionalLong] x
+    Properties.single(
+      "append empty",
+      forAll { (m: Map[String, ConfigValue], p: String) =>
+        ConfigWriter[ju.OptionalLong].append(m, p, ju.OptionalLong.empty()) == m
+      })
 
-  val optionalDouble = check[ju.OptionalDouble]
+  val optionalDouble = check[ju.OptionalDouble] x
+    Properties.single(
+      "append empty",
+      forAll { (m: Map[String, ConfigValue], p: String) =>
+        ConfigWriter[ju.OptionalDouble].append(m, p, ju.OptionalDouble.empty()) == m
+      })
 
 }

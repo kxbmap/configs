@@ -23,14 +23,20 @@ import scala.collection.breakOut
 import scala.concurrent.duration._
 
 trait ConfigWriter[A] {
+  self =>
 
   def write(a: A): ConfigValue
 
   def append(map: Map[String, ConfigValue], key: String, a: A): Map[String, ConfigValue] =
     map.updated(key, write(a))
 
-  def contramap[B](f: B => A): ConfigWriter[B] =
-    b => write(f(b))
+  final def contramap[B](f: B => A): ConfigWriter[B] =
+    new ConfigWriter[B] {
+      def write(b: B): ConfigValue = self.write(f(b))
+
+      override def append(map: Map[String, ConfigValue], key: String, b: B): Map[String, ConfigValue] =
+        self.append(map, key, f(b))
+    }
 
 }
 
