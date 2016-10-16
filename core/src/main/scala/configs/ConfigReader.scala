@@ -46,10 +46,10 @@ trait ConfigReader[A] {
     flatMap(a => ConfigReader.successful(f(a)))
 
   final def rmap[B](f: A => Result[B]): ConfigReader[B] =
-    flatMap(a => (_, _) => f(a))
+    flatMap(a => ConfigReader.withResult(f(a)))
 
   final def flatMap[B](f: A => ConfigReader[B]): ConfigReader[B] =
-    transform(e => (_, _) => Result.failure(e), f)
+    transform(e => ConfigReader.withResult(Result.failure(e)), f)
 
   final def orElse[B >: A](fallback: ConfigReader[B]): ConfigReader[B] =
     transform(_ => fallback, ConfigReader.successful)
@@ -100,11 +100,14 @@ object ConfigReader extends ConfigReaderInstances {
   def fromConfigTry[A](f: Config => A): ConfigReader[A] =
     fromTry((c, p) => f(c.getConfig(p)))
 
+  def withResult[A](result: Result[A]): ConfigReader[A] =
+    (_, _) => result
+
   def successful[A](a: A): ConfigReader[A] =
-    (_, _) => Result.successful(a)
+    withResult(Result.successful(a))
 
   def failure[A](msg: String): ConfigReader[A] =
-    (_, _) => Result.failure(ConfigError(msg))
+    withResult(Result.failure(ConfigError(msg)))
 
   def get[A](path: String)(implicit A: ConfigReader[A]): ConfigReader[A] =
     fromConfig(A.read(_, path))
