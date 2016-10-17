@@ -30,7 +30,7 @@ trait StringConverter[A] {
 
   def to(value: A): String
 
-  def xmap[B](f: A => B, g: B => A): StringConverter[B] =
+  final def xmap[B](f: A => B, g: B => A): StringConverter[B] =
     new StringConverter[B] {
       def from(string: String): Result[B] = self.from(string).map(f)
       def to(value: B): String = self.to(g(value))
