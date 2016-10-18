@@ -38,6 +38,9 @@ trait ConfigWriter[A] {
         self.append(map, key, f(b))
     }
 
+  final def as[B <: A]: ConfigWriter[B] =
+    this.asInstanceOf[ConfigWriter[B]]
+
 }
 
 object ConfigWriter extends ConfigWriterInstances {
