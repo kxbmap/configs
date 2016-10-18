@@ -73,10 +73,10 @@ package object syntax {
   implicit class RichConfigObject(private val self: ConfigObject) extends AnyVal {
 
     def +[A, B](kv: (A, B))(implicit A: StringConverter[A], B: ConfigWriter[B]): ConfigObject =
-      self.withValue(A.to(kv._1), B.write(kv._2))
+      self.withValue(A.toString(kv._1), B.write(kv._2))
 
     def -[A](key: A)(implicit A: StringConverter[A]): ConfigObject =
-      self.withoutKey(A.to(key))
+      self.withoutKey(A.toString(key))
 
     def ++[A: StringConverter, B: ConfigWriter](kvs: Seq[(A, B)]): ConfigObject =
       kvs.foldLeft(self)(_ + _)

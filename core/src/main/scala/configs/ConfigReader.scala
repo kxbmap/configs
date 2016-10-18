@@ -194,7 +194,7 @@ sealed abstract class ConfigReaderInstances extends ConfigReaderInstances0 {
       Result.sequence(
         c.root().asScala.keysIterator.map { k =>
           val p = ConfigUtil.joinPath(k)
-          Result.tuple2(A.from(k).pushPath(p), B.read(c, p))
+          Result.tuple2(A.fromString(k).pushPath(p), B.read(c, p))
         })
         .map(_.toMap.asJava)
     }
@@ -235,7 +235,7 @@ sealed abstract class ConfigReaderInstances extends ConfigReaderInstances0 {
 
 
   implicit def fromStringConfigReader[A](implicit A: StringConverter[A]): ConfigReader[A] =
-    ConfigReader[String].rmap(A.from)
+    ConfigReader[String].rmap(A.fromString)
 
 
   private[this] def bigDecimal(expected: String): ConfigReader[BigDecimal] =

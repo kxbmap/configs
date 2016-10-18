@@ -35,7 +35,7 @@ object StringConverterTest extends Scalaprops {
   val roundtrip = {
     def roundtrip[A: Gen : ClassTag](implicit A: StringConverter[A]) =
       forAll { (a: A) =>
-        A.from(A.to(a)) == Result.successful(a)
+        A.fromString(A.toString(a)) == Result.successful(a)
       }.toProperties(classTag[A].runtimeClass.getName)
 
     Properties.list(

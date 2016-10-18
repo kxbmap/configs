@@ -162,7 +162,7 @@ sealed abstract class ConfigWriterInstances extends ConfigWriterInstances0 {
 
 
   implicit def toStringConfigWriter[A](implicit A: StringConverter[A]): ConfigWriter[A] =
-    stringConfigWriter.contramap(A.to)
+    stringConfigWriter.contramap(A.toString)
 
 
   private[this] def durationString(length: Long, unit: TimeUnit): String = {
@@ -234,7 +234,7 @@ sealed abstract class ConfigWriterInstances extends ConfigWriterInstances0 {
 
 
   implicit def mapConfigWriter[M[X, Y] <: collection.Map[X, Y], A, B](implicit A: StringConverter[A], B: ConfigWriter[B]): ConfigWriter[M[A, B]] =
-    m => ConfigObject.from(m.map(t => (A.to(t._1), B.write(t._2)))(breakOut))
+    m => ConfigObject.from(m.map(t => (A.toString(t._1), B.write(t._2)))(breakOut))
 
   implicit def javaMapConfigWriter[M[X, Y] <: ju.Map[X, Y], A: StringConverter, B: ConfigWriter]: ConfigWriter[M[A, B]] =
     ConfigWriter.by(_.asScala)

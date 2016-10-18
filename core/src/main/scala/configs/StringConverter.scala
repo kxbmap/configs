@@ -26,14 +26,14 @@ import scala.reflect.ClassTag
 trait StringConverter[A] {
   self =>
 
-  def from(string: String): Result[A]
+  def fromString(string: String): Result[A]
 
-  def to(value: A): String
+  def toString(value: A): String
 
   final def xmap[B](f: A => B, g: B => A): StringConverter[B] =
     new StringConverter[B] {
-      def from(string: String): Result[B] = self.from(string).map(f)
-      def to(value: B): String = self.to(g(value))
+      def fromString(string: String): Result[B] = self.fromString(string).map(f)
+      def toString(value: B): String = self.toString(g(value))
     }
 }
 
@@ -43,8 +43,8 @@ object StringConverter extends StringConverterInstances {
 
   def from[A](f: String => Result[A], t: A => String): StringConverter[A] =
     new StringConverter[A] {
-      def from(string: String): Result[A] = Result.Try(f(string)).flatten
-      def to(value: A): String = t(value)
+      def fromString(string: String): Result[A] = Result.Try(f(string)).flatten
+      def toString(value: A): String = t(value)
     }
 
   def fromTry[A](f: String => A, t: A => String): StringConverter[A] =
@@ -57,8 +57,8 @@ sealed abstract class StringConverterInstances {
 
   implicit val stringStringConverter: StringConverter[String] =
     new StringConverter[String] {
-      def from(string: String): Result[String] = Result.successful(string)
-      def to(value: String): String = value
+      def fromString(string: String): Result[String] = Result.successful(string)
+      def toString(value: String): String = value
     }
 
   implicit val symbolStringConverter: StringConverter[Symbol] =

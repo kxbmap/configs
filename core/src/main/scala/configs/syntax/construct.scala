@@ -61,7 +61,7 @@ object construct {
       configObject(body).withComments(comments)
 
     def assign[A, B](a: A, b: B)(implicit A: StringConverter[A], B: ConfigWriter[B]): Unit = {
-      entries.value = B.append(entries.value, A.to(a), b)
+      entries.value = B.append(entries.value, A.toString(a), b)
     }
 
   }
