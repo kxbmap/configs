@@ -46,6 +46,9 @@ package object syntax {
 
   implicit class RichConfigValue(private val self: ConfigValue) extends AnyVal {
 
+    def extract[A](implicit A: ConfigReader[A]): Result[A] =
+      A.extractValue(self)
+
     def withComments(comments: Seq[String]): ConfigValue =
       self.withOrigin(self.origin().withComments(comments.asJava))
 
