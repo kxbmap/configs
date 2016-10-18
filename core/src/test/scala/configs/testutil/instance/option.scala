@@ -18,7 +18,6 @@ package configs.testutil.instance
 
 import configs.testutil.instance.anyVal._
 import java.{util => ju}
-import scala.compat.java8.OptionConverters._
 import scalaprops.Gen
 import scalaz.{Equal, std}
 
@@ -28,27 +27,27 @@ object option {
     std.option.optionEqual[A]
 
   implicit def javaOptionalGen[A: Gen]: Gen[ju.Optional[A]] =
-    Gen[Option[A]].map(_.asJava)
+    Gen[Option[A]].map(_.fold(ju.Optional.empty[A])(ju.Optional.of))
 
   implicit def javaOptionalEqual[A: Equal]: Equal[ju.Optional[A]] =
-    Equal[Option[A]].contramap(_.asScala)
+    Equal[Option[A]].contramap(o => if (o.isPresent) Some(o.get) else None)
 
   implicit lazy val javaOptionalIntGen: Gen[ju.OptionalInt] =
-    Gen[Option[Int]].map(_.asPrimitive)
+    Gen[Option[Int]].map(_.fold(ju.OptionalInt.empty)(ju.OptionalInt.of))
 
   implicit lazy val javaOptionalIntEqual: Equal[ju.OptionalInt] =
-    Equal[Option[Int]].contramap(_.asScala)
+    Equal[Option[Int]].contramap(o => if (o.isPresent) Some(o.getAsInt) else None)
 
   implicit lazy val javaOptionalLongGen: Gen[ju.OptionalLong] =
-    Gen[Option[Long]].map(_.asPrimitive)
+    Gen[Option[Long]].map(_.fold(ju.OptionalLong.empty)(ju.OptionalLong.of))
 
   implicit lazy val javaOptionalLongEqual: Equal[ju.OptionalLong] =
-    Equal[Option[Long]].contramap(_.asScala)
+    Equal[Option[Long]].contramap(o => if (o.isPresent) Some(o.getAsLong) else None)
 
   implicit lazy val javaOptionalDoubleGen: Gen[ju.OptionalDouble] =
-    Gen[Option[Double]].map(_.asPrimitive)
+    Gen[Option[Double]].map(_.fold(ju.OptionalDouble.empty)(ju.OptionalDouble.of))
 
   implicit lazy val javaOptionalDoubleEqual: Equal[ju.OptionalDouble] =
-    Equal[Option[Double]].contramap(_.asScala)
+    Equal[Option[Double]].contramap(o => if (o.isPresent) Some(o.getAsDouble) else None)
 
 }

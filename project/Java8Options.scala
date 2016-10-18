@@ -5,7 +5,7 @@ object Java8Options extends AutoPlugin {
 
   override def trigger: PluginTrigger = allRequirements
 
-  override def requires: Plugins = Dependencies
+  override def requires: Plugins = Common
 
   override lazy val projectSettings: Seq[Setting[_]] = Seq(
     scalacOptions ++= seq(scalaVersion.value)(
@@ -14,7 +14,7 @@ object Java8Options extends AutoPlugin {
       "-Ydelambdafy:method"
     ),
     libraryDependencies ++= seq(scalaVersion.value)(
-      Dependencies.java8Compat.value
+      "org.scala-lang.modules" %% "scala-java8-compat" % "0.7.0"
     )
   )
 
