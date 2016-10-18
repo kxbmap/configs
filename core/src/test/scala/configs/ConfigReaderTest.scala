@@ -49,7 +49,7 @@ object ConfigReaderTest extends Scalaprops {
 
   private def extractor(v: Int): ConfigReader[Int] =
     new ConfigReader[Int] {
-      protected def read0(config: Config, path: String): Result[Int] =
+      protected def readImpl(config: Config, path: String): Result[Int] =
         Result.failure(ConfigError("failure"))
       override def extract(config: Config, key: String): Result[Int] =
         Result.successful(v)

@@ -27,10 +27,10 @@ import scala.concurrent.duration.{Duration, FiniteDuration}
 trait ConfigReader[A] {
   self =>
 
-  protected def read0(config: Config, path: String): Result[A]
+  protected def readImpl(config: Config, path: String): Result[A]
 
   final def read(config: Config, path: String): Result[A] =
-    read0(config, path).pushPath(path)
+    readImpl(config, path).pushPath(path)
 
   @deprecated("use read instead", "0.5.0")
   final def get(config: Config, path: String): Result[A] =
@@ -56,8 +56,8 @@ trait ConfigReader[A] {
 
   final def transform[B](fail: ConfigError => ConfigReader[B], succ: A => ConfigReader[B]): ConfigReader[B] =
     new ConfigReader[B] {
-      protected def read0(config: Config, path: String): Result[B] =
-        self.read0(config, path).fold(fail, succ).read0(config, path)
+      protected def readImpl(config: Config, path: String): Result[B] =
+        self.readImpl(config, path).fold(fail, succ).readImpl(config, path)
 
       override def extract(config: Config, key: String): Result[B] =
         self.extract(config, key).fold(fail, succ).extract(config, key)
@@ -358,7 +358,7 @@ sealed abstract class ConfigReaderInstances extends ConfigReaderInstances0 {
 
   implicit val configConfigReader: ConfigReader[Config] =
     new ConfigReader[Config] {
-      protected def read0(config: Config, path: String): Result[Config] =
+      protected def readImpl(config: Config, path: String): Result[Config] =
         Result.Try(config.getConfig(path))
 
       override def extract(config: Config, key: String): Result[Config] =
@@ -374,7 +374,7 @@ sealed abstract class ConfigReaderInstances extends ConfigReaderInstances0 {
 
   implicit val configValueConfigReader: ConfigReader[ConfigValue] =
     new ConfigReader[ConfigValue] {
-      protected def read0(config: Config, path: String): Result[ConfigValue] =
+      protected def readImpl(config: Config, path: String): Result[ConfigValue] =
         Result.Try(config.getValue(path))
 
       override def extract(config: Config, key: String): Result[ConfigValue] =
