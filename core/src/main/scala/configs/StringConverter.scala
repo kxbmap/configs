@@ -47,6 +47,9 @@ object StringConverter extends StringConverterInstances {
       def toString(value: A): String = t(value)
     }
 
+  def fromString[A](f: String => Result[A]): StringConverter[A] =
+    from(f, _.toString)
+
   def fromTry[A](f: String => A, t: A => String): StringConverter[A] =
     from(s => Result.successful(f(s)), t)
 
@@ -70,22 +73,22 @@ sealed abstract class StringConverterInstances {
   implicit def javaEnumStringConverter[A <: jl.Enum[A]](implicit A: ClassTag[A]): StringConverter[A] = {
     val clazz = A.runtimeClass.asInstanceOf[Class[A]]
     val enums = clazz.getEnumConstants.toSeq
-    StringConverter.from(
-      s => Result.fromOption(enums.find(_.name() == s)) {
+    StringConverter.fromString { s =>
+      Result.fromOption(enums.find(_.name() == s)) {
         ConfigError(s"$s is not a valid value for ${clazz.getName} (valid values: ${enums.mkString(", ")})")
-      },
-      _.name())
+      }
+    }
   }
 
   implicit val uuidStringConverter: StringConverter[UUID] =
     stringStringConverter.xmap(UUID.fromString, _.toString)
 
   implicit lazy val localeStringConverter: StringConverter[Locale] =
-    StringConverter.from(
-      s => Result.fromOption(Locale.getAvailableLocales.find(_.toString == s)) {
+    StringConverter.fromString { s =>
+      Result.fromOption(Locale.getAvailableLocales.find(_.toString == s)) {
         ConfigError(s"$s is not an available locale")
-      },
-      _.toString)
+      }
+    }
 
   implicit val pathStringConverter: StringConverter[Path] =
     stringStringConverter.xmap(Paths.get(_), _.toString)

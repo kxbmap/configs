@@ -26,12 +26,12 @@ class StringConverterMacro(val c: blackbox.Context) {
     val A = weakTypeOf[A].termSymbol.asModule
     q"""
       val m = $A.values.map(a => (a.toString, a)).toMap
-      _root_.configs.StringConverter.from(
-        s => _root_.configs.Result.fromOption(m.get(s)) {
+      _root_.configs.StringConverter.fromString { s =>
+        _root_.configs.Result.fromOption(m.get(s)) {
           _root_.configs.ConfigError(
             s"$$s is not a valid value for $${${A.fullName}} (valid values: $${$A.values.mkString(", ")})")
-        },
-        _.toString)
+        }
+      }
      """
   }
 
