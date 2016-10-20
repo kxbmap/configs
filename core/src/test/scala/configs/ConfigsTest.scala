@@ -18,7 +18,7 @@ package configs
 
 import com.typesafe.config.{ConfigFactory, ConfigValueFactory}
 import configs.util._
-import scala.collection.JavaConversions._
+import scala.collection.JavaConverters._
 import scalaprops.Property.forAll
 import scalaprops.{Properties, Scalaprops}
 import scalaz.std.string._
@@ -34,7 +34,7 @@ object ConfigsTest extends Scalaprops {
   val extractConfig = forAll { (p: String, v: Int) =>
     val config = ConfigFactory.parseString(s"${q(p)} = $v")
     val configs: Configs[Map[String, Int]] = Configs.fromTry {
-      _.getConfig(_).root().mapValues(_.unwrapped().asInstanceOf[Int]).toMap
+      _.getConfig(_).root().asScala.mapValues(_.unwrapped().asInstanceOf[Int]).toMap
     }
     configs.extract(config).exists(_ == Map(p -> v))
   }

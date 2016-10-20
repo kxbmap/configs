@@ -19,7 +19,7 @@ package configs.util
 import com.typesafe.config.ConfigValueFactory.fromAnyRef
 import com.typesafe.config.{Config, ConfigMemorySize, ConfigValue}
 import java.{lang => jl, time => jt, util => ju}
-import scala.collection.convert.decorateAll._
+import scala.collection.JavaConverters._
 
 trait ToConfigValue[A] {
 

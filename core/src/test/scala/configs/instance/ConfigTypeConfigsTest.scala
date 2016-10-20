@@ -19,7 +19,7 @@ package configs.instance
 import com.typesafe.config.{Config, ConfigList, ConfigMemorySize, ConfigObject, ConfigValue, ConfigValueFactory}
 import configs.util._
 import java.{util => ju}
-import scala.collection.convert.decorateAsJava._
+import scala.collection.JavaConverters._
 import scalaprops.{Gen, Scalaprops}
 import scalaz.std.string._
 import scalaz.{Equal, Need}

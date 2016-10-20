@@ -19,7 +19,7 @@ package configs.instance
 import configs.Configs
 import configs.util._
 import java.{lang => jl, util => ju}
-import scala.collection.convert.decorateAll._
+import scala.collection.JavaConverters._
 import scala.collection.generic.CanBuildFrom
 import scala.collection.immutable.TreeMap
 import scala.collection.mutable

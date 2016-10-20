@@ -19,7 +19,7 @@ package configs
 import com.typesafe.config.{ConfigUtil, ConfigValue}
 import java.{lang => jl, util => ju}
 import scala.annotation.tailrec
-import scala.collection.convert.decorateAll._
+import scala.collection.JavaConverters._
 import scalaprops.Property.forAll
 import scalaprops.{Gen, Properties, Property}
 import scalaz.std.list._

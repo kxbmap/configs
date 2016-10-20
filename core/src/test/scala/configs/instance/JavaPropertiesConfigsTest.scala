@@ -18,7 +18,7 @@ package configs.instance
 
 import configs.util._
 import java.{util => ju}
-import scala.collection.convert.decorateAsScala._
+import scala.collection.JavaConverters._
 import scalaprops.{Gen, Scalaprops}
 import scalaz.Equal
 import scalaz.std.map._

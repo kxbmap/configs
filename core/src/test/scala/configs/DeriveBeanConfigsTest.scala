@@ -19,7 +19,7 @@ package configs
 import com.typesafe.config.ConfigFactory
 import configs.util._
 import scala.beans.BeanProperty
-import scala.collection.convert.decorateAsScala._
+import scala.collection.JavaConverters._
 import scalaprops.Property.forAll
 import scalaprops.{Properties, Gen, Scalaprops}
 import scalaz.Equal
