@@ -10,19 +10,13 @@ object Dependencies extends AutoPlugin {
 
     val configVersion = settingKey[String]("Typesafe config version")
     val lombokVersion = settingKey[String]("lombok version")
-    val java8CompatVersion = settingKey[String]("scala-java8-compat version")
 
     object dependencies {
-
-      val java8Compat = Def.setting {
-        "org.scala-lang.modules" %% "scala-java8-compat" % java8CompatVersion.value
-      }
 
       val core = libraryDependencies ++= Seq(
         "com.typesafe" % "config" % configVersion.value,
         "org.scala-lang" % "scala-reflect" % scalaVersion.value % "provided",
-        "org.projectlombok" % "lombok" % lombokVersion.value % "test",
-        java8Compat.value % "test"
+        "org.projectlombok" % "lombok" % lombokVersion.value % "test"
       )
 
       val doc =
@@ -38,11 +32,7 @@ object Dependencies extends AutoPlugin {
   override lazy val projectSettings: Seq[Setting[_]] = Seq(
     configVersion := "1.3.0",
     lombokVersion := "1.16.10",
-    scalapropsVersion := "0.3.4",
-    java8CompatVersion := (CrossVersion.partialVersion(scalaVersion.value) match {
-      case Some((2, 11)) => "0.7.0"
-      case _ => "0.8.0-RC5"
-    })
+    scalapropsVersion := "0.3.4"
   )
 
 }
