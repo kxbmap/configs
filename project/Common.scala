@@ -9,7 +9,7 @@ object Common extends AutoPlugin {
 
   override lazy val projectSettings: Seq[Setting[_]] = Seq(
     scalaVersion := "2.11.8",
-    crossScalaVersions := Seq("2.11.8", "2.12.0-M5"),
+    crossScalaVersions := Seq("2.11.8", "2.12.0-RC2"),
     scalacOptions ++= Seq(
       "-deprecation",
       "-unchecked",
