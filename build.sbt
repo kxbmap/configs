@@ -8,7 +8,6 @@ lazy val core = project
     name := "configs",
     Dependencies.core,
     scalapropsWithScalazlaws,
-    compileOrder in Test := CompileOrder.JavaThenScala,
     initialCommands :=
       """import com.typesafe.config.ConfigFactory._
         |import configs._
