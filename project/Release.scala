@@ -30,7 +30,7 @@ object Release extends AutoPlugin {
     readmeFileName := "README.md",
     readmeFileSource := (tutSourceDirectory in doc).value / readmeFileName.value,
     readmeFile := (baseDirectory in LocalRootProject).value / readmeFileName.value,
-    updateReadme <<= updateReadmeTask,
+    updateReadme := updateReadmeTask.value,
     releaseCrossBuild := true,
     releasePublishArtifactsAction := publishSigned.value,
     releaseVersionBump := Bump.Bugfix,
