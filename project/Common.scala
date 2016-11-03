@@ -1,3 +1,4 @@
+import BuildUtil.scala211Only
 import sbt.Keys._
 import sbt._
 
@@ -15,11 +16,13 @@ object Common extends AutoPlugin {
       "-unchecked",
       "-feature",
       "-Xlint",
-      "-Xexperimental",
       "-language:higherKinds",
       "-language:implicitConversions",
       "-language:experimental.macros"
-    ),
+    ) ++ scala211Only(
+      // lambda syntax for SAM types
+      "-Xexperimental"
+    ).value,
     updateOptions := updateOptions.value.withCachedResolution(true),
     incOptions := incOptions.value.withLogRecompileOnMacro(false)
   )
