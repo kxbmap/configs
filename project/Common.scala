@@ -1,4 +1,4 @@
-import BuildUtil.scala211Only
+import BuildUtil._
 import sbt.Keys._
 import sbt._
 
@@ -19,10 +19,16 @@ object Common extends AutoPlugin {
       "-language:higherKinds",
       "-language:implicitConversions",
       "-language:experimental.macros"
-    ) ++ scala211Only(
-      // lambda syntax for SAM types
-      "-Xexperimental"
-    ).value,
+    ),
+    scalacOptions ++= byScalaVersion {
+      case (2, 12) => Seq(
+        "-opt:l:method"
+      )
+      case (2, 11) => Seq(
+        // lambda syntax for SAM types
+        "-Xexperimental"
+      )
+    }.value,
     updateOptions := updateOptions.value.withCachedResolution(true),
     incOptions := incOptions.value.withLogRecompileOnMacro(false)
   )
