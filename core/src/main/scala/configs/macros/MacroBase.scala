@@ -19,7 +19,7 @@ package configs.macros
 import scala.collection.mutable
 import scala.reflect.macros.blackbox
 
-private[macros] abstract class MacroBase extends Util {
+private[macros] abstract class MacroBase {
 
   val c: blackbox.Context
 
@@ -56,12 +56,30 @@ private[macros] abstract class MacroBase extends Util {
     xss.lengthCompare(1) <= 0 && xss.forall(_.isEmpty)
 
 
-  def defineInstance[T <: Target](t: T)(f: T => Tree)(implicit cache: InstanceCache): Tree = {
-    cache.putEmpty(t.tpe)
-    val inst = cache.replace(t.tpe, f(t))
+  abstract class DerivingContext {
+
+    type Cache <: InstanceCache
+
+    def cache: Cache
+
+    def naming: Tree
+
+    private[this] val n = freshName("n")
+
+    def configKey(field: String): Tree = q"$n($field)"
+
+    def valDefs: List[Tree] = {
+      val nv = q"val $n = $naming"
+      nv :: cache.valDefs
+    }
+  }
+
+  def defineInstance[T <: Target](t: T)(f: T => Tree)(implicit ctx: DerivingContext): Tree = {
+    ctx.cache.putEmpty(t.tpe)
+    val inst = ctx.cache.replace(t.tpe, f(t))
     q"""
       new _root_.java.lang.Object {
-        ..${cache.valDefs}
+        ..${ctx.valDefs}
       }.$inst
      """
   }

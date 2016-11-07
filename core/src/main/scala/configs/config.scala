@@ -88,24 +88,6 @@ object ConfigMemorySize {
 
 }
 
-object ConfigUtil {
-
-  import com.typesafe.config.{ConfigUtil => Impl}
-
-  def quoteString(s: String): String =
-    Impl.quoteString(s)
-
-  def joinPath(element: String, elements: String*): String =
-    Impl.joinPath(element +: elements: _*)
-
-  def joinPath(elements: Seq[String]): String =
-    Impl.joinPath(elements.asJava)
-
-  def splitPath(path: String): List[String] =
-    Impl.splitPath(path).asScala.toList
-
-}
-
 object ConfigOrigin {
 
   def simple: ConfigOrigin = ConfigOriginFactory.newSimple()

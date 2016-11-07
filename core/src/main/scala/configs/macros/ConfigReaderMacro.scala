@@ -24,11 +24,11 @@ class ConfigReaderMacro(val c: blackbox.Context)
 
   import c.universe._
 
-  def derive[A: WeakTypeTag]: Tree =
-    deriveImpl(construct[A])
+  def derive[A: WeakTypeTag](naming: Tree): Tree =
+    deriveImpl(construct[A])(newContext(naming))
 
-  def deriveBeanWith[A: WeakTypeTag](newInstance: Tree): Tree =
-    deriveBeanWithImpl(constructBeans[A](newInstance))
+  def deriveBeanWith[A: WeakTypeTag](newInstance: Tree)(naming: Tree): Tree =
+    deriveBeanWithImpl(constructBeans[A](newInstance))(newContext(naming))
 
 }
 
@@ -37,21 +37,31 @@ private[macros] trait ConfigReaderMacroImpl {
 
   import c.universe._
 
-  protected def deriveImpl(target: Target): Tree = {
-    implicit val cache = new ConfigReaderCache()
+  protected def deriveImpl(target: Target)(implicit ctx: DerivingReaderContext): Tree =
     defineInstance(target) {
       case SealedClass(t, ss) => sealedClass(t, ss)
       case CaseClass(t, ps, _) => caseClass(t, ps)
       case ValueClass(t, p, _) => valueClass(t, p)
       case JavaBeans(t, p, ps) => javaBeans(t, p, ps)
     }
-  }
 
-  protected def deriveBeanWithImpl(beans: JavaBeans): Tree = {
-    implicit val cache = new ConfigReaderCache()
+  protected def deriveBeanWithImpl(beans: JavaBeans)(implicit ctx: DerivingReaderContext): Tree =
     defineInstance(beans) {
       case JavaBeans(t, p, ps) => javaBeans(t, p, ps)
     }
+
+
+  protected def newContext(naming: Tree): DerivingReaderContext =
+    new DerivingReaderContext(naming, new ConfigReaderCache())
+
+  class DerivingReaderContext(val naming: Tree, val cache: ConfigReaderCache) extends DerivingContext {
+    type Cache = ConfigReaderCache
+  }
+
+  class ConfigReaderCache extends InstanceCache {
+    def instanceType(t: Type): Type = tConfigReader(t)
+    def instance(tpe: Type): Tree = q"$qConfigReader[$tpe]"
+    def optInstance(inst: TermName): Tree = q"$qConfigReader.optionConfigReader($inst)"
   }
 
 
@@ -68,24 +78,18 @@ private[macros] trait ConfigReaderMacroImpl {
   private def resultTuple(args: Seq[Tree]): Tree =
     q"$qResult.${TermName(s"tuple${args.length}")}(..$args)"
 
-  private class ConfigReaderCache extends InstanceCache {
-    def instanceType(t: Type): Type = tConfigReader(t)
-    def instance(tpe: Type): Tree = q"$qConfigReader[$tpe]"
-    def optInstance(inst: TermName): Tree = q"$qConfigReader.optionConfigReader($inst)"
-  }
 
-
-  private def sealedClass(tpe: Type, subs: List[SealedMember])(implicit cache: ConfigReaderCache): Tree = {
-    subs.map(_.tpe).foreach(cache.putEmpty)
+  private def sealedClass(tpe: Type, subs: List[SealedMember])(implicit ctx: DerivingReaderContext): Tree = {
+    subs.map(_.tpe).foreach(ctx.cache.putEmpty)
     val cos = subs.collect {
       case CaseObject(t, m) =>
-        val c = cache.replace(t, q"$qConfigReader.successful($m)")
+        val c = ctx.cache.replace(t, q"$qConfigReader.successful($m)")
         cq"${decodedName(t)} => $c.as[$tpe]"
     }
     val obj = {
       val (ccs, ccq) = subs.collect {
         case CaseClass(t, ps, _) =>
-          val c = cache.replace(t, caseClass(t, ps))
+          val c = ctx.cache.replace(t, caseClass(t, ps))
           val cc = q"$c.as[$tpe]"
           (cc, cq"${decodedName(t)} => $cc")
       }.unzip
@@ -109,19 +113,19 @@ private[macros] trait ConfigReaderMacroImpl {
       }
     }
     q"""
-      ${cache.get(typeOf[String])}.transform(_ => $obj, {
+      ${ctx.cache.get(typeOf[String])}.transform(_ => $obj, {
         case ..$cos
         case s => $qConfigReader.failure("unknown module: " + s)
       })
      """
   }
 
-  private def caseClass(tpe: Type, params: List[Param])(implicit cache: ConfigReaderCache): Tree = {
+  private def caseClass(tpe: Type, params: List[Param])(implicit ctx: DerivingReaderContext): Tree = {
     val config = freshName("c")
 
     def read(p: Param): Tree = {
-      val c = if (p.hasDefault) cache.getOpt(p.tpe) else cache.get(p.tpe)
-      q"$c.read($config, ${toLowerHyphenCase(p.name)})"
+      val c = if (p.hasDefault) ctx.cache.getOpt(p.tpe) else ctx.cache.get(p.tpe)
+      q"$c.read($config, ${ctx.configKey(p.name)})"
     }
 
     def aType(p: Param): Type =
@@ -182,11 +186,11 @@ private[macros] trait ConfigReaderMacroImpl {
     }
   }
 
-  private def valueClass(tpe: Type, param: Param)(implicit cache: ConfigReaderCache): Tree =
-    q"${cache.get(param.tpe)}.map(new $tpe(_))"
+  private def valueClass(tpe: Type, param: Param)(implicit ctx: DerivingReaderContext): Tree =
+    q"${ctx.cache.get(param.tpe)}.map(new $tpe(_))"
 
   private def javaBeans(
-      tpe: Type, provider: InstanceProvider, props: List[Property])(implicit cache: ConfigReaderCache): Tree = {
+      tpe: Type, provider: InstanceProvider, props: List[Property])(implicit ctx: DerivingReaderContext): Tree = {
     val bean = freshName("b")
     val config = freshName("c")
 
@@ -198,7 +202,7 @@ private[macros] trait ConfigReaderMacroImpl {
        """
 
     def readOpt(p: Property): Tree =
-      q"${cache.getOpt(p.tpe)}.read($config, ${toLowerHyphenCase(p.name)})"
+      q"${ctx.cache.getOpt(p.tpe)}.read($config, ${ctx.configKey(p.name)})"
 
     def setOpt(p: Property, opt: Tree): Tree =
       q"$opt.foreach($bean.${p.setter})"

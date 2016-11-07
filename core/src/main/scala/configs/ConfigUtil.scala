@@ -14,28 +14,27 @@
  * limitations under the License.
  */
 
-package configs.macros
+package configs
 
-import java.util.Locale
+import com.typesafe.config.{ConfigUtil => Impl}
+import scala.collection.JavaConverters._
 
-private[macros] trait Util {
+object ConfigUtil {
 
-  final val MaxApplySize = 22
-  final val MaxTupleSize = 22
-  final val MaxSize = MaxApplySize * MaxTupleSize
+  def quoteString(s: String): String =
+    Impl.quoteString(s)
 
-  def toLower(s: String): String =
-    s.toLowerCase(Locale.ROOT)
+  def joinPath(element: String, elements: String*): String =
+    Impl.joinPath(element +: elements: _*)
 
-  def toLowerHyphenCase(s: String): String =
-    toLower(words(s).mkString("-"))
+  def joinPath(elements: Seq[String]): String =
+    Impl.joinPath(elements.asJava)
 
-  def toLowerCamel(s: String): String = {
-    val w :: ws = words(s)
-    (toLower(w) :: ws).mkString
-  }
+  def splitPath(path: String): List[String] =
+    Impl.splitPath(path).asScala.toList
 
-  def words(s: String): List[String] = {
+
+  def splitWords(s: String): List[String] = {
     @annotation.tailrec
     def loop(s: String, acc: List[String]): List[String] =
       if (s.isEmpty) acc.reverse
@@ -63,13 +62,6 @@ private[macros] trait Util {
         }
       }
     s.split("[_-]+").toList.flatMap(loop(_, Nil))
-  }
-
-  def grouping[A](xs: List[A]): List[List[A]] = {
-    val n = xs.length
-    val t = (n + MaxTupleSize - 1) / MaxTupleSize
-    val g = (n + t - 1) / t
-    xs.grouped(g).toList
   }
 
 }

@@ -49,7 +49,7 @@ object ConfigWriter extends ConfigWriterInstances {
   def apply[A](implicit A: ConfigWriter[A]): ConfigWriter[A] = A
 
 
-  def derive[A]: ConfigWriter[A] =
+  def derive[A](implicit naming: ConfigKeyNaming[A]): ConfigWriter[A] =
     macro macros.ConfigWriterMacro.derive[A]
 
   def from[A](f: A => ConfigValue): ConfigWriter[A] =
@@ -63,7 +63,7 @@ object ConfigWriter extends ConfigWriterInstances {
 
 sealed abstract class ConfigWriterInstances3 {
 
-  implicit def autoDeriveConfigWriter[A]: ConfigWriter[A] =
+  implicit def autoDeriveConfigWriter[A](implicit naming: ConfigKeyNaming[A]): ConfigWriter[A] =
     macro macros.ConfigWriterMacro.derive[A]
 
 }
