@@ -26,6 +26,7 @@ import java.util.Objects
 import scala.beans.BeanProperty
 import scalaprops.Property.forAll
 import scalaprops.{Gen, Properties, Scalaprops}
+import scalaz.syntax.apply._
 import scalaz.syntax.equal._
 import scalaz.{Equal, Need}
 
@@ -124,5 +125,49 @@ object DeriveForBeanTest extends Scalaprops {
   }
 
   val recursive = check[RecursiveBean]
+
+
+  val propertyName = {
+    class Foo(
+        @BeanProperty var FooBah: String,
+        @BeanProperty var X: String,
+        @BeanProperty var URL: String) {
+      def this() = this(null, null, null)
+    }
+
+    implicit val gen: Gen[Foo] = {
+      val s = Gen.nonEmptyString(Gen.alphaChar)
+      (s |@| s |@| s)(new Foo(_, _, _))
+    }
+
+    implicit val naming: ConfigKeyNaming[Foo] = ConfigKeyNaming.identity
+
+    forAll { user: Foo =>
+      val expected =
+        s"""URL=${user.getURL}
+           |fooBah=${user.getFooBah}
+           |x=${user.getX}
+           |""".stripMargin
+
+      render(user) == expected
+    }
+  }
+
+
+  val preferIsGetter = {
+    class Foo {
+      def setBoolean(foo: Boolean): Unit = ()
+      def isBoolean: Boolean = true
+      def getBoolean: Boolean = false
+    }
+
+    forAll {
+      val expected =
+        s"""boolean=true
+           |""".stripMargin
+
+      render(new Foo()) == expected
+    }
+  }
 
 }

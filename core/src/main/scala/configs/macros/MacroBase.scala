@@ -128,14 +128,15 @@ private[macros] abstract class MacroBase {
 
   object Property {
 
+    def name(s: String): String = java.beans.Introspector.decapitalize(s)
+
     object Getter {
       def unapply(m: MethodSymbol): Option[(String, MethodSymbol, Type)] =
         if (!m.isPublic || !isEmpty(m.paramLists)) None
         else {
           val (s, n) = decodedName(m).span(_.isLower)
-          val t = m.returnType
-          if (n.nonEmpty && (s == "get" || s == "is" && (t =:= typeOf[Boolean] || t =:= typeOf[java.lang.Boolean])))
-            Some((n, m, t))
+          if (n.nonEmpty && (s == "get" || s == "is" && m.returnType =:= typeOf[Boolean]))
+            Some((name(n), m, m.returnType))
           else None
         }
     }
@@ -146,7 +147,7 @@ private[macros] abstract class MacroBase {
         else m.paramLists match {
           case (p :: Nil) :: Nil =>
             val (s, n) = decodedName(m).span(_.isLower)
-            if (n.nonEmpty && s == "set") Some((n, m, p.info))
+            if (n.nonEmpty && s == "set") Some((name(n), m, p.info))
             else None
           case _ => None
         }

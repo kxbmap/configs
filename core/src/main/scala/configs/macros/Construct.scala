@@ -161,14 +161,17 @@ trait Construct {
   }
 
   private def listProperties(tpe: Type): List[Property] = {
-    val setters: Map[String, (MethodSymbol, Type)] =
-      tpe.members.collect {
-        case Property.Setter((n, s, t)) => (n, (s, t))
-      }(collection.breakOut)
+    val getters: Map[String, (MethodSymbol, Type)] =
+      tpe.members.foldLeft(Map.empty[String, (MethodSymbol, Type)]) {
+        case (m, Property.Getter((n, g, t))) =>
+          if (m.contains(n) && decodedName(g).startsWith("get")) m
+          else m + ((n, (g, t)))
+        case (m, _) => m
+      }
     tpe.members.sorted.collect {
-      case Property.Getter(t@(n, _, _)) => (t, setters.get(n))
+      case Property.Setter(s@(n, _, _)) => (s, getters.get(n))
     }.collect {
-      case ((n, g, t1), Some((s, t2))) if t1 =:= t2 => Property(n, t1, g, s)
+      case ((n, s, t1), Some((g, t2))) if t1 =:= t2 => Property(n, t1, g, s)
     }
   }
 
