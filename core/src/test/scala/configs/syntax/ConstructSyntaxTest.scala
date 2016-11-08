@@ -16,9 +16,9 @@
 
 package configs.syntax
 
-import com.typesafe.config.{ConfigFactory, ConfigRenderOptions}
-import configs.ConfigObject
+import com.typesafe.config.ConfigFactory
 import configs.ConfigUtil.{quoteString => q}
+import configs.testutil.fun._
 import configs.testutil.instance.string._
 import scalaprops.Property.{forAll, forAllG}
 import scalaprops.{Gen, Scalaprops}
@@ -68,9 +68,6 @@ object ConstructSyntaxTest extends Scalaprops {
 
 
   private val commentGen = Gen.asciiString
-
-  private def render(co: ConfigObject): String =
-    co.render(ConfigRenderOptions.defaults().setJson(false).setOriginComments(false))
 
   val `object with comment` =
     forAllG(commentGen) { comment =>

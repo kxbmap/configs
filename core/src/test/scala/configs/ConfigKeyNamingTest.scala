@@ -16,7 +16,7 @@
 
 package configs
 
-import com.typesafe.config.ConfigRenderOptions
+import configs.testutil.fun._
 import scalaprops.Property.forAll
 import scalaprops.{Gen, Scalaprops}
 import scalaz.syntax.apply._
@@ -30,9 +30,6 @@ object ConfigKeyNamingTest extends Scalaprops {
     (s |@| s |@| s)(User.apply)
   }
 
-  def render[A: ConfigWriter](a: A): String =
-    ConfigWriter[A].write(a).render(
-      ConfigRenderOptions.defaults().setJson(false).setOriginComments(false))
 
   val identity = {
     implicit val naming: ConfigKeyNaming[User] = ConfigKeyNaming.identity

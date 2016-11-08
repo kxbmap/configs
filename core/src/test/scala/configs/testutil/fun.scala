@@ -16,7 +16,7 @@
 
 package configs.testutil
 
-import com.typesafe.config.ConfigFactory
+import com.typesafe.config.{ConfigFactory, ConfigRenderOptions}
 import configs.testutil.instance.string._
 import configs.{Config, ConfigReader, ConfigWriter, Result}
 import scalaprops.Or.Empty
@@ -25,6 +25,11 @@ import scalaprops.{:-:, Gen, Or, Properties}
 import scalaz.Equal
 
 object fun {
+
+  def render[A: ConfigWriter](
+      value: A,
+      options: ConfigRenderOptions = ConfigRenderOptions.defaults().setJson(false).setOriginComments(false)): String =
+    ConfigWriter[A].write(value).render(options)
 
   private def xxx(x: Any): Unit = {
     println(s"${Console.RED}xxx${Console.RESET} $x")
