@@ -241,8 +241,11 @@ object Result {
   }
 
 
+  def traverse[F[X] <: TraversableOnce[X], A, B](fa: F[A])(f: A => Result[B])(implicit cbf: CanBuildFrom[F[A], B, F[B]]): Result[F[B]] =
+    fa.foldLeft(successful(cbf(fa)))((rb, a) => apply2(rb, f(a))(_ += _)).map(_.result())
+
   def sequence[F[X] <: TraversableOnce[X], A](fa: F[Result[A]])(implicit cbf: CanBuildFrom[F[Result[A]], A, F[A]]): Result[F[A]] =
-    fa.foldLeft(successful(cbf(fa)))(apply2(_, _)(_ += _)).map(_.result())
+    traverse(fa)(x => x)
 
 
   def apply2[A, B, C](a: Result[A], b: Result[B])(fn: (A, B) => C): Result[C] =

@@ -21,45 +21,64 @@ import configs.testutil.instance.error._
 import configs.testutil.instance.result._
 import scalaprops.Property._
 import scalaprops.{Scalaprops, scalazlaws}
-import scalaz.{Applicative, MonadError}
+import scalaz.std.list._
+import scalaz.{Applicative, MonadError, Traverse}
 
 object ResultTest extends Scalaprops {
 
   val monadErrorLaw = {
-    implicit val instance: MonadError[Result, ConfigError] =
-      new MonadError[Result, ConfigError] {
-        def point[A](a: => A): Result[A] =
-          Result.successful(a)
-
-        def bind[A, B](fa: Result[A])(f: A => Result[B]): Result[B] =
-          fa.flatMap(f)
-
-        def raiseError[A](e: ConfigError): Result[A] =
-          Result.Failure(e)
-
-        def handleError[A](fa: Result[A])(f: ConfigError => Result[A]): Result[A] =
-          fa.handleWith { case e => f(e) }
-      }
-
+    import ResultInstance.monadError
     scalazlaws.monadError.all[Result, ConfigError]
   }
 
   val applicativeLaw = {
-    implicit val instance: Applicative[Result] =
-      new Applicative[Result] {
-        def point[A](a: => A): Result[A] =
-          Result.successful(a)
-
-        def ap[A, B](fa: => Result[A])(f: => Result[A => B]): Result[B] =
-          fa.ap(f)
-      }
-
+    import ResultInstance.applicative
     scalazlaws.applicative.all[Result]
   }
+
+  val traverse =
+    forAll { (xs: List[Int], f: Int => Result[Long]) =>
+      import ResultInstance.applicative
+      Result.traverse(xs)(f) == Traverse[List].traverse(xs)(f)
+    }
+
+  val sequence =
+    forAll { (xs: List[Result[Int]]) =>
+      import ResultInstance.applicative
+      Result.sequence(xs) == Traverse[List].sequence(xs)
+    }
 
   val toFromEither =
     forAll { a: Result[Int] =>
       Result.fromEither(a.toEither) == a
+    }
+
+}
+
+object ResultInstance {
+
+  implicit val monadError: MonadError[Result, ConfigError] =
+    new MonadError[Result, ConfigError] {
+      def point[A](a: => A): Result[A] =
+        Result.successful(a)
+
+      def bind[A, B](fa: Result[A])(f: A => Result[B]): Result[B] =
+        fa.flatMap(f)
+
+      def raiseError[A](e: ConfigError): Result[A] =
+        Result.Failure(e)
+
+      def handleError[A](fa: Result[A])(f: ConfigError => Result[A]): Result[A] =
+        fa.handleWith { case e => f(e) }
+    }
+
+  implicit val applicative: Applicative[Result] =
+    new Applicative[Result] {
+      def point[A](a: => A): Result[A] =
+        Result.successful(a)
+
+      def ap[A, B](fa: => Result[A])(f: => Result[A => B]): Result[B] =
+        fa.ap(f)
     }
 
 }

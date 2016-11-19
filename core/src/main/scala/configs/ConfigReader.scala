@@ -173,11 +173,9 @@ sealed abstract class ConfigReaderInstances extends ConfigReaderInstances0 {
 
   implicit def javaListConfigReader[A](implicit A: ConfigReader[A]): ConfigReader[ju.List[A]] =
     ConfigReader[ConfigList].rmap { xs =>
-      Result.sequence(
-        xs.asScala.zipWithIndex.map {
-          case (x, i) => A.extractValue(x, i.toString)
-        })
-        .map(_.asJava)
+      Result.traverse(xs.asScala.zipWithIndex) {
+        case (x, i) => A.extractValue(x, i.toString)
+      }.map(_.asJava)
     }
 
   implicit def javaIterableConfigReader[A](implicit C: ConfigReader[ju.List[A]]): ConfigReader[jl.Iterable[A]] =
@@ -191,12 +189,10 @@ sealed abstract class ConfigReaderInstances extends ConfigReaderInstances0 {
 
   implicit def javaMapConfigReader[A, B](implicit A: StringConverter[A], B: ConfigReader[B]): ConfigReader[ju.Map[A, B]] =
     ConfigReader.fromConfig { c =>
-      Result.sequence(
-        c.root().asScala.keysIterator.map { k =>
-          val p = ConfigUtil.joinPath(k)
-          Result.tuple2(A.fromString(k).pushPath(p), B.read(c, p))
-        })
-        .map(_.toMap.asJava)
+      Result.traverse(c.root().asScala.keysIterator) { k =>
+        val p = ConfigUtil.joinPath(k)
+        Result.tuple2(A.fromString(k).pushPath(p), B.read(c, p))
+      }.map(_.toMap.asJava)
     }
 
 
