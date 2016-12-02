@@ -23,7 +23,7 @@ import configs.testutil.instance.string._
 import configs.testutil.instance.tuple._
 import configs.testutil.{Bean1, Bean22, Bean484}
 import java.util.Objects
-import scala.beans.BeanProperty
+import scala.beans.{BeanProperty, BooleanBeanProperty}
 import scalaprops.Property.forAll
 import scalaprops.{Gen, Properties, Scalaprops}
 import scalaz.syntax.apply._
@@ -142,14 +142,35 @@ object DeriveForBeanTest extends Scalaprops {
 
     implicit val naming: ConfigKeyNaming[Foo] = ConfigKeyNaming.identity
 
-    forAll { user: Foo =>
+    forAll { foo: Foo =>
       val expected =
-        s"""URL=${user.getURL}
-           |fooBah=${user.getFooBah}
-           |x=${user.getX}
+        s"""URL=${foo.getURL}
+           |fooBah=${foo.getFooBah}
+           |x=${foo.getX}
            |""".stripMargin
 
-      render(user) == expected
+      render(foo) == expected
+    }
+  }
+
+
+  val booleanProperties = {
+    class BooleanProps(
+        @BooleanBeanProperty var primitive: Boolean,
+        @BooleanBeanProperty var wrapped: java.lang.Boolean) {
+      def this() = this(false, false)
+    }
+
+    implicit val gen: Gen[BooleanProps] =
+      (Gen[Boolean] |@| Gen[Boolean])(new BooleanProps(_, _))
+
+    forAll { bool: BooleanProps =>
+      val expected =
+        s"""primitive=${bool.isPrimitive}
+           |wrapped=${bool.isWrapped}
+           |""".stripMargin
+
+      render(bool) == expected
     }
   }
 

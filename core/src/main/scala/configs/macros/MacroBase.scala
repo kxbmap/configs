@@ -130,12 +130,14 @@ private[macros] abstract class MacroBase {
 
     def name(s: String): String = java.beans.Introspector.decapitalize(s)
 
+    def isBooleanType(t: Type): Boolean = t =:= typeOf[Boolean] || t =:= typeOf[java.lang.Boolean]
+
     object Getter {
       def unapply(m: MethodSymbol): Option[(String, MethodSymbol, Type)] =
         if (!m.isPublic || !isEmpty(m.paramLists)) None
         else {
           val (s, n) = decodedName(m).span(_.isLower)
-          if (n.nonEmpty && (s == "get" || s == "is" && m.returnType =:= typeOf[Boolean]))
+          if (n.nonEmpty && (s == "get" || s == "is" && isBooleanType(m.returnType)))
             Some((name(n), m, m.returnType))
           else None
         }
