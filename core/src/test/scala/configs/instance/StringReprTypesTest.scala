@@ -21,12 +21,15 @@ import configs.testutil.fun._
 import configs.testutil.instance.enum._
 import configs.testutil.instance.io._
 import configs.testutil.instance.net._
+import configs.testutil.instance.regex._
 import configs.testutil.instance.symbol._
 import configs.testutil.instance.util._
 import java.io.File
 import java.net.{InetAddress, URI}
 import java.nio.file.Path
+import java.util.regex.Pattern
 import java.util.{Locale, UUID}
+import scala.util.matching.Regex
 import scalaprops.Scalaprops
 
 object StringReprTypesTest extends Scalaprops {
@@ -46,5 +49,9 @@ object StringReprTypesTest extends Scalaprops {
   val inetAddress = check[InetAddress]
 
   val uri = check[URI]
+
+  val regex = check[Regex]
+
+  val pattern = check[Pattern]
 
 }

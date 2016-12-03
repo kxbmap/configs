@@ -19,9 +19,11 @@ package configs
 import java.io.File
 import java.net.{InetAddress, URI}
 import java.nio.file.{Path, Paths}
+import java.util.regex.Pattern
 import java.util.{Locale, UUID}
 import java.{lang => jl}
 import scala.reflect.ClassTag
+import scala.util.matching.Regex
 
 trait StringConverter[A] {
   self =>
@@ -101,5 +103,11 @@ sealed abstract class StringConverterInstances {
 
   implicit val uriStringConverter: StringConverter[URI] =
     stringStringConverter.xmap(new URI(_), _.toString)
+
+  implicit val regexStringConverter: StringConverter[Regex] =
+    stringStringConverter.xmap(_.r, _.regex)
+
+  implicit val patternStringConverter: StringConverter[Pattern] =
+    stringStringConverter.xmap(Pattern.compile, _.pattern())
 
 }
