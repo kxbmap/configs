@@ -19,8 +19,10 @@ package configs
 import configs.testutil.instance.anyVal._
 import configs.testutil.instance.error._
 import configs.testutil.instance.result._
+import configs.testutil.instance.string._
+import scala.collection.breakOut
 import scalaprops.Property._
-import scalaprops.{Scalaprops, scalazlaws}
+import scalaprops.{Properties, Scalaprops, scalazlaws}
 import scalaz.std.list._
 import scalaz.{Applicative, MonadError, Traverse}
 
@@ -36,17 +38,31 @@ object ResultTest extends Scalaprops {
     scalazlaws.applicative.all[Result]
   }
 
-  val traverse =
-    forAll { (xs: List[Int], f: Int => Result[Long]) =>
-      import ResultInstance.applicative
-      Result.traverse(xs)(f) == Traverse[List].traverse(xs)(f)
-    }
+  val traverse = {
+    import ResultInstance.applicative
+    Properties.list(
+      Properties.single("list", forAll { (xs: List[Int], f: Int => Result[Long]) =>
+        Result.traverse(xs)(f) == Traverse[List].traverse(xs)(f)
+      }),
+      Properties.single("breakOut", forAll { m0: Map[Int, Long] =>
+        val m: Result[Map[Int, Long]] = Result.traverse(m0)(Result.successful)(breakOut)
+        m.exists(_ == m0)
+      })
+    )
+  }
 
-  val sequence =
-    forAll { (xs: List[Result[Int]]) =>
-      import ResultInstance.applicative
-      Result.sequence(xs) == Traverse[List].sequence(xs)
-    }
+  val sequence = {
+    import ResultInstance.applicative
+    Properties.list(
+      Properties.single("list", forAll { xs: List[Result[Int]] =>
+        Result.sequence(xs) == Traverse[List].sequence(xs)
+      }),
+      Properties.single("breakOut", forAll { m0: Map[Int, Long] =>
+        val m: Result[Map[Int, Long]] = Result.sequence(m0.map(Result.successful))(breakOut)
+        m.exists(_ == m0)
+      })
+    )
+  }
 
   val toFromEither =
     forAll { a: Result[Int] =>

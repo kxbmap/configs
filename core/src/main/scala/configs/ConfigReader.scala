@@ -21,6 +21,7 @@ import java.util.concurrent.TimeUnit
 import java.{lang => jl, math => jm, time => jt, util => ju}
 import scala.annotation.compileTimeOnly
 import scala.collection.JavaConverters._
+import scala.collection.breakOut
 import scala.collection.generic.CanBuildFrom
 import scala.concurrent.duration.{Duration, FiniteDuration}
 
@@ -189,10 +190,12 @@ sealed abstract class ConfigReaderInstances extends ConfigReaderInstances0 {
 
   implicit def javaMapConfigReader[A, B](implicit A: StringConverter[A], B: ConfigReader[B]): ConfigReader[ju.Map[A, B]] =
     ConfigReader.fromConfig { c =>
-      Result.traverse(c.root().asScala.keysIterator) { k =>
-        val p = ConfigUtil.joinPath(k)
-        Result.tuple2(A.fromString(k).pushPath(p), B.read(c, p))
-      }.map(_.toMap.asJava)
+      val m: Result[Map[A, B]] =
+        Result.traverse(c.root().asScala.keysIterator) { k =>
+          val p = ConfigUtil.joinPath(k)
+          Result.tuple2(A.fromString(k).pushPath(p), B.read(c, p))
+        }(breakOut)
+      m.map(_.asJava)
     }
 
 
