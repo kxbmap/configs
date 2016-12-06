@@ -80,6 +80,7 @@ object Release extends AutoPlugin {
     val vcs = x.get(releaseVcs).getOrElse(
       sys.error("Aborting release. Working directory is not a repository of a recognized VCS."))
     val base = vcs.baseDir
+    val sign = x.get(releaseVcsSign)
     val files = Seq(x.get(readmeFile), x.get(readmeFileSource)).map { f =>
       IO.relativize(base, f).getOrElse(
         sys.error(s"Readme file [$f] is outside of this VCS repository with base directory [$base]!"))
@@ -87,7 +88,7 @@ object Release extends AutoPlugin {
     vcs.add(files: _*) ! st.log
     val status = vcs.status.!!.trim
     if (status.nonEmpty) {
-      vcs.commit(s"Update ${x.get(readmeFileName)}") ! st.log
+      vcs.commit(s"Update ${x.get(readmeFileName)}", sign) ! st.log
     }
     st
   }
