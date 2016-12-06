@@ -17,7 +17,7 @@ object Dependencies extends AutoPlugin {
 
   override lazy val projectSettings: Seq[Setting[_]] = Seq(
     configVersion := "1.3.1",
-    lombokVersion := "1.16.10",
+    lombokVersion := "1.16.12",
     scalapropsVersion := "0.3.4"
   )
 
