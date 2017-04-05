@@ -24,12 +24,6 @@ object Config {
 
   def empty: Config = ConfigFactory.empty()
 
-  def apply(configObject: ConfigObject): Config =
-    configObject.toConfig
-
-  def unapply(config: Config): Option[ConfigObject] =
-    Some(config.root())
-
 }
 
 object ConfigValue {
