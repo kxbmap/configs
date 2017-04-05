@@ -23,7 +23,7 @@ import scalaprops.Scalaprops
 object ConfigWriterTest extends Scalaprops {
 
   val contramap = forAll { (f: String => Int, s: String) =>
-    val w: ConfigWriter[Int] = ConfigValue.from
+    val w: ConfigWriter[Int] = ConfigValue.fromAny(_).value
     w.contramap(f).write(s) == w.write(f(s))
   }
 

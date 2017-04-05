@@ -16,6 +16,7 @@
 
 package configs
 
+import com.typesafe.config.ConfigValueFactory
 import java.{lang => jl, math => jm, time => jt, util => ju}
 import scala.annotation.compileTimeOnly
 import scala.collection.JavaConverters._
@@ -124,7 +125,7 @@ sealed abstract class ConfigWriterInstances0 extends ConfigWriterInstances1 {
 
 sealed abstract class ConfigWriterInstances extends ConfigWriterInstances0 {
 
-  private[this] val any: ConfigWriter[Any] = ConfigValue.from
+  private[this] val any: ConfigWriter[Any] = ConfigValueFactory.fromAnyRef(_)
 
   private def fromAny[A]: ConfigWriter[A] = any.asInstanceOf[ConfigWriter[A]]
 
@@ -222,7 +223,7 @@ sealed abstract class ConfigWriterInstances extends ConfigWriterInstances0 {
 
 
   implicit def iterableConfigWriter[F[X] <: Iterable[X], A](implicit A: ConfigWriter[A]): ConfigWriter[F[A]] =
-    xs => ConfigList.from(xs.map(A.write)(breakOut))
+    xs => ConfigList.fromSeq(xs.map(A.write)(breakOut)).value
 
   implicit def charIterableConfigWriter[F[X] <: Iterable[X]]: ConfigWriter[F[Char]] =
     ConfigWriter.by(cs => new String(cs.toArray))
@@ -238,7 +239,7 @@ sealed abstract class ConfigWriterInstances extends ConfigWriterInstances0 {
 
 
   implicit def mapConfigWriter[M[X, Y] <: collection.Map[X, Y], A, B](implicit A: StringConverter[A], B: ConfigWriter[B]): ConfigWriter[M[A, B]] =
-    m => ConfigObject.from(m.map(t => (A.toString(t._1), B.write(t._2)))(breakOut))
+    m => ConfigObject.fromMap(m.map(t => (A.toString(t._1), B.write(t._2)))(breakOut)).value
 
   implicit def javaMapConfigWriter[M[X, Y] <: ju.Map[X, Y], A: StringConverter, B: ConfigWriter]: ConfigWriter[M[A, B]] =
     ConfigWriter.by(_.asScala)

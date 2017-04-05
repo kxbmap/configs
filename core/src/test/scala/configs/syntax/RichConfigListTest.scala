@@ -17,6 +17,7 @@
 package configs.syntax
 
 import configs.testutil.instance.config._
+import configs.testutil.instance.result._
 import configs.testutil.instance.string._
 import configs.{ConfigList, ConfigValue}
 import scala.collection.JavaConverters._
@@ -29,26 +30,26 @@ object RichConfigListTest extends Scalaprops {
 
   val :+ = forAll { (list: ConfigList, v: Int) =>
     val result = list :+ v
-    result.get(result.size() - 1) === ConfigValue.from(v) &&
-      ConfigList.from(result.asScala.init) === list
+    ConfigValue.fromAny(v).exists(_ === result.get(result.size() - 1)) &&
+      ConfigList.fromSeq(result.asScala.init).exists(_ === list)
   }
 
   val +: = forAll { (list: ConfigList, v: Int) =>
     val result = v +: list
-    result.get(0) === ConfigValue.from(v) &&
-      ConfigList.from(result.asScala.tail) === list
+    ConfigValue.fromAny(v).exists(_ === result.get(0)) &&
+      ConfigList.fromSeq(result.asScala.tail).exists(_ === list)
   }
 
   val `++ Seq` = forAll { (xs: ConfigList, ys: List[Int]) =>
     val result = xs ++ ys
-    ConfigList.from(result.asScala.take(xs.size())) === xs &&
-      ConfigList.from(result.asScala.drop(xs.size())) === ConfigList.from(ys)
+    ConfigList.fromSeq(result.asScala.take(xs.size())).exists(_ === xs) &&
+      ConfigList.fromSeq(result.asScala.drop(xs.size())) === ConfigList.fromSeq(ys)
   }
 
   val `++ ConfigList` = forAll { (xs: ConfigList, ys: ConfigList) =>
     val result = xs ++ ys
-    ConfigList.from(result.asScala.take(xs.size())) === xs &&
-      ConfigList.from(result.asScala.drop(xs.size())) === ys
+    ConfigList.fromSeq(result.asScala.take(xs.size())).exists(_ === xs) &&
+      ConfigList.fromSeq(result.asScala.drop(xs.size())).exists(_ === ys)
   }
 
   val `++/empty monoid` = {

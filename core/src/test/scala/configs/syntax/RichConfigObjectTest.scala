@@ -30,7 +30,7 @@ object RichConfigObjectTest extends Scalaprops {
 
   val + = forAll { (co: ConfigObject, k: Symbol, v: Int) =>
     val result = co + (k -> v)
-    result.get(k.name) === ConfigValue.from(v)
+    ConfigValue.fromAny(v).exists(_ === result.get(k.name))
   }
 
   val - = forAll { (co: ConfigObject, d: Symbol) =>
@@ -46,7 +46,7 @@ object RichConfigObjectTest extends Scalaprops {
       val dup = co.asScala.keys.take(dupSize).map(Symbol(_) -> 42).toSeq
       val result = co ++ kvs ++ dup
       (kvs ++ dup).groupBy(_._1).forall {
-        case (k, vs) => result.get(k.name) === ConfigValue.from(vs.last._2)
+        case (k, vs) => ConfigValue.fromAny(vs.last._2).exists(_ === result.get(k.name))
         case _ => true
       }
     }
@@ -56,7 +56,7 @@ object RichConfigObjectTest extends Scalaprops {
       val dup = co.asScala.keys.take(dupSize).map(Symbol(_) -> 42).toMap
       val result = co ++ kvs ++ dup
       (kvs ++ dup).forall {
-        case (k, v) => result.get(k.name) === ConfigValue.from(v)
+        case (k, v) => ConfigValue.fromAny(v).exists(_ === result.get(k.name))
       }
     }
 

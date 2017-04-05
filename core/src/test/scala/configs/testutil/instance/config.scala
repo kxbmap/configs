@@ -46,7 +46,7 @@ object config {
     }
 
   private[this] def configValue[A: Gen]: Gen[ConfigValue] =
-    Gen[A].map(ConfigValue.from)
+    Gen[A].map(ConfigValue.fromAny(_).value)
 
   implicit lazy val configValueGen: Gen[ConfigValue] =
     Gen.lazyFrequency(
@@ -63,7 +63,7 @@ object config {
     Equal.equalBy(_.asScala.toList)
 
   implicit lazy val configListGen: Gen[ConfigList] =
-    Gen.list(configValueGen).map(ConfigList.from)
+    Gen.list(configValueGen).map(ConfigList.fromSeq(_).value)
 
   implicit lazy val configValueJListGen: Gen[ju.List[ConfigValue]] =
     configListGen.widen[ju.List[ConfigValue]]
@@ -73,7 +73,7 @@ object config {
     Equal.equalBy(_.asScala)
 
   implicit lazy val configObjectGen: Gen[ConfigObject] =
-    Gen.mapGen(Gen[String], configValueGen).map(ConfigObject.from)
+    Gen.mapGen(Gen[String], configValueGen).map(ConfigObject.fromMap(_).value)
 
   implicit lazy val configValueJavaMapGen: Gen[ju.Map[String, ConfigValue]] =
     configObjectGen.widen[ju.Map[String, ConfigValue]]

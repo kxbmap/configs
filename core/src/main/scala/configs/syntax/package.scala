@@ -57,16 +57,16 @@ package object syntax {
   implicit class RichConfigList(private val self: ConfigList) extends AnyVal {
 
     def :+[A](value: A)(implicit A: ConfigWriter[A]): ConfigList =
-      ConfigList.from(self.asScala :+ A.write(value))
+      ConfigList.fromSeq(self.asScala :+ A.write(value)).value
 
     def +:[A](value: A)(implicit A: ConfigWriter[A]): ConfigList =
-      ConfigList.from(A.write(value) +: self.asScala)
+      ConfigList.fromSeq(A.write(value) +: self.asScala).value
 
     def ++[A](values: Seq[A])(implicit A: ConfigWriter[A]): ConfigList =
-      ConfigList.from(self.asScala ++ values.map(A.write))
+      ConfigList.fromSeq(self.asScala ++ values.map(A.write)).value
 
     def ++(list: ConfigList): ConfigList =
-      ConfigList.from(self.asScala ++ list.asScala)
+      ConfigList.fromSeq(self.asScala ++ list.asScala).value
 
     def withComments(comments: Seq[String]): ConfigList =
       self.withOrigin(self.origin().withComments(comments.asJava))

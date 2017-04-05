@@ -41,9 +41,9 @@ object ConfigReaderTest extends Scalaprops {
   }
 
   val extractValue = forAll { v: Int =>
-    val cv = ConfigValue.from(v)
+    val cv = ConfigValue.fromAny(v)
     val reader: ConfigReader[Int] = ConfigReader.fromTry(_.getInt(_))
-    reader.extractValue(cv).contains(v)
+    cv.flatMap(reader.extractValue(_)).contains(v)
   }
 
 

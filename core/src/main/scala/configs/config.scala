@@ -34,39 +34,39 @@ object Config {
 
 object ConfigValue {
 
-  final val Null = from(null)
-  final val True = from(true)
-  final val False = from(false)
+  val Null = ConfigValueFactory.fromAnyRef(null)
+  val True = ConfigValueFactory.fromAnyRef(true)
+  val False = ConfigValueFactory.fromAnyRef(false)
 
-  def from(any: Any): ConfigValue =
-    ConfigValueFactory.fromAnyRef(any)
+  def fromAny(any: Any): Result[ConfigValue] =
+    Result.Try(ConfigValueFactory.fromAnyRef(any))
 
-  def from(any: Any, originDescription: String): ConfigValue =
-    ConfigValueFactory.fromAnyRef(any, originDescription)
+  def fromAny(any: Any, originDescription: String): Result[ConfigValue] =
+    Result.Try(ConfigValueFactory.fromAnyRef(any, originDescription))
 
 }
 
 object ConfigList {
 
-  def empty: ConfigList = from(Nil)
+  def empty: ConfigList = ConfigValueFactory.fromIterable(Nil.asJava)
 
-  def from(seq: Seq[Any]): ConfigList =
-    ConfigValueFactory.fromIterable(seq.asJava)
+  def fromSeq(seq: Seq[Any]): Result[ConfigList] =
+    Result.Try(ConfigValueFactory.fromIterable(seq.asJava))
 
-  def from(seq: Seq[Any], originDescription: String): ConfigList =
-    ConfigValueFactory.fromIterable(seq.asJava, originDescription)
+  def fromSeq(seq: Seq[Any], originDescription: String): Result[ConfigList] =
+    Result.Try(ConfigValueFactory.fromIterable(seq.asJava, originDescription))
 
 }
 
 object ConfigObject {
 
-  def empty: ConfigObject = from(Map.empty)
+  def empty: ConfigObject = ConfigValueFactory.fromMap(Map.empty[String, Any].asJava)
 
-  def from(map: Map[String, Any]): ConfigObject =
-    ConfigValueFactory.fromMap(map.asJava)
+  def fromMap(map: Map[String, Any]): Result[ConfigObject] =
+    Result.Try(ConfigValueFactory.fromMap(map.asJava))
 
-  def from(map: Map[String, Any], originDescription: String): ConfigObject =
-    ConfigValueFactory.fromMap(map.asJava, originDescription)
+  def fromMap(map: Map[String, Any], originDescription: String): Result[ConfigObject] =
+    Result.Try(ConfigValueFactory.fromMap(map.asJava, originDescription))
 
 }
 

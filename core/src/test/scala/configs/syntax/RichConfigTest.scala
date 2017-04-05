@@ -19,7 +19,7 @@ package configs.syntax
 import com.typesafe.config.ConfigFactory
 import configs.testutil.instance.config._
 import configs.testutil.instance.string._
-import configs.{Config, ConfigObject, ConfigOrigin, ConfigReader, ConfigValue, ConfigWriter, Result}
+import configs.{Config, ConfigObject, ConfigReader, ConfigValue, ConfigWriter, Result}
 import scala.collection.JavaConverters._
 import scalaprops.Property.forAll
 import scalaprops.{Properties, Scalaprops}
@@ -29,8 +29,7 @@ import scalaz.syntax.equal._
 object RichConfigTest extends Scalaprops {
 
   val extract = forAll { m: Map[String, Int] =>
-    val config = ConfigObject.from(m).toConfig
-    config.extract[Map[String, Int]] == Result.successful(m)
+    ConfigObject.fromMap(m).map(_.toConfig).flatMap(_.extract[Map[String, Int]]).exists(_ == m)
   }
 
   val get = forAll { n: Int =>

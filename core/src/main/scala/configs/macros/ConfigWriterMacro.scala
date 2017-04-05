@@ -122,7 +122,7 @@ private[macros] trait ConfigWriterMacroImpl {
       val m = appends.foldLeft(m0) {
         case (q, Append(w, k, v)) => q"$w.append($q, $k, $v)"
       }
-      q"_root_.configs.ConfigObject.from($m)"
+      q"_root_.configs.ConfigObject.fromMap($m).value"
     }
 
   private def from(tpe: Type)(body: TermName => Tree): Tree = {
