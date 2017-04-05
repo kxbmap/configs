@@ -125,7 +125,8 @@ sealed abstract class ConfigWriterInstances0 extends ConfigWriterInstances1 {
 sealed abstract class ConfigWriterInstances extends ConfigWriterInstances0 {
 
   private[this] val any: ConfigWriter[Any] = ConfigValue.from
-  def fromAny[A]: ConfigWriter[A] = any.asInstanceOf[ConfigWriter[A]]
+
+  private def fromAny[A]: ConfigWriter[A] = any.asInstanceOf[ConfigWriter[A]]
 
   implicit val longConfigWriter: ConfigWriter[Long] = fromAny[Long]
   implicit val intConfigWriter: ConfigWriter[Int] = fromAny[Int]
