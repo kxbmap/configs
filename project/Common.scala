@@ -9,8 +9,8 @@ object Common extends AutoPlugin {
   override def requires: Plugins = plugins.JvmPlugin
 
   override lazy val projectSettings: Seq[Setting[_]] = Seq(
-    scalaVersion := "2.12.1",
-    crossScalaVersions := Seq("2.12.1", "2.11.8"),
+    scalaVersion := "2.12.2",
+    crossScalaVersions := Seq("2.12.2", "2.11.11"),
     scalacOptions ++= Seq(
       "-deprecation",
       "-unchecked",
