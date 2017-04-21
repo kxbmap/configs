@@ -16,6 +16,8 @@
 
 package configs.macros
 
+import configs.beans.ignoredBeanProperties
+
 trait Construct {
   this: MacroBase =>
 
@@ -161,18 +163,45 @@ trait Construct {
   }
 
   private def listProperties(tpe: Type): List[Property] = {
-    val getters: Map[String, (MethodSymbol, Type)] =
+    val getters =
       tpe.members.foldLeft(Map.empty[String, (MethodSymbol, Type)]) {
         case (m, Property.Getter((n, g, t))) =>
           if (m.contains(n) && decodedName(g).startsWith("get")) m
           else m + ((n, (g, t)))
         case (m, _) => m
       }
-    tpe.members.sorted.collect {
-      case Property.Setter(s@(n, _, _)) => (s, getters.get(n))
-    }.collect {
-      case ((n, s, t1), Some((g, t2))) if t1 =:= t2 => Property(n, t1, g, s)
+    val props =
+      tpe.members.sorted.collect {
+        case Property.Setter(s@(n, _, _)) => (s, getters.get(n))
+      }.collect {
+        case ((n, s, t1), Some((g, t2))) if t1 =:= t2 => Property(n, t1, g, s)
+      }
+    val ignored = ignoredProperties(tpe, props.map(_.name).toSet)
+
+    props.filter(p => !ignored(p.name))
+  }
+
+  private def ignoredProperties(tpe: Type, propNames: Set[String]): Set[String] = {
+    val annotationType = typeOf[ignoredBeanProperties]
+    val args = {
+      val q"{ ${dummy: Tree}; () }" = c.typecheck(q"{ object ${freshName()}; () }")
+      dummy.symbol.owner.annotations
+        .map(_.tree)
+        .filter(_.tpe =:= annotationType)
+        .flatMap(_.children.tail)
     }
+    val (errors, props) = args.foldLeft((Nil: List[(Position, String)], Nil: List[String])) {
+      case ((xs, ps), Literal(Constant(p: String))) if propNames(p) => (xs, p :: ps)
+      case ((xs, ps), x@Literal(Constant(p))) => ((x.pos, s"$tpe doesn't have property `$p`") :: xs, ps)
+      case ((xs, ps), x) => ((x.pos, "arguments must be string literal") :: xs, ps)
+    }
+    if (errors.nonEmpty) {
+      errors.reverse.foreach {
+        case (pos, msg) => c.error(pos, msg)
+      }
+      c.abort(c.enclosingPosition, s"invalid arguments to @$annotationType")
+    }
+    else props.toSet
   }
 
 }
