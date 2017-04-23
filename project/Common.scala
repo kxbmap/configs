@@ -31,6 +31,19 @@ object Common extends AutoPlugin {
     }.value,
     updateOptions := updateOptions.value.withCachedResolution(true),
     incOptions := incOptions.value.withLogRecompileOnMacro(false)
-  )
+  ) ++
+    Seq(Compile, Test).map { c =>
+      scalacOptions in (c, console) := {
+        val opts = (scalacOptions in (c, console)).value
+        CrossVersion.partialVersion(scalaVersion.value) match {
+          case Some((2, 12)) =>
+            opts.map {
+              case "-Xlint" => "-Xlint:-unused,_"
+              case otherwise => otherwise
+            }
+          case _ => opts
+        }
+      }
+    }
 
 }
