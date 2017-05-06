@@ -15,9 +15,4 @@ object BuildUtil {
       case (2, 11) => xs
     }
 
-  def scala212Only[A](xs: A*): Def.Initialize[Seq[A]] =
-    byScalaVersion {
-      case (2, 12) => xs
-    }
-
 }

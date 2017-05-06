@@ -10,7 +10,7 @@ object Common extends AutoPlugin {
 
   override lazy val projectSettings: Seq[Setting[_]] = Seq(
     scalaVersion := "2.12.2",
-    crossScalaVersions := Seq("2.12.2", "2.11.11"),
+    crossScalaVersions := Seq("2.12.2", "2.11.11", "2.13.0-M1"),
     scalacOptions ++= Seq(
       "-deprecation",
       "-unchecked",
@@ -21,7 +21,7 @@ object Common extends AutoPlugin {
       "-language:experimental.macros"
     ),
     scalacOptions ++= byScalaVersion {
-      case (2, 12) => Seq(
+      case (2, x) if x >= 12 => Seq(
         "-opt:l:method"
       )
       case (2, 11) => Seq(
@@ -36,7 +36,7 @@ object Common extends AutoPlugin {
       scalacOptions in (c, console) := {
         val opts = (scalacOptions in (c, console)).value
         CrossVersion.partialVersion(scalaVersion.value) match {
-          case Some((2, 12)) =>
+          case Some((2, x)) if x >= 12 =>
             opts.map {
               case "-Xlint" => "-Xlint:-unused,_"
               case otherwise => otherwise

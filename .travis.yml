@@ -6,16 +6,17 @@ jdk:
 scala:
   - 2.12.2
   - 2.11.11
-
-cache:
-  directories:
-    - $HOME/.ivy2/cache
-    - $HOME/.sbt/boot
+  - 2.13.0-M1
 
 env:
-  - SBT_TASK=test
+  - SBT_TASK=core/test
   - SBT_TASK=bench/jmh:run
   - SBT_TASK=docs/tut
+
+matrix:
+  exclude:
+    - scala: 2.13.0-M1
+      env: SBT_TASK=docs/tut
 
 script:
   - sbt ++$TRAVIS_SCALA_VERSION $SBT_TASK
@@ -23,3 +24,8 @@ script:
   # Tricks to avoid unnecessary cache updates
   - find $HOME/.sbt -name "*.lock" -delete
   - find $HOME/.ivy2 -name "ivydata-*.properties" -delete
+
+cache:
+  directories:
+    - $HOME/.ivy2/cache
+    - $HOME/.sbt/boot
