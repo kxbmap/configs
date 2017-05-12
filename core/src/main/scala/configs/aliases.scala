@@ -16,15 +16,9 @@
 
 package configs
 
-import com.typesafe.config.{ConfigFactory, ConfigOriginFactory, ConfigValueFactory}
+import com.typesafe.config.{ConfigOriginFactory, ConfigValueFactory}
 import java.net.URL
 import scala.collection.JavaConverters._
-
-object Config {
-
-  def empty: Config = ConfigFactory.empty()
-
-}
 
 object ConfigValue {
 
