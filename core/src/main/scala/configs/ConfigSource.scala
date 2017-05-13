@@ -16,7 +16,6 @@
 
 package configs
 
-import com.typesafe.config.ConfigParseOptions
 import java.io.{File, Reader}
 import java.net.URL
 import java.nio.file.Path
@@ -30,39 +29,39 @@ object ConfigSource {
 
 
   def fromURL(url: URL)(
-      implicit parseOptions: ConfigParseOptions = ConfigParseOptions.defaults()): Parsable =
+      implicit parseOptions: ConfigParseOptions = ConfigParseOptions.defaults): Parsable =
     FromURL(url, parseOptions)
 
   def fromFile(file: File)(
-      implicit parseOptions: ConfigParseOptions = ConfigParseOptions.defaults()): Parsable =
+      implicit parseOptions: ConfigParseOptions = ConfigParseOptions.defaults): Parsable =
     FromFile(file, parseOptions)
 
   def fromFileAnySyntax(fileBasename: File)(
-      implicit parseOptions: ConfigParseOptions = ConfigParseOptions.defaults()): Parsable =
+      implicit parseOptions: ConfigParseOptions = ConfigParseOptions.defaults): Parsable =
     FromFileAnySyntax(fileBasename, parseOptions)
 
   def fromPath(path: Path)(
-      implicit parseOptions: ConfigParseOptions = ConfigParseOptions.defaults()): Parsable =
+      implicit parseOptions: ConfigParseOptions = ConfigParseOptions.defaults): Parsable =
     FromPath(path, parseOptions)
 
   def fromResources(resource: String, klass: Option[Class[_]] = None)(
-      implicit parseOptions: ConfigParseOptions = ConfigParseOptions.defaults()): Parsable =
+      implicit parseOptions: ConfigParseOptions = ConfigParseOptions.defaults): Parsable =
     FromResources(resource, klass, parseOptions)
 
   def fromResourcesAnySyntax(resourceBasename: String, klass: Option[Class[_]] = None)(
-      implicit parseOptions: ConfigParseOptions = ConfigParseOptions.defaults()): Parsable =
+      implicit parseOptions: ConfigParseOptions = ConfigParseOptions.defaults): Parsable =
     FromResourcesAnySyntax(resourceBasename, klass, parseOptions)
 
   def fromProperties(properties: Properties)(
-      implicit parseOptions: ConfigParseOptions = ConfigParseOptions.defaults()): Parsable =
+      implicit parseOptions: ConfigParseOptions = ConfigParseOptions.defaults): Parsable =
     FromProperties(properties, parseOptions)
 
   def fromReader(reader: Reader)(
-      implicit parseOptions: ConfigParseOptions = ConfigParseOptions.defaults()): Parsable =
+      implicit parseOptions: ConfigParseOptions = ConfigParseOptions.defaults): Parsable =
     FromReader(reader, parseOptions)
 
   def fromString(string: String)(
-      implicit parseOptions: ConfigParseOptions = ConfigParseOptions.defaults()): Parsable =
+      implicit parseOptions: ConfigParseOptions = ConfigParseOptions.defaults): Parsable =
     FromString(string, parseOptions)
 
   def fromMap(map: Map[String, _]): Parsable =
@@ -127,27 +126,27 @@ object ConfigSource {
   // implicit conversions
 
   implicit def urlToConfigSource(url: URL)(
-      implicit parseOptions: ConfigParseOptions = ConfigParseOptions.defaults()): Parsable =
+      implicit parseOptions: ConfigParseOptions = ConfigParseOptions.defaults): Parsable =
     fromURL(url)
 
   implicit def fileToConfigSource(file: File)(
-      implicit parseOptions: ConfigParseOptions = ConfigParseOptions.defaults()): Parsable =
+      implicit parseOptions: ConfigParseOptions = ConfigParseOptions.defaults): Parsable =
     fromFile(file)
 
   implicit def pathToConfigSource(path: Path)(
-      implicit parseOptions: ConfigParseOptions = ConfigParseOptions.defaults()): Parsable =
+      implicit parseOptions: ConfigParseOptions = ConfigParseOptions.defaults): Parsable =
     fromPath(path)
 
   implicit def propertiesToConfigSource(properties: Properties)(
-      implicit parseOptions: ConfigParseOptions = ConfigParseOptions.defaults()): Parsable =
+      implicit parseOptions: ConfigParseOptions = ConfigParseOptions.defaults): Parsable =
     fromProperties(properties)
 
   implicit def readerToConfigSource(reader: Reader)(
-      implicit parseOptions: ConfigParseOptions = ConfigParseOptions.defaults()): Parsable =
+      implicit parseOptions: ConfigParseOptions = ConfigParseOptions.defaults): Parsable =
     fromReader(reader)
 
   implicit def stringToConfigSource(string: String)(
-      implicit parseOptions: ConfigParseOptions = ConfigParseOptions.defaults()): Parsable =
+      implicit parseOptions: ConfigParseOptions = ConfigParseOptions.defaults): Parsable =
     fromString(string)
 
   implicit def mapToConfigSource(map: Map[String, _]): Parsable =

@@ -28,6 +28,12 @@ package object configs {
 
   type ConfigOrigin = com.typesafe.config.ConfigOrigin
 
+  type ConfigParseOptions = com.typesafe.config.ConfigParseOptions
+
+  type ConfigResolveOptions = com.typesafe.config.ConfigResolveOptions
+
+  type ConfigRenderOptions = com.typesafe.config.ConfigRenderOptions
+
 
   @deprecated("use ConfigReader instead", "0.5.0")
   type Configs[A] = ConfigReader[A]

@@ -16,7 +16,7 @@
 
 package configs
 
-import com.typesafe.config.{ConfigFactory, ConfigParseOptions, ConfigResolveOptions}
+import com.typesafe.config.ConfigFactory
 import scala.collection.JavaConverters._
 
 object Config {
@@ -28,8 +28,8 @@ object Config {
 
   def load()(
       implicit
-      parseOptions: ConfigParseOptions = ConfigParseOptions.defaults(),
-      resolveOptions: ConfigResolveOptions = ConfigResolveOptions.defaults()): Result[Config] =
+      parseOptions: ConfigParseOptions = ConfigParseOptions.defaults,
+      resolveOptions: ConfigResolveOptions = ConfigResolveOptions.defaults): Result[Config] =
     Result.Try(ConfigFactory.load(parseOptions, resolveOptions))
 
 
@@ -52,7 +52,7 @@ object Config {
   }
 
   def mergeAll(sources: ConfigSource*)(
-      implicit resolveOptions: ConfigResolveOptions = ConfigResolveOptions.defaults()): Result[Config] = {
+      implicit resolveOptions: ConfigResolveOptions = ConfigResolveOptions.defaults): Result[Config] = {
     import ConfigSource._
     Result.traverse(sources) {
       case source: Parsable => parse(source)
@@ -63,7 +63,7 @@ object Config {
 
 
   def defaultApplication()(
-      implicit parseOptions: ConfigParseOptions = ConfigParseOptions.defaults()): Result[Config] =
+      implicit parseOptions: ConfigParseOptions = ConfigParseOptions.defaults): Result[Config] =
     Result.Try(ConfigFactory.defaultApplication(parseOptions))
 
   def defaultApplication(loader: ClassLoader): Result[Config] =

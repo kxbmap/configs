@@ -16,9 +16,9 @@
 
 package configs.testutil
 
-import com.typesafe.config.{ConfigFactory, ConfigRenderOptions}
+import com.typesafe.config.ConfigFactory
 import configs.testutil.instance.string._
-import configs.{Config, ConfigReader, ConfigWriter, Result}
+import configs.{Config, ConfigReader, ConfigRenderOptions, ConfigWriter, Result}
 import scalaprops.Or.Empty
 import scalaprops.Property.{forAll, forAllG}
 import scalaprops.{:-:, Gen, Or, Properties}
@@ -28,7 +28,7 @@ object fun {
 
   def render[A: ConfigWriter](
       value: A,
-      options: ConfigRenderOptions = ConfigRenderOptions.defaults().setJson(false).setOriginComments(false)): String =
+      options: ConfigRenderOptions = ConfigRenderOptions.hocon.setOriginComments(false)): String =
     ConfigWriter[A].write(value).render(options)
 
   private def xxx(x: Any): Unit = {

@@ -87,3 +87,33 @@ object ConfigOrigin {
   def url(url: URL): ConfigOrigin = ConfigOriginFactory.newURL(url)
 
 }
+
+object ConfigParseOptions {
+
+  import com.typesafe.config.{ConfigParseOptions => Impl}
+
+  def defaults: ConfigParseOptions = Impl.defaults()
+
+}
+
+object ConfigResolveOptions {
+
+  import com.typesafe.config.{ConfigResolveOptions => Impl}
+
+  def defaults: ConfigResolveOptions = Impl.defaults()
+
+  def noSystem: ConfigResolveOptions = Impl.noSystem()
+
+}
+
+object ConfigRenderOptions {
+
+  import com.typesafe.config.{ConfigRenderOptions => Impl}
+
+  def defaults: ConfigRenderOptions = Impl.defaults()
+
+  def concise: ConfigRenderOptions = Impl.concise()
+
+  def hocon: ConfigRenderOptions = defaults.setJson(false)
+
+}
