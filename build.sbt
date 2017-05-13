@@ -26,10 +26,9 @@ lazy val testutil = project
   )
 
 lazy val docs = project
-  .dependsOn(core % "test")
-  .enablePlugins(Unpublished)
+  .dependsOn(core % "tut")
+  .enablePlugins(TutPlugin, Unpublished)
   .settings(
     Dependencies.docs,
-    tutSettings,
-    tutSourceDirectory := sourceDirectory.value / "tut"
+    tutSourceDirectory := (sourceDirectory in Tut).value / "doc"
   )
