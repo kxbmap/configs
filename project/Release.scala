@@ -7,7 +7,7 @@ import sbtrelease.ReleasePlugin.autoImport.ReleaseKeys._
 import sbtrelease.ReleasePlugin.autoImport._
 import sbtrelease.ReleaseStateTransformations._
 import sbtrelease.Version.Bump
-import tut.Plugin._
+import tut.TutPlugin.autoImport._
 
 object Release extends AutoPlugin {
 

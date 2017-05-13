@@ -37,7 +37,7 @@ object Dependencies extends AutoPlugin {
 
   lazy val docs =
     libraryDependencies ++= Seq(
-      "org.projectlombok" % "lombok" % lombokVersion.value % "test"
+      "org.projectlombok" % "lombok" % lombokVersion.value % "tut"
     )
 
 }
