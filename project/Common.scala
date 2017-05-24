@@ -1,6 +1,6 @@
-import BuildUtil._
 import sbt.Keys._
 import sbt._
+import scalaprops.ScalapropsPlugin.autoImport._
 
 object Common extends AutoPlugin {
 
@@ -8,9 +8,24 @@ object Common extends AutoPlugin {
 
   override def requires: Plugins = plugins.JvmPlugin
 
+  object autoImport {
+
+    val typesafeConfig = "com.typesafe" % "config" % "1.3.1"
+
+    val lombok = "org.projectlombok" % "lombok" % "1.16.16"
+
+    val scalaJava8Compat = "org.scala-lang.modules" %% "scala-java8-compat" % "0.8.0"
+
+    val scalaReflect = Def.setting {
+      "org.scala-lang" % "scala-reflect" % scalaVersion.value
+    }
+
+  }
+
   override lazy val projectSettings: Seq[Setting[_]] = Seq(
     scalaVersion := "2.12.2",
     crossScalaVersions := Seq("2.12.2", "2.11.11", "2.13.0-M1"),
+    scalapropsVersion := "0.4.2",
     scalacOptions ++= Seq(
       "-deprecation",
       "-unchecked",
@@ -20,15 +35,17 @@ object Common extends AutoPlugin {
       "-language:implicitConversions",
       "-language:experimental.macros"
     ),
-    scalacOptions ++= byScalaVersion {
-      case (2, x) if x >= 12 => Seq(
-        "-opt:l:method"
-      )
-      case (2, 11) => Seq(
-        // lambda syntax for SAM types
-        "-Xexperimental"
-      )
-    }.value,
+    scalacOptions ++= {
+      CrossVersion.partialVersion(scalaVersion.value) match {
+        case Some((2, x)) if x >= 12 => Seq(
+          "-opt:l:method"
+        )
+        case Some((2, 11)) => Seq(
+          "-Xexperimental"  // lambda syntax for SAM types
+        )
+        case _ => Nil
+      }
+    },
     updateOptions := updateOptions.value.withCachedResolution(true),
     incOptions := incOptions.value.withLogRecompileOnMacro(false)
   ) ++

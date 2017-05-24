@@ -6,7 +6,11 @@ lazy val core = project
   .dependsOn(testutil % "test")
   .settings(
     name := "configs",
-    Dependencies.core,
+    libraryDependencies ++= Seq(
+      typesafeConfig,
+      scalaReflect.value % "provided",
+      lombok % "test"
+    ),
     scalapropsWithScalazlaws,
     initialCommands :=
       """import com.typesafe.config.ConfigFactory._
@@ -22,13 +26,17 @@ lazy val bench = project
 lazy val testutil = project
   .enablePlugins(Unpublished)
   .settings(
-    Dependencies.testutil
+    libraryDependencies ++= Seq(
+      lombok
+    )
   )
 
 lazy val docs = project
   .dependsOn(core % "tut")
   .enablePlugins(TutPlugin, Unpublished)
   .settings(
-    Dependencies.docs,
-    tutSourceDirectory := (sourceDirectory in Tut).value / "doc"
+    tutSourceDirectory := (sourceDirectory in Tut).value / "doc",
+    libraryDependencies ++= Seq(
+      lombok % "tut"
+    )
   )
