@@ -111,6 +111,28 @@ val config = ConfigFactory.parseString("""
 config.extract[MyConfig]
 ```
 
+You may use the `~` operator to combine multiple results and apply a function with the results passed as arguments, this is useful when you want to construct a complex case class from several config extractors.
+
+```tut:silent
+import configs.syntax._
+
+case class ServiceConfig(name: String, port: Int, hosts: List[String])
+
+val config = ConfigFactory.parseString(
+  """
+    |name = "foo"
+    |port = 9876
+    |hosts = ["localhost", "foo.com"]
+  """.stripMargin)
+```
+```tut
+(
+  config.get[String]("name") ~
+  config.get[Int]("port") ~
+  config.get[List[String]]("hosts")
+)(ServiceConfig) // Alternatively (name, port, hosts) => ServerConfig(name, port, posts)
+```
+
 Supported types
 ---------------
 
