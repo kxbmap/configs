@@ -19,7 +19,7 @@ package configs.syntax
 import com.typesafe.config.ConfigFactory
 import configs.testutil.instance.config._
 import configs.testutil.instance.string._
-import configs.{Config, ConfigObject, ConfigReader, ConfigValue, ConfigWriter, Result}
+import configs.{Config, ConfigObject, ConfigValue, ConfigWriter, Result}
 import scala.collection.JavaConverters._
 import scalaprops.Property.forAll
 import scalaprops.{Properties, Scalaprops}
@@ -38,8 +38,6 @@ object RichConfigTest extends Scalaprops {
   }
 
   val getOrElse = {
-    implicit val unused: ConfigReader[Option[Int]] = ConfigReader.successful(Some(42))
-
     val p1 = Properties.single("get", forAll { (n: Int, d: Int) =>
       val config = ConfigWriter[Int].write(n).atPath("path")
       config.getOrElse("path", d) == Result.successful(n)
