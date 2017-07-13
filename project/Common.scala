@@ -12,7 +12,7 @@ object Common extends AutoPlugin {
 
     val typesafeConfig = "com.typesafe" % "config" % "1.3.1"
 
-    val lombok = "org.projectlombok" % "lombok" % "1.16.16"
+    val lombok = "org.projectlombok" % "lombok" % "1.16.18"
 
     val scalaJava8Compat = "org.scala-lang.modules" %% "scala-java8-compat" % "0.8.0"
 
@@ -25,7 +25,7 @@ object Common extends AutoPlugin {
   override lazy val projectSettings: Seq[Setting[_]] = Seq(
     scalaVersion := "2.12.2",
     crossScalaVersions := Seq("2.12.2", "2.11.11", "2.13.0-M1"),
-    scalapropsVersion := "0.4.2",
+    scalapropsVersion := "0.5.0",
     scalacOptions ++= Seq(
       "-deprecation",
       "-unchecked",
