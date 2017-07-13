@@ -3,9 +3,9 @@ name := "configs-root"
 enablePlugins(Unpublished)
 
 lazy val core = project
-  .dependsOn(testutil % "test")
   .settings(
     name := "configs",
+    compileOrder := CompileOrder.JavaThenScala,
     libraryDependencies ++= Seq(
       typesafeConfig,
       scalaReflect.value % "provided",
@@ -17,14 +17,6 @@ lazy val core = project
         |import configs._
         |import configs.syntax._
         |""".stripMargin
-  )
-
-lazy val testutil = project
-  .enablePlugins(Unpublished)
-  .settings(
-    libraryDependencies ++= Seq(
-      lombok
-    )
   )
 
 lazy val docs = project
