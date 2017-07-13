@@ -19,10 +19,6 @@ lazy val core = project
         |""".stripMargin
   )
 
-lazy val bench = project
-  .dependsOn(core, testutil)
-  .enablePlugins(JmhPlugin, Unpublished)
-
 lazy val testutil = project
   .enablePlugins(Unpublished)
   .settings(

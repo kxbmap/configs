@@ -10,7 +10,6 @@ scala:
 
 env:
   - SBT_TASK=core/test
-  - SBT_TASK=bench/jmh:run
   - SBT_TASK=docs/tut
 
 matrix:
