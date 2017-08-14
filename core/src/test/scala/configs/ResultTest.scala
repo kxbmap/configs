@@ -17,7 +17,6 @@
 package configs
 
 import configs.testutil.instance.anyVal._
-import configs.testutil.instance.error._
 import configs.testutil.instance.result._
 import configs.testutil.instance.string._
 import scala.collection.breakOut
@@ -28,10 +27,10 @@ import scalaz.{Applicative, MonadError, Traverse}
 
 object ResultTest extends Scalaprops {
 
-  val monadErrorLaw = {
-    import ResultInstance.monadError
-    scalazlaws.monadError.all[Result, ConfigError]
-  }
+//  val monadErrorLaw = {
+//    import ResultInstance.monadError
+//    scalazlaws.monadError.all[Result, ConfigError]
+//  }
 
   val applicativeLaw = {
     import ResultInstance.applicative
