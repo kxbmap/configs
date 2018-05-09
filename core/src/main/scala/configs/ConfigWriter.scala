@@ -20,7 +20,6 @@ import com.typesafe.config.ConfigValueFactory
 import java.{lang => jl, math => jm, time => jt, util => ju}
 import scala.annotation.compileTimeOnly
 import scala.collection.JavaConverters._
-import scala.collection.breakOut
 import scala.concurrent.duration._
 
 trait ConfigWriter[A] {
@@ -223,7 +222,7 @@ sealed abstract class ConfigWriterInstances extends ConfigWriterInstances0 {
 
 
   implicit def iterableConfigWriter[F[X] <: Iterable[X], A](implicit A: ConfigWriter[A]): ConfigWriter[F[A]] =
-    xs => ConfigList.fromSeq(xs.map(A.write)(breakOut)).value
+    xs => ConfigList.fromSeq(xs.map(A.write).toSeq).value
 
   implicit def charIterableConfigWriter[F[X] <: Iterable[X]]: ConfigWriter[F[Char]] =
     ConfigWriter.by(cs => new String(cs.toArray))
@@ -239,7 +238,7 @@ sealed abstract class ConfigWriterInstances extends ConfigWriterInstances0 {
 
 
   implicit def mapConfigWriter[M[X, Y] <: collection.Map[X, Y], A, B](implicit A: StringConverter[A], B: ConfigWriter[B]): ConfigWriter[M[A, B]] =
-    m => ConfigObject.fromMap(m.map(t => (A.toString(t._1), B.write(t._2)))(breakOut)).value
+    m => ConfigObject.fromMap(m.map(t => (A.toString(t._1), B.write(t._2))).toMap).value
 
   implicit def javaMapConfigWriter[M[X, Y] <: ju.Map[X, Y], A: StringConverter, B: ConfigWriter]: ConfigWriter[M[A, B]] =
     ConfigWriter.by(_.asScala)
