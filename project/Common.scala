@@ -10,9 +10,9 @@ object Common extends AutoPlugin {
 
   object autoImport {
 
-    val typesafeConfig = "com.typesafe" % "config" % "1.3.1"
+    val typesafeConfig = "com.typesafe" % "config" % "1.3.3"
 
-    val lombok = "org.projectlombok" % "lombok" % "1.16.18"
+    val lombok = "org.projectlombok" % "lombok" % "1.16.20"
 
     val scalaJava8Compat = "org.scala-lang.modules" %% "scala-java8-compat" % "0.8.0"
 
@@ -23,9 +23,9 @@ object Common extends AutoPlugin {
   }
 
   override lazy val projectSettings: Seq[Setting[_]] = Seq(
-    scalaVersion := "2.12.3",
-    crossScalaVersions := Seq("2.12.3", "2.11.11", "2.13.0-M1"),
-    scalapropsVersion := "0.5.1",
+    scalaVersion := "2.12.6",
+    crossScalaVersions := Seq("2.12.6", "2.11.12", "2.13.0-M3"),
+    scalapropsVersion := "0.5.4",
     scalacOptions ++= Seq(
       "-deprecation",
       "-unchecked",

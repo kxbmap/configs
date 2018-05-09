@@ -4,18 +4,13 @@ language: scala
 jdk:
   - oraclejdk8
 scala:
-  - 2.12.3
-  - 2.11.11
-  - 2.13.0-M1
+  - 2.12.6
+  - 2.11.12
+  - 2.13.0-M3
 
 env:
   - SBT_TASK=core/test
   - SBT_TASK=docs/tut
-
-matrix:
-  exclude:
-    - scala: 2.13.0-M1
-      env: SBT_TASK=docs/tut
 
 script:
   - sbt ++$TRAVIS_SCALA_VERSION $SBT_TASK
