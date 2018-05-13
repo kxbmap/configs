@@ -67,7 +67,7 @@ object Release extends AutoPlugin {
     val org = x.get(organization).replaceAll("\\.", "\\.")
     val dep = s"""libraryDependencies \\+= "$org" %% ".+" % "(.+)"""".r
     val src = x.get(readmeFileSource)
-    val updated = IO.read(src).linesIterator.map {
+    val updated = IO.read(src).lines.map {
       case line@dep(ver) => line.replace(ver, releaseVer)
       case line => line
     }.mkString("", "\n", "\n")
