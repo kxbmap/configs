@@ -19,7 +19,7 @@ package configs.testutil.instance
 import configs.testutil.instance.string._
 import java.{lang => jl, util => ju}
 import scala.collection.JavaConverters._
-import scala.collection.generic.CanBuildFrom
+import scala.collection.compat._
 import scalaprops.Gen
 import scalaz.{Equal, Order, std}
 
@@ -45,8 +45,8 @@ object collection {
     listEqual[A].contramap(_.asScala.toList)
 
 
-  implicit def mapGen[M[_, _], A: Gen, B: Gen](implicit cbf: CanBuildFrom[Nothing, (A, B), M[A, B]]): Gen[M[A, B]] =
-    Gen.mapGen[A, B].map(_.to[({type F[_] = M[A, B]})#F])
+  implicit def mapGen[M[_, _], A: Gen, B: Gen](implicit F: Factory[(A, B), M[A, B]]): Gen[M[A, B]] =
+    Gen.mapGen[A, B].map(F.fromSpecific)
 
   implicit def mapEqual[M[X, Y] <: scala.collection.Map[X, Y], A: Order, B: Equal]: Equal[M[A, B]] =
     std.map.mapEqual[A, B].contramap(m => m.toMap)

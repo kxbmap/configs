@@ -23,7 +23,7 @@ final case class ConfigError(head: ConfigError.Entry, tail: Vector[ConfigError.E
   def entries: Vector[ConfigError.Entry] =
     head +: tail
 
-  def messages: Seq[String] =
+  def messages: collection.Seq[String] =
     entries.map(_.messageWithPath)
 
   def +(that: ConfigError): ConfigError =

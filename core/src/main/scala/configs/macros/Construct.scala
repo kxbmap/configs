@@ -94,7 +94,7 @@ trait Construct {
           case d: MethodSymbol if d.isSynthetic => (encodedName(d), d)
         }.collect {
           case (n, d) if n.startsWith(p) => (n.drop(pn).toInt - 1, ModuleMethod(mod, d))
-        }(collection.breakOut)
+        }.toMap
       case _ => Map.empty
     }
 
