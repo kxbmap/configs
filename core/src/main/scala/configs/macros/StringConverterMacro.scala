@@ -24,8 +24,9 @@ class StringConverterMacro(val c: blackbox.Context) {
 
   def enumValueStringConverter[A <: Enumeration : WeakTypeTag]: Tree = {
     val A = weakTypeOf[A].termSymbol.asModule
+    // https://github.com/scala/bug/issues/10906
     q"""
-      val m = $A.values.map(a => (a.toString, a)).toMap
+      val m = ($A.values: _root_.scala.Predef.Set[$A.Value]).map(a => (a.toString, a)).toMap
       _root_.configs.StringConverter.fromString { s =>
         _root_.configs.Result.fromOption(m.get(s)) {
           _root_.configs.ConfigError(

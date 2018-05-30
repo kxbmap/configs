@@ -21,7 +21,7 @@ import java.util.concurrent.TimeUnit
 import java.{lang => jl, math => jm, time => jt, util => ju}
 import scala.annotation.compileTimeOnly
 import scala.collection.JavaConverters._
-import scala.collection.generic.CanBuildFrom
+import scala.collection.compat._
 import scala.concurrent.duration.{Duration, FiniteDuration}
 
 trait ConfigReader[A] {
@@ -198,11 +198,11 @@ sealed abstract class ConfigReaderInstances extends ConfigReaderInstances0 {
     }
 
 
-  implicit def cbfJListConfigReader[F[_], A](implicit C: ConfigReader[ju.List[A]], cbf: CanBuildFrom[Nothing, A, F[A]]): ConfigReader[F[A]] =
-    C.map(_.asScala.to[F])
+  implicit def cbfJListConfigReader[F[_], A](implicit C: ConfigReader[ju.List[A]], F: Factory[A, F[A]]): ConfigReader[F[A]] =
+    C.map(c => F.fromSpecific(c.asScala))
 
-  implicit def cbfJMapConfigReader[M[_, _], A, B](implicit C: ConfigReader[ju.Map[A, B]], cbf: CanBuildFrom[Nothing, (A, B), M[A, B]]): ConfigReader[M[A, B]] =
-    C.map(_.asScala.to[({type F[_] = M[A, B]})#F])
+  implicit def cbfJMapConfigReader[M[_, _], A, B](implicit C: ConfigReader[ju.Map[A, B]], F: Factory[(A, B), M[A, B]]): ConfigReader[M[A, B]] =
+    C.map(c => F.fromSpecific(c.asScala))
 
 
   implicit def optionConfigReader[A](implicit A: ConfigReader[A]): ConfigReader[Option[A]] =

@@ -16,7 +16,7 @@
 
 package configs
 
-import scala.collection.generic.CanBuildFrom
+import scala.collection.compat._
 
 sealed abstract class Result[+A] extends Product with Serializable {
 
@@ -241,10 +241,10 @@ object Result {
   }
 
 
-  def traverse[F[X] <: TraversableOnce[X], A, B, That](fa: F[A])(f: A => Result[B])(implicit cbf: CanBuildFrom[F[A], B, That]): Result[That] =
-    fa.foldLeft(successful(cbf(fa)))((rb, a) => apply2(rb, f(a))(_ += _)).map(_.result())
+  def traverse[F[X] <: IterableOnce[X], A, B, That](fa: F[A])(f: A => Result[B])(implicit bf: BuildFrom[F[A], B, That]): Result[That] =
+    fa.foldLeft(successful(bf.newBuilder(fa)))((rb, a) => apply2(rb, f(a))(_ += _)).map(_.result())
 
-  def sequence[F[X] <: TraversableOnce[X], A, That](fa: F[Result[A]])(implicit cbf: CanBuildFrom[F[Result[A]], A, That]): Result[That] =
+  def sequence[F[X] <: IterableOnce[X], A, That](fa: F[Result[A]])(implicit cbf: BuildFrom[F[Result[A]], A, That]): Result[That] =
     traverse(fa)(x => x)
 
 

@@ -27,7 +27,7 @@ object ConfigUtil {
   def joinPath(element: String, elements: String*): String =
     Impl.joinPath(element +: elements: _*)
 
-  def joinPath(elements: Seq[String]): String =
+  def joinPath(elements: collection.Seq[String]): String =
     Impl.joinPath(elements.asJava)
 
   def splitPath(path: String): List[String] =

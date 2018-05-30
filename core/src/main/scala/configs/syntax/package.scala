@@ -49,7 +49,7 @@ package object syntax {
     def extract[A](implicit A: ConfigReader[A]): Result[A] =
       A.extractValue(self)
 
-    def withComments(comments: Seq[String]): ConfigValue =
+    def withComments(comments: collection.Seq[String]): ConfigValue =
       self.withOrigin(self.origin().withComments(comments.asJava))
 
   }
@@ -62,13 +62,13 @@ package object syntax {
     def +:[A](value: A)(implicit A: ConfigWriter[A]): ConfigList =
       ConfigList.fromSeq(A.write(value) +: self.asScala).value
 
-    def ++[A](values: Seq[A])(implicit A: ConfigWriter[A]): ConfigList =
+    def ++[A](values: collection.Seq[A])(implicit A: ConfigWriter[A]): ConfigList =
       ConfigList.fromSeq(self.asScala ++ values.map(A.write)).value
 
     def ++(list: ConfigList): ConfigList =
       ConfigList.fromSeq(self.asScala ++ list.asScala).value
 
-    def withComments(comments: Seq[String]): ConfigList =
+    def withComments(comments: collection.Seq[String]): ConfigList =
       self.withOrigin(self.origin().withComments(comments.asJava))
 
   }
@@ -81,7 +81,7 @@ package object syntax {
     def -[A](key: A)(implicit A: StringConverter[A]): ConfigObject =
       self.withoutKey(A.toString(key))
 
-    def ++[A: StringConverter, B: ConfigWriter](kvs: Seq[(A, B)]): ConfigObject =
+    def ++[A: StringConverter, B: ConfigWriter](kvs: collection.Seq[(A, B)]): ConfigObject =
       kvs.foldLeft(self)(_ + _)
 
     def ++[A: StringConverter, B: ConfigWriter](kvs: Map[A, B]): ConfigObject =
@@ -90,7 +90,7 @@ package object syntax {
     def ++(obj: ConfigObject): ConfigObject =
       obj.asScala.foldLeft(self)(_ + _)
 
-    def withComments(comments: Seq[String]): ConfigObject =
+    def withComments(comments: collection.Seq[String]): ConfigObject =
       self.withOrigin(self.origin().withComments(comments.asJava))
 
   }

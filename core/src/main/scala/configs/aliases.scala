@@ -44,10 +44,10 @@ object ConfigList {
 
   def empty: ConfigList = ConfigValueFactory.fromIterable(Nil.asJava)
 
-  def fromSeq(seq: Seq[Any]): Result[ConfigList] =
+  def fromSeq(seq: collection.Seq[Any]): Result[ConfigList] =
     Result.Try(ConfigValueFactory.fromIterable(seq.asJava))
 
-  def fromSeq(seq: Seq[Any], originDescription: String): Result[ConfigList] =
+  def fromSeq(seq: collection.Seq[Any], originDescription: String): Result[ConfigList] =
     Result.Try(ConfigValueFactory.fromIterable(seq.asJava, originDescription))
 
 }
