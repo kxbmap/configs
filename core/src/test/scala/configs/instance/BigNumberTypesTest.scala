@@ -28,7 +28,7 @@ object BigNumberTypesTest extends Scalaprops {
   val bigInt = check[BigInt]
 
   val bigIntFromDecimal = forAll { d: BigDecimal =>
-    ConfigReader[BigInt].extractValue(ConfigWriter[BigDecimal].write(d)).contains(d.toBigInt())
+    ConfigReader[BigInt].extractValue(ConfigWriter[BigDecimal].write(d)).contains(d.toBigInt)
   }
 
   val bigInteger = check[jm.BigInteger]
