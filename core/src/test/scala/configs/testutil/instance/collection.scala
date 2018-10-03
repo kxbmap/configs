@@ -71,7 +71,7 @@ object collection {
   implicit lazy val javaPropertiesGen: Gen[ju.Properties] =
     Gen[ju.Map[String, String]].map { m =>
       val p = new ju.Properties()
-      p.putAll(m)
+      (p: java.util.Hashtable[AnyRef, AnyRef]).putAll(m)
       p
     }
 

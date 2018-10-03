@@ -403,7 +403,7 @@ sealed abstract class ConfigReaderInstances extends ConfigReaderInstances0 {
   implicit lazy val javaPropertiesConfigReader: ConfigReader[ju.Properties] =
     ConfigReader[ju.Map[String, String]].map { m =>
       val p = new ju.Properties()
-      p.putAll(m)
+      (p: java.util.Hashtable[AnyRef, AnyRef]).putAll(m)
       p
     }
 

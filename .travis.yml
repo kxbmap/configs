@@ -16,6 +16,10 @@ matrix:
   exclude:
   - scala: 2.13.0-M4
     env: SBT_TASK=docs/tut
+  include:
+  - scala: 2.12.7
+    env: SBT_TASK=core/test
+    jdk: openjdk11
 
 script:
   - sbt ++$TRAVIS_SCALA_VERSION $SBT_TASK
