@@ -21,11 +21,11 @@ lazy val core = project
   )
 
 lazy val docs = project
-  .dependsOn(core % "tut")
+  .dependsOn(core % Tut)
   .enablePlugins(TutPlugin, Unpublished)
   .settings(
     tutSourceDirectory := (sourceDirectory in Tut).value / "doc",
     libraryDependencies ++= Seq(
-      lombok % "tut"
+      lombok % Tut
     )
   )
