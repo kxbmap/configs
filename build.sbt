@@ -9,8 +9,8 @@ lazy val core = project
     libraryDependencies ++= Seq(
       typesafeConfig,
       scalaCollectionCompact,
-      scalaReflect.value % "provided",
-      lombok % "test"
+      scalaReflect.value % Provided,
+      lombok % Test
     ),
     scalapropsWithScalazlaws,
     initialCommands :=
