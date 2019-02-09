@@ -20,12 +20,12 @@ object Common extends AutoPlugin {
       "org.scala-lang" % "scala-reflect" % scalaVersion.value
     }
 
-    val scalaCollectionCompact = "org.scala-lang.modules" %% "scala-collection-compat" % "0.1.1"
+    val scalaCollectionCompact = "org.scala-lang.modules" %% "scala-collection-compat" % "0.3.0"
   }
 
   override lazy val projectSettings: Seq[Setting[_]] = Seq(
-    scalaVersion := "2.12.7",
-    crossScalaVersions := Seq("2.12.7", "2.11.12", "2.13.0-M4"),
+    scalaVersion := "2.12.8",
+    crossScalaVersions := Seq("2.12.8", "2.11.12", "2.13.0-M5"),
     scalapropsVersion := "0.5.5",
     scalacOptions ++= Seq(
       "-deprecation",
