@@ -22,8 +22,9 @@ import configs.testutil.instance.anyVal._
 import configs.testutil.instance.string._
 import configs.testutil.instance.tuple._
 import scalaprops.Property.forAll
-import scalaprops.{Gen, Properties, Scalaprops}
-import scalaz.{Apply, Equal, Need}
+import scalaprops.{Gen, Lazy, Properties, Scalaprops}
+import scalaprops.ScalapropsScalaz._
+import scalaz.{Apply, Equal}
 
 
 object DeriveTest extends Scalaprops {
@@ -179,8 +180,8 @@ object DeriveTest extends Scalaprops {
 
     implicit lazy val gen: Gen[Recursive] =
       Gen.oneOfLazy(
-        Need(Apply[Gen].apply2(Gen[Int], Gen[Recursive])(RCons)),
-        Need(Gen.value(RNil))
+        Lazy(Apply[Gen].apply2(Gen[Int], Gen[Recursive])(RCons)),
+        Lazy(Gen.value(RNil))
       )
 
     implicit lazy val equal: Equal[Recursive] =
@@ -201,7 +202,7 @@ object DeriveTest extends Scalaprops {
 
     implicit lazy val gen: Gen[RecursiveOpt] =
       Gen.oneOfLazy(
-        Need(Gen[Option[RecursiveOpt]].map(RecursiveOpt.apply))
+        Lazy(Gen[Option[RecursiveOpt]].map(RecursiveOpt.apply))
       )
 
     implicit lazy val equal: Equal[RecursiveOpt] =

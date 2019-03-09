@@ -18,7 +18,6 @@ package configs.syntax
 
 import configs.Result
 import configs.testutil.instance.result._
-import configs.testutil.instance.string._
 import scalaprops.Property.{forAll, forAllG}
 import scalaprops.{Gen, Properties, Scalaprops}
 

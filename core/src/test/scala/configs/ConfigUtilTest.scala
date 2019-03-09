@@ -16,9 +16,9 @@
 
 package configs
 
-import configs.testutil.instance.string._
 import scalaprops.Property.forAllG
 import scalaprops.{Gen, Properties, Scalaprops}
+import scalaprops.ScalapropsScalaz._
 import scalaz.NonEmptyList
 import scalaz.syntax.apply._
 

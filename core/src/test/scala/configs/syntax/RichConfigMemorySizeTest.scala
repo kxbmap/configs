@@ -18,7 +18,6 @@ package configs.syntax
 
 import configs.testutil.instance.anyVal._
 import configs.testutil.instance.config._
-import configs.testutil.instance.string._
 import configs.{Bytes, ConfigMemorySize}
 import scalaprops.Property.{forAll, forAllG}
 import scalaprops.{Gen, Properties, Property, Scalaprops}

@@ -18,7 +18,6 @@ package configs
 
 import configs.testutil.instance.anyVal._
 import configs.testutil.instance.result._
-import configs.testutil.instance.string._
 import scalaprops.Property._
 import scalaprops.{Properties, Scalaprops, scalazlaws}
 import scalaz.std.list._
