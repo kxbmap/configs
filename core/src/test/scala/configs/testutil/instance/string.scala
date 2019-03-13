@@ -19,7 +19,7 @@ package configs.testutil.instance
 import configs.ConfigUtil
 import java.{lang => jl}
 import scala.annotation.tailrec
-import scalaprops.Gen
+import scalaprops.{Gen, ScalapropsScalaz}
 import scalaz.{Monoid, Order}
 
 object string {
@@ -74,7 +74,7 @@ object string {
     )
 
   lazy val pathStringGen: Gen[String] =
-    Gen.nonEmptyList(stringGen).map { ks =>
+    ScalapropsScalaz.nonEmptyListGen(stringGen).map { ks =>
       ConfigUtil.joinPath(ks.list.toList)
     }
 

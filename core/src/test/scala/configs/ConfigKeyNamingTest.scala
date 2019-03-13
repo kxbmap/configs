@@ -19,6 +19,7 @@ package configs
 import configs.testutil.fun._
 import scalaprops.Property.forAll
 import scalaprops.{Gen, Scalaprops}
+import scalaprops.ScalapropsScalaz._
 import scalaz.syntax.apply._
 
 object ConfigKeyNamingTest extends Scalaprops {

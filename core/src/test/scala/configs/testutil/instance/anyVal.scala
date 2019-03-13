@@ -18,7 +18,9 @@ package configs.testutil.instance
 
 import java.{lang => jl}
 import scalaprops.Gen
+import scalaprops.ScalapropsScalaz._
 import scalaz.{Order, Ordering, std}
+import scalaz.syntax.functor._
 
 object anyVal {
 

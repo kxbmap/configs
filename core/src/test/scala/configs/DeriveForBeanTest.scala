@@ -19,16 +19,16 @@ package configs
 import com.typesafe.config.ConfigFactory
 import configs.testutil.fun._
 import configs.testutil.instance.anyVal._
-import configs.testutil.instance.string._
 import configs.testutil.instance.tuple._
 import configs.testutil.{Bean1, Bean22, Bean484}
 import java.util.Objects
 import scala.beans.{BeanProperty, BooleanBeanProperty}
 import scalaprops.Property.forAll
-import scalaprops.{Gen, Properties, Scalaprops}
+import scalaprops.{Gen, Lazy, Properties, Scalaprops}
+import scalaprops.ScalapropsScalaz._
 import scalaz.syntax.apply._
 import scalaz.syntax.equal._
-import scalaz.{Equal, Need}
+import scalaz.Equal
 
 object DeriveForBeanTest extends Scalaprops {
 
@@ -118,7 +118,7 @@ object DeriveForBeanTest extends Scalaprops {
 
     implicit lazy val gen: Gen[RecursiveBean] =
       Gen.oneOfLazy(
-        Need(Gen[(Int, Option[RecursiveBean])].map {
+        Lazy(Gen[(Int, Option[RecursiveBean])].map {
           case (n, b) => new RecursiveBean(n, b.orNull)
         })
       )

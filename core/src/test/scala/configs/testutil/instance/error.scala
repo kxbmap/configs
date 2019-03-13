@@ -21,6 +21,7 @@ import configs.testutil.instance.string._
 import configs.{Config, ConfigError}
 import scala.util.control.NoStackTrace
 import scalaprops.{Cogen, CogenState, Gen}
+import scalaprops.ScalapropsScalaz._
 import scalaz.{Equal, NonEmptyList, Semigroup}
 
 object error {

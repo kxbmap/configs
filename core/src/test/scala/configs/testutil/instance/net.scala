@@ -18,6 +18,7 @@ package configs.testutil.instance
 
 import java.net.{InetAddress, URI}
 import scalaprops.Gen
+import scalaprops.ScalapropsScalaz._
 import scalaz.{Apply, Equal}
 
 object net {

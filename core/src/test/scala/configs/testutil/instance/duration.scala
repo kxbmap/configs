@@ -19,7 +19,9 @@ package configs.testutil.instance
 import java.{time => jt}
 import scala.concurrent.duration.{Duration, FiniteDuration}
 import scalaprops.{Choose, Gen}
+import scalaprops.ScalapropsScalaz._
 import scalaz.{Apply, Equal}
+import scalaz.syntax.functor._
 
 object duration {
 

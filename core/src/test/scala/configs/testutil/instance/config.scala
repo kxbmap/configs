@@ -22,8 +22,10 @@ import configs.testutil.instance.string._
 import configs.{Config, ConfigList, ConfigMemorySize, ConfigObject, ConfigValue}
 import java.{lang => jl, util => ju}
 import scala.collection.JavaConverters._
-import scalaprops.Gen
-import scalaz.{Equal, Need}
+import scalaprops.{Gen, Lazy}
+import scalaprops.ScalapropsScalaz._
+import scalaz.Equal
+import scalaz.syntax.functor._
 
 object config {
 
@@ -50,12 +52,12 @@ object config {
 
   implicit lazy val configValueGen: Gen[ConfigValue] =
     Gen.lazyFrequency(
-      8 -> Need(configObjectGen.widen[ConfigValue]),
-      5 -> Need(configListGen.widen[ConfigValue]),
-      50 -> Need(configValue[jl.Number]),
-      30 -> Need(configValue[String]),
-      5 -> Need(Gen.elements(ConfigValue.True, ConfigValue.False)),
-      2 -> Need(Gen.value(ConfigValue.Null))
+      8 -> Lazy(configObjectGen.widen[ConfigValue]),
+      5 -> Lazy(configListGen.widen[ConfigValue]),
+      50 -> Lazy(configValue[jl.Number]),
+      30 -> Lazy(configValue[String]),
+      5 -> Lazy(Gen.elements(ConfigValue.True, ConfigValue.False)),
+      2 -> Lazy(Gen.value(ConfigValue.Null))
     ).mapSize(s => (s + 1) / 2)
 
 

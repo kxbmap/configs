@@ -18,13 +18,13 @@ package configs.testutil.instance
 
 import java.io.File
 import java.nio.file.{Path, Paths}
-import scalaprops.Gen
+import scalaprops.{Gen, ScalapropsScalaz}
 import scalaz.Equal
 
 object io {
 
   implicit lazy val pathGen: Gen[Path] =
-    Gen.nonEmptyList(Gen.nonEmptyString(Gen.alphaChar)).map(p => Paths.get(p.head, p.tail.toList: _*))
+    ScalapropsScalaz.nonEmptyListGen(Gen.nonEmptyString(Gen.alphaChar)).map(p => Paths.get(p.head, p.tail.toList: _*))
   
   implicit lazy val pathEqual: Equal[Path] =
     Equal.equalA[Path]

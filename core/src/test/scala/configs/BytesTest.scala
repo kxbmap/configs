@@ -18,7 +18,6 @@ package configs
 
 import configs.testutil.fun._
 import configs.testutil.instance.bytes._
-import configs.testutil.instance.string._
 import scalaprops.Property.forAll
 import scalaprops.{Properties, Scalaprops}
 import scalaz.Monoid
