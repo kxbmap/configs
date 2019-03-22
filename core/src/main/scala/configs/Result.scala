@@ -48,7 +48,7 @@ sealed abstract class Result[+A] extends Product with Serializable {
   def handleWith[B >: A](pf: PartialFunction[ConfigError, Result[B]]): Result[B]
 
   final def handle[B >: A](pf: PartialFunction[ConfigError, B]): Result[B] =
-    handleWith(pf.andThen(Result.successful))
+    handleWith(pf.andThen(Result.successful(_)))
 
   def mapError(f: ConfigError => ConfigError): Result[A]
 
