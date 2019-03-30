@@ -88,7 +88,7 @@ object Release extends AutoPlugin {
     vcs.add(files: _*) ! st.log
     val status = vcs.status.!!.trim
     if (status.nonEmpty) {
-      vcs.commit(s"Update ${x.get(readmeFileName)}", sign) ! st.log
+      vcs.commit(s"Update ${x.get(readmeFileName)}", sign, false) ! st.log
     }
     st
   }
