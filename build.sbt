@@ -12,7 +12,7 @@ lazy val core = project
       scalaReflect.value % Provided,
       lombok % Test
     ),
-    scalapropsWithScalazlaws,
+    scalapropsWithScalaz,
     initialCommands :=
       """import com.typesafe.config.ConfigFactory._
         |import configs._
