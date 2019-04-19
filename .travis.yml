@@ -16,6 +16,7 @@ matrix:
   include:
   - scala: 2.12.8
     env: SBT_TASK=core/test
+    dist: xenial
     jdk: openjdk11
 
 script:
