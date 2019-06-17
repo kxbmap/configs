@@ -2,7 +2,8 @@ sudo: false
 
 language: scala
 jdk:
-  - oraclejdk8
+  - openjdk8
+  - openjdk12
 scala:
   - 2.12.8
   - 2.11.12
@@ -13,10 +14,10 @@ env:
   - SBT_TASK=docs/tut
 
 matrix:
-  include:
-  - scala: 2.12.8
-    env: SBT_TASK=core/test
-    jdk: openjdk11
+  # https://github.com/scala/bug/issues/11372
+  exclude:
+    - scala: 2.12.8
+      jdk: openjdk12
 
 script:
   - sbt ++$TRAVIS_SCALA_VERSION $SBT_TASK

@@ -38,12 +38,13 @@ object Common extends AutoPlugin {
     ),
     scalacOptions ++= {
       CrossVersion.partialVersion(scalaVersion.value) match {
-        case Some((2, x)) if x >= 12 => Seq(
-          "-opt:l:method"
-        )
-        case Some((2, 11)) => Seq(
-          "-Xexperimental"  // lambda syntax for SAM types
-        )
+        case Some((2, x)) if x >= 12 => Seq("-opt:l:method")
+        case _ => Nil
+      }
+    },
+    scalacOptions ++= {
+      CrossVersion.partialVersion(scalaVersion.value) match {
+        case Some((2, 11)) => Seq("-Xexperimental") // lambda syntax for SAM types
         case _ => Nil
       }
     },
