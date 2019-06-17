@@ -14,18 +14,18 @@ object Common extends AutoPlugin {
 
     val lombok = "org.projectlombok" % "lombok" % "1.18.6"
 
-    val scalaJava8Compat = "org.scala-lang.modules" %% "scala-java8-compat" % "0.8.0"
+    val scalaJava8Compat = "org.scala-lang.modules" %% "scala-java8-compat" % "0.9.0"
 
     val scalaReflect = Def.setting {
       "org.scala-lang" % "scala-reflect" % scalaVersion.value
     }
 
-    val scalaCollectionCompact = "org.scala-lang.modules" %% "scala-collection-compat" % "1.0.0"
+    val scalaCollectionCompact = "org.scala-lang.modules" %% "scala-collection-compat" % "2.0.0"
   }
 
   override lazy val projectSettings: Seq[Setting[_]] = Seq(
     scalaVersion := "2.12.8",
-    crossScalaVersions := Seq("2.12.8", "2.11.12", "2.13.0-RC1"),
+    crossScalaVersions := Seq("2.12.8", "2.11.12", "2.13.0"),
     scalapropsVersion := "0.6.0",
     scalacOptions ++= Seq(
       "-deprecation",
