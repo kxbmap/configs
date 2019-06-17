@@ -24,19 +24,20 @@ object WithOriginTest extends Scalaprops {
 
   val value = forAll { n: Int =>
     val config = ConfigFactory.parseString(s"a = $n")
-    ConfigReader[WithOrigin[Int]].read(config, "a") ==
-      Result.successful(WithOrigin(n, ConfigOrigin.simple("String").withLineNumber(1)))
+    val result = ConfigReader[WithOrigin[Int]].read(config, "a")
+    result == Result.successful(WithOrigin(n, ConfigOrigin.simple("String").withLineNumber(1)))
   }
 
   val `null` = forAll {
     val config = ConfigFactory.parseString("a = null")
-    ConfigReader[WithOrigin[Option[Int]]].read(config, "a") ==
-      Result.successful(WithOrigin(None, ConfigOrigin.simple("String").withLineNumber(1)))
+    val result = ConfigReader[WithOrigin[Option[Int]]].read(config, "a")
+    result == Result.successful(WithOrigin(None, ConfigOrigin.simple("String").withLineNumber(1)))
   }
 
   val missing = forAll {
-    ConfigReader[WithOrigin[Option[Int]]].read(Config.empty, "a") ==
-      Result.failure(ConfigError("no origin for path 'a', value 'None'").pushPath("a"))
+    val config = ConfigFactory.empty()
+    val result = ConfigReader[WithOrigin[Option[Int]]].read(config, "a")
+    result == Result.successful(WithOrigin(None, ConfigOrigin.simple("empty config")))
   }
 
 }
