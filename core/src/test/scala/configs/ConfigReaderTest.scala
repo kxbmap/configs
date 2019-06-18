@@ -18,9 +18,9 @@ package configs
 
 import com.typesafe.config.ConfigFactory
 import configs.ConfigUtil.{quoteString => q}
+import configs.internal.CollectionConverters._
 import configs.testutil.instance.result._
 import configs.testutil.instance.string._
-import scala.collection.JavaConverters._
 import scalaprops.Property.{forAll, forAllG}
 import scalaprops.{Gen, Properties, Scalaprops}
 
@@ -35,7 +35,9 @@ object ConfigReaderTest extends Scalaprops {
   val extract = forAll { (p: String, v: Int) =>
     val config = ConfigFactory.parseString(s"${q(p)} = $v")
     val reader: ConfigReader[Map[String, Int]] = ConfigReader.fromTry {
-      _.getConfig(_).root().asScala.mapValues(_.unwrapped().asInstanceOf[Int]).toMap
+      _.getConfig(_).root().asScala.map {
+        case (k, v) => (k, v.unwrapped().asInstanceOf[Int])
+      }.toMap
     }
     reader.extract(config).contains(Map(p -> v))
   }
@@ -125,11 +127,11 @@ object ConfigReaderTest extends Scalaprops {
       val succ2: ConfigReader[Int] = ConfigReader.successful(v2)
       succ1.orElse(succ2).read(config, "dummy").contains(v1)
     }
-    val p2 = forAll { (v: Int) =>
+    val p2 = forAll { v: Int =>
       val succ: ConfigReader[Int] = ConfigReader.successful(v)
       succ.orElse(fail).read(config, "dummy").contains(v)
     }
-    val p3 = forAll { (v: Int) =>
+    val p3 = forAll { v: Int =>
       val succ: ConfigReader[Int] = ConfigReader.successful(v)
       fail.orElse(succ).read(config, "dummy").contains(v)
     }
@@ -138,7 +140,7 @@ object ConfigReaderTest extends Scalaprops {
         _.messages == Seq("[dummy] failure")
       )
     }
-    val p5 = forAll { (v: Int) =>
+    val p5 = forAll { v: Int =>
       val reader = extractor(v)
       reader.orElse(fail).extract(Config.empty).contains(v) &&
         reader.orElse(fail).extractValue(ConfigValue.Null).contains(v)

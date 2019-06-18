@@ -17,9 +17,9 @@
 package configs.syntax
 
 import configs.ConfigValue
+import configs.internal.CollectionConverters._
 import configs.testutil.instance.config._
 import configs.testutil.instance.string._
-import scala.collection.JavaConverters._
 import scalaprops.Property.forAll
 import scalaprops.Scalaprops
 

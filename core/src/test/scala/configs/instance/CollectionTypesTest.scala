@@ -43,7 +43,6 @@ object CollectionTypesTest extends Scalaprops {
   val fromJList =
     check[List[Int]]("list") x
       check[Vector[Int]]("vector") x
-      check[Stream[Int]]("stream") x
       check[Array[Int]]("array") x
       check[Set[Int]]("set")
 

@@ -16,14 +16,14 @@
 
 package configs.testutil.instance
 
+import configs.internal.CollectionConverters._
 import configs.testutil.instance.anyVal._
 import configs.testutil.instance.collection._
 import configs.testutil.instance.string._
 import configs.{Config, ConfigList, ConfigMemorySize, ConfigObject, ConfigValue}
 import java.{lang => jl, util => ju}
-import scala.collection.JavaConverters._
-import scalaprops.{Gen, Lazy}
 import scalaprops.ScalapropsScalaz._
+import scalaprops.{Gen, Lazy}
 import scalaz.Equal
 import scalaz.syntax.functor._
 

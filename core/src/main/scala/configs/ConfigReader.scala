@@ -17,10 +17,10 @@
 package configs
 
 import com.typesafe.config.ConfigException
+import configs.internal.CollectionConverters._
 import java.util.concurrent.TimeUnit
 import java.{lang => jl, math => jm, time => jt, util => ju}
 import scala.annotation.compileTimeOnly
-import scala.collection.JavaConverters._
 import scala.collection.compat._
 import scala.concurrent.duration.{Duration, FiniteDuration}
 

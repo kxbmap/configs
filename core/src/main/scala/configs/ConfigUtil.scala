@@ -17,7 +17,7 @@
 package configs
 
 import com.typesafe.config.{ConfigUtil => Impl}
-import scala.collection.JavaConverters._
+import configs.internal.CollectionConverters._
 
 object ConfigUtil {
 

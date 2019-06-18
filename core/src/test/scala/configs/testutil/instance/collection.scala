@@ -16,9 +16,9 @@
 
 package configs.testutil.instance
 
+import configs.internal.CollectionConverters._
 import configs.testutil.instance.string._
 import java.{lang => jl, util => ju}
-import scala.collection.JavaConverters._
 import scala.collection.compat._
 import scalaprops.Gen
 import scalaz.{Equal, Order, std}
@@ -30,9 +30,6 @@ object collection {
 
   implicit def vectorEqual[A: Equal]: Equal[Vector[A]] =
     std.vector.vectorEqual[A]
-
-  implicit def streamEqual[A: Equal]: Equal[Stream[A]] =
-    std.stream.streamEqual[A]
 
   implicit def arrayEqual[A: Equal]: Equal[Array[A]] =
     listEqual[A].contramap(_.toList)

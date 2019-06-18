@@ -242,7 +242,7 @@ object Result {
 
 
   def traverse[F[X] <: IterableOnce[X], A, B, That](fa: F[A])(f: A => Result[B])(implicit bf: BuildFrom[F[A], B, That]): Result[That] =
-    fa.foldLeft(successful(bf.newBuilder(fa)))((rb, a) => apply2(rb, f(a))(_ += _)).map(_.result())
+    fa.iterator.foldLeft(successful(bf.newBuilder(fa)))((rb, a) => apply2(rb, f(a))(_ += _)).map(_.result())
 
   def sequence[F[X] <: IterableOnce[X], A, That](fa: F[Result[A]])(implicit cbf: BuildFrom[F[Result[A]], A, That]): Result[That] =
     traverse(fa)(x => x)

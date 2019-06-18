@@ -17,8 +17,8 @@
 package configs
 
 import com.typesafe.config.{ConfigFactory, ConfigOriginFactory, ConfigValueFactory}
+import configs.internal.CollectionConverters._
 import java.net.URL
-import scala.collection.JavaConverters._
 
 object Config {
 

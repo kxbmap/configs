@@ -30,7 +30,7 @@ object util {
 
   implicit lazy val localeGen: Gen[Locale] = {
     val ls = Locale.getAvailableLocales
-    Gen.elements(ls.head, ls.tail: _*)
+    Gen.elements(ls.head, ls.tail.toIndexedSeq: _*)
   }
 
   implicit lazy val localeEqual: Equal[Locale] =

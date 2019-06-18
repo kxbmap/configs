@@ -17,9 +17,9 @@
 package configs
 
 import com.typesafe.config.ConfigValueFactory
+import configs.internal.CollectionConverters._
 import java.{lang => jl, math => jm, time => jt, util => ju}
 import scala.annotation.compileTimeOnly
-import scala.collection.JavaConverters._
 import scala.concurrent.duration._
 
 trait ConfigWriter[A] {
