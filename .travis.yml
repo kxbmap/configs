@@ -5,9 +5,9 @@ jdk:
   - openjdk8
   - openjdk12
 scala:
+  - 2.13.0
   - 2.12.8
   - 2.11.12
-  - 2.13.0
 
 env:
   - SBT_TASK=core/test
