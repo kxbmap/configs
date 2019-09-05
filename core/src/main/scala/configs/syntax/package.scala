@@ -16,8 +16,8 @@
 
 package configs
 
-import configs.internal.CollectionConverters._
 import java.lang.Long.{highestOneBit, numberOfTrailingZeros}
+import scala.jdk.CollectionConverters._
 
 package object syntax {
 

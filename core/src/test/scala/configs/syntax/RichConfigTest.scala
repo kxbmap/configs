@@ -17,10 +17,10 @@
 package configs.syntax
 
 import com.typesafe.config.ConfigFactory
-import configs.internal.CollectionConverters._
 import configs.testutil.instance.config._
 import configs.testutil.instance.string._
 import configs.{Config, ConfigObject, ConfigValue, ConfigWriter, Result}
+import scala.jdk.CollectionConverters._
 import scalaprops.Property.forAll
 import scalaprops.{Properties, Scalaprops}
 import scalaz.Monoid

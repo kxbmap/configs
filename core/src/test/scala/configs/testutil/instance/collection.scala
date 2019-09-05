@@ -16,10 +16,10 @@
 
 package configs.testutil.instance
 
-import configs.internal.CollectionConverters._
 import configs.testutil.instance.string._
 import java.{lang => jl, util => ju}
 import scala.collection.compat._
+import scala.jdk.CollectionConverters._
 import scalaprops.Gen
 import scalaz.{Equal, Order, std}
 

@@ -17,10 +17,10 @@
 package configs
 
 import com.typesafe.config.ConfigValueFactory
-import configs.internal.CollectionConverters._
 import java.{lang => jl, math => jm, time => jt, util => ju}
 import scala.annotation.compileTimeOnly
 import scala.concurrent.duration._
+import scala.jdk.CollectionConverters._
 
 trait ConfigWriter[A] {
   self =>

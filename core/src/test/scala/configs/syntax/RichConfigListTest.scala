@@ -16,11 +16,11 @@
 
 package configs.syntax
 
-import configs.internal.CollectionConverters._
 import configs.testutil.instance.config._
 import configs.testutil.instance.result._
 import configs.testutil.instance.string._
 import configs.{ConfigList, ConfigValue}
+import scala.jdk.CollectionConverters._
 import scalaprops.Property.forAll
 import scalaprops.Scalaprops
 import scalaz.Monoid
