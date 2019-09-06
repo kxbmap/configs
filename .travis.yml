@@ -6,18 +6,12 @@ jdk:
   - openjdk12
 scala:
   - 2.13.0
-  - 2.12.8
+  - 2.12.9
   - 2.11.12
 
 env:
   - SBT_TASK=core/test
   - SBT_TASK=docs/tut
-
-matrix:
-  # https://github.com/scala/bug/issues/11372
-  exclude:
-    - scala: 2.12.8
-      jdk: openjdk12
 
 script:
   - sbt ++$TRAVIS_SCALA_VERSION $SBT_TASK
