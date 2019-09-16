@@ -28,8 +28,8 @@ object Release extends AutoPlugin {
 
   override lazy val projectSettings: Seq[Setting[_]] = Seq(
     readmeFileName := "README.md",
-    readmeFileSource := (tutSourceDirectory in docs).value / readmeFileName.value,
-    readmeFile := (baseDirectory in LocalRootProject).value / readmeFileName.value,
+    readmeFileSource := (docs / tutSourceDirectory).value / readmeFileName.value,
+    readmeFile := (LocalRootProject / baseDirectory).value / readmeFileName.value,
     updateReadme := updateReadmeTask.value,
     releaseCrossBuild := true,
     releasePublishArtifactsAction := publishSigned.value,
@@ -53,7 +53,7 @@ object Release extends AutoPlugin {
 
   private def updateReadmeTask = Def.task {
     val name = readmeFileName.value
-    val out = (tut in docs).value
+    val out = (docs / tut).value
       .collectFirst { case (o, `name`) => o }
       .getOrElse(sys.error(s"$name not found"))
     val readme = readmeFile.value

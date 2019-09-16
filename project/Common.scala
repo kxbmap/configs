@@ -52,8 +52,8 @@ object Common extends AutoPlugin {
     incOptions := incOptions.value.withLogRecompileOnMacro(false)
   ) ++
     Seq(Compile, Test).map { c =>
-      scalacOptions in (c, console) := {
-        val opts = (scalacOptions in (c, console)).value
+      c / console / scalacOptions := {
+        val opts = (c / console / scalacOptions).value
         CrossVersion.partialVersion(scalaVersion.value) match {
           case Some((2, x)) if x >= 12 =>
             opts.map {
