@@ -27,5 +27,6 @@ lazy val docs = project
     tutSourceDirectory := (Tut / sourceDirectory).value / "doc",
     libraryDependencies ++= Seq(
       lombok % Tut
-    )
+    ),
+    Tut / scalacOptions := Common.suppressUnusedWarning((Tut / scalacOptions).value, scalaVersion.value)
   )

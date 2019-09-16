@@ -52,17 +52,17 @@ object Common extends AutoPlugin {
     incOptions := incOptions.value.withLogRecompileOnMacro(false)
   ) ++
     Seq(Compile, Test).map { c =>
-      c / console / scalacOptions := {
-        val opts = (c / console / scalacOptions).value
-        CrossVersion.partialVersion(scalaVersion.value) match {
-          case Some((2, x)) if x >= 12 =>
-            opts.map {
-              case "-Xlint" => "-Xlint:-unused,_"
-              case otherwise => otherwise
-            }
-          case _ => opts
+      c / console / scalacOptions := suppressUnusedWarning((c / console / scalacOptions).value, scalaVersion.value)
+    }
+
+  def suppressUnusedWarning(scalacOptions: Seq[String], scalaVersion: String): Seq[String] =
+    CrossVersion.partialVersion(scalaVersion) match {
+      case Some((2, x)) if x >= 12 =>
+        scalacOptions.map {
+          case "-Xlint" => "-Xlint:-unused,_"
+          case otherwise => otherwise
         }
-      }
+      case _ => scalacOptions
     }
 
 }
