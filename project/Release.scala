@@ -1,5 +1,5 @@
-import com.typesafe.sbt.SbtPgp
-import com.typesafe.sbt.pgp.PgpKeys._
+import com.jsuereth.sbtpgp.PgpKeys._
+import com.jsuereth.sbtpgp.SbtPgp
 import sbt.Keys._
 import sbt._
 import sbtrelease.ReleasePlugin
