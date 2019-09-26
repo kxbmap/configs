@@ -12,7 +12,7 @@ object Common extends AutoPlugin {
 
     val typesafeConfig = "com.typesafe" % "config" % "1.3.4"
 
-    val lombok = "org.projectlombok" % "lombok" % "1.18.8"
+    val lombok = "org.projectlombok" % "lombok" % "1.18.10"
 
     val scalaJava8Compat = "org.scala-lang.modules" %% "scala-java8-compat" % "0.9.0"
 
