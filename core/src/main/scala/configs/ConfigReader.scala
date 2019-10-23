@@ -25,7 +25,6 @@ import scala.concurrent.duration.{Duration, FiniteDuration}
 import scala.jdk.CollectionConverters._
 
 trait ConfigReader[A] {
-  self =>
 
   protected def get(config: Config, path: String): Result[A]
 
@@ -43,19 +42,19 @@ trait ConfigReader[A] {
   }
 
   final def map[B](f: A => B): ConfigReader[B] =
-    flatMap(a => ConfigReader.successful(f(a)))
+    get(_, _).map(f)
 
   final def rmap[B](f: A => Result[B]): ConfigReader[B] =
-    flatMap(a => ConfigReader.withResult(f(a)))
+    get(_, _).flatMap(f)
 
   final def flatMap[B](f: A => ConfigReader[B]): ConfigReader[B] =
-    transform(e => ConfigReader.withResult(Result.failure(e)), f)
+    (c, p) => get(c, p).flatMap(f(_).get(c, p))
 
   final def orElse[B >: A](fallback: ConfigReader[B]): ConfigReader[B] =
-    transform(_ => fallback, ConfigReader.successful)
+    (c, p) => get(c, p).orElse(fallback.get(c, p))
 
   final def transform[B](fail: ConfigError => ConfigReader[B], succ: A => ConfigReader[B]): ConfigReader[B] =
-    (config, path) => self.get(config, path).fold(fail, succ).get(config, path)
+    (c, p) => get(c, p).fold(fail, succ).get(c, p)
 
   final def as[B >: A]: ConfigReader[B] =
     this.asInstanceOf[ConfigReader[B]]
