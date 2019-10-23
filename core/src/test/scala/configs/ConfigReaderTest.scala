@@ -86,8 +86,8 @@ object ConfigReaderTest extends Scalaprops {
       "respect original impl",
       forAll { (v: Int, f: Int => Result[String]) =>
         val reader = extractor(v)
-        reader.rmap(f).extract(Config.empty) == f(v).pushPath("extract") &&
-          reader.rmap(f).extractValue(ConfigValue.Null) == f(v).pushPath("extract")
+        reader.rmap(f).extract(Config.empty) == f(v) &&
+          reader.rmap(f).extractValue(ConfigValue.Null) == f(v)
       }))
 
   val flatMap = Properties.list(
@@ -114,8 +114,8 @@ object ConfigReaderTest extends Scalaprops {
       forAll { (v: Int, f0: Int => Result[String]) =>
         val reader = extractor(v)
         val f = f0.andThen(ConfigReader.withResult)
-        reader.flatMap(f).extract(Config.empty) == f0(v).pushPath("extract") &&
-          reader.flatMap(f).extractValue(ConfigValue.Null) == f0(v).pushPath("extract")
+        reader.flatMap(f).extract(Config.empty) == f0(v) &&
+          reader.flatMap(f).extractValue(ConfigValue.Null) == f0(v)
       }))
 
   val orElse = {

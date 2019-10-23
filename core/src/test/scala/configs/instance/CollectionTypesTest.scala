@@ -16,6 +16,7 @@
 
 package configs.instance
 
+import com.typesafe.config.ConfigFactory
 import configs.testutil.fun._
 import configs.testutil.instance.anyVal._
 import configs.testutil.instance.collection._
@@ -24,6 +25,7 @@ import configs.testutil.instance.symbol._
 import java.{lang => jl, util => ju}
 import scala.collection.immutable.TreeMap
 import scala.collection.mutable
+import scalaprops.Property.forAllG
 import scalaprops.Scalaprops
 
 object CollectionTypesTest extends Scalaprops {
@@ -52,5 +54,36 @@ object CollectionTypesTest extends Scalaprops {
       check[mutable.Map[String, Int]]("mutable map")
 
   val javaProperties = check[ju.Properties]
+
+
+  import configs.syntax._
+
+  val listPaths =
+    forAllG(pathStringGen) { p1 =>
+      val config = ConfigFactory.parseString(
+        s"""$p1 = [foo, bar, baz]
+           |""".stripMargin)
+      config.get[List[Int]](p1).failed.exists { ce =>
+        ce.entries.zipWithIndex.forall {
+          case (e, n) => e.paths == List(p1, n.toString)
+        }
+      }
+    }
+
+  val mapPaths =
+    forAllG(pathStringGen) { p1 =>
+      val config = ConfigFactory.parseString(
+        s"""$p1 = {
+           |  a = foo
+           |  b = bar
+           |  c = baz
+           |}
+           |""".stripMargin)
+      config.get[Map[String, Int]](p1).failed.exists { ce =>
+        ce.entries.sortBy(_.pathString).zip(List("a", "b", "c")).forall {
+          case (e, p2) => e.paths == List(p1, p2)
+        }
+      }
+    }
 
 }

@@ -37,10 +37,10 @@ trait ConfigReader[A] {
     read(config, path)
 
   def extract(config: Config, key: String = "extract"): Result[A] =
-    read(config.atKey(key), key)
+    read(config.atKey(key), key).popPath
 
   def extractValue(value: ConfigValue, key: String = "extract"): Result[A] =
-    read(value.atKey(key), key)
+    read(value.atKey(key), key).popPath
 
   final def map[B](f: A => B): ConfigReader[B] =
     flatMap(a => ConfigReader.successful(f(a)))
@@ -174,7 +174,7 @@ sealed abstract class ConfigReaderInstances extends ConfigReaderInstances0 {
   implicit def javaListConfigReader[A](implicit A: ConfigReader[A]): ConfigReader[ju.List[A]] =
     ConfigReader[ConfigList].rmap { xs =>
       Result.traverse(xs.asScala.zipWithIndex) {
-        case (x, i) => A.extractValue(x, i.toString)
+        case (x, i) => A.extractValue(x).pushPath(i.toString)
       }.map(_.asJava)
     }
 
