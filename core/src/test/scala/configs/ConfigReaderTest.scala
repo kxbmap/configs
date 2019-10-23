@@ -48,75 +48,36 @@ object ConfigReaderTest extends Scalaprops {
   }
 
 
-  private def extractor(v: Int): ConfigReader[Int] =
-    new ConfigReader[Int] {
-      protected def get(config: Config, path: String): Result[Int] =
-        Result.failure(ConfigError("failure"))
-      override def extract(config: Config): Result[Int] =
-        Result.successful(v)
-      override def extractValue(value: ConfigValue): Result[Int] =
-        Result.successful(v)
+  val map = forAll { (v: Int, f: Int => String) =>
+    val config = ConfigFactory.parseString(s"v = $v")
+    val reader: ConfigReader[Int] = ConfigReader.fromTry(_.getInt(_))
+    reader.map(f).read(config, "v").contains(f(v))
+  }
+
+  val rmap = forAll { (v: Int, f: Int => Result[String]) =>
+    val config = ConfigFactory.parseString(s"v = $v")
+    val reader: ConfigReader[Int] = ConfigReader.fromTry(_.getInt(_))
+    reader.rmap(f).read(config, "v") == f(v).pushPath("v")
+  }
+
+
+  val flatMap = {
+    case class Foo(a: Int, b: String, c: Boolean)
+    val reader = for {
+      a <- ConfigReader.get[Int]("a")
+      b <- ConfigReader.get[String]("b")
+      c <- ConfigReader.get[Boolean]("c")
+    } yield Foo(a, b, c)
+
+    forAll { (a: Int, b: String, c: Boolean) =>
+      val config = ConfigFactory.parseString(
+        s"""a = $a
+           |b = ${q(b)}
+           |c = $c
+           |""".stripMargin)
+      reader.extract(config).contains(Foo(a, b, c))
     }
-
-  val map = Properties.list(
-    Properties.single(
-      "map",
-      forAll { (v: Int, f: Int => String) =>
-        val config = ConfigFactory.parseString(s"v = $v")
-        val reader: ConfigReader[Int] = ConfigReader.fromTry(_.getInt(_))
-        reader.map(f).read(config, "v").contains(f(v))
-      }),
-    Properties.single(
-      "respect original impl",
-      forAll { (v: Int, f: Int => String) =>
-        val reader = extractor(v)
-        reader.map(f).extract(Config.empty).contains(f(v)) &&
-          reader.map(f).extractValue(ConfigValue.Null).contains(f(v))
-      }))
-
-  val rmap = Properties.list(
-    Properties.single(
-      "rmap",
-      forAll { (v: Int, f: Int => Result[String]) =>
-        val config = ConfigFactory.parseString(s"v = $v")
-        val reader: ConfigReader[Int] = ConfigReader.fromTry(_.getInt(_))
-        reader.rmap(f).read(config, "v") == f(v).pushPath("v")
-      }),
-    Properties.single(
-      "respect original impl",
-      forAll { (v: Int, f: Int => Result[String]) =>
-        val reader = extractor(v)
-        reader.rmap(f).extract(Config.empty) == f(v) &&
-          reader.rmap(f).extractValue(ConfigValue.Null) == f(v)
-      }))
-
-  val flatMap = Properties.list(
-    Properties.single(
-      "flatMap", {
-        case class Foo(a: Int, b: String, c: Boolean)
-        val reader = for {
-          a <- ConfigReader.get[Int]("a")
-          b <- ConfigReader.get[String]("b")
-          c <- ConfigReader.get[Boolean]("c")
-        } yield Foo(a, b, c)
-
-        forAll { (a: Int, b: String, c: Boolean) =>
-          val config = ConfigFactory.parseString(
-            s"""a = $a
-               |b = ${q(b)}
-               |c = $c
-               |""".stripMargin)
-          reader.extract(config).contains(Foo(a, b, c))
-        }
-      }),
-    Properties.single(
-      "respect original impl",
-      forAll { (v: Int, f0: Int => Result[String]) =>
-        val reader = extractor(v)
-        val f = f0.andThen(ConfigReader.withResult)
-        reader.flatMap(f).extract(Config.empty) == f0(v) &&
-          reader.flatMap(f).extractValue(ConfigValue.Null) == f0(v)
-      }))
+  }
 
   val orElse = {
     val config = Config.empty
@@ -139,17 +100,11 @@ object ConfigReaderTest extends Scalaprops {
         _.messages == Seq("[dummy] failure")
       )
     }
-    val p5 = forAll { v: Int =>
-      val reader = extractor(v)
-      reader.orElse(fail).extract(Config.empty).contains(v) &&
-        reader.orElse(fail).extractValue(ConfigValue.Null).contains(v)
-    }
     Properties.list(
       p1.toProperties("succ orElse succ"),
       p2.toProperties("succ orElse fail"),
       p3.toProperties("fail orElse succ"),
-      p4.toProperties("fail orElse fail"),
-      p5.toProperties("respect original impl")
+      p4.toProperties("fail orElse fail")
     )
   }
 

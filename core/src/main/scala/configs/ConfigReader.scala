@@ -32,12 +32,12 @@ trait ConfigReader[A] {
   final def read(config: Config, path: String): Result[A] =
     get(config, path).pushPath(path)
 
-  def extract(config: Config): Result[A] = {
+  final def extract(config: Config): Result[A] = {
     val p = "extract"
     read(config.atKey(p), p).popPath
   }
 
-  def extractValue(value: ConfigValue): Result[A] = {
+  final def extractValue(value: ConfigValue): Result[A] = {
     val p = "extractValue"
     read(value.atKey(p), p).popPath
   }
@@ -55,16 +55,7 @@ trait ConfigReader[A] {
     transform(_ => fallback, ConfigReader.successful)
 
   final def transform[B](fail: ConfigError => ConfigReader[B], succ: A => ConfigReader[B]): ConfigReader[B] =
-    new ConfigReader[B] {
-      protected def get(config: Config, path: String): Result[B] =
-        self.get(config, path).fold(fail, succ).get(config, path)
-
-      override def extract(config: Config): Result[B] =
-        self.extract(config).fold(fail, succ).extract(config)
-
-      override def extractValue(value: ConfigValue): Result[B] =
-        self.extractValue(value).fold(fail, succ).extractValue(value)
-    }
+    (config, path) => self.get(config, path).fold(fail, succ).get(config, path)
 
   final def as[B >: A]: ConfigReader[B] =
     this.asInstanceOf[ConfigReader[B]]
@@ -354,33 +345,11 @@ sealed abstract class ConfigReaderInstances extends ConfigReaderInstances0 {
     })
 
 
-  implicit val configConfigReader: ConfigReader[Config] =
-    new ConfigReader[Config] {
-      protected def get(config: Config, path: String): Result[Config] =
-        Result.Try(config.getConfig(path))
+  implicit lazy val configConfigReader: ConfigReader[Config] =
+    ConfigReader.fromTry(_.getConfig(_))
 
-      override def extract(config: Config): Result[Config] =
-        Result.successful(config)
-
-      override def extractValue(value: ConfigValue): Result[Config] =
-        value match {
-          case co: ConfigObject => Result.successful(co.toConfig)
-          case _ => super.extractValue(value)
-        }
-    }
-
-
-  implicit val configValueConfigReader: ConfigReader[ConfigValue] =
-    new ConfigReader[ConfigValue] {
-      protected def get(config: Config, path: String): Result[ConfigValue] =
-        Result.Try(config.getValue(path))
-
-      override def extract(config: Config): Result[ConfigValue] =
-        Result.successful(config.root())
-
-      override def extractValue(value: ConfigValue): Result[ConfigValue] =
-        Result.successful(value)
-    }
+  implicit lazy val configValueConfigReader: ConfigReader[ConfigValue] =
+    ConfigReader.fromTry(_.getValue(_))
 
   implicit lazy val configListConfigReader: ConfigReader[ConfigList] =
     ConfigReader.fromTry(_.getList(_))
