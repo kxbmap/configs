@@ -36,11 +36,15 @@ trait ConfigReader[A] {
   final def get(config: Config, path: String): Result[A] =
     read(config, path)
 
-  def extract(config: Config, key: String = "extract"): Result[A] =
-    read(config.atKey(key), key).popPath
+  def extract(config: Config): Result[A] = {
+    val p = "extract"
+    read(config.atKey(p), p).popPath
+  }
 
-  def extractValue(value: ConfigValue, key: String = "extract"): Result[A] =
-    read(value.atKey(key), key).popPath
+  def extractValue(value: ConfigValue): Result[A] = {
+    val p = "extractValue"
+    read(value.atKey(p), p).popPath
+  }
 
   final def map[B](f: A => B): ConfigReader[B] =
     flatMap(a => ConfigReader.successful(f(a)))
@@ -59,11 +63,11 @@ trait ConfigReader[A] {
       protected def readImpl(config: Config, path: String): Result[B] =
         self.readImpl(config, path).fold(fail, succ).readImpl(config, path)
 
-      override def extract(config: Config, key: String): Result[B] =
-        self.extract(config, key).fold(fail, succ).extract(config, key)
+      override def extract(config: Config): Result[B] =
+        self.extract(config).fold(fail, succ).extract(config)
 
-      override def extractValue(value: ConfigValue, key: String): Result[B] =
-        self.extractValue(value, key).fold(fail, succ).extractValue(value, key)
+      override def extractValue(value: ConfigValue): Result[B] =
+        self.extractValue(value).fold(fail, succ).extractValue(value)
     }
 
   final def as[B >: A]: ConfigReader[B] =
@@ -359,13 +363,13 @@ sealed abstract class ConfigReaderInstances extends ConfigReaderInstances0 {
       protected def readImpl(config: Config, path: String): Result[Config] =
         Result.Try(config.getConfig(path))
 
-      override def extract(config: Config, key: String): Result[Config] =
+      override def extract(config: Config): Result[Config] =
         Result.successful(config)
 
-      override def extractValue(value: ConfigValue, key: String): Result[Config] =
+      override def extractValue(value: ConfigValue): Result[Config] =
         value match {
           case co: ConfigObject => Result.successful(co.toConfig)
-          case _ => super.extractValue(value, key)
+          case _ => super.extractValue(value)
         }
     }
 
@@ -375,10 +379,10 @@ sealed abstract class ConfigReaderInstances extends ConfigReaderInstances0 {
       protected def readImpl(config: Config, path: String): Result[ConfigValue] =
         Result.Try(config.getValue(path))
 
-      override def extract(config: Config, key: String): Result[ConfigValue] =
+      override def extract(config: Config): Result[ConfigValue] =
         Result.successful(config.root())
 
-      override def extractValue(value: ConfigValue, key: String): Result[ConfigValue] =
+      override def extractValue(value: ConfigValue): Result[ConfigValue] =
         Result.successful(value)
     }
 

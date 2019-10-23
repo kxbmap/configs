@@ -44,7 +44,7 @@ object ConfigReaderTest extends Scalaprops {
   val extractValue = forAll { v: Int =>
     val cv = ConfigValue.fromAny(v)
     val reader: ConfigReader[Int] = ConfigReader.fromTry(_.getInt(_))
-    cv.flatMap(reader.extractValue(_)).contains(v)
+    cv.flatMap(reader.extractValue).contains(v)
   }
 
 
@@ -52,9 +52,9 @@ object ConfigReaderTest extends Scalaprops {
     new ConfigReader[Int] {
       protected def readImpl(config: Config, path: String): Result[Int] =
         Result.failure(ConfigError("failure"))
-      override def extract(config: Config, key: String): Result[Int] =
+      override def extract(config: Config): Result[Int] =
         Result.successful(v)
-      override def extractValue(value: ConfigValue, key: String): Result[Int] =
+      override def extractValue(value: ConfigValue): Result[Int] =
         Result.successful(v)
     }
 
