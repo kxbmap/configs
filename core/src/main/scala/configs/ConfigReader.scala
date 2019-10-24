@@ -33,12 +33,12 @@ trait ConfigReader[A] {
 
   final def extract(config: Config): Result[A] = {
     val p = "extract"
-    read(config.atKey(p), p).popPath
+    get(config.atKey(p), p)
   }
 
   final def extractValue(value: ConfigValue): Result[A] = {
     val p = "extractValue"
-    read(value.atKey(p), p).popPath
+    get(value.atKey(p), p)
   }
 
   final def map[B](f: A => B): ConfigReader[B] =
