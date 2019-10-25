@@ -1,6 +1,6 @@
 name := "configs-root"
 
-enablePlugins(Unpublished)
+enablePlugins(Release, Unpublished)
 
 lazy val core = project
   .settings(
@@ -21,12 +21,12 @@ lazy val core = project
   )
 
 lazy val docs = project
-  .dependsOn(core % Tut)
-  .enablePlugins(TutPlugin, Unpublished)
+  .dependsOn(core)
+  .enablePlugins(MdocPlugin, Unpublished)
   .settings(
-    tutSourceDirectory := (Tut / sourceDirectory).value / "doc",
-    libraryDependencies ++= Seq(
-      lombok % Tut
+    mdocIn := (Compile / sourceDirectory).value / "mdoc",
+    mdocVariables ++= Map(
+      "VERSION" -> version.value
     ),
-    Tut / scalacOptions := Common.suppressUnusedWarning((Tut / scalacOptions).value, scalaVersion.value)
+    libraryDependencies ++= Seq(lombok)
   )

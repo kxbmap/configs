@@ -11,7 +11,7 @@ scala:
 
 env:
   - SBT_TASK=core/test
-  - SBT_TASK=docs/tut
+  - SBT_TASK=docs/mdoc
 
 script:
   - sbt ++$TRAVIS_SCALA_VERSION $SBT_TASK

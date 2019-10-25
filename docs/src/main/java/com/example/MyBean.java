@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+package com.example;
+
 @lombok.Data
 public class MyBean {
     private int intValue;

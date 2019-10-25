@@ -1,24 +1,19 @@
 import com.jsuereth.sbtpgp.PgpKeys._
 import com.jsuereth.sbtpgp.SbtPgp
+import mdoc.MdocPlugin.autoImport._
 import sbt.Keys._
 import sbt._
 import sbtrelease.ReleasePlugin
-import sbtrelease.ReleasePlugin.autoImport.ReleaseKeys._
 import sbtrelease.ReleasePlugin.autoImport._
 import sbtrelease.ReleaseStateTransformations._
 import sbtrelease.Version.Bump
-import tut.TutPlugin.autoImport._
 
 object Release extends AutoPlugin {
-
-  override def trigger: PluginTrigger = allRequirements
 
   override def requires: Plugins = Common && ReleasePlugin && SbtPgp
 
   object autoImport {
     val readmeFileName = settingKey[String]("Readme file name")
-    val readmeFileSource = settingKey[File]("README file source").withRank(KeyRanks.Invisible)
-    val readmeFile = settingKey[File]("README file")
     val updateReadme = taskKey[File]("Update readme file")
   }
 
@@ -28,8 +23,6 @@ object Release extends AutoPlugin {
 
   override lazy val projectSettings: Seq[Setting[_]] = Seq(
     readmeFileName := "README.md",
-    readmeFileSource := (docs / tutSourceDirectory).value / readmeFileName.value,
-    readmeFile := (LocalRootProject / baseDirectory).value / readmeFileName.value,
     updateReadme := updateReadmeTask.value,
     releaseCrossBuild := true,
     releasePublishArtifactsAction := publishSigned.value,
@@ -39,9 +32,9 @@ object Release extends AutoPlugin {
       inquireVersions,
       runClean,
       runTest,
-      updateReadmeStep,
-      commitReadme,
       setReleaseVersion,
+      releaseStepTask(updateReadme),
+      commitReadme,
       commitReleaseVersion,
       tagRelease,
       publishArtifacts,
@@ -51,46 +44,30 @@ object Release extends AutoPlugin {
     )
   )
 
-  private def updateReadmeTask = Def.task {
-    val name = readmeFileName.value
-    val out = (docs / tut).value
-      .collectFirst { case (o, `name`) => o }
-      .getOrElse(sys.error(s"$name not found"))
-    val readme = readmeFile.value
-    IO.copy(Seq(out -> readme))
-    readme
-  }
+  private def updateReadmeTask =
+    Def.sequential(
+      Def.taskDyn {
+        (docs / mdoc).toTask(s" --include ${readmeFileName.value}")
+      },
+      Def.task {
+        val name = readmeFileName.value
+        val out = (docs / mdocOut).value / name
+        val readme = baseDirectory.value / name
+        IO.copy(Seq(out -> readme))
+        readme
+      })
 
-  val updateReadmeStep = ReleaseStep { st =>
-    val (releaseVer, _) = st.get(versions).getOrElse(
-      sys.error("No versions are set! Was this release part executed before inquireVersions?"))
-    val x = Project.extract(st)
-    val org = x.get(organization).replaceAll("\\.", "\\.")
-    val dep = s"""libraryDependencies \\+= "$org" %% ".+" % "(.+)"""".r
-    val src = x.get(readmeFileSource)
-    val updated = augmentString(IO.read(src)).lines.map {
-      case line@dep(ver) => line.replace(ver, releaseVer)
-      case line => line
-    }.mkString("", "\n", "\n")
-    IO.write(src, updated)
-    x.runTask(updateReadme, st)._1
-  }
-
-  val commitReadme = ReleaseStep { st =>
+  private val commitReadme = ReleaseStep { st =>
     val x = Project.extract(st)
     val vcs = x.get(releaseVcs).getOrElse(
       sys.error("Aborting release. Working directory is not a repository of a recognized VCS."))
-    val base = vcs.baseDir
     val sign = x.get(releaseVcsSign)
     val signOff = x.get(releaseVcsSignOff)
-    val files = Seq(x.get(readmeFile), x.get(readmeFileSource)).map { f =>
-      IO.relativize(base, f).getOrElse(
-        sys.error(s"Readme file [$f] is outside of this VCS repository with base directory [$base]!"))
-    }
-    vcs.add(files: _*) ! st.log
+    val name = x.get(readmeFileName)
+    vcs.add(name) ! st.log
     val status = vcs.status.!!.trim
-    if (status.nonEmpty) {
-      vcs.commit(s"Update ${x.get(readmeFileName)}", sign, signOff) ! st.log
+    if (status.contains(name)) {
+      vcs.commit(s"Update $name", sign, signOff) ! st.log
     }
     st
   }
