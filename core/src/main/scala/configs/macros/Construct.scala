@@ -103,13 +103,10 @@ trait Construct {
     val params =
       tpe.decls.collectFirst {
         case m: MethodSymbol if m.isPrimaryConstructor =>
-          if (m.paramLists.lengthCompare(1) <= 0) {
-            val ds = defaults(a, m)
-            m.paramLists.flatten.zipWithIndex.map {
-              case (s, i) => Param(s, ds.get(i))
-            }
+          val ds = defaults(a, m)
+          m.paramLists.head.zipWithIndex.map {
+            case (s, i) => Param(s, ds.get(i))
           }
-          else abort(a, "primary constructor has multi param list")
       }.getOrElse(abort(a, "bug?"))
     val accessors =
       tpe.decls.sorted.collect {
