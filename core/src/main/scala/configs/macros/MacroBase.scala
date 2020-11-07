@@ -64,9 +64,9 @@ private[macros] abstract class MacroBase {
 
     def naming: Tree
 
-    private[this] val n = freshName("n")
+    protected val n = freshName("n")
 
-    def configKey(field: String): Tree = q"$n($field)"
+    def configKey(field: String): Tree
 
     def valDefs: List[Tree] = {
       val nv = q"val $n = $naming"

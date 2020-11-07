@@ -19,6 +19,7 @@ package configs
 import com.typesafe.config.ConfigException
 import java.util.concurrent.TimeUnit
 import java.{lang => jl, math => jm, time => jt, util => ju}
+
 import scala.annotation.compileTimeOnly
 import scala.collection.compat._
 import scala.concurrent.duration.{Duration, FiniteDuration}
@@ -28,8 +29,17 @@ trait ConfigReader[A] {
 
   protected def get(config: Config, path: String): Result[A]
 
-  final def read(config: Config, path: String): Result[A] =
+  final def read(config: Config, path: String): Result[A] = {
     get(config, path).pushPath(path)
+  }
+
+  final def read(config: Config, path: Seq[String]): Result[A] = {
+    // take first success, if all failed the last failure
+    path.zipWithIndex.iterator
+      .map { case (p,i) => (read(config, p),i)}
+      .find { case (p,i) => p.isSuccess || i == path.size - 1 }
+      .get._1
+  }
 
   final def extract(config: Config): Result[A] = {
     val p = "extract"
