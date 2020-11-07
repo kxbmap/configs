@@ -35,6 +35,7 @@ object Common extends AutoPlugin {
       "-language:higherKinds",
       "-language:implicitConversions",
       "-language:experimental.macros"
+      //"-Ymacro-debug-lite"
     ),
     scalacOptions ++= {
       CrossVersion.partialVersion(scalaVersion.value) match {

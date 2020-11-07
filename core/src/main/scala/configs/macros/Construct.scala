@@ -104,6 +104,7 @@ trait Construct {
       tpe.decls.collectFirst {
         case m: MethodSymbol if m.isPrimaryConstructor =>
           val ds = defaults(a, m)
+          // only use first parameter list of case class constructor
           m.paramLists.head.zipWithIndex.map {
             case (s, i) => Param(s, ds.get(i))
           }
