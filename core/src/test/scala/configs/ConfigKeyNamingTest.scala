@@ -16,11 +16,11 @@
 
 package configs
 
-import configs.testutil.fun._
 import scalaprops.Property.forAll
 import scalaprops.{Gen, Scalaprops}
 import scalaprops.ScalapropsScalaz._
 import scalaz.syntax.apply._
+import collection.JavaConverters._
 
 object ConfigKeyNamingTest extends Scalaprops {
 
@@ -36,13 +36,8 @@ object ConfigKeyNamingTest extends Scalaprops {
     implicit val naming: ConfigKeyNaming[User] = ConfigKeyNaming.identity
 
     forAll { user: User =>
-      val expected =
-        s"""emailAddress=${user.emailAddress}
-           |name=${user.name}
-           |siteURL=${user.siteURL}
-           |""".stripMargin
-
-      render(user) == expected
+      val result = ConfigWriter[User].write(user).asInstanceOf[ConfigObject]
+      result.keySet().asScala == Set("emailAddress", "name", "siteURL")
     }
   }
 
@@ -50,13 +45,8 @@ object ConfigKeyNamingTest extends Scalaprops {
     implicit val naming: ConfigKeyNaming[User] = ConfigKeyNaming.hyphenSeparated
 
     forAll { user: User =>
-      val expected =
-        s"""email-address=${user.emailAddress}
-           |name=${user.name}
-           |site-url=${user.siteURL}
-           |""".stripMargin
-
-      render(user) == expected
+      val result = ConfigWriter[User].write(user).asInstanceOf[ConfigObject]
+      result.keySet().asScala == Set("email-address", "name", "site-url")
     }
   }
 
@@ -64,13 +54,8 @@ object ConfigKeyNamingTest extends Scalaprops {
     implicit val naming: ConfigKeyNaming[User] = ConfigKeyNaming.snakeCase
 
     forAll { user: User =>
-      val expected =
-        s""""email_address"=${user.emailAddress}
-           |name=${user.name}
-           |"site_url"=${user.siteURL}
-           |""".stripMargin
-
-      render(user) == expected
+      val result = ConfigWriter[User].write(user).asInstanceOf[ConfigObject]
+      result.keySet().asScala == Set("email_address", "name", "site_url")
     }
   }
 
@@ -78,13 +63,8 @@ object ConfigKeyNamingTest extends Scalaprops {
     implicit val naming: ConfigKeyNaming[User] = ConfigKeyNaming.lowerCamelCase
 
     forAll { user: User =>
-      val expected =
-        s"""emailAddress=${user.emailAddress}
-           |name=${user.name}
-           |siteURL=${user.siteURL}
-           |""".stripMargin
-
-      render(user) == expected
+      val result = ConfigWriter[User].write(user).asInstanceOf[ConfigObject]
+      result.keySet().asScala == Set("emailAddress", "name", "siteURL")
     }
   }
 
@@ -92,28 +72,18 @@ object ConfigKeyNamingTest extends Scalaprops {
     implicit val naming: ConfigKeyNaming[User] = ConfigKeyNaming.upperCamelCase
 
     forAll { user: User =>
-      val expected =
-        s"""EmailAddress=${user.emailAddress}
-           |Name=${user.name}
-           |SiteURL=${user.siteURL}
-           |""".stripMargin
-
-      render(user) == expected
+      val result = ConfigWriter[User].write(user).asInstanceOf[ConfigObject]
+      result.keySet().asScala == Set("EmailAddress", "Name", "SiteURL")
     }
   }
 
   val andThen = {
     implicit val naming: ConfigKeyNaming[User] =
-      ConfigKeyNaming.hyphenSeparated.andThen("user-" + _)
+      ConfigKeyNaming.hyphenSeparated.andThen(x => Seq("user-" + x))
 
     forAll { user: User =>
-      val expected =
-        s"""user-email-address=${user.emailAddress}
-           |user-name=${user.name}
-           |user-site-url=${user.siteURL}
-           |""".stripMargin
-
-      render(user) == expected
+      val result = ConfigWriter[User].write(user).asInstanceOf[ConfigObject]
+      result.keySet().asScala == Set("user-email-address", "user-name", "user-site-url")
     }
   }
 
