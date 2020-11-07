@@ -48,6 +48,9 @@ private[macros] trait ConfigWriterMacroImpl {
 
   class DerivingWriterContext(val naming: Tree, val cache: ConfigWriterCache) extends DerivingContext {
     type Cache = ConfigWriterCache
+
+    // for writing we take the first name produced by ConfigKeyNaming
+    def configKey(field: String): Tree = q"$n.applyFirst($field)"
   }
 
   class ConfigWriterCache extends InstanceCache {

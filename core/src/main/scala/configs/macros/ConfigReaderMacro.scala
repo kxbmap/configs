@@ -56,6 +56,9 @@ private[macros] trait ConfigReaderMacroImpl {
 
   class DerivingReaderContext(val naming: Tree, val cache: ConfigReaderCache) extends DerivingContext {
     type Cache = ConfigReaderCache
+
+    // for reading we take the all names produced by ConfigKeyNaming
+    def configKey(field: String): Tree = q"$n.apply($field)"
   }
 
   class ConfigReaderCache extends InstanceCache {
