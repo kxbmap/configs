@@ -59,6 +59,8 @@ private[macros] trait ConfigReaderMacroImpl {
 
     // for reading we take the all names produced by ConfigKeyNaming
     def configKey(field: String): Tree = q"$n.apply($field)"
+
+    def failOnSuperfluousKeys: Tree = q"$n.failOnSuperfluousKeys"
   }
 
   class ConfigReaderCache extends InstanceCache {
@@ -80,6 +82,8 @@ private[macros] trait ConfigReaderMacroImpl {
 
   private def resultTuple(args: Seq[Tree]): Tree =
     q"$qResult.${TermName(s"tuple${args.length}")}(..$args)"
+
+  private val qError = q"_root_.configs.ConfigError"
 
 
   private def sealedClass(tpe: Type, subs: List[SealedMember])(implicit ctx: DerivingReaderContext): Tree = {
@@ -180,14 +184,29 @@ private[macros] trait ConfigReaderMacroImpl {
     }
 
     fromConfig(tpe, config) {
-      params match {
+      val result = params match {
         case Nil => noArg
         case p :: Nil => single(p)
         case ps if ps.lengthCompare(MaxApplySize) <= 0 => small
         case _ => large
       }
+      // check for superfluous keys in the config
+      q"""
+        val superfluousKeys = ${getSuperfluousKeys(config, params.map(p => p.name))}
+        if (superfluousKeys.isEmpty) $result
+        else $qResult.failure($qError("Superfluous keys found: " + superfluousKeys))
+      """
     }
   }
+
+  private def getSuperfluousKeys(config: TermName, names: List[String])(implicit ctx: DerivingReaderContext): Tree =
+    q"""
+      if (${ctx.failOnSuperfluousKeys}) {
+        val configKeys = scala.collection.JavaConverters.asScalaSet($config.root.keySet)
+        val paramKeys = Set(..${names.map(n => ctx.configKey(n))}).flatten
+        configKeys.diff(paramKeys)
+      } else Set()
+    """
 
   private def valueClass(tpe: Type, param: Param)(implicit ctx: DerivingReaderContext): Tree =
     q"${ctx.cache.get(param.tpe)}.map(new $tpe(_))"
@@ -251,11 +270,17 @@ private[macros] trait ConfigReaderMacroImpl {
     }
 
     fromConfig(tpe, config) {
-      props match {
+      val result = props match {
         case p :: Nil => single(p)
         case ps if ps.lengthCompare(MaxApplySize) <= 0 => small
         case _ => large
       }
+      // check for superfluous keys in the config
+      q"""
+        val superfluousKeys = ${getSuperfluousKeys(config, props.map(p => p.name))}
+        if (superfluousKeys.isEmpty) $result
+        else $qResult.failure($qError("Superfluous keys found: " + superfluousKeys))
+      """
     }
   }
 

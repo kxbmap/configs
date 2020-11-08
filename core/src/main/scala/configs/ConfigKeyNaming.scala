@@ -30,6 +30,17 @@ trait ConfigKeyNaming[A] {
 
   def or(f: String => Seq[String]): ConfigKeyNaming[A] =
     field => apply(field) ++ f(field)
+
+  /**
+   * Enable fail on parsing an object and there are superfluous keys in the config
+   */
+  def withFailOnSuperfluousKeys(): ConfigKeyNaming[A] = {
+    failOnSuperfluousKeys = true
+    this
+  }
+
+  private[configs] var failOnSuperfluousKeys: Boolean = false
+
 }
 
 object ConfigKeyNaming {

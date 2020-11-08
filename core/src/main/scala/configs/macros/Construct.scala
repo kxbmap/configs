@@ -108,7 +108,7 @@ trait Construct {
           m.paramLists.head.zipWithIndex.map {
             case (s, i) => Param(s, ds.get(i))
           }
-      }.getOrElse(abort(a, "bug?"))
+      }.getOrElse(abort(a, "no primary constructor found. bug?"))
     val accessors =
       tpe.decls.sorted.collect {
         case m: MethodSymbol if m.isCaseAccessor => Accessor(m)

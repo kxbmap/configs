@@ -35,7 +35,7 @@ object Common extends AutoPlugin {
       "-language:higherKinds",
       "-language:implicitConversions",
       "-language:experimental.macros"
-      //"-Ymacro-debug-lite"
+      //"-Ymacro-debug-lite" // enable to see generated macro code
     ),
     scalacOptions ++= {
       CrossVersion.partialVersion(scalaVersion.value) match {
