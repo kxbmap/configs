@@ -19,17 +19,17 @@ package configs
 import configs.ConfigUtil.splitWords
 import java.util.Locale
 
-trait ConfigKeyNaming[A] {
+trait ConfigKeyNaming[A] { self =>
 
   def apply(field: String): Seq[String]
 
   def applyFirst(field: String): String = apply(field).head
 
   def andThen(f: String => Seq[String]): ConfigKeyNaming[A] =
-    field => apply(field).flatMap(f)
+    field => self.apply(field).flatMap(f)
 
   def or(f: String => Seq[String]): ConfigKeyNaming[A] =
-    field => apply(field) ++ f(field)
+    field => self.apply(field) ++ f(field)
 }
 
 object ConfigKeyNaming {
