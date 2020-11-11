@@ -19,13 +19,17 @@ package configs
 import configs.ConfigUtil.splitWords
 import java.util.Locale
 
-trait ConfigKeyNaming[A] {
+trait ConfigKeyNaming[A] { self =>
 
-  def apply(field: String): String
+  def apply(field: String): Seq[String]
 
-  def andThen(f: String => String): ConfigKeyNaming[A] =
-    field => f(apply(field))
+  def applyFirst(field: String): String = apply(field).head
 
+  def andThen(f: String => Seq[String]): ConfigKeyNaming[A] =
+    field => self.apply(field).flatMap(f)
+
+  def or(f: String => Seq[String]): ConfigKeyNaming[A] =
+    field => self.apply(field) ++ f(field)
 }
 
 object ConfigKeyNaming {
@@ -38,37 +42,37 @@ object ConfigKeyNaming {
     _identity.asInstanceOf[ConfigKeyNaming[A]]
 
   private[this] val _identity: ConfigKeyNaming[Any] =
-    x => x
+    x => Seq(x)
 
 
   def hyphenSeparated[A]: ConfigKeyNaming[A] =
     _hyphenSeparated.asInstanceOf[ConfigKeyNaming[A]]
 
   private[this] val _hyphenSeparated: ConfigKeyNaming[Any] =
-    splitWords(_).mkString("-").toLowerCase(Locale.ROOT)
+    x => Seq(splitWords(x).mkString("-").toLowerCase(Locale.ROOT))
 
 
   def snakeCase[A]: ConfigKeyNaming[A] =
     _snakeCase.asInstanceOf[ConfigKeyNaming[A]]
 
   private[this] val _snakeCase: ConfigKeyNaming[Any] =
-    splitWords(_).mkString("_").toLowerCase(Locale.ROOT)
+    x => Seq(splitWords(x).mkString("_").toLowerCase(Locale.ROOT))
 
 
   def lowerCamelCase[A]: ConfigKeyNaming[A] =
     _lowerCamelCase.asInstanceOf[ConfigKeyNaming[A]]
 
   private[this] val _lowerCamelCase: ConfigKeyNaming[Any] =
-    splitWords(_) match {
+    x => Seq(splitWords(x) match {
       case Nil => ""
       case h :: t => (h.toLowerCase(Locale.ROOT) :: t.map(_.capitalize)).mkString
-    }
+    })
 
 
   def upperCamelCase[A]: ConfigKeyNaming[A] =
     _upperCamelCase.asInstanceOf[ConfigKeyNaming[A]]
 
   private[this] val _upperCamelCase: ConfigKeyNaming[Any] =
-    splitWords(_).map(_.capitalize).mkString
+    x => Seq(splitWords(x).map(_.capitalize).mkString)
 
 }

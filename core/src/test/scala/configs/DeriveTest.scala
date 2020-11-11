@@ -26,6 +26,14 @@ import scalaprops.{Gen, Lazy, Properties, Scalaprops}
 import scalaprops.ScalapropsScalaz._
 import scalaz.{Apply, Equal}
 
+// Note:
+// the following case class needs to be declared outside and before DeriveTest object, because otherwise the generation
+// of default value functions in scala 2.11 might occur after macro expansion
+case class OptionDefault(opt: Option[Int] = Some(42))
+object OptionDefault {
+  implicit lazy val equal: Equal[OptionDefault] =
+    Equal.equalA[OptionDefault]
+}
 
 object DeriveTest extends Scalaprops {
 
@@ -144,14 +152,6 @@ object DeriveTest extends Scalaprops {
       check[Default1]("w/ default")
     }
     p1 x p2
-  }
-
-
-  case class OptionDefault(opt: Option[Int] = Some(42))
-
-  object OptionDefault {
-    implicit lazy val equal: Equal[OptionDefault] =
-      Equal.equalA[OptionDefault]
   }
 
   val optionDefault = {

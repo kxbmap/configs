@@ -22,6 +22,7 @@ import configs.testutil.instance.anyVal._
 import configs.testutil.instance.tuple._
 import configs.testutil.{Bean1, Bean22, Bean484}
 import java.util.Objects
+
 import scala.beans.{BeanProperty, BooleanBeanProperty}
 import scalaprops.Property.forAll
 import scalaprops.{Gen, Lazy, Properties, Scalaprops}
@@ -29,6 +30,7 @@ import scalaprops.ScalapropsScalaz._
 import scalaz.syntax.apply._
 import scalaz.syntax.equal._
 import scalaz.Equal
+import collection.JavaConverters._
 
 object DeriveForBeanTest extends Scalaprops {
 
@@ -143,13 +145,8 @@ object DeriveForBeanTest extends Scalaprops {
     implicit val naming: ConfigKeyNaming[Foo] = ConfigKeyNaming.identity
 
     forAll { foo: Foo =>
-      val expected =
-        s"""URL=${foo.getURL}
-           |fooBah=${foo.getFooBah}
-           |x=${foo.getX}
-           |""".stripMargin
-
-      render(foo) == expected
+      val result = ConfigWriter[Foo].write(foo).asInstanceOf[ConfigObject]
+      result.unwrapped.asScala.toSet == Set("URL" -> foo.getURL, "fooBah" -> foo.getFooBah, "x" -> foo.getX)
     }
   }
 
@@ -165,12 +162,8 @@ object DeriveForBeanTest extends Scalaprops {
       (Gen[Boolean] |@| Gen[Boolean])(new BooleanProps(_, _))
 
     forAll { bool: BooleanProps =>
-      val expected =
-        s"""primitive=${bool.isPrimitive}
-           |wrapped=${bool.isWrapped}
-           |""".stripMargin
-
-      render(bool) == expected
+      val result = ConfigWriter[BooleanProps].write(bool).asInstanceOf[ConfigObject]
+      result.unwrapped.asScala.toSet == Set("primitive" -> bool.isPrimitive, "wrapped" -> bool.isWrapped)
     }
   }
 
@@ -183,11 +176,8 @@ object DeriveForBeanTest extends Scalaprops {
     }
 
     forAll {
-      val expected =
-        s"""boolean=true
-           |""".stripMargin
-
-      render(new Foo()) == expected
+      val result = ConfigWriter[Foo].write(new Foo()).asInstanceOf[ConfigObject]
+      result.unwrapped.asScala.toSet == Set("boolean" -> true.asInstanceOf[AnyRef])
     }
   }
 
