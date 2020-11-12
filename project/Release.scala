@@ -17,7 +17,7 @@ object Release extends AutoPlugin {
 
   object autoImport {
     val readmeFileName = settingKey[String]("Readme file name")
-    val readmeFileSource = settingKey[File]("README file source")
+    val readmeFileSource = settingKey[File]("README file source").withRank(KeyRanks.Invisible)
     val readmeFile = settingKey[File]("README file")
     val updateReadme = taskKey[File]("Update readme file")
   }
