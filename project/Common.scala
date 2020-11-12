@@ -12,15 +12,15 @@ object Common extends AutoPlugin {
 
     val typesafeConfig = "com.typesafe" % "config" % "1.3.4"
 
-    val lombok = "org.projectlombok" % "lombok" % "1.18.10"
+    val lombok = "org.projectlombok" % "lombok" % "1.18.16"
 
-    val scalaJava8Compat = "org.scala-lang.modules" %% "scala-java8-compat" % "0.9.0"
+    val scalaJava8Compat = "org.scala-lang.modules" %% "scala-java8-compat" % "0.9.1"
 
     val scalaReflect = Def.setting {
       "org.scala-lang" % "scala-reflect" % scalaVersion.value
     }
 
-    val scalaCollectionCompat = "org.scala-lang.modules" %% "scala-collection-compat" % "2.1.2"
+    val scalaCollectionCompat = "org.scala-lang.modules" %% "scala-collection-compat" % "2.2.0"
   }
 
   override lazy val projectSettings: Seq[Setting[_]] = Seq(
