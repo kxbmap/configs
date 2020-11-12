@@ -22,7 +22,7 @@ import scalaz.Equal
 
 object bytes {
 
-  implicit lazy val bytesGen: Gen[Bytes] = Gen[Long].map(Bytes.apply)
+  implicit lazy val bytesGen: Gen[Bytes] = Gen.positiveLong.map(Bytes.apply)
 
   implicit lazy val bytesEqual: Equal[Bytes] = Equal.equalA[Bytes]
 

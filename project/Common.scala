@@ -10,7 +10,7 @@ object Common extends AutoPlugin {
 
   object autoImport {
 
-    val typesafeConfig = "com.typesafe" % "config" % "1.3.4"
+    val typesafeConfig = "com.typesafe" % "config" % "1.4.1"
 
     val lombok = "org.projectlombok" % "lombok" % "1.18.16"
 
