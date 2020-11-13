@@ -103,13 +103,13 @@ private[macros] trait ConfigWriterMacroImpl {
       val kvs = vals.map {
         case Property(n, t, g, _) =>
           val k = ctx.configKey(n)
-          val v = q"${ctx.cache.get(t)}.write($o.$g)"
+          val v = q"${ctx.cache.get(t)}.write($o.$g())"
           (k, v)
       }
       val appends = refs.map {
         case Property(n, t, g, _) =>
           val k = ctx.configKey(n)
-          val v = q"_root_.scala.Option($o.$g)"
+          val v = q"_root_.scala.Option($o.$g())"
           Append(ctx.cache.getOpt(t), k, v)
       }
       (kvs, appends)

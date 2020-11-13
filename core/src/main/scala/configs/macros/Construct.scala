@@ -137,7 +137,7 @@ trait Construct {
     val tpe = a.toType
     for {
       ctor <- tpe.decls.collectFirst {
-        case m: MethodSymbol if m.isConstructor && m.isPublic && isEmpty(m.paramLists) =>
+        case m: MethodSymbol if m.isConstructor && m.isPublic && hasEmptyArgumentList(m) =>
           Constructor(tpe)
       }
       props = listProperties(tpe) if props.nonEmpty
@@ -164,7 +164,7 @@ trait Construct {
     val getters =
       tpe.members.foldLeft(Map.empty[String, (MethodSymbol, Type)]) {
         case (m, Property.Getter((n, g, t))) =>
-          if (m.contains(n) && decodedName(g).startsWith("get")) m
+          if (m.contains(n) && decodedName(g).startsWith("get")) m  // prefer "is" getter
           else m + ((n, (g, t)))
         case (m, _) => m
       }

@@ -16,11 +16,11 @@
 
 package configs
 
+import scala.jdk.CollectionConverters._
 import scalaprops.Property.forAll
-import scalaprops.{Gen, Scalaprops}
 import scalaprops.ScalapropsScalaz._
+import scalaprops.{Gen, Scalaprops}
 import scalaz.syntax.apply._
-import collection.JavaConverters._
 
 object ConfigKeyNamingTest extends Scalaprops {
 
