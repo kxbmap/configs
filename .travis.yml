@@ -3,10 +3,10 @@ sudo: false
 language: scala
 jdk:
   - openjdk8
-  - openjdk12
+  - openjdk11
 scala:
-  - 2.13.1
-  - 2.12.10
+  - 2.13.3
+  - 2.12.12
   - 2.11.12
 
 env:
@@ -16,11 +16,15 @@ env:
 script:
   - sbt ++$TRAVIS_SCALA_VERSION $SBT_TASK
 
-  # Tricks to avoid unnecessary cache updates
-  - find $HOME/.sbt -name "*.lock" -delete
-  - find $HOME/.ivy2 -name "ivydata-*.properties" -delete
-
 cache:
   directories:
+    - $HOME/.sbt
     - $HOME/.ivy2/cache
-    - $HOME/.sbt/boot
+    - $HOME/.cache/coursier
+
+before_cache:
+  - find $HOME/.sbt -name "*.lock" -print -delete
+  - rm -fv $HOME/.ivy2/.sbt.ivy.lock
+  - find $HOME/.ivy2/cache -name "ivydata-*.properties" -print -delete
+  - find $HOME/.ivy2/cache -name "*-SNAPSHOT*" -print -delete
+  - find $HOME/.cache/coursier -name "*-SNAPSHOT*" -print -delete
