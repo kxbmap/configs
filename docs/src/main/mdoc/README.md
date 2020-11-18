@@ -197,7 +197,7 @@ val config5 = ConfigFactory.parseString("""
   """)
 ```
 
-```scala mdoc
+```scala mdoc:nest
 config5.get[Tree]("tree")
 ```
 
