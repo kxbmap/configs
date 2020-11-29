@@ -33,7 +33,6 @@ object ConfigUtil {
   def splitPath(path: String): List[String] =
     Impl.splitPath(path).asScala.toList
 
-
   def splitWords(s: String): List[String] = {
     @annotation.tailrec
     def loop(s: String, acc: List[String]): List[String] =
@@ -64,4 +63,20 @@ object ConfigUtil {
     s.split("[_-]+").toList.flatMap(loop(_, Nil))
   }
 
+  def getRootKeys(config: Config): List[String] = config.root.keySet.asScala.toList
+
+  def getSuperfluousKeys(configKeys: List[String], paramKeys: List[String]): List[(String, List[String])] = {
+    configKeys.diff(paramKeys)
+      .map( key => (key, getSimilarKeys( key, paramKeys )))
+  }
+
+  val maxSimilarityDistance = 4 // limit levenshtein distance calculation to a maximum of 4 character mutations
+  def getSimilarKeys(key: String, params: List[String]): List[String] = {
+    import org.apache.commons.text.similarity.LevenshteinDistance
+    val similarityCalculator = new LevenshteinDistance(maxSimilarityDistance)
+    params.map( p => (p,similarityCalculator.apply(p, key)))
+      .filter( _._2 >= 0) // ignore if not similar (result is -1 in this case)
+      .sortBy(_._2)
+      .map(_._1)
+  }
 }

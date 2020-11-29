@@ -9,7 +9,7 @@ import scalaprops.Scalaprops
 
 object CaseClassTypesTest extends Scalaprops {
 
-  case class TestClass(myAttr1: String, myAttr2: String)
+  case class TestClass(myAttr1: String, myAttr2: String, myAttr3: Option[String] = None, other: Option[String] = None )
   case class ComplexClass(complexAttr: TestClass, myAttr3: String, myAttr4: String)
 
   val simple = {
@@ -62,14 +62,18 @@ object CaseClassTypesTest extends Scalaprops {
       .withFailOnSuperfluousKeys()
     forAll {
       val configStr = """
-          myAttr1 = test
-          myAttr2 = test
-          myAttrFail = test
+          myAttr1 = test1
+          myAttr2 = test2
+          myAtrt3 = test3 // typo
       """
       val config = ConfigFactory.parseString(configStr)
       val d = config.extract[TestClass]
       d match {
-        case Failure(e) => e.messages.head.contains("myAttrFail")
+        case Failure(e) =>
+          // message should contain wrong attr,
+          e.messages.head.contains("myAtrt3") &&
+            e.messages.head.contains("myAttr3") && // similar attributes should be mentioned in error message
+            !e.messages.head.contains("other") // not enough similar attribute should not be mentioned in error message
         case _ => false
       }
     }

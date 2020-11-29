@@ -72,6 +72,8 @@ private[macros] trait ConfigReaderMacroImpl {
 
   private val qConfigReader = q"_root_.configs.ConfigReader"
 
+  private val qConfigUtil = q"_root_.configs.ConfigUtil"
+
   private def tConfigReader(arg: Type): Type =
     appliedType(typeOf[ConfigReader[_]].typeConstructor, arg)
 
@@ -184,29 +186,32 @@ private[macros] trait ConfigReaderMacroImpl {
     }
 
     fromConfig(tpe, config) {
-      val result = params match {
-        case Nil => noArg
-        case p :: Nil => single(p)
-        case ps if ps.lengthCompare(MaxApplySize) <= 0 => small
-        case _ => large
-      }
-      // check for superfluous keys in the config
       q"""
-        val superfluousKeys = ${getSuperfluousKeys(config, params.map(p => p.name))}
-        if (superfluousKeys.isEmpty) $result
-        else $qResult.failure($qError("Superfluous keys found: " + superfluousKeys))
+        ${checkSuperfluousKeys(config, params.map(_.name))} match {
+          case Nil => ${
+            params match {
+              case Nil => noArg
+              case p :: Nil => single(p)
+              case ps if ps.lengthCompare(MaxApplySize) <= 0 => small
+              case _ => large
+            }
+          }
+          case ks => $qResult.failure($qError("Superfluous key(s) found: "+ ks.mkString(" ")))
+        }
       """
     }
   }
 
-  private def getSuperfluousKeys(config: TermName, names: List[String])(implicit ctx: DerivingReaderContext): Tree =
+  private def checkSuperfluousKeys(config: TermName, params: List[String])(implicit ctx: DerivingReaderContext): Tree = {
     q"""
       if (${ctx.failOnSuperfluousKeys}) {
-        val configKeys = scala.collection.JavaConverters.asScalaSet($config.root.keySet)
-        val paramKeys = Set(..${names.map(n => ctx.configKey(n))}).flatten
-        configKeys.diff(paramKeys)
-      } else Set()
+        val configKeys = $qConfigUtil.getRootKeys($config)
+        val paramKeys: List[String] = ${params.map(ctx.configKey)}.flatten
+        $qConfigUtil.getSuperfluousKeys(configKeys, paramKeys)
+          .map{ case (key, similarParams) => key + " (did you mean " + similarParams.mkString(", ") + "?)"}
+      } else List()
     """
+  }
 
   private def valueClass(tpe: Type, param: Param)(implicit ctx: DerivingReaderContext): Tree =
     q"${ctx.cache.get(param.tpe)}.map(new $tpe(_))"
@@ -270,16 +275,17 @@ private[macros] trait ConfigReaderMacroImpl {
     }
 
     fromConfig(tpe, config) {
-      val result = props match {
-        case p :: Nil => single(p)
-        case ps if ps.lengthCompare(MaxApplySize) <= 0 => small
-        case _ => large
-      }
-      // check for superfluous keys in the config
       q"""
-        val superfluousKeys = ${getSuperfluousKeys(config, props.map(p => p.name))}
-        if (superfluousKeys.isEmpty) $result
-        else $qResult.failure($qError("Superfluous keys found: " + superfluousKeys))
+        ${checkSuperfluousKeys(config, props.map(_.name))} match {
+          case Nil => ${
+            props match {
+              case p :: Nil => single(p)
+              case ps if ps.lengthCompare(MaxApplySize) <= 0 => small
+              case _ => large
+            }
+          }
+          case ks => $qResult.failure($qError("Superfluous key(s) found: " + ks.mkString(" ")))
+        }
       """
     }
   }

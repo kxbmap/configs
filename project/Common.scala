@@ -14,6 +14,8 @@ object Common extends AutoPlugin {
 
     val lombok = "org.projectlombok" % "lombok" % "1.18.10"
 
+    val commonsText = "org.apache.commons" % "commons-text" % "1.9"
+
     val scalaJava8Compat = "org.scala-lang.modules" %% "scala-java8-compat" % "0.9.0"
 
     val scalaReflect = Def.setting {
