@@ -20,9 +20,11 @@ import com.typesafe.config.ConfigValueType
 import configs.testutil.fun._
 import configs.testutil.instance.collection._
 import configs.testutil.instance.config._
+import configs.testutil.instance.math._
 import configs.testutil.instance.string._
 import configs.{Config, ConfigList, ConfigMemorySize, ConfigObject, ConfigValue}
 import java.{util => ju}
+import scalaprops.Property.forAllG
 import scalaprops.Scalaprops
 
 object ConfigTypesTest extends Scalaprops {
@@ -45,6 +47,18 @@ object ConfigTypesTest extends Scalaprops {
 
   val configObject = check[ConfigObject]
 
-  val configMemorySize = check[ConfigMemorySize]
+  val configMemorySize = {
+    // Workaround
+    import BigInt._
+    implicit val param: CheckParam[ConfigMemorySize] = new CheckParam[ConfigMemorySize] {
+      override def exceptRoundtrip(a: ConfigMemorySize): Boolean =
+        !a.toBytesBigInteger.isValidLong
+    }
+    check[ConfigMemorySize]
+  } x
+    forAllG(nonNegativeBigInt) { n =>
+      val ConfigMemorySize(m) = ConfigMemorySize(n)
+      m == n
+    }.toProperties("unapply")
 
 }

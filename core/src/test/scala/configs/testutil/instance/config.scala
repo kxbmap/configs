@@ -18,6 +18,7 @@ package configs.testutil.instance
 
 import configs.testutil.instance.anyVal._
 import configs.testutil.instance.collection._
+import configs.testutil.instance.math._
 import configs.testutil.instance.string._
 import configs.{Config, ConfigList, ConfigMemorySize, ConfigObject, ConfigValue}
 import java.{lang => jl, util => ju}
@@ -85,6 +86,6 @@ object config {
     Equal.equalA[ConfigMemorySize]
 
   implicit lazy val configMemorySizeGen: Gen[ConfigMemorySize] =
-    Gen.nonNegativeLong.map(ConfigMemorySize.apply)
+    nonNegativeBigInt.map(ConfigMemorySize(_))
 
 }

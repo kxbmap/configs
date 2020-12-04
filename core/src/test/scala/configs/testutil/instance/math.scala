@@ -17,6 +17,7 @@
 package configs.testutil.instance
 
 import java.{math => jm}
+import scalaprops.Gen
 import scalaz.{Equal, std}
 
 object math {
@@ -32,5 +33,15 @@ object math {
 
   implicit lazy val javaBigDecimalEqual: Equal[jm.BigDecimal] =
     Equal.equalA[jm.BigDecimal]
+
+
+  val nonNegativeBigInt: Gen[BigInt] =
+    Gen.genBigIntBoundaries.map(_.abs)
+
+  val positiveBigInt: Gen[BigInt] =
+    nonNegativeBigInt.map(x => if (x == BigInt(0)) BigInt(42) else x)
+
+  val negativeBigInt: Gen[BigInt] =
+    positiveBigInt.map(-_)
 
 }
