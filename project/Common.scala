@@ -26,7 +26,10 @@ object Common extends AutoPlugin {
   override def buildSettings: Seq[Setting[_]] = Seq(
     scalaVersion := "2.13.4",
     crossScalaVersions := Seq("2.13.4", "2.12.12", "2.11.12"),
-    scalapropsVersion := "0.8.1",
+    scalapropsVersion := "0.8.1"
+  )
+
+  override lazy val projectSettings: Seq[Setting[_]] = Seq(
     scalacOptions ++= Seq(
       "-deprecation",
       "-unchecked",
@@ -48,10 +51,7 @@ object Common extends AutoPlugin {
         case Some((2, 11)) => Seq("-Xexperimental") // lambda syntax for SAM types
         case _ => Nil
       }
-    }
-  )
-
-  override lazy val projectSettings: Seq[Setting[_]] = Seq(
+    },
     updateOptions := updateOptions.value.withCachedResolution(true),
     incOptions := incOptions.value.withLogRecompileOnMacro(false)
   ) ++
