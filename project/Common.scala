@@ -26,7 +26,7 @@ object Common extends AutoPlugin {
   override def buildSettings: Seq[Setting[_]] = Seq(
     scalaVersion := "2.13.4",
     crossScalaVersions := Seq("2.13.4", "2.12.12", "2.11.12"),
-    scalapropsVersion := "0.8.0",
+    scalapropsVersion := "0.8.1",
     scalacOptions ++= Seq(
       "-deprecation",
       "-unchecked",
