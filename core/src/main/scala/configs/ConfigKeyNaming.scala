@@ -29,7 +29,7 @@ trait ConfigKeyNaming[A] {
     field => apply(field).flatMap(f)
 
   def or(f: String => Seq[String]): ConfigKeyNaming[A] =
-    field => apply(field) ++ f(field)
+    field => (apply(field) ++ f(field)).distinct
 
   /**
    * Enable fail on parsing an object and there are superfluous keys in the config
@@ -39,7 +39,7 @@ trait ConfigKeyNaming[A] {
     this
   }
 
-  private[configs] var failOnSuperfluousKeys: Boolean = false
+  var failOnSuperfluousKeys: Boolean = false
 
 }
 

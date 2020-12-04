@@ -208,7 +208,7 @@ private[macros] trait ConfigReaderMacroImpl {
         val configKeys = $qConfigUtil.getRootKeys($config)
         val paramKeys: List[String] = ${params.map(ctx.configKey)}.flatten
         $qConfigUtil.getSuperfluousKeys(configKeys, paramKeys)
-          .map{ case (key, similarParams) => key + " (did you mean " + similarParams.mkString(", ") + "?)"}
+          .map{ case (key, similarParams) => key + (if (similarParams.nonEmpty) " (did you mean " + similarParams.mkString(", ") + "?)" else "")}
       } else List()
     """
   }
