@@ -20,7 +20,7 @@ object Common extends AutoPlugin {
       "org.scala-lang" % "scala-reflect" % scalaVersion.value
     }
 
-    val scalaCollectionCompat = "org.scala-lang.modules" %% "scala-collection-compat" % "2.2.0"
+    val scalaCollectionCompat = "org.scala-lang.modules" %% "scala-collection-compat" % "2.3.1"
   }
 
   override lazy val projectSettings: Seq[Setting[_]] = Seq(
