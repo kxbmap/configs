@@ -182,7 +182,7 @@ trait Construct {
   private def ignoredProperties(tpe: Type, propNames: Set[String]): Set[String] = {
     val annotationType = typeOf[ignoredBeanProperties]
     val args = {
-      val q"{ ${dummy: Tree}; () }" = c.typecheck(q"{ object ${freshName()}; () }")
+      val q"{ ${dummy: Tree}; () }" = c.typecheck(q"{ object ${freshName()}; () }"): @unchecked
       dummy.symbol.owner.annotations
         .map(_.tree)
         .filter(_.tpe =:= annotationType)

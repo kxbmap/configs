@@ -74,7 +74,7 @@ object ConfigMemorySize {
   def apply(bytes: BigInt): ConfigMemorySize =
     com.typesafe.config.ConfigMemorySize.ofBytes(bytes.bigInteger)
 
-  def unapply(memorySize: ConfigMemorySize): Option[BigInt] =
+  def unapply(memorySize: ConfigMemorySize): Some[BigInt] =
     Some(memorySize.toBytesBigInteger)
 
   implicit val configMemorySizeOrdering: Ordering[ConfigMemorySize] =
