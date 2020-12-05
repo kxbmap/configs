@@ -201,6 +201,9 @@ val config = ConfigFactory.parseString("""
 config.get[Tree]("tree")
 ```
 
+```scala mdoc:invisible
+Leaf // Avoid unused warning
+```
 
 ### Java Beans support
 
