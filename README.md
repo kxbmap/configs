@@ -13,17 +13,15 @@ Usage
 Add the following line to your build file:
 
 ```scala
-libraryDependencies += "com.github.kxbmap" %% "configs" % "0.4.4"
+libraryDependencies += "com.github.kxbmap" %% "configs" % "0.5.0"
 ```
-
-configs version 0.4+ only support Java 8. If you need to Java 7, please check [0.3.x](https://github.com/kxbmap/configs/tree/v0.3.x-java7).
 
 Quick Start
 -----------
 
 ```scala
 import com.typesafe.config.ConfigFactory
-import configs.Configs
+import configs.ConfigReader
 ```
 
 Result type of get a value from config is `configs.Result`.
@@ -33,17 +31,25 @@ If get successfully, returns `configs.Result.Success`, if not `configs.Result.Fa
 val config = ConfigFactory.parseString("foo = 42")
 ```
 ```scala
-scala> val result = Configs[Int].get(config, "foo")
-result: configs.Result[Int] = Success(42)
+val foo = ConfigReader[Int].read(config, "foo")
+// foo: configs.Result[Int] = Success(value = 42)
 
-scala> result.valueOrElse(0)
-res0: Int = 42
+foo.valueOrElse(0)
+// res0: Int = 42
 
-scala> val result = Configs[Int].get(config, "missing")
-result: configs.Result[Int] = Failure(ConfigError(Exceptional(com.typesafe.config.ConfigException$Missing: No configuration setting found for key 'missing',List(missing)),Vector()))
+val missing = ConfigReader[Int].read(config, "missing")
+// missing: configs.Result[Int] = Failure(
+//   error = ConfigError(
+//     head = Exceptional(
+//       throwable = com.typesafe.config.ConfigException$Missing: String: 1: No configuration setting found for key 'missing',
+//       paths = List("missing")
+//     ),
+//     tail = Vector()
+//   )
+// )
 
-scala> result.valueOrElse(0)
-res1: Int = 0
+missing.valueOrElse(0)
+// res1: Int = 0
 ```
 
 Import `configs.syntax._` provides extension methods for `Config`:
@@ -52,18 +58,18 @@ Import `configs.syntax._` provides extension methods for `Config`:
 import configs.syntax._
 ```
 ```scala
-scala> config.get[Int]("foo")
-res2: configs.Result[Int] = Success(42)
+config.get[Int]("foo")
+// res2: configs.Result[Int] = Success(value = 42)
 ```
 
 `get[Option[A]]` will return success with value `None` if path is not exists:
 
 ```scala
-scala> config.get[Option[Int]]("missing")
-res3: configs.Result[Option[Int]] = Success(None)
+config.get[Option[Int]]("missing")
+// res3: configs.Result[Option[Int]] = Success(value = None)
 
-scala> config.getOrElse("missing", 0) // Alias for config.get[Option[Int]]("missing").map(_.getOrElse(0))
-res4: configs.Result[Int] = Success(0)
+config.getOrElse("missing", 0) // Alias for config.get[Option[Int]]("missing").map(_.getOrElse(0))
+// res4: configs.Result[Int] = Success(value = 0)
 ```
 
 You can get a case class value out of the box:
@@ -83,8 +89,14 @@ val config = ConfigFactory.parseString("""
   """)
 ```
 ```scala
-scala> config.get[MyConfig]("my-config")
-res6: configs.Result[MyConfig] = Success(MyConfig(My config value,123456,List(1 hour, 2 minutes, 3 seconds)))
+config.get[MyConfig]("my-config")
+// res5: configs.Result[MyConfig] = Success(
+//   value = MyConfig(
+//     foo = "My config value",
+//     bar = 123456,
+//     baz = List(1 hour, 2 minutes, 3 seconds)
+//   )
+// )
 ```
 
 If failed, `Result` accumulates error messages:
@@ -98,19 +110,42 @@ val config = ConfigFactory.parseString("""
   """)
 ```
 ```scala
-scala> val result = config.get[MyConfig]("my-config")
-result: configs.Result[MyConfig] = Failure(ConfigError(Exceptional(com.typesafe.config.ConfigException$Missing: No configuration setting found for key 'foo',List(my-config, foo)),Vector(Exceptional(com.typesafe.config.ConfigException$WrongType: String: 2: bar has type out-of-range value 2147483648 rather than int (32-bit integer),List(my-config, bar)), Exceptional(com.typesafe.config.ConfigException$BadValue: String: 4: Invalid value at '0': No number in duration value 'aaa',List(my-config, baz, 0)), Exceptional(com.typesafe.config.ConfigException$BadValue: String: 4: Invalid value at '1': No number in duration value 'bbb',List(my-config, baz, 1)), Exceptional(com.typesafe.config.ConfigException$BadValue: String: 4: Invalid value at '2': No number in duration v...
+val result = config.get[MyConfig]("my-config")
+// result: configs.Result[MyConfig] = Failure(
+//   error = ConfigError(
+//     head = Exceptional(
+//       throwable = com.typesafe.config.ConfigException$Missing: String: 2: No configuration setting found for key 'foo',
+//       paths = List("my-config", "foo")
+//     ),
+//     tail = Vector(
+//       Exceptional(
+//         throwable = com.typesafe.config.ConfigException$WrongType: String: 2: bar has type out-of-range value 2147483648 rather than int (32-bit integer),
+//         paths = List("my-config", "bar")
+//       ),
+//       Exceptional(
+//         throwable = com.typesafe.config.ConfigException$BadValue: String: 4: Invalid value at '0': No number in duration value 'aaa',
+//         paths = List("my-config", "baz", "0")
+//       ),
+//       Exceptional(
+//         throwable = com.typesafe.config.ConfigException$BadValue: String: 4: Invalid value at '1': No number in duration value 'bbb',
+//         paths = List("my-config", "baz", "1")
+//       ),
+//       Exceptional(
+//         throwable = com.typesafe.config.ConfigException$BadValue: String: 4: Invalid value at '2': No number in duration value 'ccc',
+//         paths = List("my-config", "baz", "2")
+//       )
+//     )
+//   )
+// )
 
-scala> result.valueOr { error =>
-     |   error.messages.foreach(println)
-     |   MyConfig("", 0, Nil)
-     | }
-[my-config.foo] No configuration setting found for key 'foo'
-[my-config.bar] String: 2: bar has type out-of-range value 2147483648 rather than int (32-bit integer)
-[my-config.baz.0] String: 4: Invalid value at '0': No number in duration value 'aaa'
-[my-config.baz.1] String: 4: Invalid value at '1': No number in duration value 'bbb'
-[my-config.baz.2] String: 4: Invalid value at '2': No number in duration value 'ccc'
-res7: MyConfig = MyConfig(,0,List())
+result.failed.foreach { error =>
+  error.messages.foreach(println)
+}
+// [my-config.foo] String: 2: No configuration setting found for key 'foo'
+// [my-config.bar] String: 2: bar has type out-of-range value 2147483648 rather than int (32-bit integer)
+// [my-config.baz.0] String: 4: Invalid value at '0': No number in duration value 'aaa'
+// [my-config.baz.1] String: 4: Invalid value at '1': No number in duration value 'bbb'
+// [my-config.baz.2] String: 4: Invalid value at '2': No number in duration value 'ccc'
 ```
 
 You can get a value without key using `extract`:
@@ -123,17 +158,50 @@ val config = ConfigFactory.parseString("""
   """)
 ```
 ```scala
-scala> config.extract[MyConfig]
-res8: configs.Result[MyConfig] = Success(MyConfig(My config value,123456,List(1 hour, 2 minutes, 3 seconds)))
+config.extract[MyConfig]
+// res7: configs.Result[MyConfig] = Success(
+//   value = MyConfig(
+//     foo = "My config value",
+//     bar = 123456,
+//     baz = List(1 hour, 2 minutes, 3 seconds)
+//   )
+// )
+```
+
+You may use the `~` operator to combine multiple results and apply a function with the results passed as arguments, this is useful when you want to construct a complex case class from several config extractors.
+
+```scala
+case class ServiceConfig(name: String, port: Int, hosts: List[String])
+
+val config = ConfigFactory.parseString(
+  """
+    |name = "foo"
+    |port = 9876
+    |hosts = ["localhost", "foo.com"]
+  """.stripMargin)
+```
+```scala
+(
+  config.get[String]("name") ~
+  config.get[Int]("port") ~
+  config.get[List[String]]("hosts")
+)(ServiceConfig) // Alternatively (name, port, hosts) => ServerConfig(name, port, posts)
+// res8: configs.Result[ServiceConfig] = Success(
+//   value = ServiceConfig(
+//     name = "foo",
+//     port = 9876,
+//     hosts = List("localhost", "foo.com")
+//   )
+// )
 ```
 
 Supported types
 ---------------
 
 configs can get many type values from config.
-It is provided by type class `Configs`.
+It is provided by type class `ConfigReader`.
 
-There are a number of built-in `Configs` instances:
+There are a number of built-in `ConfigReader` instances:
 
 * Primitive/Wrapper types
   * `Long`, `Int`, `Short`, `Byte`, `Double`, `Float`, `Char`, `Boolean`
@@ -164,11 +232,10 @@ There are a number of built-in `Configs` instances:
   * `Option[A]`
   * `java.util.`{`Optional[A]`, `OptionalLong`, `OptionalInt`, `OptionalDouble`}
 * case classes
-* classes that have public constructors
 * ADTs (sealed trait + classes/objects). See [ADTs support](#adts-support)
 * Java Beans. See [Java Beans support](#java-beans-support)
 
-In this list, `A` means any type that is `Configs` instance. And `S` means any type that is `FromString` instance.
+In this list, `A` means any type that is `ConfigReader` instance. And `S` means any type that is `StringConverter` instance.
 
 
 ### ADTs support
@@ -186,22 +253,26 @@ You can get an ADT value from config:
 ```scala
 val config = ConfigFactory.parseString("""
   tree = {
-    type = Branch
     value = 42
     left = Leaf
     right {
-      type = Branch
       value = 123
       left = Leaf
-      right = { type = Leaf }
+      right = Leaf
     }
   }
   """)
 ```
 
 ```scala
-scala> config.get[Tree]("tree")
-res9: configs.Result[Tree] = Success(Branch(42,Leaf,Branch(123,Leaf,Leaf)))
+config.get[Tree]("tree")
+// res9: configs.Result[Tree] = Success(
+//   value = Branch(
+//     value = 42,
+//     left = Leaf,
+//     right = Branch(value = 123, left = Leaf, right = Leaf)
+//   )
+// )
 ```
 
 
@@ -210,6 +281,8 @@ res9: configs.Result[Tree] = Success(Branch(42,Leaf,Branch(123,Leaf,Leaf)))
 If there is Java Beans class like the follows:
 
 ```java
+package com.example;
+
 @lombok.Data
 public class MyBean {
     private int intValue;
@@ -218,11 +291,13 @@ public class MyBean {
 }
 ```
 
-Then you define `Configs` instance using `deriveBean` macro:
+Then you define `ConfigReader` instance using `deriveBean` macro:
 
 ```scala
-implicit val myBeanConfigs: Configs[MyBean] =
-  Configs.deriveBean[MyBean]
+import com.example.MyBean
+
+implicit val myBeanConfigReader: ConfigReader[MyBean] =
+  ConfigReader.deriveBean[MyBean]
 ```
 
 And then you can get Java Beans value:
@@ -238,8 +313,10 @@ val config = ConfigFactory.parseString("""
   """)
 ```
 ```scala
-scala> config.extract[MyBean]
-res10: configs.Result[MyBean] = Success(MyBean(intValue=42, stringList=[foo, bar, baz], localeToDuration={en_US=PT2M3S, ja_JP=PT0.042S}))
+config.extract[MyBean]
+// res11: configs.Result[MyBean] = Success(
+//   value = MyBean(intValue=42, stringList=[foo, bar, baz], localeToDuration={en_US=PT2M3S, ja_JP=PT0.042S})
+// )
 ```
 
 
