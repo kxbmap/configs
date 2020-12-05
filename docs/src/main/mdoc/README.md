@@ -64,8 +64,8 @@ import scala.concurrent.duration.FiniteDuration
 
 case class MyConfig(foo: String, bar: Int, baz: List[FiniteDuration])
 ```
-```scala mdoc:silent
-val config1 = ConfigFactory.parseString("""
+```scala mdoc:nest:silent
+val config = ConfigFactory.parseString("""
   my-config {
     foo = My config value
     bar = 123456
@@ -74,13 +74,13 @@ val config1 = ConfigFactory.parseString("""
   """)
 ```
 ```scala mdoc
-config1.get[MyConfig]("my-config")
+config.get[MyConfig]("my-config")
 ```
 
 If failed, `Result` accumulates error messages:
 
-```scala mdoc:silent
-val config2 = ConfigFactory.parseString("""
+```scala mdoc:nest:silent
+val config = ConfigFactory.parseString("""
   my-config {
     bar = 2147483648
     baz = [aaa, bbb, ccc]
@@ -88,7 +88,7 @@ val config2 = ConfigFactory.parseString("""
   """)
 ```
 ```scala mdoc
-val result = config2.get[MyConfig]("my-config")
+val result = config.get[MyConfig]("my-config")
 
 result.failed.foreach { error =>
   error.messages.foreach(println)
@@ -97,23 +97,23 @@ result.failed.foreach { error =>
 
 You can get a value without key using `extract`:
 
-```scala mdoc:silent
-val config3 = ConfigFactory.parseString("""
+```scala mdoc:nest:silent
+val config = ConfigFactory.parseString("""
   foo = My config value
   bar = 123456
   baz = [1h, 2m, 3s]
   """)
 ```
 ```scala mdoc
-config3.extract[MyConfig]
+config.extract[MyConfig]
 ```
 
 You may use the `~` operator to combine multiple results and apply a function with the results passed as arguments, this is useful when you want to construct a complex case class from several config extractors.
 
-```scala mdoc:silent
+```scala mdoc:nest:silent
 case class ServiceConfig(name: String, port: Int, hosts: List[String])
 
-val config4 = ConfigFactory.parseString(
+val config = ConfigFactory.parseString(
   """
     |name = "foo"
     |port = 9876
@@ -122,9 +122,9 @@ val config4 = ConfigFactory.parseString(
 ```
 ```scala mdoc
 (
-  config4.get[String]("name") ~
-  config4.get[Int]("port") ~
-  config4.get[List[String]]("hosts")
+  config.get[String]("name") ~
+  config.get[Int]("port") ~
+  config.get[List[String]]("hosts")
 )(ServiceConfig) // Alternatively (name, port, hosts) => ServerConfig(name, port, posts)
 ```
 
@@ -183,8 +183,8 @@ case object Leaf extends Tree
 
 You can get an ADT value from config:
 
-```scala mdoc:silent
-val config5 = ConfigFactory.parseString("""
+```scala mdoc:nest:silent
+val config = ConfigFactory.parseString("""
   tree = {
     value = 42
     left = Leaf
@@ -197,8 +197,8 @@ val config5 = ConfigFactory.parseString("""
   """)
 ```
 
-```scala mdoc:nest
-config5.get[Tree]("tree")
+```scala mdoc
+config.get[Tree]("tree")
 ```
 
 
@@ -228,8 +228,8 @@ implicit val myBeanConfigReader: ConfigReader[MyBean] =
 
 And then you can get Java Beans value:
 
-```scala mdoc:silent
-val config6 = ConfigFactory.parseString("""
+```scala mdoc:nest:silent
+val config = ConfigFactory.parseString("""
   int-value = 42
   string-list = [foo, bar, baz]
   locale-to-duration {
@@ -239,7 +239,7 @@ val config6 = ConfigFactory.parseString("""
   """)
 ```
 ```scala mdoc
-config6.extract[MyBean]
+config.extract[MyBean]
 ```
 
 
