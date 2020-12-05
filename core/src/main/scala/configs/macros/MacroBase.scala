@@ -25,8 +25,6 @@ private[macros] abstract class MacroBase {
 
   import c.universe._
 
-  val TypeKey = "type"
-
 
   def tqTuple(args: Seq[Type]): Tree = tq"(..$args)"
 
@@ -64,7 +62,7 @@ private[macros] abstract class MacroBase {
 
     def naming: Tree
 
-    protected val n = freshName("n")
+    protected val n: TermName = freshName("n")
 
     def configKey(field: String): Tree
 

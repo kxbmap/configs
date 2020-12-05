@@ -66,7 +66,7 @@ object ConfigUtil {
   def getRootKeys(config: Config): List[String] = config.root.keySet.asScala.toList
 
   def getSuperfluousKeys(configKeys: List[String], paramKeys: List[String]): List[(String, List[String])] = {
-    configKeys.diff(paramKeys)
+    configKeys.diff(paramKeys).sorted
       .map( key => (key, getSimilarKeys( key, paramKeys )))
   }
 

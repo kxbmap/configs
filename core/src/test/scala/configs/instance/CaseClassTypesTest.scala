@@ -9,8 +9,13 @@ import scalaprops.Scalaprops
 
 object CaseClassTypesTest extends Scalaprops {
 
-  case class TestClass(myAttr1: String, myAttr2: String, myAttr3: Option[String] = None, other: Option[String] = None )
+  case class TestClass(myAttr1: String, myAttr2: String, myAttr3: Option[String] = None, other: Option[String] = None, testSeal: Option[TestSeal] = None )
   case class ComplexClass(complexAttr: TestClass, myAttr3: String, myAttr4: String)
+
+  sealed trait TestSeal
+  case class Seal1(myAttr1: Option[String] = None, myAttr2: String) extends TestSeal
+  case class Seal0() extends TestSeal {
+  }
 
   val simple = {
     forAll {
@@ -25,7 +30,9 @@ object CaseClassTypesTest extends Scalaprops {
   }
 
   val multiNamingStrategies = {
-    implicit val naming = ConfigKeyNaming.lowerCamelCase[TestClass].or(ConfigKeyNaming.hyphenSeparated[TestClass].apply)
+    implicit val naming: ConfigKeyNaming[TestClass] =
+      ConfigKeyNaming.lowerCamelCase[TestClass].or(ConfigKeyNaming.hyphenSeparated[TestClass].apply)
+        .withFailOnSuperfluousKeys()
     forAll {
       val configStr = """
           my-attr-1 = test
@@ -40,13 +47,44 @@ object CaseClassTypesTest extends Scalaprops {
 
   val complexMultiNamingStrategies = {
     // generic default naming
-    implicit def defaultNaming[A]: ConfigKeyNaming[A] =
-      ConfigKeyNaming.lowerCamelCase[A].or(ConfigKeyNaming.hyphenSeparated[A].apply)
+    implicit def myDefaultNaming[A]: ConfigKeyNaming[A] =
+      ConfigKeyNaming.hyphenSeparated[A].or(ConfigKeyNaming.lowerCamelCase[A].apply)
+        .withFailOnSuperfluousKeys()
     forAll {
       val configStr = """
           complexAttr = {
             my-attr-1 = test
             myAttr2 = test
+            test-seal = {
+              type = Seal1
+              myAttr1 = test
+              my-attr-2 = test
+            }
+          }
+          my-attr-3 = test
+          myAttr4 = test
+      """
+      val config = ConfigFactory.parseString(configStr)
+      val d = config.extract[ComplexClass]
+      d.isSuccess
+    }
+  }
+
+  val complexMultiNamingStrategies1 = {
+    // generic default naming
+    implicit def myDefaultNaming[A]: ConfigKeyNaming[A] =
+      ConfigKeyNaming.lowerCamelCase[A].or(ConfigKeyNaming.hyphenSeparated[A].apply)
+        .withFailOnSuperfluousKeys()
+    forAll {
+      val configStr = """
+          complex-attr = {
+            my-attr-1 = test
+            myAttr2 = test
+            testSeal = {
+              type = Seal1
+              myAttr1 = test
+              my-attr-2 = test
+            }
           }
           my-attr-3 = test
           myAttr4 = test
@@ -58,7 +96,7 @@ object CaseClassTypesTest extends Scalaprops {
   }
 
   val failOnSuperfluousConfig = {
-    implicit def defaultNaming[A]: ConfigKeyNaming[A] = ConfigKeyNaming.lowerCamelCase[A].or(ConfigKeyNaming.hyphenSeparated[A].apply)
+    implicit def myDefaultNaming[A]: ConfigKeyNaming[A] = ConfigKeyNaming.lowerCamelCase[A].or(ConfigKeyNaming.hyphenSeparated[A].apply)
       .withFailOnSuperfluousKeys()
     forAll {
       val configStr = """
