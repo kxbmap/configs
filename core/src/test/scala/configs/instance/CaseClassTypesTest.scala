@@ -25,7 +25,9 @@ object CaseClassTypesTest extends Scalaprops {
       """
       val config = ConfigFactory.parseString(configStr)
       val d = config.extract[TestClass]
-      d.isSuccess
+      d.isSuccess &&
+        d.value.myAttr1.contains("test") &&
+        d.value.myAttr2.contains("test")
     }
   }
 
@@ -41,11 +43,13 @@ object CaseClassTypesTest extends Scalaprops {
       """
       val config = ConfigFactory.parseString(configStr)
       val d = config.extract[TestClass]
-      d.isSuccess
+      d.isSuccess &&
+        d.value.myAttr1.contains("test") &&
+        d.value.myAttr2.contains("test")
     }
   }
 
-  val complexMultiNamingStrategies = {
+  val complexMultiNamingStrategies1 = {
     // generic default naming
     implicit def myDefaultNaming[A]: ConfigKeyNaming[A] =
       ConfigKeyNaming.hyphenSeparated[A].or(ConfigKeyNaming.lowerCamelCase[A].apply)
@@ -66,12 +70,14 @@ object CaseClassTypesTest extends Scalaprops {
       """
       val config = ConfigFactory.parseString(configStr)
       val d = config.extract[ComplexClass]
-      d.isSuccess
+      d.isSuccess &&
+        d.value.complexAttr.testSeal.get.asInstanceOf[Seal1].myAttr1.contains("test") &&
+        d.value.complexAttr.testSeal.get.asInstanceOf[Seal1].myAttr2.contains("test")
     }
   }
 
-  val complexMultiNamingStrategies1 = {
-    // generic default naming
+  val complexMultiNamingStrategies2 = {
+    // generic default naming, order changed
     implicit def myDefaultNaming[A]: ConfigKeyNaming[A] =
       ConfigKeyNaming.lowerCamelCase[A].or(ConfigKeyNaming.hyphenSeparated[A].apply)
         .withFailOnSuperfluousKeys()
@@ -91,7 +97,9 @@ object CaseClassTypesTest extends Scalaprops {
       """
       val config = ConfigFactory.parseString(configStr)
       val d = config.extract[ComplexClass]
-      d.isSuccess
+      d.isSuccess &&
+        d.value.complexAttr.testSeal.get.asInstanceOf[Seal1].myAttr1.contains("test") &&
+        d.value.complexAttr.testSeal.get.asInstanceOf[Seal1].myAttr2.contains("test")
     }
   }
 

@@ -29,16 +29,20 @@ trait ConfigReader[A] {
 
   protected def get(config: Config, path: String): Result[A]
 
+  /**
+   * reduce results for multiple naming strategies
+   */
+  protected def reduce(results: Seq[Result[A]]): Result[A] =
+    // default is: take first success, if all failed the last failure
+    results.find( r => r.isSuccess ).getOrElse(results.last)
+
+
   final def read(config: Config, path: String): Result[A] = {
     get(config, path).pushPath(path)
   }
 
   final def read(config: Config, path: Seq[String]): Result[A] = {
-    // take first success, if all failed the last failure
-    path.zipWithIndex.iterator
-      .map { case (p,i) => (read(config, p),i)}
-      .find { case (p,i) => p.isSuccess || i == path.size - 1 }
-      .get._1
+    reduce(path.map(read(config, _)))
   }
 
   final def extract(config: Config): Result[A] = {
@@ -204,16 +208,26 @@ sealed abstract class ConfigReaderInstances extends ConfigReaderInstances0 {
   implicit def cbfJMapConfigReader[M[_, _], A, B](implicit C: ConfigReader[ju.Map[A, B]], F: Factory[(A, B), M[A, B]]): ConfigReader[M[A, B]] =
     C.map(c => F.fromSpecific(c.asScala))
 
-
-  implicit def optionConfigReader[A](implicit A: ConfigReader[A]): ConfigReader[Option[A]] =
-    ConfigReader.from { (c, p) =>
-      if (c.hasPathOrNull(p))
-        A.read(c, p).map(Some(_)).handle {
-          case ConfigError(ConfigError.NullValue(_, `p` :: Nil), es) if es.isEmpty => None
-        }.popPath
-      else
-        Result.successful(None)
+  /**
+   * Reader for Option[A] must consider how to combine empty results for different paths
+   */
+  implicit def optionConfigReader[A](implicit A: ConfigReader[A]): ConfigReader[Option[A]] = new ConfigReader[Option[A]] {
+    override def get(c: Config, p: String): Result[Option[A]] = {
+      Result.Try {
+        if (c.hasPathOrNull(p))
+          A.read(c, p).map(Some(_)).handle {
+            case ConfigError(ConfigError.NullValue(_, `p` :: Nil), es) if es.isEmpty => None
+          }.popPath
+        else
+          Result.successful(None)
+      }.flatten
     }
+    override def reduce(results: Seq[Result[Option[A]]]): Result[Option[A]] =
+      // take first success option that is defined, else first success option that is empty, else last failure
+      results.find( r => r.isSuccess && r.value.isDefined)
+        .orElse(results.find(_.isSuccess))
+        .getOrElse(results.last)
+  }
 
   implicit def javaOptionalConfigReader[A: ConfigReader]: ConfigReader[ju.Optional[A]] =
     optionConfigReader[A].map(_.fold(ju.Optional.empty[A]())(ju.Optional.of))
