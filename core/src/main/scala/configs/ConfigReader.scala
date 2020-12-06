@@ -209,7 +209,7 @@ sealed abstract class ConfigReaderInstances extends ConfigReaderInstances0 {
     C.map(c => F.fromSpecific(c.asScala))
 
   /**
-   * Reader for Option[A] must consider how to combine empty results for different paths
+   * Reader for Option[A] must consider how to combine empty results for different naming strategies
    */
   implicit def optionConfigReader[A](implicit A: ConfigReader[A]): ConfigReader[Option[A]] = new ConfigReader[Option[A]] {
     override def get(c: Config, p: String): Result[Option[A]] = {

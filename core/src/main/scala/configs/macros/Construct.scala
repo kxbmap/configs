@@ -70,13 +70,15 @@ trait Construct {
           if (s.isAbstract) acc
           else if (s.isCaseClass) member(s) :: acc
           else abort(a, s"$s is not abstract")
-        s.typeSignature
-        collect(s.knownDirectSubclasses.toList.map(_.asClass) ::: ss, accN)
+        val subclasses = s.knownDirectSubclasses.toList.map(_.asClass)
+        subclasses.foreach(_.typeSignature) // force initialize type metadata
+        collect(subclasses ::: ss, accN)
       case s :: ss if !s.isAbstract && s.isCaseClass =>
         collect(ss, member(s) :: acc)
       case s :: _ =>
         abort(a, s"$s is not a concrete case class")
     }
+    a.typeSignature // force initialize type metadata, otherwise some attributes are empty/false, e.g. isCaseClass, knownDirectSubclasses
     collect(a :: Nil, Nil) match {
       case Nil => abort(a, "no known subclasses")
       case (cc: CaseClass) :: Nil if cc.tpe =:= a.toType => cc
