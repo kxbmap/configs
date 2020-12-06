@@ -14,16 +14,11 @@
  * limitations under the License.
  */
 
-package configs.testutil.instance
+package com.example;
 
-import configs.Bytes
-import scalaprops.Gen
-import scalaz.Equal
-
-object bytes {
-
-  implicit lazy val bytesGen: Gen[Bytes] = Gen[Long].map(Bytes.apply)
-
-  implicit lazy val bytesEqual: Equal[Bytes] = Equal.equalA[Bytes]
-
+@lombok.Data
+public class MyBean {
+    private int intValue;
+    private java.util.List<String> stringList;
+    private java.util.Map<java.util.Locale, java.time.Duration> localeToDuration;
 }

@@ -61,6 +61,6 @@ object error {
     Gen[NonEmptyList[ConfigError.Entry]].map(xs => ConfigError(xs.head, xs.tail.toVector))
 
   implicit lazy val configErrorCogen: Cogen[ConfigError] =
-    Cogen[NonEmptyList[ConfigError.Entry]].contramap(e => NonEmptyList(e.head, e.tail: _*))
+    Cogen[NonEmptyList[ConfigError.Entry]].contramap(e => NonEmptyList.fromSeq(e.head, e.tail))
 
 }

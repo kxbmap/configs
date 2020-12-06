@@ -12,23 +12,26 @@ object Common extends AutoPlugin {
 
     val typesafeConfig = "com.typesafe" % "config" % "1.4.1"
 
-    val lombok = "org.projectlombok" % "lombok" % "1.18.10"
+    val lombok = "org.projectlombok" % "lombok" % "1.18.16"
 
     val commonsText = "org.apache.commons" % "commons-text" % "1.9"
 
-    val scalaJava8Compat = "org.scala-lang.modules" %% "scala-java8-compat" % "0.9.0"
+    val scalaJava8Compat = "org.scala-lang.modules" %% "scala-java8-compat" % "0.9.1"
 
     val scalaReflect = Def.setting {
       "org.scala-lang" % "scala-reflect" % scalaVersion.value
     }
 
-    val scalaCollectionCompact = "org.scala-lang.modules" %% "scala-collection-compat" % "2.1.2"
+    val scalaCollectionCompat = "org.scala-lang.modules" %% "scala-collection-compat" % "2.3.1"
   }
 
+  override def buildSettings: Seq[Setting[_]] = Seq(
+    scalaVersion := "2.13.4",
+    crossScalaVersions := Seq("2.13.4", "2.12.12", "2.11.12"),
+    scalapropsVersion := "0.8.1"
+  )
+
   override lazy val projectSettings: Seq[Setting[_]] = Seq(
-    scalaVersion := "2.13.1",
-    crossScalaVersions := Seq("2.13.1", "2.12.10", "2.11.12"),
-    scalapropsVersion := "0.6.1",
     scalacOptions ++= Seq(
       "-deprecation",
       "-unchecked",
@@ -37,7 +40,7 @@ object Common extends AutoPlugin {
       "-language:higherKinds",
       "-language:implicitConversions",
       "-language:experimental.macros"
-      //"-Ymacro-debug-lite" // enable to see generated macro code
+      //"-Ymacro-debug-lite"
     ),
     scalacOptions ++= {
       CrossVersion.partialVersion(scalaVersion.value) match {
@@ -55,17 +58,12 @@ object Common extends AutoPlugin {
     incOptions := incOptions.value.withLogRecompileOnMacro(false)
   ) ++
     Seq(Compile, Test).map { c =>
-      c / console / scalacOptions := suppressUnusedWarning((c / console / scalacOptions).value, scalaVersion.value)
-    }
-
-  def suppressUnusedWarning(scalacOptions: Seq[String], scalaVersion: String): Seq[String] =
-    CrossVersion.partialVersion(scalaVersion) match {
-      case Some((2, x)) if x >= 12 =>
-        scalacOptions.map {
-          case "-Xlint" => "-Xlint:-unused,_"
-          case otherwise => otherwise
+      c / console / scalacOptions ++= {
+        CrossVersion.partialVersion(scalaVersion.value) match {
+          case Some((2, x)) if x >= 12 => Seq("-Xlint:-unused")
+          case _ => Nil
         }
-      case _ => scalacOptions
+      }
     }
 
 }

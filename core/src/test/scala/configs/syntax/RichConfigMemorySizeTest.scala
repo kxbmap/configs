@@ -16,9 +16,9 @@
 
 package configs.syntax
 
-import configs.testutil.instance.anyVal._
+import configs.ConfigMemorySize
 import configs.testutil.instance.config._
-import configs.{Bytes, ConfigMemorySize}
+import configs.testutil.instance.math._
 import scalaprops.Property.{forAll, forAllG}
 import scalaprops.{Gen, Properties, Property, Scalaprops}
 import scalaz.syntax.std.boolean._
@@ -28,223 +28,90 @@ object RichConfigMemorySizeTest extends Scalaprops {
   private def forAllWith[A](gen: Gen[A])(f: (ConfigMemorySize, A) => Boolean): Property =
     forAllG(Gen[ConfigMemorySize], gen)(f)
 
-  val + = forAll { (a: ConfigMemorySize, b: ConfigMemorySize) =>
-    if (a.value + b.value >= 0L) {
+  val + =
+    forAll { (a: ConfigMemorySize, b: ConfigMemorySize) =>
       a + b == ConfigMemorySize(a.value + b.value)
-    } else try {
-      a + b
-      sys.error(s"$a + $b")
-    } catch {
-      case _: ArithmeticException => true
     }
-  }
 
-  val - = forAllWith(Gen[ConfigMemorySize]) { (a, b) =>
-    (a.value >= b.value) --> {
-      a - b == ConfigMemorySize(a.value - b.value)
+  val - =
+    forAll { (a: ConfigMemorySize, b: ConfigMemorySize) =>
+      (a.value >= b.value) --> {
+        a - b == ConfigMemorySize(a.value - b.value)
+      }
     }
-  }
 
   val `*` = {
-    def isExact(x: ConfigMemorySize, y: Long): Boolean =
-      try {
-        Math.multiplyExact(x.value, y)
-        true
-      } catch {
-        case _: ArithmeticException => false
-      }
     Properties.properties("by")(
-      "non-neg int" -> forAllWith(Gen.nonNegativeInt) { (a, b) =>
-        isExact(a, b) --> {
-          a * b == ConfigMemorySize(a.value * b)
-        }
+      "non-neg value" -> forAllWith(nonNegativeBigInt) { (m, n) =>
+        m * n == ConfigMemorySize(m.value * n)
       },
-      "negative int" -> forAllWith(Gen.negativeInt) { (a, b) =>
-        if (a.value == 0L) {
-          a * b == ConfigMemorySize.Zero
-        } else try {
-          a * b
-          sys.error(s"$a * $b")
+      "negative value" -> forAllWith(negativeBigInt) { (m, n) =>
+        if (m == ConfigMemorySize.Zero)
+          m * n == ConfigMemorySize.Zero
+        else try {
+          m * n
+          sys.error(s"$m * $n")
         } catch {
-          case e: IllegalArgumentException => e.getMessage.contains(b.toString)
-        }
-      },
-      "non-neg long" -> forAllWith(Gen.nonNegativeLong) { (a, b) =>
-        isExact(a, b) --> {
-          a * b == ConfigMemorySize(a.value * b)
-        }
-      },
-      "negative long" -> forAllWith(Gen.negativeLong) { (a, b) =>
-        if (a.value == 0L) {
-          a * b == ConfigMemorySize.Zero
-        } else try {
-          a * b
-          sys.error(s"$a * $b")
-        } catch {
-          case e: IllegalArgumentException => e.getMessage.contains(b.toString)
-        }
-      },
-      "non-neg double" -> forAllWith(Gen.nonNegativeFiniteDouble) { (a, b) =>
-        if (a.value * b <= Long.MaxValue) {
-          a * b == ConfigMemorySize((a.value * b).toLong)
-        } else try {
-          a * b
-          sys.error(s"$a * $b")
-        } catch {
-          case _: ArithmeticException => true
-        }
-      },
-      "negative double" -> forAllWith(Gen.negativeFiniteDouble) { (a, b) =>
-        if (a.value == 0L || java.lang.Double.compare(b, -0d) == 0) {
-          a * b == ConfigMemorySize.Zero
-        } else try {
-          a * b
-          sys.error(s"$a * $b")
-        } catch {
-          case e: IllegalArgumentException => e.getMessage.contains(b.toString)
-        }
-      },
-      "infinite double" -> forAllWith(infiniteDoubleGen) { (a, b) =>
-        try {
-          a * b
-          sys.error(s"$a * $b")
-        } catch {
-          case e: IllegalArgumentException => e.getMessage.contains(b.toString)
-        }
-      },
-      "NaN" -> forAll { a: ConfigMemorySize =>
-        try {
-          a * Double.NaN
-          sys.error(s"$a * ${Double.NaN}")
-        } catch {
-          case e: IllegalArgumentException => e.getMessage.contains("NaN")
+          case e: IllegalArgumentException => e.getMessage.contains((m.value * n).toString)
         }
       })
   }
 
   val `/` = Properties.properties("by")(
-    "positive int" -> forAllWith(Gen.positiveInt) { (a, b) =>
-      a / b == ConfigMemorySize(a.value / b)
+    "positive value" -> forAllWith(positiveBigInt) { (m, n) =>
+      m / n == ConfigMemorySize(m.value / n)
     },
-    "negative int" -> forAllWith(Gen.negativeInt) { (a, b) =>
-      if (a.value == 0L) {
-        a / b == ConfigMemorySize.Zero
-      } else try {
-        a / b
-        sys.error(s"$a / $b")
+    "negative value" -> forAllWith(negativeBigInt) { (m, n) =>
+      if (m == ConfigMemorySize.Zero)
+        m / n == ConfigMemorySize.Zero
+      else try {
+        m / n
+        sys.error(s"$m / $n")
       } catch {
-        case e: IllegalArgumentException => e.getMessage.contains(b.toString)
+        case e: IllegalArgumentException => e.getMessage.contains(n.toString)
       }
     },
-    "zero int" -> forAll { a: ConfigMemorySize =>
+    "zero" -> forAll { a: ConfigMemorySize =>
       try {
         a / 0
         sys.error(s"$a / 0")
       } catch {
         case _: ArithmeticException => true
       }
-    },
-    "positive long" -> forAllWith(Gen.positiveLong) { (a, b) =>
-      a / b == ConfigMemorySize(a.value / b)
-    },
-    "negative long" -> forAllWith(Gen.negativeLong) { (a, b) =>
-      if (a.value == 0L) {
-        a / b == ConfigMemorySize.Zero
-      } else try {
-        a / b
-        sys.error(s"$a / $b")
-      } catch {
-        case e: IllegalArgumentException => e.getMessage.contains(b.toString)
-      }
-    },
-    "zero long" -> forAll { a: ConfigMemorySize =>
-      try {
-        a / 0L
-        sys.error(s"$a / 0L")
-      } catch {
-        case _: ArithmeticException => true
-      }
-    },
-    "positive double" -> forAllWith(Gen.positiveFiniteDouble) { (a, b) =>
-      if (a.value / b <= Long.MaxValue) {
-        a / b == ConfigMemorySize((a.value / b).toLong)
-      } else try {
-        a / b
-        sys.error(s"$a / $b")
-      } catch {
-        case _: ArithmeticException => true
-      }
-    },
-    "negative double" -> forAllWith(Gen.negativeFiniteDouble) { (a, b) =>
-      if (a.value == 0L && b != -0.0d) {
-        a / b == ConfigMemorySize.Zero
-      } else try {
-        a / b
-        sys.error(s"$a / $b")
-      } catch {
-        case e: IllegalArgumentException => e.getMessage.contains(b.toString)
-      }
-    },
-    "infinite double" -> forAllWith(infiniteDoubleGen) { (a, b) =>
-      try {
-        a / b
-        sys.error(s"$a / $b")
-      } catch {
-        case e: IllegalArgumentException => e.getMessage.contains(b.toString)
-      }
-    },
-    "NaN" -> forAll { a: ConfigMemorySize =>
-      try {
-        a / Double.NaN
-        sys.error(s"$a / ${Double.NaN}")
-      } catch {
-        case e: IllegalArgumentException => e.getMessage.contains("NaN")
-      }
-    },
-    "ConfigMemorySize" -> forAllWith(Gen[ConfigMemorySize]) { (a, b) =>
-      (a / b).compare(a.value.toDouble / b.value.toDouble) == 0
     })
 
-  val `<<` = Properties.properties("by")(
-    "int" -> forAllWith(Gen[Int]) { (a, b) =>
-      if (((a.value << b & 0x7fffffffffffffffL) >> b) == a.value) {
-        (a << b) == ConfigMemorySize(a.value << b)
-      } else try {
-        a << b
-        sys.error(s"$a << $b")
+  val `<<` =
+    forAllWith(Gen[Int]) { (m, n) =>
+      (try {
+        m.value << n
+        false
       } catch {
-        case _: ArithmeticException => true
-      }
-    },
-    "long" -> forAllWith(Gen[Long]) { (a, b) =>
-      if (((a.value << b & 0x7fffffffffffffffL) >> b) == a.value) {
-        (a << b) == ConfigMemorySize(a.value << b)
-      } else try {
-        a << b
-        sys.error(s"$a << $b")
+        case _: ArithmeticException =>
+          try {
+            m << n
+            sys.error(s"$m << $n")
+          } catch {
+            case _: ArithmeticException => true
+          }
+      }) ||
+        (m << n) == ConfigMemorySize(m.value << n)
+    }
+
+  val `>>` =
+    forAllWith(Gen[Int]) { (m, n) =>
+      (try {
+        m.value >> n
+        false
       } catch {
-        case _: ArithmeticException => true
-      }
-    })
-
-  val `>>` = Properties.properties("by")(
-    "int" -> forAllWith(Gen[Int]) { (a, b) =>
-      (a >> b) == ConfigMemorySize(a.value >> b)
-    },
-    "long" -> forAllWith(Gen[Long]) { (a, b) =>
-      (a >> b) == ConfigMemorySize(a.value >> b)
-    })
-
-  val `>>>` = Properties.properties("by")(
-    "int" -> forAllWith(Gen[Int]) { (a, b) =>
-      (a >>> b) == ConfigMemorySize(a.value >>> b)
-    },
-    "long" -> forAllWith(Gen[Long]) { (a, b) =>
-      (a >>> b) == ConfigMemorySize(a.value >>> b)
-    })
-
-  val asBytes = forAll { m: ConfigMemorySize =>
-    m.asBytes == Bytes(m.value)
-  }
+        case _: ArithmeticException =>
+          try {
+            m >> n
+            sys.error(s"$m >> $n")
+          } catch {
+            case _: ArithmeticException => true
+          }
+      }) ||
+        (m >> n) == ConfigMemorySize(m.value >> n)
+    }
 
 }

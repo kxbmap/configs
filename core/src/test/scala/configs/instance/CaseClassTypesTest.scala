@@ -1,60 +1,43 @@
 package configs.instance
 
 import com.typesafe.config.ConfigFactory
-import configs.ConfigKeyNaming
-import configs.Result.Failure
-import configs.syntax.RichConfig
+import configs.{ConfigKeyNaming, ConfigReader}
 import scalaprops.Property.forAll
 import scalaprops.Scalaprops
 
 object CaseClassTypesTest extends Scalaprops {
 
-  case class TestClass(myAttr1: String, myAttr2: String, myAttr3: Option[String] = None, other: Option[String] = None, testSeal: Option[TestSeal] = None )
+  case class TestClass(myAttr1: String, myAttr2: String)
   case class ComplexClass(complexAttr: TestClass, myAttr3: String, myAttr4: String)
-
   sealed trait TestSeal
   case class Seal1(myAttr1: Option[String] = None, myAttr2: String) extends TestSeal
   case class Seal0() extends TestSeal {
   }
 
-  val simple = {
+  val caseClassMultiNaming = {
+    implicit val naming = ConfigKeyNaming.lowerCamelCase[TestClass].or(ConfigKeyNaming.hyphenSeparated[TestClass].apply)
     forAll {
-      val configStr = """
-          my-attr-1 = test
-          my-attr-2 = test
-      """
-      val config = ConfigFactory.parseString(configStr)
-      val d = config.extract[TestClass]
-      d.isSuccess &&
-        d.value.myAttr1.contains("test") &&
-        d.value.myAttr2.contains("test")
-    }
-  }
-
-  val multiNamingStrategies = {
-    implicit val naming: ConfigKeyNaming[TestClass] =
-      ConfigKeyNaming.lowerCamelCase[TestClass].or(ConfigKeyNaming.hyphenSeparated[TestClass].apply)
-        .withFailOnSuperfluousKeys()
-    forAll {
+      val reader = ConfigReader.derive[TestClass](naming)
       val configStr = """
           my-attr-1 = test
           myAttr2 = test
-          myAttr3 = test
       """
       val config = ConfigFactory.parseString(configStr)
-      val d = config.extract[TestClass]
+      val d = reader.extract(config)
+      println(d)
       d.isSuccess &&
         d.value.myAttr1.contains("test") &&
         d.value.myAttr2.contains("test")
     }
   }
 
-  val complexMultiNamingStrategies1 = {
+  val caseClassComplexMultiNaming = {
     // generic default naming
     implicit def myDefaultNaming[A]: ConfigKeyNaming[A] =
       ConfigKeyNaming.hyphenSeparated[A].or(ConfigKeyNaming.lowerCamelCase[A].apply)
         .withFailOnSuperfluousKeys()
     forAll {
+      val reader = ConfigReader.derive[ComplexClass]
       val configStr = """
           complexAttr = {
             my-attr-1 = test
@@ -69,34 +52,7 @@ object CaseClassTypesTest extends Scalaprops {
           myAttr4 = test
       """
       val config = ConfigFactory.parseString(configStr)
-      val d = config.extract[ComplexClass]
-      d.isSuccess &&
-        d.value.complexAttr.testSeal.get.asInstanceOf[Seal1].myAttr1.contains("test") &&
-        d.value.complexAttr.testSeal.get.asInstanceOf[Seal1].myAttr2.contains("test")
-    }
-  }
-
-  val complexMultiNamingStrategies2 = {
-    // generic default naming, order changed
-    implicit def myDefaultNaming[A]: ConfigKeyNaming[A] =
-      ConfigKeyNaming.lowerCamelCase[A].or(ConfigKeyNaming.hyphenSeparated[A].apply)
-        .withFailOnSuperfluousKeys()
-    forAll {
-      val configStr = """
-          complex-attr = {
-            my-attr-1 = test
-            myAttr2 = test
-            testSeal = {
-              type = Seal1
-              myAttr1 = test
-              my-attr-2 = test
-            }
-          }
-          my-attr-3 = test
-          myAttr4 = test
-      """
-      val config = ConfigFactory.parseString(configStr)
-      val d = config.extract[ComplexClass]
+      val d = reader.extract(config)
       d.isSuccess &&
         d.value.complexAttr.testSeal.get.asInstanceOf[Seal1].myAttr1.contains("test") &&
         d.value.complexAttr.testSeal.get.asInstanceOf[Seal1].myAttr2.contains("test")
@@ -104,16 +60,18 @@ object CaseClassTypesTest extends Scalaprops {
   }
 
   val failOnSuperfluousConfig = {
-    implicit def myDefaultNaming[A]: ConfigKeyNaming[A] = ConfigKeyNaming.lowerCamelCase[A].or(ConfigKeyNaming.hyphenSeparated[A].apply)
-      .withFailOnSuperfluousKeys()
+    implicit def myDefaultNaming[A]: ConfigKeyNaming[A] =
+      ConfigKeyNaming.lowerCamelCase[A].or(ConfigKeyNaming.hyphenSeparated[A].apply)
+        .withFailOnSuperfluousKeys()
     forAll {
+      val reader = ConfigReader.derive[ComplexClass]
       val configStr = """
           myAttr1 = test1
           myAttr2 = test2
           myAtrt3 = test3 // typo
       """
       val config = ConfigFactory.parseString(configStr)
-      val d = config.extract[TestClass]
+      val d = reader.extract(config)
       d match {
         case Failure(e) =>
           // message should contain wrong attr,
@@ -124,5 +82,4 @@ object CaseClassTypesTest extends Scalaprops {
       }
     }
   }
-
 }

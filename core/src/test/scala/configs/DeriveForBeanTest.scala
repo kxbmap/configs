@@ -24,13 +24,13 @@ import configs.testutil.{Bean1, Bean22, Bean484}
 import java.util.Objects
 
 import scala.beans.{BeanProperty, BooleanBeanProperty}
+import scala.jdk.CollectionConverters._
 import scalaprops.Property.forAll
-import scalaprops.{Gen, Lazy, Properties, Scalaprops}
 import scalaprops.ScalapropsScalaz._
+import scalaprops.{Gen, Lazy, Properties, Scalaprops}
+import scalaz.Equal
 import scalaz.syntax.apply._
 import scalaz.syntax.equal._
-import scalaz.Equal
-import collection.JavaConverters._
 
 object DeriveForBeanTest extends Scalaprops {
 
@@ -146,7 +146,7 @@ object DeriveForBeanTest extends Scalaprops {
 
     forAll { foo: Foo =>
       val result = ConfigWriter[Foo].write(foo).asInstanceOf[ConfigObject]
-      result.unwrapped.asScala.toSet == Set("URL" -> foo.getURL, "fooBah" -> foo.getFooBah, "x" -> foo.getX)
+      result.unwrapped.asScala.toSet == Set("URL" -> foo.getURL(), "fooBah" -> foo.getFooBah(), "x" -> foo.getX())
     }
   }
 
@@ -163,7 +163,7 @@ object DeriveForBeanTest extends Scalaprops {
 
     forAll { bool: BooleanProps =>
       val result = ConfigWriter[BooleanProps].write(bool).asInstanceOf[ConfigObject]
-      result.unwrapped.asScala.toSet == Set("primitive" -> bool.isPrimitive, "wrapped" -> bool.isWrapped)
+      result.unwrapped.asScala.toSet == Set("primitive" -> bool.isPrimitive(), "wrapped" -> bool.isWrapped())
     }
   }
 
@@ -171,8 +171,8 @@ object DeriveForBeanTest extends Scalaprops {
   val preferIsGetter = {
     class Foo {
       def setBoolean(foo: Boolean): Unit = ()
-      def isBoolean: Boolean = true
-      def getBoolean: Boolean = false
+      def isBoolean(): Boolean = true
+      def getBoolean(): Boolean = false
     }
 
     forAll {

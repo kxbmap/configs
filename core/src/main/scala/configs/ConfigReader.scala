@@ -29,31 +29,25 @@ trait ConfigReader[A] {
 
   protected def get(config: Config, path: String): Result[A]
 
+  final def read(config: Config, path: String): Result[A] =
+    get(config, path).pushPath(path)
+
   /**
    * reduce results for multiple naming strategies
    */
   protected def reduce(results: Seq[Result[A]]): Result[A] =
-    // default is: take first success, if all failed the last failure
+  // default is: take first success, if all failed the last failure
     results.find( r => r.isSuccess ).getOrElse(results.last)
 
-
-  final def read(config: Config, path: String): Result[A] = {
-    get(config, path).pushPath(path)
-  }
-
-  final def read(config: Config, path: Seq[String]): Result[A] = {
+  final def read(config: Config, path: Seq[String]): Result[A] =
     reduce(path.map(read(config, _)))
-  }
 
-  final def extract(config: Config): Result[A] = {
-    val p = "extract"
-    get(config.atKey(p), p)
-  }
 
-  final def extractValue(value: ConfigValue): Result[A] = {
-    val p = "extractValue"
-    get(value.atKey(p), p)
-  }
+  final def extract(config: Config, key: String = "extract"): Result[A] =
+    get(config.atKey(key), key)
+
+  final def extractValue(value: ConfigValue, key: String = "extractValue"): Result[A] =
+    get(value.atKey(key), key)
 
   final def map[B](f: A => B): ConfigReader[B] =
     get(_, _).map(f)
@@ -178,7 +172,9 @@ sealed abstract class ConfigReaderInstances extends ConfigReaderInstances0 {
   implicit def javaListConfigReader[A](implicit A: ConfigReader[A]): ConfigReader[ju.List[A]] =
     ConfigReader[ConfigList].rmap { xs =>
       Result.traverse(xs.asScala.zipWithIndex) {
-        case (x, i) => A.extractValue(x).pushPath(i.toString)
+        case (x, i) =>
+          val p = i.toString
+          A.extractValue(x, p).pushPath(p)
       }.map(_.asJava)
     }
 

@@ -13,15 +13,13 @@ Usage
 Add the following line to your build file:
 
 ```scala
-libraryDependencies += "com.github.kxbmap" %% "configs" % "0.5.0"
+libraryDependencies += "com.github.kxbmap" %% "configs" % "@VERSION@"
 ```
-
-configs version 0.4+ only support Java 8. If you need to Java 7, please check [0.3.x](https://github.com/kxbmap/configs/tree/v0.3.x-java7).
 
 Quick Start
 -----------
 
-```tut:silent
+```scala mdoc:silent
 import com.typesafe.config.ConfigFactory
 import configs.ConfigReader
 ```
@@ -29,31 +27,31 @@ import configs.ConfigReader
 Result type of get a value from config is `configs.Result`.
 If get successfully, returns `configs.Result.Success`, if not `configs.Result.Failure`:
 
-```tut:silent
+```scala mdoc:silent
 val config = ConfigFactory.parseString("foo = 42")
 ```
-```tut
-val result = ConfigReader[Int].read(config, "foo")
+```scala mdoc
+val foo = ConfigReader[Int].read(config, "foo")
 
-result.valueOrElse(0)
+foo.valueOrElse(0)
 
-val result = ConfigReader[Int].read(config, "missing")
+val missing = ConfigReader[Int].read(config, "missing")
 
-result.valueOrElse(0)
+missing.valueOrElse(0)
 ```
 
 Import `configs.syntax._` provides extension methods for `Config`:
 
-```tut:silent
+```scala mdoc:silent
 import configs.syntax._
 ```
-```tut
+```scala mdoc
 config.get[Int]("foo")
 ```
 
 `get[Option[A]]` will return success with value `None` if path is not exists:
 
-```tut
+```scala mdoc
 config.get[Option[Int]]("missing")
 
 config.getOrElse("missing", 0) // Alias for config.get[Option[Int]]("missing").map(_.getOrElse(0))
@@ -61,12 +59,12 @@ config.getOrElse("missing", 0) // Alias for config.get[Option[Int]]("missing").m
 
 You can get a case class value out of the box:
 
-```tut:silent
+```scala mdoc:silent
 import scala.concurrent.duration.FiniteDuration
 
 case class MyConfig(foo: String, bar: Int, baz: List[FiniteDuration])
 ```
-```tut:silent
+```scala mdoc:nest:silent
 val config = ConfigFactory.parseString("""
   my-config {
     foo = My config value
@@ -75,13 +73,13 @@ val config = ConfigFactory.parseString("""
   }
   """)
 ```
-```tut
+```scala mdoc
 config.get[MyConfig]("my-config")
 ```
 
 If failed, `Result` accumulates error messages:
 
-```tut:silent
+```scala mdoc:nest:silent
 val config = ConfigFactory.parseString("""
   my-config {
     bar = 2147483648
@@ -89,33 +87,30 @@ val config = ConfigFactory.parseString("""
   }
   """)
 ```
-```tut
+```scala mdoc
 val result = config.get[MyConfig]("my-config")
 
-result.valueOr { error =>
+result.failed.foreach { error =>
   error.messages.foreach(println)
-  MyConfig("", 0, Nil)
 }
 ```
 
 You can get a value without key using `extract`:
 
-```tut:silent
+```scala mdoc:nest:silent
 val config = ConfigFactory.parseString("""
   foo = My config value
   bar = 123456
   baz = [1h, 2m, 3s]
   """)
 ```
-```tut
+```scala mdoc
 config.extract[MyConfig]
 ```
 
 You may use the `~` operator to combine multiple results and apply a function with the results passed as arguments, this is useful when you want to construct a complex case class from several config extractors.
 
-```tut:silent
-import configs.syntax._
-
+```scala mdoc:nest:silent
 case class ServiceConfig(name: String, port: Int, hosts: List[String])
 
 val config = ConfigFactory.parseString(
@@ -125,7 +120,7 @@ val config = ConfigFactory.parseString(
     |hosts = ["localhost", "foo.com"]
   """.stripMargin)
 ```
-```tut
+```scala mdoc
 (
   config.get[String]("name") ~
   config.get[Int]("port") ~
@@ -180,7 +175,7 @@ In this list, `A` means any type that is `ConfigReader` instance. And `S` means 
 
 If there is such an ADT:
 
-```tut:silent
+```scala mdoc:silent
 sealed trait Tree
 case class Branch(value: Int, left: Tree, right: Tree) extends Tree
 case object Leaf extends Tree
@@ -188,7 +183,7 @@ case object Leaf extends Tree
 
 You can get an ADT value from config:
 
-```tut:silent
+```scala mdoc:nest:silent
 val config = ConfigFactory.parseString("""
   tree = {
     value = 42
@@ -202,16 +197,21 @@ val config = ConfigFactory.parseString("""
   """)
 ```
 
-```tut
+```scala mdoc
 config.get[Tree]("tree")
 ```
 
+```scala mdoc:invisible
+Leaf // Avoid unused warning
+```
 
 ### Java Beans support
 
 If there is Java Beans class like the follows:
 
 ```java
+package com.example;
+
 @lombok.Data
 public class MyBean {
     private int intValue;
@@ -222,14 +222,16 @@ public class MyBean {
 
 Then you define `ConfigReader` instance using `deriveBean` macro:
 
-```tut:silent
+```scala mdoc:silent
+import com.example.MyBean
+
 implicit val myBeanConfigReader: ConfigReader[MyBean] =
   ConfigReader.deriveBean[MyBean]
 ```
 
 And then you can get Java Beans value:
 
-```tut:silent
+```scala mdoc:nest:silent
 val config = ConfigFactory.parseString("""
   int-value = 42
   string-list = [foo, bar, baz]
@@ -239,7 +241,7 @@ val config = ConfigFactory.parseString("""
   }
   """)
 ```
-```tut
+```scala mdoc
 config.extract[MyBean]
 ```
 

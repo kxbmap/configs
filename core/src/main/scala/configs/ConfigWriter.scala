@@ -218,7 +218,7 @@ sealed abstract class ConfigWriterInstances extends ConfigWriterInstances0 {
   implicit val configObjectConfigWriter: ConfigWriter[ConfigObject] = v => v
 
   implicit val configMemorySizeConfigWriter: ConfigWriter[ConfigMemorySize] =
-    fromAny[ConfigMemorySize]
+    stringConfigWriter.contramap(_.toBytesBigInteger.toString)
 
 
   implicit def iterableConfigWriter[F[X] <: Iterable[X], A](implicit A: ConfigWriter[A]): ConfigWriter[F[A]] =

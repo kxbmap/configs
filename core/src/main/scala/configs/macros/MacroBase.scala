@@ -50,8 +50,11 @@ private[macros] abstract class MacroBase {
   def freshName(name: String): TermName = TermName(c.freshName(name))
 
 
-  def isEmpty(xss: List[List[Symbol]]): Boolean =
-    xss.lengthCompare(1) <= 0 && xss.forall(_.isEmpty)
+  def hasEmptyArgumentList(m: MethodSymbol): Boolean =
+    m.paramLists match {
+      case Nil :: Nil => true
+      case _ => false
+    }
 
 
   abstract class DerivingContext {
@@ -132,7 +135,7 @@ private[macros] abstract class MacroBase {
 
     object Getter {
       def unapply(m: MethodSymbol): Option[(String, MethodSymbol, Type)] =
-        if (!m.isPublic || !isEmpty(m.paramLists)) None
+        if (!m.isPublic || !hasEmptyArgumentList(m)) None
         else {
           val (s, n) = decodedName(m).span(_.isLower)
           if (n.nonEmpty && (s == "get" || s == "is" && isBooleanType(m.returnType)))
