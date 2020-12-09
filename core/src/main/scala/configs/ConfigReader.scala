@@ -33,12 +33,19 @@ trait ConfigReader[A] {
     get(config, path).pushPath(path)
   }
 
-  final def read(config: Config, path: Seq[String]): Result[A] = {
+  final def read(config: Config, paths: Seq[String]): Result[A] = {
     // take first success, if all failed the last failure
-    path.zipWithIndex.iterator
-      .map { case (p,i) => (read(config, p),i)}
-      .find { case (p,i) => p.isSuccess || i == path.size - 1 }
-      .get._1
+    @annotation.tailrec
+    def run(paths: List[String], lastFailure: Result.Failure): Result[A] =
+      paths match {
+        case p :: ps =>
+          read(config, p) match {
+            case s@Result.Success(_) => s
+            case f@Result.Failure(_) => run(ps, f)
+          }
+        case Nil => lastFailure
+      }
+    run(paths.toList, Result.Failure(ConfigError("paths is empty")))
   }
 
   final def extract(config: Config, key: String = "extract"): Result[A] =
