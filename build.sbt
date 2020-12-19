@@ -9,7 +9,7 @@ lazy val core = project
     libraryDependencies ++= Seq(
       typesafeConfig,
       commonsText,
-      scalaCollectionCompact,
+      scalaCollectionCompat,
       scalaReflect.value % Provided,
       lombok % Test
     ),
