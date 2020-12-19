@@ -209,19 +209,17 @@ sealed abstract class ConfigReaderInstances extends ConfigReaderInstances0 {
    */
   implicit def optionConfigReader[A](implicit A: ConfigReader[A]): ConfigReader[Option[A]] = new ConfigReader[Option[A]] {
     override def get(c: Config, p: String): Result[Option[A]] = {
-      Result.Try {
-        if (c.hasPathOrNull(p))
-          A.read(c, p).map(Some(_)).handle {
-            case ConfigError(ConfigError.NullValue(_, `p` :: Nil), es) if es.isEmpty => None
-          }.popPath
-        else
-          Result.successful(None)
-      }.flatten
+      if (c.hasPathOrNull(p))
+        A.read(c, p).map(Some(_)).handle {
+          case ConfigError(ConfigError.NullValue(_, `p` :: Nil), es) if es.isEmpty => None
+        }.popPath
+      else
+        Result.successful(None)
     }
     override def reduce(results: Seq[Result[Option[A]]]): Result[Option[A]] =
-      // take first success option that is defined, else first success option that is empty, else last failure
-      results.find( r => r.isSuccess && r.value.isDefined)
-        .orElse(results.find(_.isSuccess))
+      // take first failure, then first success option that is defined, else first success option that is empty
+      results.find( r => r.isFailure)
+        .orElse(results.find( r => r.isSuccess && r.value.isDefined))
         .getOrElse(results.last)
   }
 
