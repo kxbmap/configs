@@ -6,13 +6,13 @@ import configs.{ConfigKeyNaming, ConfigReader}
 import scalaprops.Property.forAll
 import scalaprops.Scalaprops
 
-object CaseClassTypesTest extends Scalaprops {
+case class TestClass(myAttr1: String, myAttr2: String, testSeal: Option[TestSeal])
+case class ComplexClass(complexAttr: TestClass, myAttr3: String, myAttr4: String)
+sealed trait TestSeal
+case class Seal1(myAttr1: Option[String] = None, myAttr2: String) extends TestSeal
+case class Seal0() extends TestSeal
 
-  case class TestClass(myAttr1: String, myAttr2: String, testSeal: Option[TestSeal])
-  case class ComplexClass(complexAttr: TestClass, myAttr3: String, myAttr4: String)
-  sealed trait TestSeal
-  case class Seal1(myAttr1: Option[String] = None, myAttr2: String) extends TestSeal
-  case class Seal0() extends TestSeal
+object CaseClassTypesTest extends Scalaprops {
 
   val caseClassMultiNaming = {
     implicit val naming = ConfigKeyNaming.lowerCamelCase[TestClass].or(ConfigKeyNaming.hyphenSeparated[TestClass].apply)
