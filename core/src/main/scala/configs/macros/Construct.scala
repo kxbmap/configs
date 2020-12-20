@@ -29,7 +29,8 @@ trait Construct {
   protected def construct[A: WeakTypeTag]: Target = {
     def forClass(a: ClassSymbol): Target = {
       def err = abort(a, "not a concrete case class or Java Beans")
-      if (a.typeParams.nonEmpty) abort(a, "polymorphic type")
+      def typeArgString = weakTypeOf[A].dealias.typeArgs.map(arg => s"${arg.typeSymbol.fullName}").mkString(", ")
+      if (a.typeParams.nonEmpty) abort(a, s"polymorphic type with arguments: $typeArgString")
       else if (a.isSealed) sealedClass(a)
       else if (a.isAbstract || a.isModuleClass) err
       else if (a.isDerivedValueClass) valueClass(a)
