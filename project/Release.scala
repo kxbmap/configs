@@ -37,7 +37,7 @@ object Release extends AutoPlugin {
       commitReadme,
       commitReleaseVersion,
       tagRelease,
-      publishArtifacts,
+      releaseStepCommand("+publishSigned"),
       releaseStepCommand("sonatypeBundleRelease"),
       setNextVersion,
       commitNextVersion
