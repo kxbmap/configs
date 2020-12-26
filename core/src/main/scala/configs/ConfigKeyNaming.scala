@@ -29,7 +29,7 @@ trait ConfigKeyNaming[A] { self =>
     field => self.apply(field).flatMap(f)
 
   def or(f: String => Seq[String]): ConfigKeyNaming[A] =
-    field => self.apply(field) ++ f(field)
+    field => (self.apply(field) ++ f(field)).distinct
 }
 
 object ConfigKeyNaming {
