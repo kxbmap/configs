@@ -34,7 +34,6 @@ object CaseClassTypesTest extends Scalaprops {
     // generic default naming
     implicit def myDefaultNaming[A]: ConfigKeyNaming[A] =
       ConfigKeyNaming.hyphenSeparated[A].or(ConfigKeyNaming.lowerCamelCase[A].apply)
-        .withFailOnSuperfluousKeys()
     forAll {
       val reader = ConfigReader.derive[ComplexClass]
       val configStr = """
@@ -54,7 +53,9 @@ object CaseClassTypesTest extends Scalaprops {
       val d = reader.extract(config)
       d.isSuccess &&
         d.value.complexAttr.testSeal.get.asInstanceOf[Seal1].myAttr1.contains("test") &&
-        d.value.complexAttr.testSeal.get.asInstanceOf[Seal1].myAttr2.contains("test")
+        d.value.complexAttr.testSeal.get.asInstanceOf[Seal1].myAttr2.contains("test") &&
+        d.value.myAttr3.contains("test") &&
+        d.value.myAttr4.contains("test")
     }
   }
 
