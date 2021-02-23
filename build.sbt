@@ -8,6 +8,7 @@ lazy val core = project
     compileOrder := CompileOrder.JavaThenScala,
     libraryDependencies ++= Seq(
       typesafeConfig,
+      commonsText,
       scalaCollectionCompat,
       scalaReflect.value % Provided,
       lombok % Test

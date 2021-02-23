@@ -59,6 +59,8 @@ private[macros] trait ConfigReaderMacroImpl {
 
     // for reading we take the all names produced by ConfigKeyNaming
     def configKey(field: String): Tree = q"$n.apply($field)"
+
+    def failOnSuperfluousKeys: Tree = q"$n.failOnSuperfluousKeys"
   }
 
   class ConfigReaderCache extends InstanceCache {
@@ -69,6 +71,10 @@ private[macros] trait ConfigReaderMacroImpl {
 
 
   private val qConfigReader = q"_root_.configs.ConfigReader"
+
+  private val qConfigUtil = q"_root_.configs.ConfigUtil"
+
+  private val qTypeKey = q"_root_.configs.macros.TypeKey"
 
   private def tConfigReader(arg: Type): Type =
     appliedType(typeOf[ConfigReader[_]].typeConstructor, arg)
@@ -81,6 +87,8 @@ private[macros] trait ConfigReaderMacroImpl {
   private def resultTuple(args: Seq[Tree]): Tree =
     q"$qResult.${TermName(s"tuple${args.length}")}(..$args)"
 
+  private val qError = q"_root_.configs.ConfigError"
+
 
   private def sealedClass(tpe: Type, subs: List[SealedMember])(implicit ctx: DerivingReaderContext): Tree = {
     subs.map(_.tpe).foreach(ctx.cache.putEmpty)
@@ -92,7 +100,7 @@ private[macros] trait ConfigReaderMacroImpl {
     val obj = {
       val (ccs, ccq) = subs.collect {
         case CaseClass(t, ps, _) =>
-          val c = ctx.cache.replace(t, caseClass(t, ps))
+          val c = ctx.cache.replace(t, caseClass(t, ps, isSealedMember = true))
           val cc = q"$c.as[$tpe]"
           (cc, cq"${decodedName(t)} => $cc")
       }.unzip
@@ -123,7 +131,7 @@ private[macros] trait ConfigReaderMacroImpl {
      """
   }
 
-  private def caseClass(tpe: Type, params: List[Param])(implicit ctx: DerivingReaderContext): Tree = {
+  private def caseClass(tpe: Type, params: List[Param], isSealedMember: Boolean = false)(implicit ctx: DerivingReaderContext): Tree = {
     val config = freshName("c")
 
     def read(p: Param): Tree = {
@@ -180,13 +188,32 @@ private[macros] trait ConfigReaderMacroImpl {
     }
 
     fromConfig(tpe, config) {
-      params match {
-        case Nil => noArg
-        case p :: Nil => single(p)
-        case ps if ps.lengthCompare(MaxApplySize) <= 0 => small
-        case _ => large
-      }
+      q"""
+        ${checkSuperfluousKeys(config, params.map(_.name), isSealedMember)} match {
+          case Nil => ${
+            params match {
+              case Nil => noArg
+              case p :: Nil => single(p)
+              case ps if ps.lengthCompare(MaxApplySize) <= 0 => small
+              case _ => large
+            }
+          }
+          case ks => $qResult.failure($qError("Superfluous key(s) found: "+ ks.mkString(", ")))
+        }
+      """
     }
+  }
+
+  private def checkSuperfluousKeys(config: TermName, params: List[String], isSealedMember: Boolean = false)(implicit ctx: DerivingReaderContext): Tree = {
+    q"""
+      if (${ctx.failOnSuperfluousKeys}) {
+        val configKeys = if ($isSealedMember) $qConfigUtil.getRootKeys($config).filter(_ != $qTypeKey)
+          else $qConfigUtil.getRootKeys($config)
+        val paramKeys: List[String] = ${params.map(ctx.configKey)}.flatten
+        $qConfigUtil.getSuperfluousKeys(configKeys, paramKeys)
+          .map{ case (key, similarParams) => key + (if (similarParams.nonEmpty) " (did you mean " + similarParams.mkString(", ") + "?)" else "")}
+      } else List()
+    """
   }
 
   private def valueClass(tpe: Type, param: Param)(implicit ctx: DerivingReaderContext): Tree =
@@ -251,11 +278,18 @@ private[macros] trait ConfigReaderMacroImpl {
     }
 
     fromConfig(tpe, config) {
-      props match {
-        case p :: Nil => single(p)
-        case ps if ps.lengthCompare(MaxApplySize) <= 0 => small
-        case _ => large
-      }
+      q"""
+        ${checkSuperfluousKeys(config, props.map(_.name))} match {
+          case Nil => ${
+            props match {
+              case p :: Nil => single(p)
+              case ps if ps.lengthCompare(MaxApplySize) <= 0 => small
+              case _ => large
+            }
+          }
+          case ks => $qResult.failure($qError("Superfluous key(s) found: " + ks.mkString(", ")))
+        }
+      """
     }
   }
 

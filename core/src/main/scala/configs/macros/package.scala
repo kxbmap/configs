@@ -22,6 +22,8 @@ package object macros {
   final val MaxTupleSize = 22
   final val MaxSize = MaxApplySize * MaxTupleSize
 
+  final val TypeKey = "type"
+
   def grouping[A](xs: List[A]): List[List[A]] = {
     val n = xs.length
     val t = (n + MaxTupleSize - 1) / MaxTupleSize

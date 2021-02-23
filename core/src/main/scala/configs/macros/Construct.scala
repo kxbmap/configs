@@ -60,7 +60,7 @@ trait Construct {
   private def sealedClass(a: ClassSymbol): Target = {
     def member(a: ClassSymbol): SealedMember =
       if (a.isModuleClass) CaseObject(a.toType, a.module.asModule)
-      else caseClass(a)
+      else caseClass(a, isSealedMember = true)
 
     @annotation.tailrec
     def collect(css: List[ClassSymbol], acc: List[SealedMember]): List[SealedMember] = css match {
@@ -100,7 +100,7 @@ trait Construct {
       case _ => Map.empty
     }
 
-  private def caseClass(a: ClassSymbol): CaseClass = {
+  private def caseClass(a: ClassSymbol, isSealedMember: Boolean = false): CaseClass = {
     val tpe = a.toType
     val params =
       tpe.decls.collectFirst {

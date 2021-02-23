@@ -64,4 +64,21 @@ object ConfigUtil {
     s.split("[_-]+").toList.flatMap(loop(_, Nil))
   }
 
+  def getRootKeys(config: Config): List[String] = config.root.keySet.asScala.toList
+
+  def getSuperfluousKeys(configKeys: List[String], paramKeys: List[String]): List[(String, List[String])] = {
+    configKeys.diff(paramKeys).sorted
+      .map( key => (key, getSimilarKeys( key, paramKeys )))
+  }
+
+  val maxSimilarityDistance = 6 // limit levenshtein distance calculation to a maximum of 6 character mutations
+  def getSimilarKeys(key: String, params: List[String]): List[String] = {
+    import org.apache.commons.text.similarity.LevenshteinDistance
+    val similarityDistanceLimit = math.min(key.length/2+1,maxSimilarityDistance)
+    val similarityCalculator = new LevenshteinDistance(similarityDistanceLimit)
+    params.map( p => (p,similarityCalculator.apply(p, key)))
+      .filter( _._2 >= 0) // ignore if not similar (result is -1 in this case)
+      .sortBy(_._2)
+      .map(_._1)
+  }
 }
