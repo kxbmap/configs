@@ -76,37 +76,39 @@ object ConfigKeyNaming {
     _identity.asInstanceOf[ConfigKeyNaming[A]]
 
   private[this] val _identity: ConfigKeyNaming[Any] =
-    ConfigKeyNaming(x => x)
+    ConfigKeyNaming((x: String) => x)
 
 
   def hyphenSeparated[A]: ConfigKeyNaming[A] =
     _hyphenSeparated.asInstanceOf[ConfigKeyNaming[A]]
 
   private[this] val _hyphenSeparated: ConfigKeyNaming[Any] =
-    ConfigKeyNaming(x => splitWords(x).mkString("-").toLowerCase(Locale.ROOT))
+    ConfigKeyNaming((x: String) => splitWords(x).mkString("-").toLowerCase(Locale.ROOT))
 
 
   def snakeCase[A]: ConfigKeyNaming[A] =
     _snakeCase.asInstanceOf[ConfigKeyNaming[A]]
 
   private[this] val _snakeCase: ConfigKeyNaming[Any] =
-    ConfigKeyNaming(x => splitWords(x).mkString("_").toLowerCase(Locale.ROOT))
+    ConfigKeyNaming((x: String) => splitWords(x).mkString("_").toLowerCase(Locale.ROOT))
 
 
   def lowerCamelCase[A]: ConfigKeyNaming[A] =
     _lowerCamelCase.asInstanceOf[ConfigKeyNaming[A]]
 
   private[this] val _lowerCamelCase: ConfigKeyNaming[Any] =
-    ConfigKeyNaming(x => splitWords(x) match {
-      case Nil => ""
-      case h :: t => (h.toLowerCase(Locale.ROOT) :: t.map(_.capitalize)).mkString
-    })
+    ConfigKeyNaming { x: String =>
+      splitWords(x) match {
+        case Nil => ""
+        case h :: t => (h.toLowerCase(Locale.ROOT) :: t.map(_.capitalize)).mkString
+      }
+    }
 
 
   def upperCamelCase[A]: ConfigKeyNaming[A] =
     _upperCamelCase.asInstanceOf[ConfigKeyNaming[A]]
 
   private[this] val _upperCamelCase: ConfigKeyNaming[Any] =
-    ConfigKeyNaming(x => splitWords(x).map(_.capitalize).mkString)
+    ConfigKeyNaming((x: String) => splitWords(x).map(_.capitalize).mkString)
 
 }
