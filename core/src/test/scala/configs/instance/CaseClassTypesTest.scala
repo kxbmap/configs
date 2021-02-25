@@ -62,7 +62,7 @@ object CaseClassTypesTest extends Scalaprops {
   val failOnSuperfluousConfig = {
     implicit def myDefaultNaming[A]: ConfigKeyNaming[A] =
       ConfigKeyNaming.lowerCamelCase[A].or(ConfigKeyNaming.hyphenSeparated[A].apply)
-        .withFailOnSuperfluousKeys()
+        .withFailOnSuperfluousKeys
     forAll {
       val reader = ConfigReader.derive[ComplexClass]
       val configStr = """
@@ -87,7 +87,7 @@ object CaseClassTypesTest extends Scalaprops {
     // generic default naming
     implicit def myDefaultNaming[A]: ConfigKeyNaming[A] =
       ConfigKeyNaming.hyphenSeparated[A].or(ConfigKeyNaming.lowerCamelCase[A].apply)
-        .withFailOnSuperfluousKeys()
+        .withFailOnSuperfluousKeys
     forAll {
       val reader = ConfigReader.derive[TestSeal]
       val configStr = """
@@ -112,7 +112,7 @@ object CaseClassTypesTest extends Scalaprops {
     // generic default naming
     implicit def myDefaultNaming[A]: ConfigKeyNaming[A] =
       ConfigKeyNaming.hyphenSeparated[A].or(ConfigKeyNaming.lowerCamelCase[A].apply)
-        .withFailOnSuperfluousKeys()
+        .withFailOnSuperfluousKeys
     forAll {
       val reader = ConfigReader.derive[TestSeal]
       val configStr = """
@@ -133,7 +133,7 @@ object CaseClassTypesTest extends Scalaprops {
     // generic default naming
     implicit def myDefaultNaming[A]: ConfigKeyNaming[A] =
       ConfigKeyNaming.hyphenSeparated[A].or(ConfigKeyNaming.lowerCamelCase[A].apply)
-        .withFailOnSuperfluousKeys()
+        .withFailOnSuperfluousKeys
     forAll {
       val reader = ConfigReader.derive[TestClass]
       val configStr = """
@@ -159,7 +159,7 @@ object CaseClassTypesTest extends Scalaprops {
     // generic default naming
     implicit def myDefaultNaming[A]: ConfigKeyNaming[A] =
       ConfigKeyNaming.hyphenSeparated[A].or(ConfigKeyNaming.lowerCamelCase[A].apply)
-        .withFailOnSuperfluousKeys()
+        .withFailOnSuperfluousKeys
     forAll {
       val reader = ConfigReader.derive[TestClass]
       val configStr = """
