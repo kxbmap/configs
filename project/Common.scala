@@ -12,7 +12,7 @@ object Common extends AutoPlugin {
 
     val typesafeConfig = "com.typesafe" % "config" % "1.4.1"
 
-    val lombok = "org.projectlombok" % "lombok" % "1.18.16"
+    val lombok = "org.projectlombok" % "lombok" % "1.18.18"
 
     val commonsText = "org.apache.commons" % "commons-text" % "1.9"
 
@@ -22,13 +22,13 @@ object Common extends AutoPlugin {
       "org.scala-lang" % "scala-reflect" % scalaVersion.value
     }
 
-    val scalaCollectionCompat = "org.scala-lang.modules" %% "scala-collection-compat" % "2.3.1"
+    val scalaCollectionCompat = "org.scala-lang.modules" %% "scala-collection-compat" % "2.4.2"
   }
 
   override def buildSettings: Seq[Setting[_]] = Seq(
     scalaVersion := "2.13.5",
     crossScalaVersions := Seq("2.13.5", "2.12.13", "2.11.12"),
-    scalapropsVersion := "0.8.1"
+    scalapropsVersion := "0.8.2"
   )
 
   override lazy val projectSettings: Seq[Setting[_]] = Seq(
