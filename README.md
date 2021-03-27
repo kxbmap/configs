@@ -13,7 +13,7 @@ Usage
 Add the following line to your build file:
 
 ```scala
-libraryDependencies += "com.github.kxbmap" %% "configs" % "0.5.0"
+libraryDependencies += "com.github.kxbmap" %% "configs" % "0.6.0"
 ```
 
 Quick Start
