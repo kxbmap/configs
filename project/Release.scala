@@ -1,4 +1,3 @@
-import com.jsuereth.sbtpgp.PgpKeys._
 import com.jsuereth.sbtpgp.SbtPgp
 import mdoc.MdocPlugin.autoImport._
 import sbt.Keys._
@@ -7,10 +6,12 @@ import sbtrelease.ReleasePlugin
 import sbtrelease.ReleasePlugin.autoImport._
 import sbtrelease.ReleaseStateTransformations._
 import sbtrelease.Version.Bump
+import xerial.sbt.Sonatype
+import xerial.sbt.Sonatype.SonatypeKeys._
 
 object Release extends AutoPlugin {
 
-  override def requires: Plugins = Common && ReleasePlugin && SbtPgp
+  override def requires: Plugins = Common && Sonatype && ReleasePlugin && SbtPgp
 
   object autoImport {
     val readmeFileName = settingKey[String]("Readme file name")
@@ -21,11 +22,10 @@ object Release extends AutoPlugin {
 
   private val docs = LocalProject("docs")
 
-  override lazy val projectSettings: Seq[Setting[_]] = Seq(
+  override def projectSettings: Seq[Setting[_]] = Seq(
     readmeFileName := "README.md",
     updateReadme := updateReadmeTask.value,
     releaseCrossBuild := true,
-    releasePublishArtifactsAction := publishSigned.value,
     releaseVersionBump := Bump.Bugfix,
     releaseProcess := Seq(
       checkSnapshotDependencies,
@@ -37,8 +37,8 @@ object Release extends AutoPlugin {
       commitReadme,
       commitReleaseVersion,
       tagRelease,
-      releaseStepCommand("+publishSigned"),
-      releaseStepCommand("sonatypeBundleRelease"),
+      publishArtifacts,
+      releaseStepTask(sonatypeBundleRelease),
       setNextVersion,
       commitNextVersion
     )
