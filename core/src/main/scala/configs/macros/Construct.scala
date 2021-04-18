@@ -86,7 +86,8 @@ trait Construct {
     }
   }
 
-  private def defaults(a: ClassSymbol, m: MethodSymbol): Map[Int, ModuleMethod] =
+  private def defaults(a: ClassSymbol, m: MethodSymbol): Map[Int, ModuleMethod] = {
+    a.typeSignature // force initialize type metadata, otherwise some attributes are empty/false, e.g. isCaseClass, knownDirectSubclasses
     a.companion match {
       case cmp if cmp.isModule =>
         val mod = cmp.asModule
@@ -99,6 +100,7 @@ trait Construct {
         }.toMap
       case _ => Map.empty
     }
+  }
 
   private def caseClass(a: ClassSymbol, isSealedMember: Boolean = false): CaseClass = {
     val tpe = a.toType
