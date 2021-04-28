@@ -26,7 +26,7 @@ object Release extends AutoPlugin {
     updateReadme := updateReadmeTask.value,
     releaseCrossBuild := true,
     releasePublishArtifactsAction := publishSigned.value,
-    releaseVersionBump := Bump.Minor,
+    releaseVersionBump := Bump.Bugfix,
     releaseProcess := Seq(
       checkSnapshotDependencies,
       inquireVersions,
