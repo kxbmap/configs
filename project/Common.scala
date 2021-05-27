@@ -16,19 +16,19 @@ object Common extends AutoPlugin {
 
     val commonsText = "org.apache.commons" % "commons-text" % "1.9"
 
-    val scalaJava8Compat = "org.scala-lang.modules" %% "scala-java8-compat" % "0.9.1"
+    val scalaJava8Compat = "org.scala-lang.modules" %% "scala-java8-compat" % "1.0.0"
 
     val scalaReflect = Def.setting {
       "org.scala-lang" % "scala-reflect" % scalaVersion.value
     }
 
-    val scalaCollectionCompat = "org.scala-lang.modules" %% "scala-collection-compat" % "2.4.3"
+    val scalaCollectionCompat = "org.scala-lang.modules" %% "scala-collection-compat" % "2.4.4"
   }
 
   override def buildSettings: Seq[Setting[_]] = Seq(
-    scalaVersion := "2.13.5",
-    crossScalaVersions := Seq("2.13.5", "2.12.13", "2.11.12"),
-    scalapropsVersion := "0.8.2"
+    scalaVersion := "2.13.6",
+    crossScalaVersions := Seq("2.13.6", "2.12.13", "2.11.12"),
+    scalapropsVersion := "0.8.3"
   )
 
   override lazy val projectSettings: Seq[Setting[_]] = Seq(
