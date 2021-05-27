@@ -75,17 +75,6 @@ object ConfigReader extends ConfigReaderInstances {
   def apply[A](implicit A: ConfigReader[A]): ConfigReader[A] = A
 
 
-  def derive[A](implicit naming: ConfigKeyNaming[A]): ConfigReader[A] =
-    macro macros.ConfigReaderMacro.derive[A]
-
-  @deprecated("Use derive[A] or auto derivation", "0.5.0")
-  def deriveBean[A](implicit naming: ConfigKeyNaming[A]): ConfigReader[A] =
-    macro macros.ConfigReaderMacro.derive[A]
-
-  def deriveBeanWith[A](newInstance: => A)(implicit naming: ConfigKeyNaming[A]): ConfigReader[A] =
-    macro macros.ConfigReaderMacro.deriveBeanWith[A]
-
-
   def from[A](f: (Config, String) => Result[A]): ConfigReader[A] =
     (c, p) => Result.Try(f(c, p)).flatten
 
@@ -113,14 +102,7 @@ object ConfigReader extends ConfigReaderInstances {
 }
 
 
-sealed abstract class ConfigReaderInstances3 {
-
-  implicit def autoDeriveConfigReader[A](implicit naming: ConfigKeyNaming[A]): ConfigReader[A] =
-    macro macros.ConfigReaderMacro.derive[A]
-
-}
-
-sealed abstract class ConfigReaderInstances2 extends ConfigReaderInstances3 {
+sealed abstract class ConfigReaderInstances2 extends ConfigReaderDerives {
 
   @compileTimeOnly(
     "cannot derive for `java.util.Map[A, B]`: " +

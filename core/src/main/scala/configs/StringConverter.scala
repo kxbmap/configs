@@ -58,7 +58,7 @@ object StringConverter extends StringConverterInstances {
 }
 
 
-sealed abstract class StringConverterInstances {
+sealed abstract class StringConverterInstances extends StringConverterDerives {
 
   implicit val stringStringConverter: StringConverter[String] =
     new StringConverter[String] {
@@ -68,9 +68,6 @@ sealed abstract class StringConverterInstances {
 
   implicit val symbolStringConverter: StringConverter[Symbol] =
     stringStringConverter.xmap(Symbol.apply, _.name)
-
-  implicit def enumValueStringConverter[A <: Enumeration]: StringConverter[A#Value] =
-    macro macros.StringConverterMacro.enumValueStringConverter[A]
 
   implicit def javaEnumStringConverter[A <: jl.Enum[A]](implicit A: ClassTag[A]): StringConverter[A] = {
     val clazz = A.runtimeClass.asInstanceOf[Class[A]]

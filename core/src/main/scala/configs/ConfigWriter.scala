@@ -49,9 +49,6 @@ object ConfigWriter extends ConfigWriterInstances {
   def apply[A](implicit A: ConfigWriter[A]): ConfigWriter[A] = A
 
 
-  def derive[A](implicit naming: ConfigKeyNaming[A]): ConfigWriter[A] =
-    macro macros.ConfigWriterMacro.derive[A]
-
   def from[A](f: A => ConfigValue): ConfigWriter[A] =
     f(_)
 
@@ -61,14 +58,7 @@ object ConfigWriter extends ConfigWriterInstances {
 }
 
 
-sealed abstract class ConfigWriterInstances3 {
-
-  implicit def autoDeriveConfigWriter[A](implicit naming: ConfigKeyNaming[A]): ConfigWriter[A] =
-    macro macros.ConfigWriterMacro.derive[A]
-
-}
-
-sealed abstract class ConfigWriterInstances2 extends ConfigWriterInstances3 {
+sealed abstract class ConfigWriterInstances2 extends ConfigWriterDerives {
 
   @compileTimeOnly(
     "cannot derive for `M[A, B]`: " +
