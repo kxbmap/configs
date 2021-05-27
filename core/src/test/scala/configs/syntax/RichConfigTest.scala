@@ -28,11 +28,11 @@ import scalaz.syntax.equal._
 
 object RichConfigTest extends Scalaprops {
 
-  val extract = forAll { m: Map[String, Int] =>
+  val extract = forAll { (m: Map[String, Int]) =>
     ConfigObject.fromMap(m).map(_.toConfig).flatMap(_.extract[Map[String, Int]]).exists(_ == m)
   }
 
-  val get = forAll { n: Int =>
+  val get = forAll { (n: Int) =>
     val config = ConfigFactory.parseString(s"path = $n")
     config.get[Int]("path") == Result.successful(n)
   }
@@ -42,11 +42,11 @@ object RichConfigTest extends Scalaprops {
       val config = ConfigWriter[Int].write(n).atPath("path")
       config.getOrElse("path", d) == Result.successful(n)
     })
-    val p2 = Properties.single("null", forAll { d: Int =>
+    val p2 = Properties.single("null", forAll { (d: Int) =>
       val config = ConfigValue.Null.atPath("path")
       config.getOrElse("path", d) == Result.successful(d)
     })
-    val p3 = Properties.single("missing", forAll { d: Int =>
+    val p3 = Properties.single("missing", forAll { (d: Int) =>
       Config.empty.getOrElse("path", d) == Result.successful(d)
     })
     Properties.list(p1, p2, p3)

@@ -50,7 +50,7 @@ object ErrorTypesTest extends Scalaprops {
       val result = ConfigReader[Result[Int]].read(config, "value")
       result.contains(ConfigReader[Int].read(config, "value"))
     })
-    val p3 = Properties.single("failure", forAll { s: String =>
+    val p3 = Properties.single("failure", forAll { (s: String) =>
       val config = Config.empty
       implicit val reader: ConfigReader[Int] = ConfigReader.failure(s)
       val result = ConfigReader[Result[Int]].read(config, "value")

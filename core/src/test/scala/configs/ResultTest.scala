@@ -47,14 +47,14 @@ object ResultTest extends Scalaprops {
   val sequence = {
     import ResultInstance.applicative
     Properties.list(
-      Properties.single("list", forAll { xs: List[Result[Int]] =>
+      Properties.single("list", forAll { (xs: List[Result[Int]]) =>
         Result.sequence(xs) == Traverse[List].sequence(xs)
       })
     )
   }
 
   val toFromEither =
-    forAll { a: Result[Int] =>
+    forAll { (a: Result[Int]) =>
       Result.fromEither(a.toEither) == a
     }
 

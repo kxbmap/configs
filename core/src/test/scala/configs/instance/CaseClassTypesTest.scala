@@ -17,7 +17,7 @@ object CaseClassTypesTest extends Scalaprops {
   val caseClassMultiNaming = {
     implicit val naming = ConfigKeyNaming.lowerCamelCase[TestClass].or(ConfigKeyNaming.hyphenSeparated[TestClass].apply)
     forAll {
-      val reader = ConfigReader.derive[TestClass](naming)
+      val reader = ConfigReader.derive[TestClass]
       val configStr = """
           my-attr-1 = test
           myAttr2 = test

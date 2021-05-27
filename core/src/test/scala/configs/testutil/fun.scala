@@ -48,7 +48,7 @@ object fun {
     }
 
   private def roundtrip[A: CheckParam : ConfigReader : ConfigWriter : Gen : Equal]: Properties[String] =
-    Properties.single("roundtrip", forAll { value: A =>
+    Properties.single("roundtrip", forAll { (value: A) =>
       CheckParam[A].exceptRoundtrip(value) || {
         val path = "path"
         val m = ConfigWriter[A].append(Map.empty, path, value)

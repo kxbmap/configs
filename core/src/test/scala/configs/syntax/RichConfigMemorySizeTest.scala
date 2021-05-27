@@ -71,7 +71,7 @@ object RichConfigMemorySizeTest extends Scalaprops {
         case e: IllegalArgumentException => e.getMessage.contains(n.toString)
       }
     },
-    "zero" -> forAll { a: ConfigMemorySize =>
+    "zero" -> forAll { (a: ConfigMemorySize) =>
       try {
         a / 0
         sys.error(s"$a / 0")

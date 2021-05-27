@@ -22,7 +22,7 @@ import scalaprops.Scalaprops
 
 object WithOriginTest extends Scalaprops {
 
-  val value = forAll { n: Int =>
+  val value = forAll { (n: Int) =>
     val config = ConfigFactory.parseString(s"a = $n")
     val result = ConfigReader[WithOrigin[Int]].read(config, "a")
     result == Result.successful(WithOrigin(n, ConfigOrigin.simple("String").withLineNumber(1)))

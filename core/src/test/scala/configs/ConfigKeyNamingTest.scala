@@ -35,7 +35,7 @@ object ConfigKeyNamingTest extends Scalaprops {
   val identity = {
     implicit val naming: ConfigKeyNaming[User] = ConfigKeyNaming.identity
 
-    forAll { user: User =>
+    forAll { (user: User) =>
       val result = ConfigWriter[User].write(user).asInstanceOf[ConfigObject]
       result.keySet().asScala == Set("emailAddress", "name", "siteURL")
     }
@@ -44,7 +44,7 @@ object ConfigKeyNamingTest extends Scalaprops {
   val hyphenSeparated = {
     implicit val naming: ConfigKeyNaming[User] = ConfigKeyNaming.hyphenSeparated
 
-    forAll { user: User =>
+    forAll { (user: User) =>
       val result = ConfigWriter[User].write(user).asInstanceOf[ConfigObject]
       result.keySet().asScala == Set("email-address", "name", "site-url")
     }
@@ -53,7 +53,7 @@ object ConfigKeyNamingTest extends Scalaprops {
   val snakeCase = {
     implicit val naming: ConfigKeyNaming[User] = ConfigKeyNaming.snakeCase
 
-    forAll { user: User =>
+    forAll { (user: User) =>
       val result = ConfigWriter[User].write(user).asInstanceOf[ConfigObject]
       result.keySet().asScala == Set("email_address", "name", "site_url")
     }
@@ -62,7 +62,7 @@ object ConfigKeyNamingTest extends Scalaprops {
   val lowerCamelCase = {
     implicit val naming: ConfigKeyNaming[User] = ConfigKeyNaming.lowerCamelCase
 
-    forAll { user: User =>
+    forAll { (user: User) =>
       val result = ConfigWriter[User].write(user).asInstanceOf[ConfigObject]
       result.keySet().asScala == Set("emailAddress", "name", "siteURL")
     }
@@ -71,7 +71,7 @@ object ConfigKeyNamingTest extends Scalaprops {
   val upperCamelCase = {
     implicit val naming: ConfigKeyNaming[User] = ConfigKeyNaming.upperCamelCase
 
-    forAll { user: User =>
+    forAll { (user: User) =>
       val result = ConfigWriter[User].write(user).asInstanceOf[ConfigObject]
       result.keySet().asScala == Set("EmailAddress", "Name", "SiteURL")
     }
@@ -81,7 +81,7 @@ object ConfigKeyNamingTest extends Scalaprops {
     implicit val naming: ConfigKeyNaming[User] =
       ConfigKeyNaming.hyphenSeparated.andThen(x => Seq("user-" + x))
 
-    forAll { user: User =>
+    forAll { (user: User) =>
       val result = ConfigWriter[User].write(user).asInstanceOf[ConfigObject]
       result.keySet().asScala == Set("user-email-address", "user-name", "user-site-url")
     }

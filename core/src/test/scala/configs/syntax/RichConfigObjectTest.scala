@@ -47,7 +47,6 @@ object RichConfigObjectTest extends Scalaprops {
       val result = co ++ kvs ++ dup
       (kvs ++ dup).groupBy(_._1).forall {
         case (k, vs) => ConfigValue.fromAny(vs.last._2).exists(_ === result.get(k.name))
-        case _ => true
       }
     }
 

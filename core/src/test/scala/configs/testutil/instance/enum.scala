@@ -18,7 +18,7 @@ package configs.testutil.instance
 
 import scalaz.Equal
 
-object enum {
+object `enum` {
 
   implicit def enumEqual[A <: Enum[A]]: Equal[A] =
     Equal.equalA[A]

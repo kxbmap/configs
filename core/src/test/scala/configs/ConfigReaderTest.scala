@@ -41,7 +41,7 @@ object ConfigReaderTest extends Scalaprops {
     reader.extract(config).contains(Map(p -> v))
   }
 
-  val extractValue = forAll { v: Int =>
+  val extractValue = forAll { (v: Int) =>
     val cv = ConfigValue.fromAny(v)
     val reader: ConfigReader[Int] = ConfigReader.fromTry(_.getInt(_))
     cv.flatMap(reader.extractValue(_)).contains(v)
@@ -87,11 +87,11 @@ object ConfigReaderTest extends Scalaprops {
       val succ2: ConfigReader[Int] = ConfigReader.successful(v2)
       succ1.orElse(succ2).read(config, "dummy").contains(v1)
     }
-    val p2 = forAll { v: Int =>
+    val p2 = forAll { (v: Int) =>
       val succ: ConfigReader[Int] = ConfigReader.successful(v)
       succ.orElse(fail).read(config, "dummy").contains(v)
     }
-    val p3 = forAll { v: Int =>
+    val p3 = forAll { (v: Int) =>
       val succ: ConfigReader[Int] = ConfigReader.successful(v)
       fail.orElse(succ).read(config, "dummy").contains(v)
     }

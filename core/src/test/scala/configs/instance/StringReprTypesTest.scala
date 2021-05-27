@@ -18,7 +18,7 @@ package configs.instance
 
 import configs.testutil.JavaEnum
 import configs.testutil.fun._
-import configs.testutil.instance.enum._
+import configs.testutil.instance.`enum`._
 import configs.testutil.instance.io._
 import configs.testutil.instance.net._
 import configs.testutil.instance.regex._

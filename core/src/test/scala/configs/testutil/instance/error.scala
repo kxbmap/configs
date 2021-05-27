@@ -41,8 +41,8 @@ object error {
 
   implicit lazy val configErrorEntryGen: Gen[ConfigError.Entry] =
     Gen.oneOf(
-      Gen[Int].map(N).map(ConfigError.NullValue(_)),
-      Gen[Int].map(E).map(ConfigError.Exceptional(_)),
+      Gen[Int].map(N.apply).map(ConfigError.NullValue(_)),
+      Gen[Int].map(E.apply).map(ConfigError.Exceptional(_)),
       Gen[String].map(ConfigError.Generic(_))
     )
 

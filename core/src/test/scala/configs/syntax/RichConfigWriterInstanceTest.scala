@@ -22,7 +22,7 @@ import scalaprops.Scalaprops
 
 object RichConfigWriterInstanceTest extends Scalaprops {
 
-  val toConfigValue = forAll { n: Int =>
+  val toConfigValue = forAll { (n: Int) =>
     n.toConfigValue == ConfigWriter[Int].write(n)
   }
 

@@ -1,3 +1,4 @@
 package configs
 
-trait StringConverterDerives
+trait StringConverterDerives:
+  given [A <: Enumeration#Value]: StringConverter[A] = ???

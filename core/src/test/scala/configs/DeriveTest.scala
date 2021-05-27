@@ -118,8 +118,8 @@ object DeriveTest extends Scalaprops {
 
     implicit lazy val gen: Gen[Sealed] =
       Gen.oneOf(
-        Gen[Int].map(SealedCase),
-        Gen[Int].map(SealedSealedClass),
+        Gen[Int].map(SealedCase.apply),
+        Gen[Int].map(SealedSealedClass.apply),
         Gen.value(SealedCaseObject)
       )
 
@@ -180,7 +180,7 @@ object DeriveTest extends Scalaprops {
 
     implicit lazy val gen: Gen[Recursive] =
       Gen.oneOfLazy(
-        Lazy(Apply[Gen].apply2(Gen[Int], Gen[Recursive])(RCons)),
+        Lazy(Apply[Gen].apply2(Gen[Int], Gen[Recursive])(RCons.apply)),
         Lazy(Gen.value(RNil))
       )
 
@@ -229,7 +229,7 @@ object DeriveTest extends Scalaprops {
 
   val localCaseClass = {
     case class LocalCC(a1: Int)
-    implicit val gen: Gen[LocalCC] = Gen[Int].map(LocalCC)
+    implicit val gen: Gen[LocalCC] = Gen[Int].map(LocalCC.apply)
     implicit val equal: Equal[LocalCC] = Equal.equalA[LocalCC]
     check[LocalCC]
   }

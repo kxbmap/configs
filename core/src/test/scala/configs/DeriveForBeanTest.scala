@@ -143,9 +143,9 @@ object DeriveForBeanTest extends Scalaprops {
 
     implicit val naming: ConfigKeyNaming[Foo] = ConfigKeyNaming.identity
 
-    forAll { foo: Foo =>
+    forAll { (foo: Foo) =>
       val result = ConfigWriter[Foo].write(foo).asInstanceOf[ConfigObject]
-      result.unwrapped.asScala.toSet == Set("URL" -> foo.getURL(), "fooBah" -> foo.getFooBah(), "x" -> foo.getX())
+      result.unwrapped.asScala.toSet == Set("URL" -> foo.URL, "fooBah" -> foo.FooBah, "x" -> foo.X)
     }
   }
 
@@ -160,9 +160,9 @@ object DeriveForBeanTest extends Scalaprops {
     implicit val gen: Gen[BooleanProps] =
       (Gen[Boolean] |@| Gen[Boolean])(new BooleanProps(_, _))
 
-    forAll { bool: BooleanProps =>
+    forAll { (bool: BooleanProps) =>
       val result = ConfigWriter[BooleanProps].write(bool).asInstanceOf[ConfigObject]
-      result.unwrapped.asScala.toSet == Set("primitive" -> bool.isPrimitive(), "wrapped" -> bool.isWrapped())
+      result.unwrapped.asScala.toSet == Set("primitive" -> bool.primitive, "wrapped" -> bool.wrapped)
     }
   }
 
