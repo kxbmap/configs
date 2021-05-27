@@ -26,8 +26,8 @@ object Common extends AutoPlugin {
   }
 
   override def buildSettings: Seq[Setting[_]] = Seq(
-    scalaVersion := "2.13.6",
-    crossScalaVersions := Seq("2.13.6", "2.12.13", "2.11.12"),
+    scalaVersion := "3.0.0",
+    crossScalaVersions := Seq("3.0.0", "2.13.6", "2.12.13", "2.11.12"),
     scalapropsVersion := "0.8.3"
   )
 
@@ -36,12 +36,17 @@ object Common extends AutoPlugin {
       "-deprecation",
       "-unchecked",
       "-feature",
-      "-Xlint",
       "-language:higherKinds",
       "-language:implicitConversions",
       "-language:experimental.macros"
       //"-Ymacro-debug-lite"
     ),
+    scalacOptions ++= {
+      CrossVersion.partialVersion(scalaVersion.value) match {
+        case Some((2, _)) => Seq("-Xlint")
+        case _ => Nil
+      }
+    },
     scalacOptions ++= {
       CrossVersion.partialVersion(scalaVersion.value) match {
         case Some((2, x)) if x >= 12 => Seq("-opt:l:method")

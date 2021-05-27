@@ -10,9 +10,14 @@ lazy val core = project
       typesafeConfig,
       commonsText,
       scalaCollectionCompat,
-      scalaReflect.value % Provided,
       lombok % Test
     ),
+    libraryDependencies ++= {
+      CrossVersion.partialVersion(scalaVersion.value) match {
+        case Some((2, _)) => scalaReflect.value % Provided :: Nil
+        case _ => Nil
+      }
+    },
     scalapropsWithScalaz,
     initialCommands :=
       """import com.typesafe.config.ConfigFactory._

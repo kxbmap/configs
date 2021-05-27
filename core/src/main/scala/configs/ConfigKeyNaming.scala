@@ -97,7 +97,7 @@ object ConfigKeyNaming {
     _lowerCamelCase.asInstanceOf[ConfigKeyNaming[A]]
 
   private[this] val _lowerCamelCase: ConfigKeyNaming[Any] =
-    ConfigKeyNaming { x: String =>
+    ConfigKeyNaming { (x: String) =>
       splitWords(x) match {
         case Nil => ""
         case h :: t => (h.toLowerCase(Locale.ROOT) :: t.map(_.capitalize)).mkString

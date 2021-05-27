@@ -93,7 +93,7 @@ object Result {
     option.fold(failure[A](err))(successful)
 
   def fromEither[A](either: Either[ConfigError, A]): Result[A] =
-    either.fold(Failure, Success(_))
+    either.fold(Failure.apply, Success(_))
 
   def fromThrowable[A](throwable: Throwable): Result[A] =
     failure(ConfigError.fromThrowable(throwable))
